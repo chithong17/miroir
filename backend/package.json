@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "embed:products": "node scripts/embedCollection.js products",
+    "embed:outfits": "node scripts/embedCollection.js outfits",
+    "embed:fashion-rules": "node scripts/embedCollection.js fashion_rules",
     "dev": "nodemon server.js",
     "start": "node server.js"
   },
@@ -13,6 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "mongodb": "^6.21.0",
     "multer": "^2.0.2"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 import LandingPage from "./pages/LandingPage.jsx";
+import StylistPage from "./pages/StylistPage.jsx";
 import TryOnPage from "./pages/TryOnPage.jsx";
 
 function App() {
@@ -6,6 +7,10 @@ function App() {
 
   if (pathname === "/try-on") {
     return <TryOnPage />;
+  }
+
+  if (pathname === "/stylist") {
+    return <StylistPage />;
   }
 
   return <LandingPage />;

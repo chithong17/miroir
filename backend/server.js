@@ -1,6 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import stylistRoutes from "./routes/stylist.routes.js";
 import tryOnRoutes from "./routes/tryon.routes.js";
 import { configureCloudinary } from "./services/cloudinary.service.js";
 
@@ -72,6 +73,7 @@ app.get("/api/debug/piapi-key", (_req, res) => {
 });
 
 app.use("/api/tryon", tryOnRoutes);
+app.use("/api/stylist", stylistRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error("Unhandled server error:", err);
