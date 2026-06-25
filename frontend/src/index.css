@@ -1,0 +1,92 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(210, 188, 251, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 20px rgba(210, 188, 251, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(210, 188, 251, 0);
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    background-image:
+      radial-gradient(circle at top left, rgba(210, 188, 251, 0.22), transparent 26%),
+      radial-gradient(circle at bottom right, rgba(210, 188, 251, 0.16), transparent 28%),
+      linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+    color: #191c1d;
+    font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    border-color: #c4c7c8;
+  }
+
+  ::selection {
+    background-color: #d2bcfb;
+    color: #191c1d;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-[2rem] border backdrop-blur-xl;
+    border-color: rgba(196, 199, 200, 0.6);
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .input-card {
+    @apply glass-panel p-4 transition duration-300 hover:bg-white;
+  }
+
+  .input-card:hover {
+    border-color: #d2bcfb;
+  }
+
+  .section-shell {
+    @apply mx-auto max-w-[1440px] px-5 md:px-16;
+  }
+
+  .editorial-title {
+    @apply tracking-[-0.02em];
+    color: #191c1d;
+    font-family: "Syne", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .soft-button {
+    @apply rounded-full border bg-white px-6 py-3 text-sm font-semibold shadow-glow transition hover:-translate-y-0.5;
+    border-color: rgba(196, 199, 200, 0.7);
+    color: #191c1d;
+  }
+
+  .soft-button:hover {
+    background-color: #f3f4f5;
+  }
+
+  .dark-button {
+    @apply rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:scale-[1.02];
+    background-color: #191c1d;
+  }
+
+  .mirror-frame {
+    animation: pulse-ring 3s infinite;
+  }
+}
