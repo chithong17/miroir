@@ -19,7 +19,12 @@ export const getMongoDb = async () => {
     throw error;
   }
 
-  client = new MongoClient(uri);
+  client = new MongoClient(uri, {
+    serverSelectionTimeoutMS: Number(
+      process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 8000
+    ),
+    connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 8000),
+  });
   await client.connect();
   db = client.db(dbName);
   return db;

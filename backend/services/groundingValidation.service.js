@@ -37,6 +37,7 @@ export const enrichRecommendation = ({ recommendation, products }) => {
         sizes: product.sizes || [],
         imageUrl: product.imageUrl || product.image_url,
         availability: product.availability,
+        shop: product.shop,
       },
       reason: item.reason || "",
     };

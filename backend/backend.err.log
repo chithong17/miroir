@@ -1,0 +1,7 @@
+Unhandled server error: Error: queryTxt EREFUSED miroir.dmfj3mg.mongodb.net
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/promises:294:17) {
+  errno: undefined,
+  code: 'EREFUSED',
+  syscall: 'queryTxt',
+  hostname: 'miroir.dmfj3mg.mongodb.net'
+}

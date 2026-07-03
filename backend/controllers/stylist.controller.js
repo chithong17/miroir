@@ -60,6 +60,7 @@ const buildGenerationPayload = ({ body, memory, context }) => ({
     occasionTags: product.occasionTags || product.occasions || [],
     material: product.material,
     fitType: product.fitType,
+    shop: product.shop,
     rerankScore: product.rerankScore,
   })),
   reviewSummaries: context.reviewSummaries,

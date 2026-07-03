@@ -25,3 +25,27 @@ export const uploadTryOnImages = upload.fields([
   { name: "upperImage", maxCount: 1 },
   { name: "lowerImage", maxCount: 1 },
 ]);
+
+export const uploadProductImage = upload.single("image");
+
+const excelUpload = multer({
+  storage,
+  fileFilter: (_req, file, cb) => {
+    const isExcel =
+      file.mimetype ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.originalname?.toLowerCase().endsWith(".xlsx");
+
+    if (isExcel) {
+      cb(null, true);
+      return;
+    }
+
+    cb(new Error("Only .xlsx files are allowed."));
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
+
+export const uploadProductImportFile = excelUpload.single("file");

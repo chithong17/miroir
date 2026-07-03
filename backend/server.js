@@ -1,6 +1,9 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import shopAuthRoutes from "./routes/shopAuth.routes.js";
+import shopProductRoutes from "./routes/shopProduct.routes.js";
+import shopRoutes from "./routes/shop.routes.js";
 import stylistRoutes from "./routes/stylist.routes.js";
 import tryOnRoutes from "./routes/tryon.routes.js";
 import { configureCloudinary } from "./services/cloudinary.service.js";
@@ -48,10 +51,21 @@ configureCloudinary();
 
 const app = express();
 const port = process.env.PORT || 5000;
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Origin ${origin} is not allowed by CORS.`));
+    },
   })
 );
 app.use(express.json());
@@ -74,6 +88,9 @@ app.get("/api/debug/piapi-key", (_req, res) => {
 
 app.use("/api/tryon", tryOnRoutes);
 app.use("/api/stylist", stylistRoutes);
+app.use("/api/shop-auth", shopAuthRoutes);
+app.use("/api/shops", shopRoutes);
+app.use("/api/shop-products", shopProductRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error("Unhandled server error:", err);
@@ -86,6 +103,13 @@ app.use((err, _req, res, _next) => {
   }
 
   if (err.message?.startsWith("Only image files")) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  if (err.message?.startsWith("Only .xlsx files")) {
     return res.status(400).json({
       success: false,
       message: err.message,

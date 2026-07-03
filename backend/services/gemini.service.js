@@ -2,6 +2,22 @@ import axios from "axios";
 
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
+const getGeminiErrorMessage = (error, action, model) => {
+  if (!axios.isAxiosError(error)) {
+    return error.message;
+  }
+
+  const status = error.response?.status;
+  const apiMessage =
+    error.response?.data?.error?.message ||
+    error.response?.data?.message ||
+    error.message;
+
+  return `Gemini ${action} failed for model "${model}"${
+    status ? ` with status ${status}` : ""
+  }: ${apiMessage}`;
+};
+
 const getApiKey = () => {
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -16,19 +32,25 @@ const getApiKey = () => {
 
 export const generateEmbedding = async (text) => {
   const apiKey = getApiKey();
-  const model = process.env.GEMINI_EMBEDDING_MODEL || "text-embedding-004";
+  const model = process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001";
   const url = `${GEMINI_BASE_URL}/models/${model}:embedContent?key=${apiKey}`;
 
-  const response = await axios.post(
-    url,
-    {
-      model: `models/${model}`,
-      content: {
-        parts: [{ text }],
+  let response;
+
+  try {
+    response = await axios.post(
+      url,
+      {
+        model: `models/${model}`,
+        content: {
+          parts: [{ text }],
+        },
       },
-    },
-    { timeout: 30000 }
-  );
+      { timeout: 30000 }
+    );
+  } catch (error) {
+    throw new Error(getGeminiErrorMessage(error, "embedding", model));
+  }
 
   const values = response.data?.embedding?.values;
 
@@ -48,7 +70,7 @@ const parseGeminiJson = (text) => {
 
 export const generateStylistRecommendation = async (payload) => {
   const apiKey = getApiKey();
-  const model = process.env.GEMINI_GENERATION_MODEL || "gemini-1.5-flash";
+  const model = process.env.GEMINI_GENERATION_MODEL || "gemini-3.5-flash";
   const url = `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`;
 
   const systemPrompt = `You are MIROIR AI Stylist.
@@ -80,29 +102,35 @@ Return JSON only using this schema:
   "fashionTips": []
 }`;
 
-  const response = await axios.post(
-    url,
-    {
-      systemInstruction: {
-        parts: [{ text: systemPrompt }],
-      },
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.35,
-      },
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: JSON.stringify(payload),
-            },
-          ],
+  let response;
+
+  try {
+    response = await axios.post(
+      url,
+      {
+        systemInstruction: {
+          parts: [{ text: systemPrompt }],
         },
-      ],
-    },
-    { timeout: 60000 }
-  );
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.35,
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: JSON.stringify(payload),
+              },
+            ],
+          },
+        ],
+      },
+      { timeout: 60000 }
+    );
+  } catch (error) {
+    throw new Error(getGeminiErrorMessage(error, "generation", model));
+  }
 
   const text =
     response.data?.candidates?.[0]?.content?.parts

@@ -294,6 +294,11 @@ function StylistPage() {
                           <p className="mt-1 text-sm text-muted">
                             {item.product.category} · {Number(item.product.price || 0).toLocaleString()} VND
                           </p>
+                          {item.product.shop?.name ? (
+                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-tertiary">
+                              {item.product.shop.name}
+                            </p>
+                          ) : null}
                           <p className="mt-3 text-sm leading-6 text-muted">{item.reason}</p>
                         </article>
                       ))}
@@ -306,6 +311,11 @@ function StylistPage() {
                           {result.alternatives.map((item) => (
                             <div key={item.product.id} className="rounded-lg border border-line/70 bg-white p-4">
                               <p className="font-semibold text-ink">{item.product.name}</p>
+                              {item.product.shop?.name ? (
+                                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-tertiary">
+                                  {item.product.shop.name}
+                                </p>
+                              ) : null}
                               <p className="mt-2 text-sm text-muted">{item.reason}</p>
                             </div>
                           ))}

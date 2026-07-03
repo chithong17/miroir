@@ -1,6 +1,7 @@
 import { generateEmbedding } from "./gemini.service.js";
 import { getMongoDb } from "./mongo.service.js";
 import { getReviewSummariesByProductIds } from "./reviewSummary.service.js";
+import { getActiveShopsByIds } from "./shop.service.js";
 
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -48,8 +49,10 @@ const buildProductFilter = (request) => {
   }
 
   and.push({
-    availability: { $in: ["in_stock", true] },
+    $or: [{ availability: "in_stock" }, { availability: true }],
   });
+
+  and.push({ status: "published" });
 
   if (request.occasion) {
     and.push({ occasionTags: request.occasion });
@@ -153,7 +156,29 @@ export const retrieveStylistContext = async ({ request, memory }) => {
     }),
   ]);
 
-  if (!rawProducts.length) {
+  const activeShops = await getActiveShopsByIds([
+    ...new Set(rawProducts.map((product) => product.shopId).filter(Boolean)),
+  ]);
+  const activeShopById = new Map(activeShops.map((shop) => [shop.id, shop]));
+  const shopFilteredProducts = rawProducts
+    .filter((product) => product.shopId && activeShopById.has(product.shopId))
+    .map((product) => {
+      const shop = activeShopById.get(product.shopId);
+
+      return {
+        ...product,
+        shop: shop
+          ? {
+              id: shop.id,
+              name: shop.name,
+              slug: shop.slug,
+              logoUrl: shop.logoUrl,
+            }
+          : undefined,
+      };
+    });
+
+  if (!shopFilteredProducts.length) {
     return {
       products: [],
       outfits,
@@ -164,12 +189,12 @@ export const retrieveStylistContext = async ({ request, memory }) => {
   }
 
   const reviewSummaries = await getReviewSummariesByProductIds(
-    rawProducts.map((product) => product.id)
+    shopFilteredProducts.map((product) => product.id)
   );
   const reviewByProductId = new Map(
     reviewSummaries.map((summary) => [summary.productId, summary])
   );
-  const products = rawProducts
+  const products = shopFilteredProducts
     .map((product) => ({
       ...product,
       rerankScore: scoreProduct({
