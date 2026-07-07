@@ -98,7 +98,7 @@ app.use((err, _req, res, _next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
     return res.status(400).json({
       success: false,
-      message: "Image size must be 10MB or smaller.",
+      message: "Uploaded file is too large.",
     });
   }
 

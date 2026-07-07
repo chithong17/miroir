@@ -1,7 +1,8 @@
-Unhandled server error: Error: queryTxt EREFUSED miroir.dmfj3mg.mongodb.net
-    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/promises:294:17) {
-  errno: undefined,
-  code: 'EREFUSED',
-  syscall: 'queryTxt',
-  hostname: 'miroir.dmfj3mg.mongodb.net'
-}
+Gemini stylist generation failed, using fallback: Error: Gemini generation failed for model "gemini-3.5-flash" with status 503: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+    at generateStylistRecommendation (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/gemini.service.js:151:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async recommendOutfit (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/stylist.controller.js:183:24)
+Gemini stylist generation failed, using fallback: Error: Gemini generation failed for model "gemini-3.5-flash" with status 503: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+    at generateStylistRecommendation (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/gemini.service.js:151:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async recommendOutfit (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/stylist.controller.js:183:24)

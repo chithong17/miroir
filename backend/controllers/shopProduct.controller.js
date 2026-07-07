@@ -3,8 +3,11 @@ import {
   archiveProduct,
   createProduct,
   getOwnerProduct,
+  hardDeleteProduct,
   listOwnerProducts,
+  restoreProduct,
   toPublicProduct,
+  trashProduct,
   updateProduct,
 } from "../services/product.service.js";
 import {
@@ -78,9 +81,57 @@ export const updateShopProduct = async (req, res, next) => {
   }
 };
 
-export const deleteShopProduct = async (req, res, next) => {
+export const archiveShopProduct = async (req, res, next) => {
   try {
     const product = await archiveProduct({
+      ownerId: req.owner.id,
+      productId: req.params.id,
+    });
+
+    return res.json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteShopProduct = async (req, res, next) => {
+  try {
+    const product = await trashProduct({
+      ownerId: req.owner.id,
+      productId: req.params.id,
+    });
+
+    return res.json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const restoreShopProduct = async (req, res, next) => {
+  try {
+    const product = await restoreProduct({
+      ownerId: req.owner.id,
+      productId: req.params.id,
+    });
+
+    return res.json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const hardDeleteShopProduct = async (req, res, next) => {
+  try {
+    const product = await hardDeleteProduct({
       ownerId: req.owner.id,
       productId: req.params.id,
     });

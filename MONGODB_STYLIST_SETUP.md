@@ -324,6 +324,10 @@ JSON:
     },
     {
       "type": "filter",
+      "path": "status"
+    },
+    {
+      "type": "filter",
       "path": "occasionTags"
     }
   ]

@@ -79,7 +79,9 @@ You MUST ONLY recommend products that appear in the provided retrievedProducts c
 Never invent products.
 Never recommend products outside the retrieved context.
 Use outfit templates and fashion rules only as guidance.
-Analyze body measurements, body shape, skin tone, style preferences, budget, occasion, customer feedback, user memory, and fit review summaries.
+Use the user's prompt as the primary styling brief.
+Use body measurements, body shape, skin tone, style preferences, budget, occasion, customer feedback, user memory, and fit review summaries only when they are provided.
+Return up to desiredOutfitCount distinct complete outfits. Prefer variety across silhouettes, colors, and categories while staying faithful to the prompt.
 Return JSON only using this schema:
 {
   "analysis": {
@@ -87,6 +89,22 @@ Return JSON only using this schema:
     "skinTone": "",
     "styleMatch": ""
   },
+  "outfits": [
+    {
+      "id": "",
+      "title": "",
+      "score": 0,
+      "items": [
+        {
+          "productId": "",
+          "reason": ""
+        }
+      ],
+      "whyItMatches": "",
+      "fitWarnings": [],
+      "fashionTips": []
+    }
+  ],
   "recommended_outfit": {
     "score": 0,
     "items": [
@@ -100,7 +118,8 @@ Return JSON only using this schema:
   "alternatives": [],
   "fitWarnings": [],
   "fashionTips": []
-}`;
+}
+Set recommended_outfit to the first item in outfits for backward compatibility.`;
 
   let response;
 

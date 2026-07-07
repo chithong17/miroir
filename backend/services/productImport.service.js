@@ -1,50 +1,94 @@
 import crypto from "crypto";
 import XLSX from "xlsx";
 import { getMongoDb } from "./mongo.service.js";
-import {
-  normalizeProductPayload,
-  productNeedsEmbeddingReset,
-  toPublicProduct,
-} from "./product.service.js";
+import { toPublicProduct } from "./product.service.js";
+import { uploadImageBuffer } from "./cloudinary.service.js";
+import { extractImagesByRowFromWorkbook } from "./xlsxImage.service.js";
 
 const COLUMNS = [
   "id",
-  "shopSlug",
   "name",
-  "category",
-  "description",
   "price",
-  "gender",
   "availability",
-  "status",
-  "colors",
   "sizes",
-  "styleTags",
-  "occasionTags",
   "material",
-  "fitType",
   "imageUrl",
 ];
 
 const EXAMPLE_ROW = {
-  shopSlug: "",
-  name: "Linen Relaxed Shirt",
-  category: "shirt",
-  description: "Lightweight linen shirt with relaxed silhouette.",
+  id: "",
+  name: "Linen Shirt",
   price: 590000,
-  gender: "female",
   availability: "in_stock",
-  status: "draft",
-  colors: "white, beige",
   sizes: "S, M, L",
-  styleTags: "minimalist, smart casual, summer",
-  occasionTags: "date, office, casual",
   material: "linen",
-  fitType: "relaxed",
   imageUrl: "https://example.com/product.jpg",
 };
 
 const cleanString = (value) => String(value || "").trim();
+
+const asStringArray = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((item) => cleanString(item)).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => cleanString(item))
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const parsePrice = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+};
+
+const normalizeShopImportPayload = (payload) => {
+  const normalized = {};
+  const errors = [];
+
+  if (!cleanString(payload.name)) {
+    errors.push("name is required.");
+  } else {
+    normalized.name = cleanString(payload.name);
+  }
+
+  const price = parsePrice(payload.price);
+  if (price === undefined) {
+    errors.push("price must be a non-negative number.");
+  } else {
+    normalized.price = price;
+  }
+
+  if (!["in_stock", "out_of_stock"].includes(payload.availability)) {
+    errors.push("availability must be one of: in_stock, out_of_stock.");
+  } else {
+    normalized.availability = payload.availability;
+  }
+
+  if (payload.sizes !== undefined) {
+    normalized.sizes = asStringArray(payload.sizes);
+  }
+
+  if (payload.material !== undefined) {
+    normalized.material = cleanString(payload.material);
+  }
+
+  const imageUrl = cleanString(payload.imageUrl);
+  if (imageUrl) {
+    normalized.imageUrl = imageUrl;
+  }
+
+  if (imageUrl && !/^https?:\/\/\S+$/i.test(imageUrl)) {
+    errors.push("imageUrl must be a valid http(s) URL.");
+  }
+
+  return { normalized, errors };
+};
 
 const persistJob = async ({ db, job }) => {
   const { _id, ...jobFields } = job;
@@ -77,12 +121,10 @@ export const generateProductImportTemplate = () => {
   });
   const notes = [
     ["Column", "Notes"],
-    ["shopSlug", "Optional. Your account can manage only one shop, so empty rows import into your shop."],
-    ["gender", "Allowed values: female, male, unisex."],
     ["availability", "Allowed values: in_stock, out_of_stock."],
-    ["status", "Allowed values: draft, published, archived. Empty defaults to draft."],
-    ["colors/sizes/styleTags/occasionTags", "Use comma-separated values."],
-    ["imageUrl", "Use a public http(s) URL. Embedded Excel images are not imported."],
+    ["sizes", "Use comma-separated values, for example: S, M, L."],
+    ["imageUrl", "Use a public http(s) URL, or place an image in this row and it will be uploaded."],
+    ["manager fields", "Category, description, gender, status, style tags, occasion tags, and fit type are managed by the system team."],
   ];
   const notesSheet = XLSX.utils.aoa_to_sheet(notes);
 
@@ -98,16 +140,13 @@ export const generateProductImportTemplate = () => {
   });
 };
 
-const getOwnerShopsBySlug = async ({ db, ownerId }) => {
+const getOwnerShops = async ({ db, ownerId }) => {
   const shops = await db.collection("shops").find({ ownerId }).toArray();
-  return {
-    shops,
-    bySlug: new Map(shops.map((shop) => [shop.slug, shop])),
-  };
+  return shops;
 };
 
 const validateRows = async ({ db, ownerId, rows }) => {
-  const { shops, bySlug } = await getOwnerShopsBySlug({ db, ownerId });
+  const shops = await getOwnerShops({ db, ownerId });
   const errors = [];
   const normalizedRows = [];
   const singleShop = shops.length === 1 ? shops[0] : null;
@@ -131,32 +170,18 @@ const validateRows = async ({ db, ownerId, rows }) => {
   for (const [index, rawRow] of rows.entries()) {
     const rowNumber = index + 2;
     const payload = rowToPayload(rawRow);
-    const shopSlug = cleanString(payload.shopSlug);
-    const shop = shopSlug ? bySlug.get(shopSlug) : singleShop;
+    const shop = singleShop;
 
     if (!shop) {
       errors.push({
         row: rowNumber,
-        field: "shopSlug",
-        message: singleShop
-          ? "shopSlug must match one of your shops when provided."
-          : "shopSlug is required and must match one of your shops.",
+        field: "shop",
+        message: "Create one shop before importing products.",
       });
       continue;
     }
 
-    if (shop.status !== "active" && payload.status === "published") {
-      errors.push({
-        row: rowNumber,
-        field: "status",
-        message: "Cannot publish products for an inactive shop.",
-      });
-    }
-
-    const { normalized, errors: productErrors } = normalizeProductPayload(
-      payload,
-      { partial: false }
-    );
+    const { normalized, errors: productErrors } = normalizeShopImportPayload(payload);
 
     productErrors.forEach((message) => {
       errors.push({
@@ -185,11 +210,29 @@ const validateRows = async ({ db, ownerId, rows }) => {
       productId,
       shopId: shop.id,
       payload: normalized,
-      originalPayload: payload,
     });
   }
 
   return { errors, normalizedRows };
+};
+
+const uploadEmbeddedImages = async ({ file, normalizedRows }) => {
+  const imagesByRow = extractImagesByRowFromWorkbook(file.buffer, "Products");
+
+  await Promise.all(
+    normalizedRows.map(async (row) => {
+      const embeddedImage = imagesByRow.get(row.rowNumber);
+      if (!embeddedImage) return;
+
+      const result = await uploadImageBuffer(
+        embeddedImage.buffer,
+        embeddedImage.fileName || `${row.productId || row.rowNumber}.png`
+      );
+
+      row.payload.imageUrl = result.secure_url;
+      row.payload.imagePublicId = result.public_id;
+    })
+  );
 };
 
 export const importProductsFromWorkbook = async ({ ownerId, file }) => {
@@ -236,6 +279,8 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
       return job;
     }
 
+    await uploadEmbeddedImages({ file, normalizedRows });
+
     const importedProducts = [];
 
     for (const row of normalizedRows) {
@@ -244,16 +289,10 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
       const basePatch = {
         ...row.payload,
         shopId: row.shopId,
-        embeddingStale: true,
-        embeddingTextHash: null,
         updatedAt: new Date(),
       };
 
       if (existing) {
-        if (productNeedsEmbeddingReset(row.originalPayload)) {
-          basePatch.embeddingUpdatedAt = null;
-        }
-
         await db
           .collection("products")
           .updateOne({ id: productId }, { $set: basePatch });
@@ -261,6 +300,15 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
       } else {
         const product = {
           id: productId,
+          status: "draft",
+          category: "",
+          description: "",
+          gender: "unisex",
+          colors: [],
+          styleTags: [],
+          occasionTags: [],
+          fitType: "",
+          embeddingStale: true,
           ...basePatch,
           createdAt: new Date(),
         };

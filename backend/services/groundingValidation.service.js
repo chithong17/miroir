@@ -1,15 +1,32 @@
 const normalizeAlternatives = (alternatives) =>
   Array.isArray(alternatives) ? alternatives : [];
 
+const normalizeOutfits = (recommendation) => {
+  if (Array.isArray(recommendation?.outfits) && recommendation.outfits.length) {
+    return recommendation.outfits;
+  }
+
+  return recommendation?.recommended_outfit
+    ? [recommendation.recommended_outfit]
+    : [];
+};
+
 export const findInvalidProductIds = ({ recommendation, allowedProductIds }) => {
   const ids = [];
-  const items = recommendation?.recommended_outfit?.items || [];
+  const outfits = normalizeOutfits(recommendation);
+  const legacyItems = recommendation?.recommended_outfit?.items || [];
   const alternatives = normalizeAlternatives(recommendation?.alternatives);
 
-  items.forEach((item) => {
-    if (item?.productId && !allowedProductIds.has(item.productId)) {
-      ids.push(item.productId);
-    }
+  outfits.forEach((outfit) => {
+    (outfit?.items || []).forEach((item) => {
+      if (item?.productId && !allowedProductIds.has(item.productId)) {
+        ids.push(item.productId);
+      }
+    });
+  });
+
+  legacyItems.forEach((item) => {
+    if (item?.productId && !allowedProductIds.has(item.productId)) ids.push(item.productId);
   });
 
   alternatives.forEach((item) => {
@@ -21,7 +38,7 @@ export const findInvalidProductIds = ({ recommendation, allowedProductIds }) => 
   return [...new Set(ids)];
 };
 
-export const enrichRecommendation = ({ recommendation, products }) => {
+export const enrichRecommendation = ({ recommendation, products, desiredOutfitCount = 5 }) => {
   const productById = new Map(products.map((product) => [product.id, product]));
 
   const enrichItem = (item) => {
@@ -43,18 +60,44 @@ export const enrichRecommendation = ({ recommendation, products }) => {
     };
   };
 
+  const enrichOutfit = (outfit, index) => ({
+    id: outfit.id || `outfit-${index + 1}`,
+    title: outfit.title || `Outfit ${index + 1}`,
+    score: outfit.score || 0,
+    items: (outfit.items || [])
+      .filter((item) => productById.has(item.productId))
+      .map(enrichItem),
+    whyItMatches: outfit.whyItMatches || "",
+    fitWarnings: Array.isArray(outfit.fitWarnings) ? outfit.fitWarnings : [],
+    fashionTips: Array.isArray(outfit.fashionTips) ? outfit.fashionTips : [],
+  });
+
+  const outfits = normalizeOutfits(recommendation)
+    .slice(0, desiredOutfitCount)
+    .map(enrichOutfit)
+    .filter((outfit) => outfit.items.length);
+
+  const firstOutfit = outfits[0] || {
+    id: "outfit-1",
+    title: "",
+    score: 0,
+    items: [],
+    whyItMatches: "",
+    fitWarnings: [],
+    fashionTips: [],
+  };
+
   return {
     analysis: recommendation.analysis || {
       bodyShape: "",
       skinTone: "",
       styleMatch: "",
     },
+    outfits,
     recommended_outfit: {
-      score: recommendation.recommended_outfit?.score || 0,
-      items: (recommendation.recommended_outfit?.items || [])
-        .filter((item) => productById.has(item.productId))
-        .map(enrichItem),
-      whyItMatches: recommendation.recommended_outfit?.whyItMatches || "",
+      score: firstOutfit.score,
+      items: firstOutfit.items,
+      whyItMatches: firstOutfit.whyItMatches,
     },
     alternatives: (recommendation.alternatives || [])
       .filter((item) => productById.has(item.productId))

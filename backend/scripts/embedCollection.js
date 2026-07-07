@@ -39,6 +39,15 @@ const run = async () => {
     }
 
     if (document.embeddingTextHash === embeddingTextHash && document.embedding) {
+      if (collectionName === "products" && document.embeddingStale) {
+        const selector = document._id ? { _id: document._id } : { id: document.id };
+        await collection.updateOne(selector, {
+          $set: {
+            embeddingStale: false,
+            embeddingUpdatedAt: document.embeddingUpdatedAt || new Date(),
+          },
+        });
+      }
       skipped += 1;
       continue;
     }
@@ -52,6 +61,7 @@ const run = async () => {
           embedding,
           embeddingTextHash,
           embeddingUpdatedAt: new Date(),
+          ...(collectionName === "products" ? { embeddingStale: false } : {}),
         },
       });
       updated += 1;

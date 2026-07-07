@@ -2,10 +2,15 @@ import { MongoClient } from "mongodb";
 
 let client;
 let db;
+let connectionPromise;
 
 export const getMongoDb = async () => {
   if (db) {
     return db;
+  }
+
+  if (connectionPromise) {
+    return connectionPromise;
   }
 
   const uri = process.env.MONGODB_URI;
@@ -19,15 +24,25 @@ export const getMongoDb = async () => {
     throw error;
   }
 
-  client = new MongoClient(uri, {
-    serverSelectionTimeoutMS: Number(
-      process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 8000
-    ),
-    connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 8000),
-  });
-  await client.connect();
-  db = client.db(dbName);
-  return db;
+  connectionPromise = (async () => {
+    client = new MongoClient(uri, {
+      serverSelectionTimeoutMS: Number(
+        process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 8000
+      ),
+      connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 8000),
+    });
+    await client.connect();
+    db = client.db(dbName);
+    return db;
+  })();
+
+  try {
+    return await connectionPromise;
+  } catch (error) {
+    connectionPromise = undefined;
+    client = undefined;
+    throw error;
+  }
 };
 
 export const closeMongoConnection = async () => {
@@ -35,5 +50,6 @@ export const closeMongoConnection = async () => {
     await client.close();
     client = undefined;
     db = undefined;
+    connectionPromise = undefined;
   }
 };

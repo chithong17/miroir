@@ -1,25 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  archiveProduct,
   createProduct,
   createShop,
   deleteProduct,
   deleteShop,
   downloadProductImportTemplate,
+  hardDeleteProduct,
   importProductsExcel,
   listMyShops,
   listShopProducts,
+  restoreProduct,
   setShopToken,
   updateProduct,
   updateShop,
   uploadProductImage,
 } from "../api/shopApi.js";
 
-const navy = "#12356f";
-const mint = "#02c6ad";
 const fieldClass =
-  "w-full rounded-md border border-[#d8dde8] bg-white px-3 py-2 text-xs text-[#1d2433] outline-none focus:border-[#12356f]";
-const labelClass = "text-[10px] font-bold uppercase tracking-[0.16em] text-[#7b8496]";
-const buttonClass = "rounded-md px-3 py-2 text-xs font-bold transition";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#12356f] focus:ring-2 focus:ring-[#12356f]/10";
+const labelClass = "text-xs font-semibold uppercase tracking-[0.12em] text-slate-500";
+const buttonBase =
+  "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
+const iconButtonClass =
+  "inline-flex h-9 w-9 items-center justify-center rounded-lg border bg-white transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50";
 
 const emptyShop = {
   id: "",
@@ -53,8 +57,23 @@ const emptyProduct = {
   imagePublicId: "",
 };
 
-const toInputList = (value) => (Array.isArray(value) ? value.join(", ") : value || "");
+const emptyBulkEdit = {
+  category: "",
+  price: "",
+  gender: "",
+  availability: "",
+  status: "",
+  colors: "",
+  sizes: "",
+  material: "",
+  fitType: "",
+  styleTags: "",
+  occasionTags: "",
+  imageUrl: "",
+  description: "",
+};
 
+const toInputList = (value) => (Array.isArray(value) ? value.join(", ") : value || "");
 const splitList = (value) =>
   String(value || "")
     .split(",")
@@ -88,9 +107,13 @@ function ShopDashboardPage() {
   const [productForm, setProductForm] = useState(emptyProduct);
   const [filters, setFilters] = useState({ query: "", status: "all" });
   const [notice, setNotice] = useState("");
-  const [status, setStatus] = useState("idle");
+  const [noticeType, setNoticeType] = useState("info");
   const [uploadNotice, setUploadNotice] = useState("");
   const [importResult, setImportResult] = useState(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+  const [bulkEditForm, setBulkEditForm] = useState(emptyBulkEdit);
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
 
   const shop = shops[0] || null;
   const editingExistingProduct = Boolean(
@@ -98,46 +121,64 @@ function ShopDashboardPage() {
   );
 
   const stats = useMemo(() => {
-    const summary = {
+    const next = {
       total: products.length,
       published: 0,
       draft: 0,
       archived: 0,
+      trashed: 0,
       needsEmbed: 0,
     };
-
     products.forEach((product) => {
-      if (product.status === "published") summary.published += 1;
-      if (product.status === "draft") summary.draft += 1;
-      if (product.status === "archived") summary.archived += 1;
-      if (product.embeddingStale) summary.needsEmbed += 1;
+      if (product.status === "published") next.published += 1;
+      if (product.status === "draft") next.draft += 1;
+      if (product.status === "archived") next.archived += 1;
+      if (product.status === "trashed") next.trashed += 1;
+      if (product.embeddingStale) next.needsEmbed += 1;
     });
-
-    return summary;
+    return next;
   }, [products]);
 
   const filteredProducts = useMemo(() => {
     const query = filters.query.trim().toLowerCase();
-
     return products.filter((product) => {
-      const matchesStatus = filters.status === "all" || product.status === filters.status;
-      const matchesQuery =
+      const scopeMatch =
+        view === "trash"
+          ? product.status === "trashed"
+          : product.status !== "trashed";
+      const statusMatch =
+        view === "trash" || filters.status === "all" || product.status === filters.status;
+      const queryMatch =
         !query ||
         [product.name, product.category, product.material, product.fitType]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(query));
-
-      return matchesStatus && matchesQuery;
+      return scopeMatch && statusMatch && queryMatch;
     });
-  }, [filters, products]);
+  }, [filters, products, view]);
 
-  const featuredProducts = filteredProducts.slice(0, 4);
-  const catalogueProducts = filteredProducts.slice(4);
+  const selectedProductSet = useMemo(
+    () => new Set(selectedProductIds),
+    [selectedProductIds]
+  );
+
+  useEffect(() => {
+    const productIds = new Set(products.map((product) => product.id));
+    setSelectedProductIds((previous) =>
+      previous.filter((productId) => productIds.has(productId))
+    );
+  }, [products]);
+
+  useEffect(() => {
+    setSelectedProductIds([]);
+  }, [view]);
+
+  const showNotice = (message, type = "info") => {
+    setNotice(message);
+    setNoticeType(type);
+  };
 
   const loadDashboard = async () => {
-    setStatus("loading");
-    setNotice("");
-
     try {
       const [shopResponse, productResponse] = await Promise.all([
         listMyShops(),
@@ -153,11 +194,8 @@ function ShopDashboardPage() {
         setShopForm(shopToForm(nextShop));
         setProductForm((previous) => ({ ...previous, shopId: nextShop.id }));
       }
-
-      setStatus("idle");
     } catch (error) {
-      setStatus("error");
-      setNotice(error.response?.data?.message || "Could not load dashboard.");
+      showNotice(error.response?.data?.message || "Could not load dashboard.", "error");
     }
   };
 
@@ -173,6 +211,10 @@ function ShopDashboardPage() {
     setProductForm((previous) => ({ ...previous, [field]: event.target.value }));
   };
 
+  const updateBulkEditField = (field) => (event) => {
+    setBulkEditForm((previous) => ({ ...previous, [field]: event.target.value }));
+  };
+
   const updateFilter = (field) => (event) => {
     setFilters((previous) => ({ ...previous, [field]: event.target.value }));
   };
@@ -181,11 +223,34 @@ function ShopDashboardPage() {
     setProductForm({ ...emptyProduct, shopId: shop?.id || "" });
     setUploadNotice("");
     setView("products");
+    setIsProductModalOpen(true);
+  };
+
+  const editProduct = (product) => {
+    setProductForm(productToForm(product));
+    setUploadNotice("");
+    setView("products");
+    setIsProductModalOpen(true);
+  };
+
+  const closeProductModal = () => {
+    setIsProductModalOpen(false);
+    setUploadNotice("");
+  };
+
+  const openBulkEditModal = () => {
+    if (!selectedProductIds.length) return;
+    setBulkEditForm(emptyBulkEdit);
+    setIsBulkEditModalOpen(true);
+  };
+
+  const closeBulkEditModal = () => {
+    setIsBulkEditModalOpen(false);
+    setBulkEditForm(emptyBulkEdit);
   };
 
   const saveShop = async (event) => {
     event.preventDefault();
-    setNotice("");
 
     const payload = {
       name: shopForm.name,
@@ -203,14 +268,14 @@ function ShopDashboardPage() {
     try {
       if (shopForm.id) {
         await updateShop(shopForm.id, payload);
-        setNotice("Shop saved.");
+        showNotice("Shop profile saved.");
       } else {
         await createShop(payload);
-        setNotice("Shop created.");
+        showNotice("Shop profile created.");
       }
       await loadDashboard();
     } catch (error) {
-      setNotice(error.response?.data?.message || "Could not save shop.");
+      showNotice(error.response?.data?.message || "Could not save shop.", "error");
     }
   };
 
@@ -219,20 +284,19 @@ function ShopDashboardPage() {
 
     try {
       await deleteShop(shop.id);
-      setNotice("Shop deactivated.");
+      showNotice("Shop deactivated.");
       await loadDashboard();
     } catch (error) {
-      setNotice(error.response?.data?.message || "Could not deactivate shop.");
+      showNotice(error.response?.data?.message || "Could not deactivate shop.", "error");
     }
   };
 
   const saveProduct = async (event) => {
     event.preventDefault();
-    setNotice("");
 
     if (!shop) {
       setView("shop");
-      setNotice("Create your shop before adding products.");
+      showNotice("Create your shop before adding products.", "error");
       return;
     }
 
@@ -259,26 +323,161 @@ function ShopDashboardPage() {
     try {
       if (editingExistingProduct) {
         await updateProduct(productForm.id, payload);
-        setNotice("Product updated.");
+        showNotice("Product updated.");
       } else {
         await createProduct(payload);
-        setNotice("Product created.");
+        showNotice("Product created.");
       }
-
-      resetProductForm();
+      setProductForm({ ...emptyProduct, shopId: shop?.id || "" });
+      setIsProductModalOpen(false);
+      setUploadNotice("");
       await loadDashboard();
     } catch (error) {
-      setNotice(error.response?.data?.message || "Could not save product.");
+      showNotice(error.response?.data?.message || "Could not save product.", "error");
     }
   };
 
-  const archiveProduct = async (productId) => {
+  const archiveShopProduct = async (productId) => {
     try {
-      await deleteProduct(productId);
-      setNotice("Product archived.");
+      await archiveProduct(productId);
+      setSelectedProductIds((previous) => previous.filter((id) => id !== productId));
+      showNotice("Product archived.");
       await loadDashboard();
     } catch (error) {
-      setNotice(error.response?.data?.message || "Could not archive product.");
+      showNotice(error.response?.data?.message || "Could not archive product.", "error");
+    }
+  };
+
+  const removeProduct = async (productId) => {
+    try {
+      await deleteProduct(productId);
+      setSelectedProductIds((previous) => previous.filter((id) => id !== productId));
+      showNotice("Product moved to trash.");
+      await loadDashboard();
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Could not move product to trash.", "error");
+    }
+  };
+
+  const recoverProduct = async (productId) => {
+    try {
+      await restoreProduct(productId);
+      setSelectedProductIds((previous) => previous.filter((id) => id !== productId));
+      showNotice("Product recovered to draft.");
+      await loadDashboard();
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Could not recover product.", "error");
+    }
+  };
+
+  const permanentlyDeleteProduct = async (productId) => {
+    const confirmed = window.confirm("Permanently delete this product from the database?");
+    if (!confirmed) return;
+
+    try {
+      await hardDeleteProduct(productId);
+      setSelectedProductIds((previous) => previous.filter((id) => id !== productId));
+      showNotice("Product permanently deleted.");
+      await loadDashboard();
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Could not permanently delete product.", "error");
+    }
+  };
+
+  const toggleProductSelection = (productId) => {
+    setSelectedProductIds((previous) =>
+      previous.includes(productId)
+        ? previous.filter((id) => id !== productId)
+        : [...previous, productId]
+    );
+  };
+
+  const toggleVisibleProductSelection = () => {
+    const visibleIds = filteredProducts.map((product) => product.id);
+    const allVisibleSelected =
+      visibleIds.length > 0 && visibleIds.every((productId) => selectedProductSet.has(productId));
+
+    setSelectedProductIds((previous) => {
+      if (allVisibleSelected) {
+        const visibleIdSet = new Set(visibleIds);
+        return previous.filter((productId) => !visibleIdSet.has(productId));
+      }
+
+      return [...new Set([...previous, ...visibleIds])];
+    });
+  };
+
+  const deleteSelectedProducts = async () => {
+    if (!selectedProductIds.length) return;
+
+    try {
+      await Promise.all(selectedProductIds.map((productId) => deleteProduct(productId)));
+      showNotice(`${selectedProductIds.length} products moved to trash.`);
+      setSelectedProductIds([]);
+      await loadDashboard();
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Could not move selected products to trash.", "error");
+      await loadDashboard();
+    }
+  };
+
+  const saveBulkEditProducts = async (event) => {
+    event.preventDefault();
+
+    const payload = {};
+    const textFields = ["category", "material", "fitType", "imageUrl", "description"];
+    const listFields = ["colors", "sizes", "styleTags", "occasionTags"];
+
+    textFields.forEach((field) => {
+      const value = bulkEditForm[field].trim();
+      if (value) payload[field] = value;
+    });
+
+    listFields.forEach((field) => {
+      const value = bulkEditForm[field].trim();
+      if (value) payload[field] = splitList(value);
+    });
+
+    if (bulkEditForm.price.trim()) {
+      payload.price = Number(bulkEditForm.price);
+    }
+
+    ["gender", "availability", "status"].forEach((field) => {
+      if (bulkEditForm[field]) payload[field] = bulkEditForm[field];
+    });
+
+    if (!Object.keys(payload).length) {
+      showNotice("Choose at least one field to bulk edit.", "error");
+      return;
+    }
+
+    try {
+      await Promise.all(selectedProductIds.map((productId) => updateProduct(productId, payload)));
+      showNotice(`${selectedProductIds.length} products updated.`);
+      setSelectedProductIds([]);
+      closeBulkEditModal();
+      await loadDashboard();
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Could not bulk edit products.", "error");
+    }
+  };
+
+  const permanentlyDeleteSelectedProducts = async () => {
+    if (!selectedProductIds.length) return;
+
+    const confirmed = window.confirm(
+      `Permanently delete ${selectedProductIds.length} products from the database?`
+    );
+    if (!confirmed) return;
+
+    try {
+      await Promise.all(selectedProductIds.map((productId) => hardDeleteProduct(productId)));
+      showNotice(`${selectedProductIds.length} products permanently deleted.`);
+      setSelectedProductIds([]);
+      await loadDashboard();
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Could not permanently delete selected products.", "error");
+      await loadDashboard();
     }
   };
 
@@ -317,18 +516,17 @@ function ShopDashboardPage() {
     if (!file) return;
 
     setImportResult(null);
-    setNotice("");
 
     try {
       const response = await importProductsExcel(file);
       setImportResult(response.importJob);
-      setNotice("Import completed.");
+      showNotice("Import completed.");
       await loadDashboard();
     } catch (error) {
       if (error.response?.data?.importJob) {
         setImportResult(error.response.data.importJob);
       }
-      setNotice(error.response?.data?.message || "Import failed.");
+      showNotice(error.response?.data?.message || "Import failed.", "error");
     }
   };
 
@@ -338,345 +536,741 @@ function ShopDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#efefef] px-3 py-5 text-[#182238] md:px-6 lg:px-10">
-      <div className="mx-auto grid min-h-[720px] max-w-[1500px] overflow-hidden rounded-xl bg-white shadow-[0_26px_80px_rgba(15,23,42,0.18)] lg:grid-cols-[70px_minmax(0,1fr)_360px]">
-        <IconRail activeView={view} logout={logout} setView={setView} />
-
-        <main className="min-w-0 border-r border-[#e5e8ef] bg-[#fbfcfe]">
-          <TopNavigation
-            filters={filters}
-            shop={shop}
-            updateFilter={updateFilter}
-            view={view}
-            setView={setView}
-          />
-
-          {notice ? (
-            <div
-              className={`mx-6 mt-5 rounded-md border px-4 py-3 text-sm ${
-                status === "error"
-                  ? "border-red-200 bg-red-50 text-red-700"
-                  : "border-[#d8dde8] bg-white text-[#566174]"
-              }`}
-            >
-              {notice}
-            </div>
-          ) : null}
-
-          {view === "products" ? (
-            <ProductWorkspace
-              catalogueProducts={catalogueProducts}
-              featuredProducts={featuredProducts}
-              filteredProducts={filteredProducts}
-              onArchiveProduct={archiveProduct}
-              onEditProduct={(product) => setProductForm(productToForm(product))}
-              onNewProduct={resetProductForm}
-              shop={shop}
-            />
-          ) : null}
-
-          {view === "shop" ? (
-            <ShopWorkspace
-              onDeactivateShop={deactivateShop}
-              onSaveShop={saveShop}
-              shop={shop}
-              shopForm={shopForm}
-              updateShopField={updateShopField}
-            />
-          ) : null}
-
-          {view === "import" ? (
-            <ImportWorkspace
-              importResult={importResult}
-              onDownloadTemplate={downloadTemplate}
-              onImportExcel={importExcel}
-              shop={shop}
-            />
-          ) : null}
-        </main>
-
-        <RightPanel
-          editingExistingProduct={editingExistingProduct}
-          importResult={importResult}
-          productForm={productForm}
+    <div className="min-h-screen bg-slate-100 text-slate-900">
+      <div className="min-h-screen lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
+        <DashboardSidebar
+          logout={logout}
+          setView={setView}
           shop={shop}
           stats={stats}
-          uploadNotice={uploadNotice}
           view={view}
-          onSaveProduct={saveProduct}
-          onUploadImage={uploadImage}
-          setView={setView}
-          updateProductField={updateProductField}
         />
+
+        <main className="min-w-0 p-4 md:p-6">
+          <div className="mx-auto max-w-[1440px]">
+            <DashboardHeader
+              filters={filters}
+              resetProductForm={resetProductForm}
+              shop={shop}
+              updateFilter={updateFilter}
+              view={view}
+            />
+
+            {notice ? <Notice message={notice} type={noticeType} /> : null}
+
+            {view === "products" || view === "trash" ? (
+              <ProductsView
+                archiveProduct={archiveShopProduct}
+                deleteSelectedProducts={deleteSelectedProducts}
+                filteredProducts={filteredProducts}
+                editProduct={editProduct}
+                openBulkEditModal={openBulkEditModal}
+                permanentlyDeleteSelectedProducts={permanentlyDeleteSelectedProducts}
+                permanentlyDeleteProduct={permanentlyDeleteProduct}
+                recoverProduct={recoverProduct}
+                removeProduct={removeProduct}
+                resetProductForm={resetProductForm}
+                selectedProductSet={selectedProductSet}
+                shop={shop}
+                toggleProductSelection={toggleProductSelection}
+                toggleVisibleProductSelection={toggleVisibleProductSelection}
+                view={view}
+              />
+            ) : null}
+
+            {view === "shop" ? (
+              <ShopView
+                deactivateShop={deactivateShop}
+                saveShop={saveShop}
+                shop={shop}
+                shopForm={shopForm}
+                updateShopField={updateShopField}
+              />
+            ) : null}
+
+            {view === "import" ? (
+              <ImportView
+                downloadTemplate={downloadTemplate}
+                importExcel={importExcel}
+                importResult={importResult}
+                shop={shop}
+              />
+            ) : null}
+          </div>
+        </main>
       </div>
+
+      {isProductModalOpen ? (
+        <ProductModal
+          editingExistingProduct={editingExistingProduct}
+          productForm={productForm}
+          saveProduct={saveProduct}
+          shop={shop}
+          uploadImage={uploadImage}
+          uploadNotice={uploadNotice}
+          updateProductField={updateProductField}
+          onClose={closeProductModal}
+        />
+      ) : null}
+
+      {isBulkEditModalOpen ? (
+        <BulkEditModal
+          bulkEditForm={bulkEditForm}
+          onClose={closeBulkEditModal}
+          saveBulkEditProducts={saveBulkEditProducts}
+          selectedCount={selectedProductIds.length}
+          updateBulkEditField={updateBulkEditField}
+        />
+      ) : null}
     </div>
   );
 }
 
-function IconRail({ activeView, logout, setView }) {
-  const items = [
-    ["products", "H", "Products"],
-    ["shop", "S", "Shop"],
-    ["import", "I", "Import"],
-  ];
-
-  return (
-    <aside className="flex flex-row items-center justify-between bg-[#12356f] p-3 text-white lg:flex-col">
-      <a
-        href="/"
-        className="grid h-11 w-11 place-items-center rounded-md bg-white/10 font-display text-lg font-bold"
-      >
-        M
-      </a>
-
-      <nav className="flex gap-2 lg:grid lg:gap-4">
-        {items.map(([key, icon, label]) => (
-          <button
-            key={key}
-            type="button"
-            title={label}
-            onClick={() => setView(key)}
-            className={`grid h-10 w-10 place-items-center rounded-md text-sm font-bold transition ${
-              activeView === key ? "bg-white text-[#12356f]" : "bg-white/0 text-white/80 hover:bg-white/10"
-            }`}
-          >
-            {icon}
-          </button>
-        ))}
-      </nav>
-
-      <button
-        type="button"
-        title="Logout"
-        onClick={logout}
-        className="grid h-10 w-10 place-items-center rounded-md bg-white/0 text-sm font-bold text-white/80 hover:bg-white/10"
-      >
-        X
-      </button>
-    </aside>
-  );
-}
-
-function TopNavigation({ filters, shop, setView, updateFilter, view }) {
-  const tabs = [
+function DashboardSidebar({ logout, setView, shop, stats, view }) {
+  const navItems = [
     ["products", "Products"],
+    ["trash", "Trash"],
     ["shop", "Shop Profile"],
     ["import", "Excel Import"],
   ];
 
   return (
-    <header className="border-b border-[#e5e8ef] bg-white px-6 py-5">
+    <aside className="border-b border-slate-200 bg-white lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+      <div className="flex h-full flex-col">
+        <div className="border-b border-slate-200 p-5">
+          <a href="/" className="font-display text-2xl font-extrabold text-[#12356f]">
+            MIROIR
+          </a>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Shop Owner
+          </p>
+        </div>
+
+        <div className="p-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className={labelClass}>Current shop</p>
+            <p className="mt-2 truncate text-base font-bold text-slate-900">
+              {shop?.name || "No shop yet"}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              {shop ? `${shop.slug} / ${shop.status}` : "Create profile first"}
+            </p>
+          </div>
+        </div>
+
+        <nav className="grid gap-1 px-3">
+          {navItems.map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setView(key)}
+              className={`rounded-lg px-4 py-3 text-left text-sm font-semibold transition ${
+                view === key
+                  ? "bg-[#12356f] text-white"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="grid grid-cols-2 gap-2 p-4">
+          <Metric label="Total" value={stats.total} />
+          <Metric label="Live" value={stats.published} />
+          <Metric label="Draft" value={stats.draft} />
+          <Metric label="Trash" value={stats.trashed} />
+        </div>
+
+        <div className="mt-auto grid gap-2 border-t border-slate-200 p-4">
+          <a
+            href="/stylist"
+            className="rounded-lg px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+          >
+            AI Stylist
+          </a>
+          <button
+            type="button"
+            onClick={logout}
+            className="rounded-lg bg-slate-900 px-4 py-3 text-left text-sm font-semibold text-white"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function DashboardHeader({ filters, resetProductForm, shop, updateFilter, view }) {
+  const title =
+    view === "shop"
+      ? "Shop Profile"
+      : view === "import"
+        ? "Excel Import"
+        : view === "trash"
+          ? "Trash"
+          : "Products";
+
+  return (
+    <header className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className={labelClass}>Miroir Shop</p>
-          <h1 className="mt-1 text-2xl font-bold text-[#182238]">
-            {shop?.name || "Create your shop"}
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {shop ? "Manage one shop catalogue for AI Stylist." : "Create your shop to begin."}
+          </p>
         </div>
+
         {view === "products" ? (
-          <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-[220px_150px]">
-            <input
-              className={fieldClass}
-              placeholder="Search catalogue"
-              value={filters.query}
-              onChange={updateFilter("query")}
-            />
+          <button
+            type="button"
+            onClick={resetProductForm}
+            disabled={!shop}
+            className={`${buttonBase} bg-[#12356f] text-white`}
+          >
+            New Product
+          </button>
+        ) : null}
+      </div>
+
+      {view === "products" || view === "trash" ? (
+        <div className={`mt-4 grid gap-3 ${view === "trash" ? "" : "md:grid-cols-[minmax(0,1fr)_180px]"}`}>
+          <input
+            className={fieldClass}
+            placeholder="Search by product, category, material"
+            value={filters.query}
+            onChange={updateFilter("query")}
+          />
+          {view !== "trash" ? (
             <select className={fieldClass} value={filters.status} onChange={updateFilter("status")}>
               <option value="all">All status</option>
               <option value="published">Published</option>
               <option value="draft">Draft</option>
               <option value="archived">Archived</option>
             </select>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="mt-5 flex gap-7 overflow-x-auto">
-        {tabs.map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setView(key)}
-            className={`border-b-2 pb-2 text-xs font-bold transition ${
-              view === key
-                ? "border-[#12356f] text-[#12356f]"
-                : "border-transparent text-[#8b94a5] hover:text-[#12356f]"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }
 
-function ProductWorkspace({
-  catalogueProducts,
-  featuredProducts,
+function ProductsView({
+  archiveProduct,
+  deleteSelectedProducts,
+  editProduct,
   filteredProducts,
-  onArchiveProduct,
-  onEditProduct,
-  onNewProduct,
+  openBulkEditModal,
+  permanentlyDeleteSelectedProducts,
+  permanentlyDeleteProduct,
+  recoverProduct,
+  removeProduct,
+  selectedProductSet,
   shop,
+  toggleProductSelection,
+  toggleVisibleProductSelection,
+  view,
 }) {
+  const selectedCount = selectedProductSet.size;
+  const inTrash = view === "trash";
+  const allVisibleSelected =
+    filteredProducts.length > 0 &&
+    filteredProducts.every((product) => selectedProductSet.has(product.id));
+
   return (
-    <div className="space-y-8 p-6">
-      <section>
-        <div className="mb-4 flex items-center justify-between">
+    <div>
+      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
           <div>
-            <h2 className="text-sm font-bold text-[#182238]">Quick Product Cards</h2>
-            <p className="mt-1 text-xs text-[#7b8496]">{filteredProducts.length} products in current view</p>
+            <h2 className="text-base font-bold text-slate-900">
+              {inTrash ? "Trash" : "Product Catalogue"}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {selectedCount
+                ? `${selectedCount} selected`
+                : `${filteredProducts.length} products shown`}
+            </p>
           </div>
-          <button
-            type="button"
-            onClick={onNewProduct}
-            disabled={!shop}
-            className={`${buttonClass} bg-[#12356f] text-white disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            Add Product
-          </button>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {featuredProducts.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              accent={index}
-              product={product}
-              onArchiveProduct={onArchiveProduct}
-              onEditProduct={onEditProduct}
-            />
-          ))}
-          {!featuredProducts.length ? (
-            <EmptyCard title="No products yet" text="Create or import products to build your catalogue." />
+          <div className="flex flex-wrap items-center gap-2">
+          {selectedCount && !inTrash ? (
+            <button
+              type="button"
+              onClick={openBulkEditModal}
+              className={`${buttonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`}
+              title="Bulk edit selected products"
+            >
+              <Icon name="edit" />
+              <span className="ml-2">Bulk edit</span>
+            </button>
           ) : null}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-[#182238]">Catalogue</h2>
-          <p className="text-xs font-semibold text-[#8b94a5]">Stock view</p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {catalogueProducts.map((product, index) => (
-            <CatalogueCard
-              key={product.id}
-              accent={index}
-              product={product}
-              onArchiveProduct={onArchiveProduct}
-              onEditProduct={onEditProduct}
-            />
-          ))}
-          {!catalogueProducts.length && featuredProducts.length ? (
-            <EmptyCard title="Catalogue is compact" text="More products will appear here after the first row." />
+          {selectedCount ? (
+            <button
+              type="button"
+              onClick={inTrash ? permanentlyDeleteSelectedProducts : deleteSelectedProducts}
+              className={`${buttonBase} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100`}
+              title={inTrash ? "Delete selected permanently" : "Move selected to trash"}
+            >
+              <Icon name={inTrash ? "deleteForever" : "trash"} />
+              <span className="ml-2">
+                {inTrash ? "Delete selected" : "Move to trash"}
+              </span>
+            </button>
           ) : null}
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[920px] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                <th className="w-12 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allVisibleSelected}
+                    disabled={!filteredProducts.length}
+                    onChange={toggleVisibleProductSelection}
+                    className="h-4 w-4 rounded border-slate-300 text-[#12356f] focus:ring-[#12356f]"
+                    aria-label="Select all visible products"
+                  />
+                </th>
+                <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Price</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Stock</th>
+                <th className="px-4 py-3">AI</th>
+                <th className="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.map((product) => {
+                const selected = selectedProductSet.has(product.id);
+
+                return (
+                <tr
+                  key={product.id}
+                  className={`group border-b border-slate-100 last:border-b-0 ${
+                    selected ? "bg-[#12356f]/5" : "hover:bg-slate-50"
+                  }`}
+                >
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => toggleProductSelection(product.id)}
+                      className={`h-4 w-4 rounded border-slate-300 text-[#12356f] focus:ring-[#12356f] ${
+                        selected ? "opacity-100" : "opacity-0 transition group-hover:opacity-100"
+                      }`}
+                      aria-label={`Select ${product.name}`}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-14 w-11 flex-none overflow-hidden rounded-lg bg-slate-100">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-slate-900">{product.name}</p>
+                        <p className="truncate text-xs text-slate-500">{product.id}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">{product.category}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatMoney(product.price)}</td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={product.status} />
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">{product.availability}</td>
+                  <td className="px-4 py-3 text-slate-600">{product.embeddingStale ? "needs embed" : "ready"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      {!inTrash ? (
+                        <button
+                          type="button"
+                          onClick={() => editProduct(product)}
+                          className={`${iconButtonClass} border-slate-200 text-slate-700`}
+                          title="Edit"
+                          aria-label={`Edit ${product.name}`}
+                        >
+                          <Icon name="edit" />
+                        </button>
+                      ) : null}
+                      {!inTrash ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => archiveProduct(product.id)}
+                            className={`${iconButtonClass} border-slate-200 text-slate-700`}
+                            title="Archive"
+                            aria-label={`Archive ${product.name}`}
+                          >
+                            <Icon name="archive" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeProduct(product.id)}
+                            className={`${iconButtonClass} border-red-200 text-red-700 hover:bg-red-50`}
+                            title="Move to trash"
+                            aria-label={`Move ${product.name} to trash`}
+                          >
+                            <Icon name="trash" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => recoverProduct(product.id)}
+                            className={`${iconButtonClass} border-green-200 text-green-700 hover:bg-green-50`}
+                            title="Recover"
+                            aria-label={`Recover ${product.name}`}
+                          >
+                            <Icon name="recover" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => permanentlyDeleteProduct(product.id)}
+                            className={`${iconButtonClass} border-red-200 text-red-700 hover:bg-red-50`}
+                            title="Delete permanently"
+                            aria-label={`Permanently delete ${product.name}`}
+                          >
+                            <Icon name="deleteForever" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+                );
+              })}
+              {!filteredProducts.length ? (
+                <tr>
+                  <td className="px-4 py-12 text-center text-sm text-slate-500" colSpan="8">
+                    No products found.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>
   );
 }
 
-function ProductCard({ accent, product, onArchiveProduct, onEditProduct }) {
-  const colors = ["#12356f", "#21a667", "#02c6ad", "#1d4ed8"];
-
+function ProductModal({
+  editingExistingProduct,
+  onClose,
+  productForm,
+  saveProduct,
+  shop,
+  uploadImage,
+  uploadNotice,
+  updateProductField,
+}) {
   return (
-    <article className="relative min-h-[190px] rounded-md border border-[#d8dde8] bg-white p-4 shadow-sm">
-      <div
-        className="absolute right-0 top-0 h-9 w-9 rounded-bl-md"
-        style={{ backgroundColor: colors[accent % colors.length] }}
-      />
-      <div className="h-16 w-16 overflow-hidden rounded-full border border-[#e5e8ef] bg-[#f6f7f8]">
-        {product.imageUrl ? (
-          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
-        ) : null}
-      </div>
-      <h3 className="mt-4 text-sm font-bold text-[#182238]">{product.name}</h3>
-      <p className="mt-1 text-xs text-[#7b8496]">{product.category}</p>
-      <p className="mt-2 text-xs font-bold text-[#12356f]">{formatMoney(product.price)}</p>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => onEditProduct(product)}
-          className="rounded-sm bg-[#12356f] px-3 py-2 text-xs font-bold text-white"
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          onClick={() => onArchiveProduct(product.id)}
-          className="rounded-sm border border-[#d8dde8] px-3 py-2 text-xs font-bold text-[#182238]"
-        >
-          Archive
-        </button>
-      </div>
-    </article>
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <form
+        onSubmit={saveProduct}
+        className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 p-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              {editingExistingProduct ? "Edit Product" : "Create Product"}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">{shop?.name || "Shop profile required"}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="max-h-[calc(92vh-145px)] overflow-y-auto p-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Product ID">
+              <input className={fieldClass} value={productForm.id} onChange={updateProductField("id")} />
+            </Field>
+            <Field label="Name">
+              <input className={fieldClass} value={productForm.name} onChange={updateProductField("name")} />
+            </Field>
+          <Field label="Category">
+            <input className={fieldClass} value={productForm.category} onChange={updateProductField("category")} />
+          </Field>
+          <Field label="Price">
+            <input className={fieldClass} value={productForm.price} onChange={updateProductField("price")} />
+          </Field>
+          <Field label="Gender">
+            <select className={fieldClass} value={productForm.gender} onChange={updateProductField("gender")}>
+              <option value="female">female</option>
+              <option value="male">male</option>
+              <option value="unisex">unisex</option>
+            </select>
+          </Field>
+          <Field label="Stock">
+            <select className={fieldClass} value={productForm.availability} onChange={updateProductField("availability")}>
+              <option value="in_stock">in_stock</option>
+              <option value="out_of_stock">out_of_stock</option>
+            </select>
+          </Field>
+          <Field label="Status">
+            <select className={fieldClass} value={productForm.status} onChange={updateProductField("status")}>
+              <option value="draft">draft</option>
+              <option value="published">published</option>
+              <option value="archived">archived</option>
+            </select>
+          </Field>
+          <Field label="Colors">
+            <input className={fieldClass} value={productForm.colors} onChange={updateProductField("colors")} />
+          </Field>
+          <Field label="Sizes">
+            <input className={fieldClass} value={productForm.sizes} onChange={updateProductField("sizes")} />
+          </Field>
+          <Field label="Material">
+            <input className={fieldClass} value={productForm.material} onChange={updateProductField("material")} />
+          </Field>
+          <Field label="Fit Type">
+            <input className={fieldClass} value={productForm.fitType} onChange={updateProductField("fitType")} />
+          </Field>
+            <Field label="Style Tags">
+              <input className={fieldClass} value={productForm.styleTags} onChange={updateProductField("styleTags")} />
+            </Field>
+            <Field label="Occasion Tags">
+              <input className={fieldClass} value={productForm.occasionTags} onChange={updateProductField("occasionTags")} />
+            </Field>
+            <Field label="Image URL" wide>
+              <input className={fieldClass} value={productForm.imageUrl} onChange={updateProductField("imageUrl")} />
+            </Field>
+            <Field label="Upload Image" wide>
+              <input className={fieldClass} type="file" accept="image/*" onChange={uploadImage} />
+            </Field>
+            <Field label="Description" wide>
+              <textarea
+                className={`${fieldClass} min-h-28 resize-none`}
+                value={productForm.description}
+                onChange={updateProductField("description")}
+              />
+            </Field>
+          </div>
+          {uploadNotice ? <p className="mt-3 text-sm text-slate-500">{uploadNotice}</p> : null}
+        </div>
+
+        <div className="flex justify-end gap-3 border-t border-slate-200 p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
+          >
+            Cancel
+          </button>
+          <button type="submit" disabled={!shop} className={`${buttonBase} bg-[#12356f] text-white`}>
+            Save Product
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
-function CatalogueCard({ accent, product, onArchiveProduct, onEditProduct }) {
-  const accents = ["#12356f", "#02c6ad", "#21a667", "#1d4ed8"];
-
+function BulkEditModal({
+  bulkEditForm,
+  onClose,
+  saveBulkEditProducts,
+  selectedCount,
+  updateBulkEditField,
+}) {
   return (
-    <article className="rounded-md border border-[#d8dde8] bg-white p-4 shadow-sm">
-      <div className="relative mx-auto h-28 w-20 overflow-hidden rounded-md bg-[#f6f7f8]">
-        {product.imageUrl ? (
-          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
-        ) : null}
-        <span
-          className="absolute right-1 top-1 h-5 w-5 rounded-full"
-          style={{ backgroundColor: accents[accent % accents.length] }}
-        />
-      </div>
-      <h3 className="mt-3 truncate text-center text-xs font-bold text-[#182238]">{product.name}</h3>
-      <p className="mt-1 text-center text-[11px] text-[#7b8496]">{product.status}</p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => onEditProduct(product)}
-          className="rounded-sm bg-[#12356f] px-2 py-2 text-xs font-bold text-white"
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          onClick={() => onArchiveProduct(product.id)}
-          className="rounded-sm border border-[#d8dde8] px-2 py-2 text-xs font-bold text-[#182238]"
-        >
-          Off
-        </button>
-      </div>
-    </article>
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <form
+        onSubmit={saveBulkEditProducts}
+        className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 p-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Bulk Edit</h2>
+            <p className="mt-1 text-sm text-slate-500">{selectedCount} selected products</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="max-h-[calc(92vh-145px)] overflow-y-auto p-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Category">
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.category}
+                onChange={updateBulkEditField("category")}
+              />
+            </Field>
+            <Field label="Price">
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.price}
+                onChange={updateBulkEditField("price")}
+              />
+            </Field>
+            <Field label="Gender">
+              <select
+                className={fieldClass}
+                value={bulkEditForm.gender}
+                onChange={updateBulkEditField("gender")}
+              >
+                <option value="">unchanged</option>
+                <option value="female">female</option>
+                <option value="male">male</option>
+                <option value="unisex">unisex</option>
+              </select>
+            </Field>
+            <Field label="Stock">
+              <select
+                className={fieldClass}
+                value={bulkEditForm.availability}
+                onChange={updateBulkEditField("availability")}
+              >
+                <option value="">unchanged</option>
+                <option value="in_stock">in_stock</option>
+                <option value="out_of_stock">out_of_stock</option>
+              </select>
+            </Field>
+            <Field label="Status">
+              <select
+                className={fieldClass}
+                value={bulkEditForm.status}
+                onChange={updateBulkEditField("status")}
+              >
+                <option value="">unchanged</option>
+                <option value="draft">draft</option>
+                <option value="published">published</option>
+                <option value="archived">archived</option>
+              </select>
+            </Field>
+            <Field label="Colors">
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.colors}
+                onChange={updateBulkEditField("colors")}
+              />
+            </Field>
+            <Field label="Sizes">
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.sizes}
+                onChange={updateBulkEditField("sizes")}
+              />
+            </Field>
+            <Field label="Material">
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.material}
+                onChange={updateBulkEditField("material")}
+              />
+            </Field>
+            <Field label="Fit Type">
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.fitType}
+                onChange={updateBulkEditField("fitType")}
+              />
+            </Field>
+            <Field label="Style Tags">
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.styleTags}
+                onChange={updateBulkEditField("styleTags")}
+              />
+            </Field>
+            <Field label="Occasion Tags">
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.occasionTags}
+                onChange={updateBulkEditField("occasionTags")}
+              />
+            </Field>
+            <Field label="Image URL" wide>
+              <input
+                className={fieldClass}
+                placeholder="unchanged"
+                value={bulkEditForm.imageUrl}
+                onChange={updateBulkEditField("imageUrl")}
+              />
+            </Field>
+            <Field label="Description" wide>
+              <textarea
+                className={`${fieldClass} min-h-28 resize-none`}
+                placeholder="unchanged"
+                value={bulkEditForm.description}
+                onChange={updateBulkEditField("description")}
+              />
+            </Field>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 border-t border-slate-200 p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
+          >
+            Cancel
+          </button>
+          <button type="submit" className={`${buttonBase} bg-[#12356f] text-white`}>
+            Apply Changes
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
-function ShopWorkspace({ onDeactivateShop, onSaveShop, shop, shopForm, updateShopField }) {
+function ShopView({ deactivateShop, saveShop, shop, shopForm, updateShopField }) {
   return (
-    <form onSubmit={onSaveShop} className="m-6 rounded-md border border-[#d8dde8] bg-white p-5 shadow-sm">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <form onSubmit={saveShop} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
         <div>
-          <h2 className="text-lg font-bold text-[#182238]">{shop ? "Shop Profile" : "Create Shop"}</h2>
-          <p className="mt-1 text-xs text-[#7b8496]">One shop owner account manages one shop.</p>
+          <h2 className="text-base font-bold text-slate-900">{shop ? "Edit Shop" : "Create Shop"}</h2>
+          <p className="mt-1 text-sm text-slate-500">One shop owner account manages one shop.</p>
         </div>
         <div className="flex gap-2">
-          <button type="submit" className={`${buttonClass} bg-[#12356f] text-white`}>
-            Save
+          <button type="submit" className={`${buttonBase} bg-[#12356f] text-white`}>
+            Save Shop
           </button>
           {shop ? (
             <button
               type="button"
-              onClick={onDeactivateShop}
-              className={`${buttonClass} border border-[#d8dde8] text-[#182238]`}
+              onClick={deactivateShop}
+              className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
             >
               Deactivate
             </button>
           ) : null}
         </div>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 p-4 md:grid-cols-2">
         <Field label="Name">
           <input className={fieldClass} value={shopForm.name} onChange={updateShopField("name")} />
         </Field>
@@ -713,40 +1307,38 @@ function ShopWorkspace({ onDeactivateShop, onSaveShop, shop, shopForm, updateSho
   );
 }
 
-function ImportWorkspace({ importResult, onDownloadTemplate, onImportExcel, shop }) {
+function ImportView({ downloadTemplate, importExcel, importResult, shop }) {
   return (
-    <div className="m-6 grid gap-5 lg:grid-cols-[320px_1fr]">
-      <section className="rounded-md border border-[#d8dde8] bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-[#182238]">Excel Import</h2>
-        <p className="mt-1 text-xs text-[#7b8496]">
-          {shop ? "Import products into this shop." : "Create a shop before importing."}
+    <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 className="text-base font-bold text-slate-900">Import Products</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          {shop ? "Download the template, fill it, then upload the .xlsx file." : "Create a shop before importing."}
         </p>
         <button
           type="button"
-          onClick={onDownloadTemplate}
-          className={`${buttonClass} mt-5 w-full border border-[#d8dde8] text-[#182238]`}
+          onClick={downloadTemplate}
+          className={`${buttonBase} mt-5 w-full border border-slate-200 bg-white text-slate-700`}
         >
           Download Template
         </button>
-        <label className="mt-5 grid gap-2">
-          <span className={labelClass}>Upload .xlsx</span>
-          <input className={fieldClass} type="file" accept=".xlsx" disabled={!shop} onChange={onImportExcel} />
-        </label>
+        <Field label="Upload .xlsx">
+          <input className={fieldClass} type="file" accept=".xlsx" disabled={!shop} onChange={importExcel} />
+        </Field>
       </section>
-
-      <section className="rounded-md border border-[#d8dde8] bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-[#182238]">Import Result</h2>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 className="text-base font-bold text-slate-900">Import Result</h2>
         {importResult ? (
-          <div className="mt-5 grid gap-4">
+          <div className="mt-4 grid gap-4">
             <div className="grid gap-3 md:grid-cols-4">
-              <PanelMetric label="Status" value={importResult.status} />
-              <PanelMetric label="Rows" value={importResult.totalRows} />
-              <PanelMetric label="Success" value={importResult.successCount} />
-              <PanelMetric label="Failed" value={importResult.failedCount} />
+              <Metric label="Status" value={importResult.status} />
+              <Metric label="Rows" value={importResult.totalRows} />
+              <Metric label="Success" value={importResult.successCount} />
+              <Metric label="Failed" value={importResult.failedCount} />
             </div>
             {importResult.errors?.length ? (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-                <p className="font-bold">Errors</p>
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                <p className="font-semibold">Errors</p>
                 <ul className="mt-2 space-y-1">
                   {importResult.errors.map((error, index) => (
                     <li key={`${error.row}-${error.field}-${index}`}>
@@ -758,195 +1350,10 @@ function ImportWorkspace({ importResult, onDownloadTemplate, onImportExcel, shop
             ) : null}
           </div>
         ) : (
-          <p className="mt-5 text-sm text-[#7b8496]">No import result yet.</p>
+          <p className="mt-4 text-sm text-slate-500">No import result yet.</p>
         )}
       </section>
     </div>
-  );
-}
-
-function RightPanel({
-  editingExistingProduct,
-  importResult,
-  onSaveProduct,
-  onUploadImage,
-  productForm,
-  setView,
-  shop,
-  stats,
-  uploadNotice,
-  updateProductField,
-  view,
-}) {
-  return (
-    <aside className="bg-white">
-      <div className="border-b border-[#e5e8ef] p-6">
-        <div className="flex items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-full bg-[#f6f7f8]">
-            {shop?.logoUrl ? (
-              <img src={shop.logoUrl} alt={shop.name} className="h-full w-full object-cover" />
-            ) : (
-              <span className="text-sm font-bold text-[#12356f]">S</span>
-            )}
-          </div>
-          <div>
-            <p className="text-sm font-bold text-[#182238]">{shop?.name || "Shop profile"}</p>
-            <p className="text-xs text-[#7b8496]">{shop?.contact?.email || "No contact email"}</p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-4 gap-2 text-center">
-          <PanelMetric label="Total" value={stats.total} />
-          <PanelMetric label="Live" value={stats.published} />
-          <PanelMetric label="Draft" value={stats.draft} />
-          <PanelMetric label="Embed" value={stats.needsEmbed} />
-        </div>
-      </div>
-
-      <div className="p-6">
-        {view === "import" ? (
-          <div className="rounded-md border border-[#d8dde8] bg-[#fbfcfe] p-4">
-            <p className={labelClass}>Latest import</p>
-            <p className="mt-3 text-sm font-bold text-[#182238]">{importResult?.status || "No import"}</p>
-            <p className="mt-1 text-xs text-[#7b8496]">
-              {importResult ? `${importResult.successCount} success / ${importResult.failedCount} failed` : ""}
-            </p>
-          </div>
-        ) : (
-          <ProductEditor
-            editingExistingProduct={editingExistingProduct}
-            onSaveProduct={onSaveProduct}
-            onUploadImage={onUploadImage}
-            productForm={productForm}
-            setView={setView}
-            shop={shop}
-            uploadNotice={uploadNotice}
-            updateProductField={updateProductField}
-          />
-        )}
-      </div>
-    </aside>
-  );
-}
-
-function ProductEditor({
-  editingExistingProduct,
-  onSaveProduct,
-  onUploadImage,
-  productForm,
-  setView,
-  shop,
-  uploadNotice,
-  updateProductField,
-}) {
-  return (
-    <form onSubmit={onSaveProduct}>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <p className={labelClass}>Product editor</p>
-          <h2 className="mt-1 text-lg font-bold text-[#182238]">
-            {editingExistingProduct ? "Edit product" : "New product"}
-          </h2>
-        </div>
-        {!shop ? (
-          <button
-            type="button"
-            onClick={() => setView("shop")}
-            className={`${buttonClass} border border-[#d8dde8] text-[#182238]`}
-          >
-            Create Shop
-          </button>
-        ) : null}
-      </div>
-
-      <div className="grid gap-3">
-        <Field label="Product ID">
-          <input className={fieldClass} value={productForm.id} onChange={updateProductField("id")} />
-        </Field>
-        <Field label="Name">
-          <input className={fieldClass} value={productForm.name} onChange={updateProductField("name")} />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Category">
-            <input className={fieldClass} value={productForm.category} onChange={updateProductField("category")} />
-          </Field>
-          <Field label="Price">
-            <input className={fieldClass} value={productForm.price} onChange={updateProductField("price")} />
-          </Field>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="Gender">
-            <select className={fieldClass} value={productForm.gender} onChange={updateProductField("gender")}>
-              <option value="female">female</option>
-              <option value="male">male</option>
-              <option value="unisex">unisex</option>
-            </select>
-          </Field>
-          <Field label="Stock">
-            <select
-              className={fieldClass}
-              value={productForm.availability}
-              onChange={updateProductField("availability")}
-            >
-              <option value="in_stock">in_stock</option>
-              <option value="out_of_stock">out_of_stock</option>
-            </select>
-          </Field>
-          <Field label="Status">
-            <select className={fieldClass} value={productForm.status} onChange={updateProductField("status")}>
-              <option value="draft">draft</option>
-              <option value="published">published</option>
-              <option value="archived">archived</option>
-            </select>
-          </Field>
-        </div>
-        <Field label="Description">
-          <textarea
-            className={`${fieldClass} min-h-20 resize-none`}
-            value={productForm.description}
-            onChange={updateProductField("description")}
-          />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Colors">
-            <input className={fieldClass} value={productForm.colors} onChange={updateProductField("colors")} />
-          </Field>
-          <Field label="Sizes">
-            <input className={fieldClass} value={productForm.sizes} onChange={updateProductField("sizes")} />
-          </Field>
-          <Field label="Material">
-            <input className={fieldClass} value={productForm.material} onChange={updateProductField("material")} />
-          </Field>
-          <Field label="Fit Type">
-            <input className={fieldClass} value={productForm.fitType} onChange={updateProductField("fitType")} />
-          </Field>
-        </div>
-        <Field label="Style Tags">
-          <input className={fieldClass} value={productForm.styleTags} onChange={updateProductField("styleTags")} />
-        </Field>
-        <Field label="Occasion Tags">
-          <input
-            className={fieldClass}
-            value={productForm.occasionTags}
-            onChange={updateProductField("occasionTags")}
-          />
-        </Field>
-        <Field label="Image URL">
-          <input className={fieldClass} value={productForm.imageUrl} onChange={updateProductField("imageUrl")} />
-        </Field>
-        <Field label="Upload Image">
-          <input className={fieldClass} type="file" accept="image/*" onChange={onUploadImage} />
-        </Field>
-        {uploadNotice ? <p className="text-xs text-[#7b8496]">{uploadNotice}</p> : null}
-        <button
-          type="submit"
-          disabled={!shop}
-          className={`${buttonClass} bg-[#12356f] text-white disabled:cursor-not-allowed disabled:opacity-50`}
-        >
-          Save Product
-        </button>
-      </div>
-    </form>
   );
 }
 
@@ -959,21 +1366,95 @@ function Field({ children, label, wide = false }) {
   );
 }
 
-function PanelMetric({ label, value }) {
+function Metric({ label, value }) {
   return (
-    <div className="rounded-md border border-[#e5e8ef] bg-white px-2 py-3">
-      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8b94a5]">{label}</p>
-      <p className="mt-1 text-sm font-bold text-[#182238]">{value}</p>
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-bold text-slate-900">{value}</p>
     </div>
   );
 }
 
-function EmptyCard({ text, title }) {
+function Notice({ message, type }) {
+  const styles =
+    type === "error"
+      ? "border-red-200 bg-red-50 text-red-700"
+      : "border-slate-200 bg-white text-slate-600";
+
+  return <div className={`mb-5 rounded-xl border p-3 text-sm ${styles}`}>{message}</div>;
+}
+
+function Icon({ name }) {
+  const icons = {
+    archive: (
+      <>
+        <path d="M3 7h18" />
+        <path d="M5 7v12h14V7" />
+        <path d="M8 7V5h8v2" />
+        <path d="M10 12h4" />
+      </>
+    ),
+    edit: (
+      <>
+        <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
+        <path d="m14 7 3 3" />
+      </>
+    ),
+    deleteForever: (
+      <>
+        <path d="M3 6h18" />
+        <path d="M8 6V4h8v2" />
+        <path d="M6 6l1 14h10l1-14" />
+        <path d="m10 11 4 4" />
+        <path d="m14 11-4 4" />
+      </>
+    ),
+    recover: (
+      <>
+        <path d="M3 12a9 9 0 1 0 3-6.7" />
+        <path d="M3 4v6h6" />
+        <path d="M12 8v5l3 2" />
+      </>
+    ),
+    trash: (
+      <>
+        <path d="M3 6h18" />
+        <path d="M8 6V4h8v2" />
+        <path d="M6 6l1 14h10l1-14" />
+        <path d="M10 11v5" />
+        <path d="M14 11v5" />
+      </>
+    ),
+  };
+
   return (
-    <article className="rounded-md border border-dashed border-[#cdd4e1] bg-white p-5">
-      <p className="text-sm font-bold text-[#182238]">{title}</p>
-      <p className="mt-2 text-xs text-[#7b8496]">{text}</p>
-    </article>
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      {icons[name]}
+    </svg>
+  );
+}
+
+function StatusBadge({ status }) {
+  const styles = {
+    published: "border-green-200 bg-green-50 text-green-700",
+    draft: "border-yellow-200 bg-yellow-50 text-yellow-700",
+    archived: "border-slate-200 bg-slate-100 text-slate-600",
+    trashed: "border-red-200 bg-red-50 text-red-700",
+  };
+
+  return (
+    <span className={`rounded-md border px-2 py-1 text-xs font-semibold ${styles[status] || styles.archived}`}>
+      {status}
+    </span>
   );
 }
 

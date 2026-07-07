@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { getMongoDb } from "./mongo.service.js";
 import { getOwnerShop, getSingleOwnerShop } from "./shop.service.js";
 
-const PRODUCT_STATUSES = ["draft", "published", "archived"];
+const PRODUCT_STATUSES = ["draft", "published", "archived", "trashed"];
 const AVAILABILITIES = ["in_stock", "out_of_stock"];
 const GENDERS = ["female", "male", "unisex"];
 const EMBEDDING_FIELDS = [
@@ -276,6 +276,41 @@ export const archiveProduct = async ({ ownerId, productId }) => {
 
   await db.collection("products").updateOne({ id: product.id }, { $set: patch });
   return toPublicProduct({ ...product, ...patch });
+};
+
+export const trashProduct = async ({ ownerId, productId }) => {
+  const db = await getMongoDb();
+  const product = await getOwnerProduct({ ownerId, productId });
+  const patch = {
+    status: "trashed",
+    updatedAt: new Date(),
+  };
+
+  await db.collection("products").updateOne({ id: product.id }, { $set: patch });
+
+  return toPublicProduct({ ...product, ...patch });
+};
+
+export const restoreProduct = async ({ ownerId, productId }) => {
+  const db = await getMongoDb();
+  const product = await getOwnerProduct({ ownerId, productId });
+  const patch = {
+    status: "draft",
+    updatedAt: new Date(),
+  };
+
+  await db.collection("products").updateOne({ id: product.id }, { $set: patch });
+
+  return toPublicProduct({ ...product, ...patch });
+};
+
+export const hardDeleteProduct = async ({ ownerId, productId }) => {
+  const db = await getMongoDb();
+  const product = await getOwnerProduct({ ownerId, productId });
+
+  await db.collection("products").deleteOne({ id: product.id });
+
+  return toPublicProduct(product);
 };
 
 export const productEnums = {

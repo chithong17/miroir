@@ -12,12 +12,15 @@ const intersects = (left = [], right = []) => {
 
 export const buildStylistQueryText = ({ request, memory }) =>
   [
-    `Occasion: ${request.occasion || ""}`,
-    `Gender: ${request.gender || ""}`,
-    `Body shape: ${request.bodyShape || "infer from measurements"}`,
-    `Skin tone: ${request.skinTone || ""}`,
-    `Style preferences: ${asArray(request.stylePreferences).join(", ")}`,
-    `Feedback: ${request.feedback || ""}`,
+    `Prompt: ${request.prompt || ""}`,
+    request.occasion ? `Occasion: ${request.occasion}` : "",
+    request.gender ? `Gender: ${request.gender}` : "",
+    request.bodyShape ? `Body shape: ${request.bodyShape}` : "",
+    request.skinTone ? `Skin tone: ${request.skinTone}` : "",
+    asArray(request.stylePreferences).length
+      ? `Style preferences: ${asArray(request.stylePreferences).join(", ")}`
+      : "",
+    request.feedback ? `Feedback: ${request.feedback}` : "",
     memory?.likedStyles?.length
       ? `Liked styles: ${memory.likedStyles.join(", ")}`
       : "",
@@ -36,12 +39,15 @@ const buildProductFilter = (request) => {
   const filter = {};
   const and = [];
 
-  if (request.budget?.max !== undefined) {
-    and.push({ price: { $lte: Number(request.budget.max) } });
+  const maxBudget = Number(request.budget?.max);
+  const minBudget = Number(request.budget?.min);
+
+  if (Number.isFinite(maxBudget) && maxBudget > 0) {
+    and.push({ price: { $lte: maxBudget } });
   }
 
-  if (request.budget?.min !== undefined) {
-    and.push({ price: { $gte: Number(request.budget.min) } });
+  if (Number.isFinite(minBudget) && minBudget > 0) {
+    and.push({ price: { $gte: minBudget } });
   }
 
   if (request.gender) {
@@ -51,12 +57,6 @@ const buildProductFilter = (request) => {
   and.push({
     $or: [{ availability: "in_stock" }, { availability: true }],
   });
-
-  and.push({ status: "published" });
-
-  if (request.occasion) {
-    and.push({ occasionTags: request.occasion });
-  }
 
   if (and.length) {
     filter.$and = and;
@@ -110,7 +110,7 @@ const scoreProduct = ({ product, request, memory, reviewSummary }) => {
   const fitType = product.fitType || product.fit_type;
 
   if (intersects(styleTags, request.stylePreferences)) score += 0.2;
-  if (intersects(occasionTags, [request.occasion])) score += 0.2;
+  if (request.occasion && intersects(occasionTags, [request.occasion])) score += 0.12;
   if (intersects(product.colors, memory?.favoriteColors)) score += 0.12;
   if (intersects(styleTags, memory?.likedStyles)) score += 0.12;
   if (fitType && fitType === memory?.fitPreference) score += 0.08;
@@ -161,7 +161,12 @@ export const retrieveStylistContext = async ({ request, memory }) => {
   ]);
   const activeShopById = new Map(activeShops.map((shop) => [shop.id, shop]));
   const shopFilteredProducts = rawProducts
-    .filter((product) => product.shopId && activeShopById.has(product.shopId))
+    .filter(
+      (product) =>
+        product.status === "published" &&
+        product.shopId &&
+        activeShopById.has(product.shopId)
+    )
     .map((product) => {
       const shop = activeShopById.get(product.shopId);
 

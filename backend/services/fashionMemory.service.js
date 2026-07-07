@@ -36,10 +36,14 @@ export const recordFashionFeedback = async ({
   eventType,
   reason,
 }) => {
-  if (!userId || !eventType) {
-    const error = new Error("userId and eventType are required.");
+  if (!eventType) {
+    const error = new Error("eventType is required.");
     error.statusCode = 400;
     throw error;
+  }
+
+  if (!userId) {
+    return null;
   }
 
   const db = await getMongoDb();

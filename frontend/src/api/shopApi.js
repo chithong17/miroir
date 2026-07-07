@@ -73,8 +73,23 @@ export const updateProduct = async (id, payload) => {
   return response.data;
 };
 
+export const archiveProduct = async (id) => {
+  const response = await shopClient.patch(`/shop-products/${id}/archive`);
+  return response.data;
+};
+
+export const restoreProduct = async (id) => {
+  const response = await shopClient.patch(`/shop-products/${id}/restore`);
+  return response.data;
+};
+
 export const deleteProduct = async (id) => {
   const response = await shopClient.delete(`/shop-products/${id}`);
+  return response.data;
+};
+
+export const hardDeleteProduct = async (id) => {
+  const response = await shopClient.delete(`/shop-products/${id}/permanent`);
   return response.data;
 };
 

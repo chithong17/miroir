@@ -1,12 +1,15 @@
 import { Router } from "express";
 import {
+  archiveShopProduct,
   createShopProduct,
   deleteShopProduct,
   downloadImportTemplate,
   getProduct,
   getProductImportJob,
+  hardDeleteShopProduct,
   importProducts,
   listProducts,
+  restoreShopProduct,
   updateShopProduct,
   uploadProductImage,
 } from "../controllers/shopProduct.controller.js";
@@ -27,6 +30,9 @@ router.post("/import", uploadProductImportFile, importProducts);
 router.get("/import-jobs/:id", getProductImportJob);
 router.get("/:id", getProduct);
 router.put("/:id", updateShopProduct);
+router.patch("/:id/archive", archiveShopProduct);
+router.patch("/:id/restore", restoreShopProduct);
+router.delete("/:id/permanent", hardDeleteShopProduct);
 router.delete("/:id", deleteShopProduct);
 
 export default router;
