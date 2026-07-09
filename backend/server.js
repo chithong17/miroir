@@ -44,6 +44,37 @@ const isAllowedDevOrigin = (origin) => {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
 };
 
+const isAllowedVercelPreviewOrigin = (origin, configuredOrigin) => {
+  if (!origin || !configuredOrigin) {
+    return false;
+  }
+
+  try {
+    const originUrl = new URL(origin);
+    const configuredUrl = new URL(configuredOrigin);
+
+    if (
+      originUrl.protocol !== "https:" ||
+      configuredUrl.protocol !== "https:" ||
+      originUrl.hostname === configuredUrl.hostname
+    ) {
+      return false;
+    }
+
+    if (
+      !originUrl.hostname.endsWith(".vercel.app") ||
+      !configuredUrl.hostname.endsWith(".vercel.app")
+    ) {
+      return false;
+    }
+
+    const configuredProjectSlug = configuredUrl.hostname.replace(".vercel.app", "");
+    return originUrl.hostname.startsWith(`${configuredProjectSlug}-`);
+  } catch {
+    return false;
+  }
+};
+
 const requiredEnvVars = [
   "PIAPI_KEY",
   "CLOUDINARY_CLOUD_NAME",
@@ -72,7 +103,8 @@ app.use(
       if (
         !origin ||
         origin === configuredFrontendOrigin ||
-        isAllowedDevOrigin(origin)
+        isAllowedDevOrigin(origin) ||
+        isAllowedVercelPreviewOrigin(origin, configuredFrontendOrigin)
       ) {
         callback(null, true);
         return;
