@@ -2,7 +2,11 @@ import {
   createPiApiTask,
   getPiApiTaskStatus,
 } from "../services/piapi.service.js";
+import axios from "axios";
+import https from "https";
 import { uploadImageBuffer } from "../services/cloudinary.service.js";
+import { getCatalogProduct } from "../services/catalog.service.js";
+import { getRawUserById } from "../services/userAuth.service.js";
 import { findResultUrl } from "../utils/findResultUrl.js";
 
 const parseBatchSize = (rawValue) => {
@@ -105,6 +109,203 @@ export const createTryOnTask = async (req, res, next) => {
       success: true,
       taskId,
       message: "Try-on task created successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const httpsAgent = new https.Agent({
+  minVersion: "TLSv1.2",
+});
+
+const normalizeText = (value = "") =>
+  String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const isLowerCategory = (value = "") => {
+  const normalized = normalizeText(value);
+  return [
+    "bottom",
+    "pants",
+    "trousers",
+    "jeans",
+    "skirt",
+    "shorts",
+    "chan vay",
+    "quan",
+  ].some((keyword) => normalized.includes(keyword));
+};
+
+const isDressCategory = (value = "") => {
+  const normalized = normalizeText(value);
+  return ["dress", "dam", "vay lien", "one-piece", "one piece", "jumpsuit"].some(
+    (keyword) => normalized.includes(keyword)
+  );
+};
+
+const extractTaskId = (taskResponse) =>
+  taskResponse?.data?.task_id ||
+  taskResponse?.task_id ||
+  taskResponse?.data?.id ||
+  taskResponse?.id;
+
+const uploadRemoteImageUrl = async (imageUrl, fallbackName = "catalog-garment") => {
+  const response = await axios.get(imageUrl, {
+    responseType: "arraybuffer",
+    httpsAgent,
+    timeout: 30000,
+    headers: {
+      "User-Agent": "MIROIR/1.0",
+    },
+  });
+
+  const contentType = response.headers?.["content-type"] || "";
+  if (!contentType.startsWith("image/")) {
+    throw new Error("Selected product image URL did not return an image.");
+  }
+
+  const uploaded = await uploadImageBuffer(
+    Buffer.from(response.data),
+    `${fallbackName}.jpg`
+  );
+
+  return uploaded.secure_url;
+};
+
+export const createCatalogTryOnTask = async (req, res, next) => {
+  try {
+    const { productId } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ success: false, message: "productId is required." });
+    }
+
+    const user = await getRawUserById(req.user.id);
+    const { product } = await getCatalogProduct(productId);
+    let modelInput = user?.profile?.modelImageUrl || "";
+
+    if (req.file) {
+      const uploaded = await uploadImageBuffer(req.file.buffer, req.file.originalname);
+      modelInput = uploaded.secure_url;
+    }
+
+    if (!modelInput) {
+      return res.status(400).json({
+        success: false,
+        message: "Upload a model image or save one in your profile before trying on.",
+      });
+    }
+
+    if (!product.imageUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected product does not have an imageUrl.",
+      });
+    }
+
+    const garmentInput = await uploadRemoteImageUrl(product.imageUrl, product.id);
+    const categoryText = `${product.category || ""} ${product.name || ""}`;
+    const isLower = isLowerCategory(categoryText);
+    const isDress = !isLower && isDressCategory(categoryText);
+    const tryOnType = isDress ? "dress" : "upper_lower";
+    const imageUrls = {
+      model_input: modelInput,
+      dress_input: isDress ? garmentInput : undefined,
+      upper_input: !isDress && !isLower ? garmentInput : undefined,
+      lower_input: isLower ? garmentInput : undefined,
+    };
+
+    const taskResponse = await createPiApiTask({
+      tryOnType,
+      batchSize: parseBatchSize(req.body.batchSize),
+      imageUrls,
+    });
+    const taskId = extractTaskId(taskResponse);
+
+    if (!taskId) {
+      return res.status(502).json({
+        success: false,
+        message: "PiAPI did not return a task id.",
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      taskId,
+      productId: product.id,
+      tryOnType,
+      message: "Catalog try-on task created successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createCustomTryOnTask = async (req, res, next) => {
+  try {
+    const { tryOnType } = req.body;
+    const files = req.files || {};
+    const hasDressImage = Boolean(files.dressImage?.[0]);
+    const hasUpperImage = Boolean(files.upperImage?.[0]);
+    const hasLowerImage = Boolean(files.lowerImage?.[0]);
+
+    if (!["dress", "upper_lower"].includes(tryOnType)) {
+      return res.status(400).json({
+        success: false,
+        message: "tryOnType must be either 'dress' or 'upper_lower'.",
+      });
+    }
+
+    if (tryOnType === "dress" && !hasDressImage) {
+      return res.status(400).json({
+        success: false,
+        message: "dressImage is required when tryOnType is 'dress'.",
+      });
+    }
+
+    if (tryOnType === "upper_lower" && !hasUpperImage && !hasLowerImage) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one of upperImage or lowerImage is required for upper_lower try-on.",
+      });
+    }
+
+    const user = await getRawUserById(req.user.id);
+    const imageUrls = await uploadRequiredImages(files);
+
+    if (!imageUrls.model_input) {
+      imageUrls.model_input = user?.profile?.modelImageUrl || "";
+    }
+
+    if (!imageUrls.model_input) {
+      return res.status(400).json({
+        success: false,
+        message: "Upload a model image or save one in your profile before trying on.",
+      });
+    }
+
+    const taskResponse = await createPiApiTask({
+      tryOnType,
+      batchSize: parseBatchSize(req.body.batchSize),
+      imageUrls,
+    });
+    const taskId = extractTaskId(taskResponse);
+
+    if (!taskId) {
+      return res.status(502).json({
+        success: false,
+        message: "PiAPI did not return a task id.",
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      taskId,
+      tryOnType,
+      message: "Custom try-on task created successfully",
     });
   } catch (error) {
     next(error);

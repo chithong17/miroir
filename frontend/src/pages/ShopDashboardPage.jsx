@@ -532,7 +532,7 @@ function ShopDashboardPage() {
 
   const logout = () => {
     setShopToken("");
-    window.location.href = "/shop/login";
+    window.location.href = "/login";
   };
 
   return (

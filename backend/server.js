@@ -1,11 +1,16 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import adminAuthRoutes from "./routes/adminAuth.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import catalogRoutes from "./routes/catalog.routes.js";
 import shopAuthRoutes from "./routes/shopAuth.routes.js";
 import shopProductRoutes from "./routes/shopProduct.routes.js";
 import shopRoutes from "./routes/shop.routes.js";
 import stylistRoutes from "./routes/stylist.routes.js";
 import tryOnRoutes from "./routes/tryon.routes.js";
+import userAuthRoutes from "./routes/userAuth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import { configureCloudinary } from "./services/cloudinary.service.js";
 
 dotenv.config();
@@ -88,6 +93,11 @@ app.get("/api/debug/piapi-key", (_req, res) => {
 
 app.use("/api/tryon", tryOnRoutes);
 app.use("/api/stylist", stylistRoutes);
+app.use("/api/catalog", catalogRoutes);
+app.use("/api/user-auth", userAuthRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin-auth", adminAuthRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/shop-auth", shopAuthRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/shop-products", shopProductRoutes);
