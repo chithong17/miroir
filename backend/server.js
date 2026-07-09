@@ -31,6 +31,14 @@ const describeEnvValue = (value) => {
   };
 };
 
+const isAllowedDevOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+};
+
 const requiredEnvVars = [
   "PIAPI_KEY",
   "CLOUDINARY_CLOUD_NAME",
@@ -51,15 +59,16 @@ configureCloudinary();
 
 const app = express();
 const port = process.env.PORT || 5000;
-const allowedOrigins = [
-  process.env.FRONTEND_URL || "http://localhost:5173",
-  "http://127.0.0.1:5173",
-];
+const configuredFrontendOrigin = process.env.FRONTEND_URL;
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        origin === configuredFrontendOrigin ||
+        isAllowedDevOrigin(origin)
+      ) {
         callback(null, true);
         return;
       }

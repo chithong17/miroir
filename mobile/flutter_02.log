@@ -1,0 +1,81 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter run -d chrome
+
+## exception
+
+ShaderCompilerException: ShaderCompilerException: Shader compilation of "C:\Users\ACER\AppData\Local\Pub\Cache\hosted\pub.dev\liquid_glass_easy-3.2.2\lib\assets\shaders\liquid_glass.frag" to "build\flutter_assets\packages/liquid_glass_easy/lib/assets/shaders/liquid_glass.frag" failed with exit code 1.
+
+
+
+```
+#0      ShaderCompiler.compileShader (package:flutter_tools/src/build_system/tools/shader_compiler.dart:232:9)
+<asynchronous suspension>
+#1      writeBundle.<anonymous closure> (package:flutter_tools/src/bundle_builder.dart:227:25)
+<asynchronous suspension>
+#2      Future.wait.<anonymous closure> (dart:async/future.dart:546:21)
+<asynchronous suspension>
+#3      writeBundle (package:flutter_tools/src/bundle_builder.dart:171:3)
+<asynchronous suspension>
+#4      WebDevFS.update (package:flutter_tools/src/isolated/devfs_web.dart:342:9)
+<asynchronous suspension>
+#5      ResidentWebRunner._updateDevFS (package:flutter_tools/src/isolated/resident_web_runner.dart:804:35)
+<asynchronous suspension>
+#6      ResidentWebRunner.run.<anonymous closure> (package:flutter_tools/src/isolated/resident_web_runner.dart:330:41)
+<asynchronous suspension>
+#7      asyncGuard.<anonymous closure> (package:flutter_tools/src/base/async_guard.dart:108:24)
+<asynchronous suspension>
+```
+
+## flutter doctor
+
+```
+[32m[✓][39m Flutter (Channel stable, 3.44.5, on Microsoft Windows [Version 10.0.26200.8655], locale en-US) [618ms]
+    [32m•[39m Flutter version 3.44.5 on channel stable at D:\sdk\flutter
+    [32m•[39m Upstream repository https://github.com/flutter/flutter.git
+    [32m•[39m Framework revision f94f4fc76b (2 days ago), 2026-07-06 11:19:24 -0700
+    [32m•[39m Engine revision 83675ed276
+    [32m•[39m Dart version 3.12.2
+    [32m•[39m DevTools version 2.57.0
+    [32m•[39m Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios,
+      cli-animations, enable-native-assets, enable-swift-package-manager, omit-legacy-version-file, enable-lldb-debugging,
+      enable-uiscene-migration
+
+[32m[✓][39m Windows Version (11 Home Single Language 64-bit, 25H2, 2009) [1,279ms]
+
+[31m[✗][39m Android toolchain - develop for Android devices [321ms]
+    [31m✗[39m Unable to locate Android SDK.
+      Install Android Studio from: https://developer.android.com/studio/index.html
+      On first launch it will assist you in installing the Android SDK components.
+      (or visit https://flutter.dev/to/windows-android-setup for detailed instructions).
+      If the Android SDK has been installed to a custom location, please use
+      `flutter config --android-sdk` to update to that location.
+
+
+[32m[✓][39m Chrome - develop for the web [308ms]
+    [32m•[39m Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[33m[!][39m Visual Studio - develop Windows apps (Visual Studio Community 2022 17.14.32) [307ms]
+    [32m•[39m Visual Studio at C:\Program Files\Microsoft Visual Studio\2022\Community
+    [32m•[39m Visual Studio Community 2022 version 17.14.37301.10
+    [32m•[39m Windows 10 SDK version 10.0.19041.0
+    [31m✗[39m Visual Studio is missing necessary components. Please re-run the Visual Studio installer for the "Desktop development with C++"
+      workload, and include these components:
+        MSVC v142 - VS 2019 C++ x64/x86 build tools
+         - If there are multiple build tool versions available, install the latest
+        C++ CMake tools for Windows
+        Windows 10 SDK
+
+[32m[✓][39m Connected device (3 available) [22ms]
+    [32m•[39m Windows (desktop) • windows • windows-x64    • Microsoft Windows [Version 10.0.26200.8655]
+    [32m•[39m Chrome (web)      • chrome  • web-javascript • Google Chrome 150.0.7871.49
+    [32m•[39m Edge (web)        • edge    • web-javascript • Microsoft Edge 150.0.4078.48
+
+[32m[✓][39m Network resources [929ms]
+    [32m•[39m All expected network resources are available.
+
+[33m![39m Doctor found issues in 2 categories.
+```
