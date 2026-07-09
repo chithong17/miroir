@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: miroir-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: PIAPI_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: miroir
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: miroir
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_EMBEDDING_MODEL
+        value: gemini-embedding-001
+      - key: GEMINI_GENERATION_MODEL
+        value: gemini-3.5-flash
+      - key: MONGODB_PRODUCT_VECTOR_INDEX
+        value: products_embedding_index
+      - key: MONGODB_OUTFIT_VECTOR_INDEX
+        value: outfits_embedding_index
+      - key: MONGODB_FASHION_RULE_VECTOR_INDEX
+        value: fashion_rules_embedding_index
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
