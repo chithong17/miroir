@@ -71,7 +71,7 @@ export const registerShopOwner = async ({ email, password, name }) => {
     email: normalizedEmail,
     passwordHash: await bcrypt.hash(password, 12),
     name: String(name).trim(),
-    status: "active",
+    status: "pending",
     createdAt: now,
     updatedAt: now,
   };
@@ -80,7 +80,7 @@ export const registerShopOwner = async ({ email, password, name }) => {
 
   return {
     owner: publicOwner(owner),
-    token: signOwnerToken(owner),
+    message: "Your shop owner account is pending admin approval.",
   };
 };
 
@@ -105,7 +105,11 @@ export const loginShopOwner = async ({ email, password }) => {
   }
 
   if (owner.status !== "active") {
-    const error = new Error("This shop owner account is not active.");
+    const message =
+      owner.status === "pending"
+        ? "This shop owner account is pending admin approval."
+        : "This shop owner account is not active.";
+    const error = new Error(message);
     error.statusCode = 403;
     throw error;
   }

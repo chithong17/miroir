@@ -7,6 +7,7 @@
     "embed:products": "node scripts/embedCollection.js products",
     "embed:outfits": "node scripts/embedCollection.js outfits",
     "embed:fashion-rules": "node scripts/embedCollection.js fashion_rules",
+    "seed:admin": "node scripts/seedAdmin.js",
     "dev": "nodemon server.js",
     "start": "node server.js"
   },

@@ -1,6 +1,10 @@
 import axios from "axios";
+import https from "https";
 
 const PIAPI_BASE_URL = "https://api.piapi.ai/api/v1";
+const httpsAgent = new https.Agent({
+  minVersion: "TLSv1.2",
+});
 
 const getPiApiKey = () => {
   const apiKey = process.env.PIAPI_KEY?.trim();
@@ -36,6 +40,7 @@ const describeApiKey = (apiKey) => {
 
 const piapiClient = axios.create({
   baseURL: PIAPI_BASE_URL,
+  httpsAgent,
   timeout: 120000,
 });
 

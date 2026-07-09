@@ -38,8 +38,14 @@ function ShopAuthPage({ mode = "login" }) {
             email: form.email,
             password: form.password,
           });
-      setShopToken(response.token);
-      window.location.href = "/shop/dashboard";
+      if (response.token) {
+        setShopToken(response.token);
+        window.location.href = "/shop/dashboard";
+        return;
+      }
+
+      setStatus("success");
+      setMessage(response.message || "Your shop owner account is pending admin approval.");
     } catch (error) {
       setStatus("error");
       setMessage(error.response?.data?.message || "Could not authenticate.");
@@ -91,8 +97,12 @@ function ShopAuthPage({ mode = "login" }) {
               />
             </label>
 
-            {status === "error" ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {status === "error" || status === "success" ? (
+              <div className={`rounded-lg border p-3 text-sm ${
+                status === "error"
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              }`}>
                 {message}
               </div>
             ) : null}
