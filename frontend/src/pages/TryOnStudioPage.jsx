@@ -1,34 +1,17 @@
 import { useEffect, useState } from "react";
-import {
-  getCatalogProduct,
-  listCatalogProducts,
-  submitProductFeedback,
-} from "../api/catalogApi.js";
-import {
-  createCatalogTryOnTask,
-  createTryOnTask,
-  createCustomTryOnTask,
-  getTryOnTaskStatus,
-} from "../api/tryonApi.js";
-import {
-  createUserPayment,
-  getUserMe,
-  getUserToken,
-  listPaymentPlans,
-  setUserToken,
-} from "../api/userApi.js";
-import { UnifiedNav } from "./AuthPage.jsx";
-
-const fieldClass =
-  "w-full rounded-lg border border-line/70 bg-white px-3 py-2 text-sm outline-none focus:border-tertiary";
+import { getCatalogProduct, listCatalogProducts, submitProductFeedback } from "../api/catalogApi.js";
+import { createCatalogTryOnTask, createCustomTryOnTask, createTryOnTask, getTryOnTaskStatus } from "../api/tryonApi.js";
+import { createUserPayment, getUserMe, getUserToken, listPaymentPlans, setUserToken } from "../api/userApi.js";
+import { AppShell, Button, EmptyState, PageHeader, ProductCard, SegmentedTabs, SelectField, StatusBadge, TextField, TopNav, formatMoney } from "../components/ui/index.jsx";
+import { useLanguage } from "../i18n.jsx";
 
 function TryOnStudioPage() {
+  const { t } = useLanguage();
   const params = new URLSearchParams(window.location.search);
   const initialProductId = params.get("productId") || "";
   const [user, setUser] = useState(null);
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [garmentSource, setGarmentSource] = useState(initialProductId ? "platform" : "upload");
   const [customTryOnType, setCustomTryOnType] = useState("dress");
   const [dressFile, setDressFile] = useState(null);
   const [upperFile, setUpperFile] = useState(null);
@@ -44,21 +27,13 @@ function TryOnStudioPage() {
   const [message, setMessage] = useState("");
   const [paymentRequired, setPaymentRequired] = useState(false);
   const [paymentPlans, setPaymentPlans] = useState([]);
-  const [feedbackForm, setFeedbackForm] = useState({
-    rating: "5",
-    fitFeedback: "true_to_size",
-    comment: "",
-  });
+  const [feedbackForm, setFeedbackForm] = useState({ rating: "5", fitFeedback: "true_to_size", comment: "" });
   const [feedbackNotice, setFeedbackNotice] = useState("");
   const userPremiumPlan = paymentPlans.find((plan) => plan.code === "USER_PREMIUM_MONTHLY");
 
   useEffect(() => {
-    listPaymentPlans()
-      .then((response) => setPaymentPlans(response.plans || []))
-      .catch(() => setPaymentPlans([]));
-
+    listPaymentPlans().then((response) => setPaymentPlans(response.plans || [])).catch(() => setPaymentPlans([]));
     if (!getUserToken()) return;
-
     getUserMe()
       .then((response) => {
         setUser(response.user);
@@ -77,24 +52,21 @@ function TryOnStudioPage() {
 
   const loadProduct = async (productId) => {
     setMessage("");
-    setGarmentSource("platform");
+    setDressFile(null); setDressPreview("");
+    setUpperFile(null); setUpperPreview("");
+    setLowerFile(null); setLowerPreview("");
     const response = await getCatalogProduct(productId);
     setProduct(response.product);
     setResultUrl("");
     setCompletedTryOnProductId("");
     setFeedbackNotice("");
-    const related = await listCatalogProducts({
-      category: response.product.category,
-      shopId: response.product.shopId,
-      limit: 8,
-    });
+    const related = await listCatalogProducts({ category: response.product.category, shopId: response.product.shopId, limit: 8 });
     setRelatedProducts((related.products || []).filter((item) => item.id !== productId));
     window.history.replaceState(null, "", `/app/try-on?productId=${productId}`);
   };
 
   const setGarmentFile = (field, file) => {
     const preview = file ? URL.createObjectURL(file) : "";
-
     if (field === "dress") {
       setDressFile(file);
       setDressPreview(preview);
@@ -105,7 +77,6 @@ function TryOnStudioPage() {
         setLowerPreview("");
       }
     }
-
     if (field === "upper") {
       setUpperFile(file);
       setUpperPreview(preview);
@@ -114,7 +85,6 @@ function TryOnStudioPage() {
         setDressPreview("");
       }
     }
-
     if (field === "lower") {
       setLowerFile(file);
       setLowerPreview(preview);
@@ -128,15 +98,12 @@ function TryOnStudioPage() {
   const onModelFile = (event) => {
     const file = event.target.files?.[0] || null;
     setModelFile(file);
-    if (file) {
-      setModelPreview(URL.createObjectURL(file));
-    }
+    if (file) setModelPreview(URL.createObjectURL(file));
   };
 
   const poll = async (taskId, feedbackProductId = "") => {
     setStatus("processing");
     setMessage("Task created. Waiting for the first result check...");
-
     for (let attempt = 0; attempt < 72; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, attempt === 0 ? 15000 : 5000));
       const response = await getTryOnTaskStatus(taskId);
@@ -165,31 +132,15 @@ function TryOnStudioPage() {
 
   const startTryOn = async () => {
     const isLoggedIn = Boolean(getUserToken());
+    const hasUploads = Boolean(dressFile || upperFile || lowerFile);
+    const isPlatform = !hasUploads && Boolean(product);
 
-    if (garmentSource === "platform" && !product) {
-      setMessage("Choose a platform product first.");
-      return;
-    }
+    if (!isPlatform && !hasUploads) return setMessage("Choose a platform product or upload a garment first.");
+    if (isPlatform && !isLoggedIn) return setMessage("Please log in to try on platform products.");
+    if (hasUploads && !isLoggedIn && !modelFile) return setMessage("Upload your original photo first.");
+    if (hasUploads && customTryOnType === "dress" && !dressFile) return setMessage("Upload a dress garment image first.");
+    if (hasUploads && customTryOnType === "upper_lower" && !upperFile && !lowerFile) return setMessage("Upload at least one upper or lower garment image first.");
 
-    if (garmentSource === "platform" && !isLoggedIn) {
-      setMessage("Please log in to try on platform products.");
-      return;
-    }
-
-    if (garmentSource === "upload" && !isLoggedIn && !modelFile) {
-      setMessage("Upload your original photo first.");
-      return;
-    }
-
-    if (garmentSource === "upload" && customTryOnType === "dress" && !dressFile) {
-      setMessage("Upload a dress garment image first.");
-      return;
-    }
-
-    if (garmentSource === "upload" && customTryOnType === "upper_lower" && !upperFile && !lowerFile) {
-      setMessage("Upload at least one upper or lower garment image first.");
-      return;
-    }
     setStatus("loading");
     setMessage("");
     setPaymentRequired(false);
@@ -199,20 +150,10 @@ function TryOnStudioPage() {
 
     try {
       let response;
-
-      if (garmentSource === "platform") {
-        response = await createCatalogTryOnTask({
-          productId: product.id,
-          modelImage: modelFile,
-        });
+      if (isPlatform) {
+        response = await createCatalogTryOnTask({ productId: product.id, modelImage: modelFile });
       } else if (isLoggedIn) {
-        response = await createCustomTryOnTask({
-          tryOnType: customTryOnType,
-          modelImage: modelFile,
-          dressImage: dressFile,
-          upperImage: upperFile,
-          lowerImage: lowerFile,
-        });
+        response = await createCustomTryOnTask({ tryOnType: customTryOnType, modelImage: modelFile, dressImage: dressFile, upperImage: upperFile, lowerImage: lowerFile });
       } else {
         const formData = new FormData();
         formData.append("tryOnType", customTryOnType);
@@ -223,21 +164,10 @@ function TryOnStudioPage() {
         if (lowerFile) formData.append("lowerImage", lowerFile);
         response = await createTryOnTask(formData);
       }
-
       if (response.usage) {
-        setUser((previous) =>
-          previous
-            ? {
-                ...previous,
-                subscription: {
-                  ...(previous.subscription || {}),
-                  usage: response.usage,
-                },
-              }
-            : previous
-        );
+        setUser((previous) => previous ? { ...previous, subscription: { ...(previous.subscription || {}), usage: response.usage } } : previous);
       }
-      await poll(response.taskId, garmentSource === "platform" ? product.id : "");
+      await poll(response.taskId, isPlatform ? product.id : "");
     } catch (error) {
       setStatus("error");
       setPaymentRequired(Boolean(error.response?.data?.subscriptionRequired));
@@ -247,28 +177,21 @@ function TryOnStudioPage() {
 
   const startPremiumCheckout = async () => {
     try {
-      setMessage("Đang tạo liên kết thanh toán...");
+      setMessage(t("payment.creating"));
       const response = await createUserPayment();
       window.location.href = response.checkoutUrl;
     } catch (error) {
-      setMessage(error.response?.data?.message || "Không thể tạo thanh toán.");
+      setMessage(error.response?.data?.message || t("payment.createError"));
     }
   };
 
-  const updateFeedback = (field) => (event) =>
-    setFeedbackForm((previous) => ({ ...previous, [field]: event.target.value }));
-
+  const updateFeedback = (field) => (event) => setFeedbackForm((previous) => ({ ...previous, [field]: event.target.value }));
   const sendTryOnFeedback = async (event) => {
     event.preventDefault();
     if (!product?.id) return;
-
     try {
       setFeedbackNotice("Saving feedback...");
-      await submitProductFeedback(product.id, {
-        ...feedbackForm,
-        rating: Number(feedbackForm.rating),
-        context: "tryon",
-      });
+      await submitProductFeedback(product.id, { ...feedbackForm, rating: Number(feedbackForm.rating), context: "tryon" });
       setFeedbackNotice("Feedback saved. Thank you.");
     } catch (error) {
       setFeedbackNotice(error.response?.data?.message || "Could not save feedback.");
@@ -281,242 +204,151 @@ function TryOnStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-hero">
-      <UnifiedNav user={user} onLogout={logout} />
+    <AppShell nav={<TopNav user={user} onLogout={logout} />}>
       <main className="section-shell py-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="editorial-title text-3xl font-bold">Try-On Studio</h1>
-            <p className="text-sm text-muted">
-              Upload your photo, inspect the selected product, then generate the result.
-            </p>
-          </div>
-          <a className="soft-button rounded-lg" href="/app">
-            Back to marketplace
-          </a>
-        </div>
+        <PageHeader
+          eyebrow={t("tryon.eyebrow")}
+          title={t("tryon.title")}
+          description={t("tryon.description")}
+          action={<a className="soft-button px-5 py-2" href="/app">{t("tryon.back")}</a>}
+        />
 
         {user ? (
-          <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/60 bg-white/85 p-4">
+          <section className="miroir-card mt-6 flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
-              <span className={`rounded-md px-2 py-1 text-xs font-bold ${user.subscription?.isPremium ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
-                {user.subscription?.isPremium ? "Premium" : "Free"}
-              </span>
+              <StatusBadge status={user.subscription?.isPremium ? t("app.premium") : t("app.free")} tone={user.subscription?.isPremium ? "success" : "neutral"} />
               <p className="mt-2 text-sm text-muted">
                 {user.subscription?.isPremium
-                  ? "Không giới hạn số lần thử đồ trong tháng."
-                  : `Còn ${user.subscription?.usage?.remaining ?? 5}/5 lần thử đồ miễn phí trong tháng. Premium: ${formatMoney(userPremiumPlan?.amount || 49000)}.`}
+                  ? t("tryon.premiumUsage")
+                  : t("tryon.freeUsage", { remaining: user.subscription?.usage?.remaining ?? 5, amount: formatMoney(userPremiumPlan?.amount || 49000) })}
               </p>
             </div>
-            {!user.subscription?.isPremium ? (
-              <button type="button" className="dark-button rounded-lg" onClick={startPremiumCheckout}>
-                Nâng cấp {formatMoney(userPremiumPlan?.amount || 49000)}
-              </button>
-            ) : null}
+            {!user.subscription?.isPremium ? <Button onClick={startPremiumCheckout}>{t("app.upgrade", { amount: formatMoney(userPremiumPlan?.amount || 49000) })}</Button> : null}
           </section>
         ) : null}
 
-        <section className="mt-6 grid gap-5 lg:grid-cols-3">
-          <StudioPanel title="1. Original photo">
-            <div className="aspect-[4/5] overflow-hidden rounded-lg bg-panelSoft">
-              {modelPreview ? (
-                <img src={modelPreview} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">
-                  Use your saved profile photo or upload a new one.
-                </div>
-              )}
+        <section className="mt-6 grid gap-5 xl:grid-cols-3">
+          <StudioPanel eyebrow="01" title={t("tryon.originalPhoto")}>
+            <PreviewFrame image={modelPreview} empty={t("tryon.savedOrUpload")} />
+            <div className="mt-auto pt-4">
+              <input className="miroir-field" type="file" accept="image/*" onChange={onModelFile} />
+              <p className="mt-2 text-xs text-muted">
+                {user?.profile?.modelImageUrl ? t("tryon.savedOrUpload") : t("tryon.platformRequires")}
+              </p>
             </div>
-            <input className={`${fieldClass} mt-4`} type="file" accept="image/*" onChange={onModelFile} />
-            {user?.profile?.modelImageUrl ? (
-              <p className="mt-2 text-xs text-muted">Saved profile photo is ready if you do not upload a new one.</p>
-            ) : !user ? (
-              <p className="mt-2 text-xs text-muted">Login is optional for uploaded garments, but platform products require a user account.</p>
-            ) : null}
           </StudioPanel>
 
-          <StudioPanel title="2. Product / outfit">
-            <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-panelSoft p-1">
-              <button
-                type="button"
-                onClick={() => setGarmentSource("platform")}
-                className={`rounded-md py-2 text-sm font-semibold ${garmentSource === "platform" ? "bg-white text-ink shadow-sm" : "text-muted"}`}
-              >
-                Platform product
-              </button>
-              <button
-                type="button"
-                onClick={() => setGarmentSource("upload")}
-                className={`rounded-md py-2 text-sm font-semibold ${garmentSource === "upload" ? "bg-white text-ink shadow-sm" : "text-muted"}`}
-              >
-                Upload garment
-              </button>
-            </div>
-            <div className="aspect-[4/5] overflow-hidden rounded-lg bg-panelSoft">
-              {garmentSource === "platform" && product?.imageUrl ? (
-                <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
-              ) : garmentSource === "upload" && (dressPreview || upperPreview || lowerPreview) ? (
-                <div className="grid h-full grid-cols-2 gap-2 p-2">
-                  {dressPreview ? <img src={dressPreview} alt="" className="col-span-2 h-full w-full rounded-md object-cover" /> : null}
-                  {upperPreview ? <img src={upperPreview} alt="" className="h-full w-full rounded-md object-cover" /> : null}
-                  {lowerPreview ? <img src={lowerPreview} alt="" className="h-full w-full rounded-md object-cover" /> : null}
-                </div>
-              ) : (
-                <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">
-                  {garmentSource === "platform"
-                    ? "Choose a product from the marketplace."
-                    : "Upload your garment image here."}
-                </div>
-              )}
-            </div>
-            {garmentSource === "platform" && product ? (
-              <div className="mt-4">
-                <h2 className="font-bold">{product.name}</h2>
-                <p className="text-sm text-muted">
-                  {product.shop?.name || "Shop details for Premium"}
-                </p>
-                <p className="mt-1 font-semibold">{formatMoney(product.price)}</p>
+          <StudioPanel eyebrow="02" title={t("tryon.productOutfit")}>
+            <GarmentPreview product={product} dressPreview={dressPreview} upperPreview={upperPreview} lowerPreview={lowerPreview} />
+            {product && !dressFile && !upperFile && !lowerFile ? (
+              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
+                <h2 className="text-xl font-extrabold text-ink">{product.name}</h2>
+                <p className="text-sm text-muted">{product.shop?.name || t("product.detailsForPremium")}</p>
+                <p className="mt-1 font-bold text-rose">{formatMoney(product.price)}</p>
               </div>
             ) : null}
-            {garmentSource === "upload" ? (
-              <div className="mt-4 grid gap-3">
-                <select
-                  className={fieldClass}
-                  value={customTryOnType}
-                  onChange={(event) => setCustomTryOnType(event.target.value)}
-                >
+            <div className="mt-auto pt-4 border-t border-white/10">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">{t("tryon.uploadGarment")}</p>
+              <div className="grid gap-3">
+                <SelectField value={customTryOnType} onChange={(event) => setCustomTryOnType(event.target.value)}>
                   <option value="dress">Dress / one-piece</option>
                   <option value="upper_lower">Upper / lower</option>
-                </select>
+                </SelectField>
                 {customTryOnType === "dress" ? (
-                  <input
-                    className={fieldClass}
-                    type="file"
-                    accept="image/*"
-                    onChange={(event) => setGarmentFile("dress", event.target.files?.[0] || null)}
-                  />
+                  <input className="miroir-field" type="file" accept="image/*" onChange={(event) => setGarmentFile("dress", event.target.files?.[0] || null)} />
                 ) : (
                   <div className="grid gap-3 md:grid-cols-2">
-                    <input
-                      className={fieldClass}
-                      type="file"
-                      accept="image/*"
-                      onChange={(event) => setGarmentFile("upper", event.target.files?.[0] || null)}
-                    />
-                    <input
-                      className={fieldClass}
-                      type="file"
-                      accept="image/*"
-                      onChange={(event) => setGarmentFile("lower", event.target.files?.[0] || null)}
-                    />
+                    <input className="miroir-field" type="file" accept="image/*" onChange={(event) => setGarmentFile("upper", event.target.files?.[0] || null)} />
+                    <input className="miroir-field" type="file" accept="image/*" onChange={(event) => setGarmentFile("lower", event.target.files?.[0] || null)} />
                   </div>
                 )}
               </div>
-            ) : null}
-          </StudioPanel>
-
-          <StudioPanel title="3. Result">
-            <div className="aspect-[4/5] overflow-hidden rounded-lg bg-panelSoft">
-              {resultUrl ? (
-                <img src={resultUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">
-                  Your generated try-on result will appear here.
-                </div>
-              )}
             </div>
-            <button
-              className="dark-button mt-4 w-full rounded-lg"
-              disabled={status === "loading" || status === "processing"}
-              onClick={startTryOn}
-            >
-              {status === "loading" || status === "processing" ? "Generating..." : "Generate try-on"}
-            </button>
-            {message ? (
-              <p className={`mt-3 text-sm ${status === "error" ? "text-red-700" : "text-muted"}`}>
-                {message}
-              </p>
-            ) : null}
-            {paymentRequired ? (
-              <button type="button" className="dark-button mt-3 w-full rounded-lg" onClick={startPremiumCheckout}>
-                Nâng cấp Premium
-              </button>
-            ) : null}
-            {status === "completed" && resultUrl && product && completedTryOnProductId === product.id ? (
-              <form onSubmit={sendTryOnFeedback} className="mt-4 grid gap-3 rounded-lg border border-line/60 p-3">
-                <p className="text-sm font-bold">Rate this try-on product</p>
-                <select className={fieldClass} value={feedbackForm.rating} onChange={updateFeedback("rating")}>
-                  {[5, 4, 3, 2, 1].map((rating) => (
-                    <option key={rating} value={rating}>{rating} stars</option>
-                  ))}
-                </select>
-                <select className={fieldClass} value={feedbackForm.fitFeedback} onChange={updateFeedback("fitFeedback")}>
-                  <option value="true_to_size">True to size</option>
-                  <option value="runs_small">Runs small</option>
-                  <option value="runs_large">Runs large</option>
-                  <option value="not_sure">Not sure</option>
-                </select>
-                <textarea
-                  className={fieldClass}
-                  rows="3"
-                  placeholder="Feedback about this product"
-                  value={feedbackForm.comment}
-                  onChange={updateFeedback("comment")}
-                />
-                <button type="submit" className="soft-button rounded-lg">Submit feedback</button>
-                {feedbackNotice ? <p className="text-xs text-muted">{feedbackNotice}</p> : null}
-              </form>
-            ) : null}
+          </StudioPanel>
+
+          <StudioPanel eyebrow="03" title={t("tryon.result")}>
+            <PreviewFrame image={resultUrl} empty={t("tryon.resultEmpty")} />
+            <div className="mt-auto pt-4">
+              <Button className="w-full" disabled={status === "loading" || status === "processing"} onClick={startTryOn}>
+                {status === "loading" || status === "processing" ? t("tryon.generating") : t("tryon.generate")}
+              </Button>
+              {message ? <p className={`mt-3 text-sm ${status === "error" ? "text-red-100" : "text-muted"}`}>{message}</p> : null}
+              {paymentRequired ? <Button className="mt-3 w-full" onClick={startPremiumCheckout}>{t("app.upgradePremium")}</Button> : null}
+              {status === "completed" && resultUrl && product && completedTryOnProductId === product.id ? (
+                <form onSubmit={sendTryOnFeedback} className="mt-4 grid gap-3 rounded-lg border border-white/10 bg-white/7 p-3">
+                  <p className="text-sm font-bold text-ink">{t("product.feedback")}</p>
+                  <SelectField value={feedbackForm.rating} onChange={updateFeedback("rating")}>
+                    {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
+                  </SelectField>
+                  <SelectField value={feedbackForm.fitFeedback} onChange={updateFeedback("fitFeedback")}>
+                    <option value="true_to_size">True to size</option>
+                    <option value="runs_small">Runs small</option>
+                    <option value="runs_large">Runs large</option>
+                    <option value="not_sure">Not sure</option>
+                  </SelectField>
+                  <TextField as="textarea" rows="3" placeholder="Feedback about this product" value={feedbackForm.comment} onChange={updateFeedback("comment")} />
+                  <Button type="submit" variant="secondary">{t("common.submitFeedback")}</Button>
+                  {feedbackNotice ? <p className="text-xs text-muted">{feedbackNotice}</p> : null}
+                </form>
+              ) : null}
+            </div>
           </StudioPanel>
         </section>
 
-        {garmentSource === "platform" ? (
-        <section className="mt-10">
-          <h2 className="text-xl font-bold">Related products</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {relatedProducts.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => loadProduct(item.id)}
-                className="overflow-hidden rounded-lg border border-line/60 bg-white text-left shadow-sm"
-              >
-                <div className="aspect-[4/5] bg-panelSoft">
-                  {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-cover" /> : null}
-                </div>
-                <div className="p-3">
-                  <p className="font-semibold">{item.name}</p>
-                  <p className="text-sm text-muted">{formatMoney(item.price)}</p>
-                </div>
-              </button>
-            ))}
-            {!relatedProducts.length ? (
-              <div className="rounded-lg border border-line/60 bg-white p-6 text-sm text-muted">
-                No related products yet.
+        {relatedProducts.length > 0 ? (
+          <section className="mt-10">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose">{t("tryon.continue")}</p>
+                <h2 className="mt-2 text-2xl font-extrabold text-ink">{t("tryon.related")}</h2>
               </div>
-            ) : null}
-          </div>
-        </section>
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {relatedProducts.map((item) => <ProductCard key={item.id} product={item} onDetail={() => loadProduct(item.id)} onTryOn={() => loadProduct(item.id)} />)}
+            </div>
+          </section>
         ) : null}
       </main>
-    </div>
+    </AppShell>
   );
 }
 
-function StudioPanel({ children, title }) {
+function StudioPanel({ children, eyebrow, title }) {
   return (
-    <section className="rounded-lg border border-line/60 bg-white/90 p-4 shadow-sm">
-      <h2 className="mb-4 font-bold">{title}</h2>
-      {children}
+    <section className="glass-panel p-5 flex flex-col h-full">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-rose">{eyebrow}</p>
+      <h2 className="mb-4 mt-1 text-xl font-extrabold text-ink">{title}</h2>
+      <div className="flex-1 flex flex-col">
+        {children}
+      </div>
     </section>
   );
 }
 
-const formatMoney = (value) =>
-  new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0));
+function PreviewFrame({ empty, image }) {
+  return (
+    <div className="aspect-[4/5] overflow-hidden rounded-lg border border-white/10 bg-white/5">
+      {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">{empty}</div>}
+    </div>
+  );
+}
+
+function GarmentPreview({ dressPreview, lowerPreview, product, upperPreview }) {
+  const { t } = useLanguage();
+
+  if (dressPreview || upperPreview || lowerPreview) {
+    return (
+      <div className="aspect-[4/5] overflow-hidden rounded-lg border border-white/10 bg-white/5">
+        <div className="grid h-full grid-cols-2 gap-2 p-2">
+          {dressPreview ? <img src={dressPreview} alt="" className="col-span-2 h-full w-full rounded-lg object-cover" /> : null}
+          {upperPreview ? <img src={upperPreview} alt="" className="h-full w-full rounded-lg object-cover" /> : null}
+          {lowerPreview ? <img src={lowerPreview} alt="" className="h-full w-full rounded-lg object-cover" /> : null}
+        </div>
+      </div>
+    );
+  }
+  if (product?.imageUrl) return <PreviewFrame image={product.imageUrl} empty="" />;
+  return <PreviewFrame empty={t("tryon.chooseProduct") + " / " + t("tryon.uploadGarment")} />;
+}
 
 export default TryOnStudioPage;

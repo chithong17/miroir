@@ -33,6 +33,7 @@ const shopDefaults = {
   coverUrl: "",
   contactEmail: "",
   contactPhone: "",
+  contactAddress: "",
 };
 
 const productDefaults = {
@@ -55,7 +56,7 @@ const productDefaults = {
 };
 
 const fieldClass =
-  "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#67558c] focus:ring-2 focus:ring-[#67558c]/10";
+  "w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-ink outline-none transition focus:border-tertiarySoft focus:ring-2 focus:ring-tertiarySoft/15";
 const buttonClass =
   "inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -73,6 +74,7 @@ const shopToForm = (shop) => ({
   ownerId: shop.ownerId || "",
   contactEmail: shop.contact?.email || "",
   contactPhone: shop.contact?.phone || "",
+  contactAddress: shop.contact?.address || "",
 });
 
 const productToForm = (product) => ({
@@ -296,6 +298,7 @@ function AdminDashboardPage() {
       contact: {
         email: shopForm.contactEmail,
         phone: shopForm.contactPhone,
+        address: shopForm.contactAddress,
       },
     };
 
@@ -420,20 +423,20 @@ function AdminDashboardPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-sm text-slate-600">Loading admin dashboard...</div>;
+    return <div className="p-8 text-sm text-muted">Loading admin dashboard...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f7f9] text-slate-950">
+    <main className="min-h-screen bg-canvasDeep text-ink">
       <div className="grid min-h-screen lg:grid-cols-[248px_1fr]">
-        <aside className="border-r border-slate-200 bg-white px-4 py-5">
+        <aside className="border-r border-white/10 bg-white/5 px-4 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-950 text-sm font-bold text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-tertiarySoft text-sm font-bold text-canvas">
               MA
             </div>
             <div>
               <div className="font-extrabold">MIROIR Admin</div>
-              <p className="text-xs text-slate-500">{admin?.email}</p>
+              <p className="text-xs text-muted">{admin?.email}</p>
             </div>
           </div>
 
@@ -449,8 +452,8 @@ function AdminDashboardPage() {
             </NavButton>
 
             {selectedShop ? (
-              <div className="mt-4 grid gap-1 border-t border-slate-200 pt-4">
-                <p className="px-3 text-xs font-semibold uppercase text-slate-400">
+              <div className="mt-4 grid gap-1 border-t border-white/10 pt-4">
+                <p className="px-3 text-xs font-semibold uppercase text-muted">
                   {selectedShop.name}
                 </p>
                 <NavButton active={view === "products"} icon="package" onClick={() => setView("products")}>
@@ -472,7 +475,7 @@ function AdminDashboardPage() {
           <button
             type="button"
             onClick={logout}
-            className="mt-8 w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="mt-8 w-full rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-ink hover:bg-white/7"
           >
             Logout
           </button>
@@ -536,13 +539,13 @@ function AdminDashboardPage() {
 
           {selectedShop && view === "profile" ? (
             <section className="mt-6 max-w-3xl">
-              <div className="rounded-md border border-slate-200 bg-white p-4">
+              <div className="rounded-md border border-white/10 bg-white/5 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="font-bold">{selectedShop.name}</h2>
-                    <p className="text-sm text-slate-500">{selectedShop.slug}</p>
+                    <p className="text-sm text-muted">{selectedShop.slug}</p>
                   </div>
-                  <button type="button" onClick={() => openEditShop(selectedShop)} className={`${buttonClass} bg-slate-950 text-white`}>
+                  <button type="button" onClick={() => openEditShop(selectedShop)} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
                     <Icon name="edit" />
                     Edit shop
                   </button>
@@ -627,14 +630,14 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
               type="button"
               onClick={backToShops}
               title="Back to shops"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/5 text-ink hover:bg-white/7"
             >
               <Icon name="back" />
             </button>
           ) : null}
           <div>
             <h1 className="text-2xl font-bold">{title}</h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted">
               {selectedShop
                 ? `${selectedShop.name} - ${selectedShop.owner?.email || "No owner assigned"}`
                 : "Select a shop before managing products, trash, profile, or Excel imports."}
@@ -645,7 +648,7 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
       <button
         type="button"
         onClick={refreshAll}
-        className={`${buttonClass} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
+        className={`${buttonClass} border border-white/10 bg-white/5 text-ink hover:bg-white/7`}
       >
         <Icon name="refresh" />
         Refresh
@@ -656,8 +659,8 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
 
 function OwnersView({ owners, ownerAction, ownerStatus, setOwnerStatus }) {
   return (
-    <section className="mt-6 rounded-md border border-slate-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
+    <section className="mt-6 rounded-md border border-white/10 bg-white/5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-4">
         <h2 className="font-bold">Shop owner accounts</h2>
         <select
           className={`${fieldClass} max-w-48`}
@@ -673,13 +676,13 @@ function OwnersView({ owners, ownerAction, ownerStatus, setOwnerStatus }) {
       </div>
       <Table headers={["Name", "Email", "Status", "Created", "Actions"]}>
         {owners.map((owner) => (
-          <tr key={owner.id} className="border-t border-slate-100 hover:bg-slate-50/70">
+          <tr key={owner.id} className="border-t border-white/10/60 hover:bg-white/7/70">
             <td className="px-4 py-3 font-medium">{owner.name}</td>
-            <td className="px-4 py-3 text-slate-600">{owner.email}</td>
+            <td className="px-4 py-3 text-muted">{owner.email}</td>
             <td className="px-4 py-3">
               <StatusBadge status={owner.status} />
             </td>
-            <td className="px-4 py-3 text-slate-500">{formatDate(owner.createdAt)}</td>
+            <td className="px-4 py-3 text-muted">{formatDate(owner.createdAt)}</td>
             <td className="px-4 py-3">
               <div className="flex flex-wrap gap-2">
                 <ActionButton title="Approve" onClick={() => ownerAction(owner.id, "approve")} icon="check" />
@@ -703,12 +706,12 @@ function PaymentPlansView({
   return (
     <section className="mt-6 grid gap-4">
       {paymentPlans.map((plan) => (
-        <article key={plan.code} className="rounded-md border border-slate-200 bg-white p-4">
+        <article key={plan.code} className="rounded-md border border-white/10 bg-white/5 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-bold">{plan.name}</h2>
-              <p className="mt-1 text-xs font-semibold uppercase text-slate-400">{plan.code}</p>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-xs font-semibold uppercase text-muted">{plan.code}</p>
+              <p className="mt-1 text-sm text-muted">
                 Default: {formatMoney(plan.defaultAmount)} / {plan.defaultDurationDays} days
               </p>
             </div>
@@ -716,7 +719,7 @@ function PaymentPlansView({
               type="button"
               disabled={savingPlanCode === plan.code}
               onClick={() => savePaymentPlan(plan)}
-              className={`${buttonClass} bg-slate-950 text-white`}
+              className={`${buttonClass} bg-tertiarySoft text-canvas`}
             >
               <Icon name="check" />
               {savingPlanCode === plan.code ? "Saving..." : "Save plan"}
@@ -759,7 +762,7 @@ function PaymentPlansView({
               />
             </Field>
             <label className="grid gap-1 md:col-span-2">
-              <span className="text-xs font-semibold uppercase text-slate-500">Features, one per line</span>
+              <span className="text-xs font-semibold uppercase text-muted">Features, one per line</span>
               <textarea
                 className={fieldClass}
                 rows="4"
@@ -771,7 +774,7 @@ function PaymentPlansView({
         </article>
       ))}
       {!paymentPlans.length ? (
-        <div className="rounded-md border border-slate-200 bg-white p-6 text-sm text-slate-500">
+        <div className="rounded-md border border-white/10 bg-white/5 p-6 text-sm text-muted">
           No payment plans found.
         </div>
       ) : null}
@@ -793,18 +796,18 @@ function ShopsView({
 }) {
   return (
     <section className="mt-6">
-      <div className="rounded-md border border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
+      <div className="rounded-md border border-white/10 bg-white/5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-4">
           <div>
             <h2 className="font-bold">Shops</h2>
-            <p className="text-sm text-slate-500">{shops.length} shops loaded</p>
+            <p className="text-sm text-muted">{shops.length} shops loaded</p>
           </div>
-          <button type="button" onClick={openNewShop} className={`${buttonClass} bg-slate-950 text-white`}>
+          <button type="button" onClick={openNewShop} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
             <Icon name="plus" />
             New shop
           </button>
         </div>
-        <div className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-[1fr_160px_auto]">
+        <div className="grid gap-3 border-b border-white/10 p-4 md:grid-cols-[1fr_160px_auto]">
           <input
             className={fieldClass}
             placeholder="Search shops"
@@ -816,21 +819,21 @@ function ShopsView({
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <button type="button" onClick={reloadShops} className={`${buttonClass} bg-slate-950 text-white`}>
+          <button type="button" onClick={reloadShops} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
             <Icon name="search" />
             Search
           </button>
         </div>
         <Table headers={["Shop", "Owner", "Status", "Products", "Actions"]}>
           {shops.map((shop) => (
-            <tr key={shop.id} className="border-t border-slate-100 hover:bg-slate-50/70">
+            <tr key={shop.id} className="border-t border-white/10/60 hover:bg-white/7/70">
               <td className="px-4 py-3">
                 <button type="button" className="text-left" onClick={() => openShop(shop)}>
-                  <p className="font-semibold text-slate-950">{shop.name}</p>
-                  <p className="text-xs text-slate-500">{shop.slug}</p>
+                  <p className="font-semibold text-ink">{shop.name}</p>
+                  <p className="text-xs text-muted">{shop.slug}</p>
                 </button>
               </td>
-              <td className="px-4 py-3 text-sm text-slate-600">{shop.owner?.email || "No owner"}</td>
+              <td className="px-4 py-3 text-sm text-muted">{shop.owner?.email || "No owner"}</td>
               <td className="px-4 py-3">
                 <StatusBadge status={shop.status} />
               </td>
@@ -852,9 +855,9 @@ function ShopsView({
 
 function ShopModal({ children, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-tertiarySoft/45 p-4" onMouseDown={onClose}>
       <div
-        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white shadow-2xl"
+        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white/5 shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         {children}
@@ -871,7 +874,7 @@ function ShopForm({ activeOwners, onClose, saveShop, setShopForm, shopForm, upda
         <button
           type="button"
           title="Close"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 text-muted hover:bg-white/7"
           onClick={() => {
             setShopForm(shopDefaults);
             onClose?.();
@@ -918,7 +921,10 @@ function ShopForm({ activeOwners, onClose, saveShop, setShopForm, shopForm, upda
         <Field label="Contact phone">
           <input className={fieldClass} value={shopForm.contactPhone} onChange={updateShopField("contactPhone")} />
         </Field>
-        <button className={`${buttonClass} bg-slate-950 text-white`} type="submit">
+        <Field label="Contact address">
+          <input className={fieldClass} value={shopForm.contactAddress} onChange={updateShopField("contactAddress")} />
+        </Field>
+        <button className={`${buttonClass} bg-tertiarySoft text-canvas`} type="submit">
           Save shop
         </button>
       </div>
@@ -948,22 +954,22 @@ function ProductsView({
 
   return (
     <section className="mt-6">
-      <div className="rounded-md border border-slate-200 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
+      <div className="rounded-md border border-white/10 bg-white/5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-4">
           <div>
             <h2 className="font-bold">{isTrash ? "Trashed products" : "Product catalogue"}</h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted">
               {products.length} shown from {rawProductCount} products in {selectedShop.name}
             </p>
           </div>
           {!isTrash ? (
-            <button type="button" onClick={openNewProduct} className={`${buttonClass} bg-slate-950 text-white`}>
+            <button type="button" onClick={openNewProduct} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
               <Icon name="plus" />
               New product
             </button>
           ) : null}
         </div>
-        <div className="grid gap-3 border-b border-slate-200 p-4 lg:grid-cols-[1fr_150px_140px_auto]">
+        <div className="grid gap-3 border-b border-white/10 p-4 lg:grid-cols-[1fr_150px_140px_auto]">
           <input
             className={fieldClass}
             placeholder="Search products"
@@ -981,7 +987,7 @@ function ProductsView({
             <option value="archived">Archived</option>
             <option value="trashed">Trashed</option>
           </select>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-sm text-muted">
             <input
               type="checkbox"
               checked={productFilters.missingOnly}
@@ -989,28 +995,28 @@ function ProductsView({
             />
             Missing only
           </label>
-          <button type="button" onClick={() => loadProducts()} className={`${buttonClass} bg-slate-950 text-white`}>
+          <button type="button" onClick={() => loadProducts()} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
             <Icon name="search" />
             Filter
           </button>
         </div>
         <Table headers={["Product", "Category", "Price", "Status", "Availability", "Actions"]}>
           {products.map((product) => (
-            <tr key={product.id} className="border-t border-slate-100 hover:bg-slate-50/70">
+            <tr key={product.id} className="border-t border-white/10/60 hover:bg-white/7/70">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 overflow-hidden rounded-md bg-slate-100">
+                  <div className="h-12 w-12 overflow-hidden rounded-md bg-canvasDeep">
                     {product.imageUrl ? (
                       <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
                     ) : null}
                   </div>
                   <div>
                     <p className="font-medium">{product.name}</p>
-                    <p className="text-xs text-slate-500">{product.id}</p>
+                    <p className="text-xs text-muted">{product.id}</p>
                   </div>
                 </div>
               </td>
-              <td className="px-4 py-3 text-slate-600">{product.category || "-"}</td>
+              <td className="px-4 py-3 text-muted">{product.category || "-"}</td>
               <td className="px-4 py-3">{formatMoney(product.price)}</td>
               <td className="px-4 py-3">
                 <StatusBadge status={product.status} />
@@ -1052,9 +1058,9 @@ function ProductsView({
 
 function ProductModal({ children, onClose }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-tertiarySoft/45 p-4" onMouseDown={onClose}>
       <div
-        className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-md bg-white shadow-2xl"
+        className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-md bg-white/5 shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         {children}
@@ -1069,12 +1075,12 @@ function ProductForm({ onClose, productForm, saveProduct, selectedShop, setProdu
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="font-bold">{productForm.id ? "Edit product" : "Create product"}</h2>
-          <p className="text-xs text-slate-500">{selectedShop?.name || "Select a shop"}</p>
+          <p className="text-xs text-muted">{selectedShop?.name || "Select a shop"}</p>
         </div>
         <button
           type="button"
           title="Close"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 text-muted hover:bg-white/7"
           onClick={() => {
             setProductForm(productDefaults);
             onClose?.();
@@ -1142,10 +1148,10 @@ function ProductForm({ onClose, productForm, saveProduct, selectedShop, setProdu
           <input className={fieldClass} value={productForm.imagePublicId} onChange={updateProductField("imagePublicId")} />
         </Field>
         <label className="grid gap-1 md:col-span-2">
-          <span className="text-xs font-semibold uppercase text-slate-500">Description</span>
+          <span className="text-xs font-semibold uppercase text-muted">Description</span>
           <textarea className={fieldClass} rows="4" value={productForm.description} onChange={updateProductField("description")} />
         </label>
-        <button className={`${buttonClass} bg-slate-950 text-white md:col-span-2`} type="submit">
+        <button className={`${buttonClass} bg-tertiarySoft text-canvas md:col-span-2`} type="submit">
           Save product
         </button>
       </div>
@@ -1156,15 +1162,15 @@ function ProductForm({ onClose, productForm, saveProduct, selectedShop, setProdu
 function ExcelView({ downloadProducts, importResult, products, selectedShop, uploadProducts }) {
   return (
     <section className="mt-6 grid gap-5 xl:grid-cols-[400px_1fr]">
-      <div className="rounded-md border border-slate-200 bg-white p-4">
+      <div className="rounded-md border border-white/10 bg-white/5 p-4">
         <h2 className="font-bold">Product Excel</h2>
-        <p className="mt-1 text-sm text-slate-500">{selectedShop.name}</p>
+        <p className="mt-1 text-sm text-muted">{selectedShop.name}</p>
         <div className="mt-4 grid gap-3">
-          <button type="button" onClick={() => downloadProducts("all")} className={`${buttonClass} bg-slate-950 text-white`}>
+          <button type="button" onClick={() => downloadProducts("all")} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
             <Icon name="download" />
             Download all products
           </button>
-          <button type="button" onClick={() => downloadProducts("missing")} className={`${buttonClass} border border-slate-300 bg-white`}>
+          <button type="button" onClick={() => downloadProducts("missing")} className={`${buttonClass} border border-white/10 bg-white/5`}>
             <Icon name="download" />
             Download missing fields
           </button>
@@ -1172,7 +1178,7 @@ function ExcelView({ downloadProducts, importResult, products, selectedShop, upl
         </div>
       </div>
 
-      <div className="rounded-md border border-slate-200 bg-white p-4">
+      <div className="rounded-md border border-white/10 bg-white/5 p-4">
         <h2 className="font-bold">Import result</h2>
         {importResult ? (
           <div className="mt-4">
@@ -1193,7 +1199,7 @@ function ExcelView({ downloadProducts, importResult, products, selectedShop, upl
             ) : null}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-slate-500">{products.length} products loaded for this shop.</p>
+          <p className="mt-4 text-sm text-muted">{products.length} products loaded for this shop.</p>
         )}
       </div>
     </section>
@@ -1206,7 +1212,7 @@ function NavButton({ active, children, icon, onClick }) {
       type="button"
       onClick={onClick}
       className={`inline-flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold ${
-        active ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"
+        active ? "bg-tertiarySoft text-canvas" : "text-muted hover:bg-canvasDeep"
       }`}
     >
       <Icon name={icon} />
@@ -1218,7 +1224,7 @@ function NavButton({ active, children, icon, onClick }) {
 function Field({ children, label }) {
   return (
     <label className="grid gap-1">
-      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <span className="text-xs font-semibold uppercase text-muted">{label}</span>
       {children}
     </label>
   );
@@ -1229,7 +1235,7 @@ function Table({ children, headers }) {
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-sm">
         <thead>
-          <tr className="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr className="bg-white/7 text-xs uppercase text-muted">
             {headers.map((header) => (
               <th key={header} className="px-4 py-3 font-semibold">
                 {header}
@@ -1250,7 +1256,7 @@ function ActionButton({ icon, onClick, title }) {
       title={title}
       aria-label={title}
       onClick={onClick}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/5 text-ink hover:bg-white/7"
     >
       <Icon name={icon} />
     </button>
@@ -1259,8 +1265,8 @@ function ActionButton({ icon, onClick, title }) {
 
 function Metric({ label, value }) {
   return (
-    <div className="rounded-md bg-slate-50 p-3">
-      <p className="text-xs uppercase text-slate-500">{label}</p>
+    <div className="rounded-md bg-white/7 p-3">
+      <p className="text-xs uppercase text-muted">{label}</p>
       <p className="mt-1 font-bold">{value}</p>
     </div>
   );
@@ -1272,12 +1278,12 @@ function StatusBadge({ status }) {
       active: "bg-emerald-50 text-emerald-700 ring-emerald-200",
       published: "bg-emerald-50 text-emerald-700 ring-emerald-200",
       pending: "bg-amber-50 text-amber-700 ring-amber-200",
-      draft: "bg-slate-100 text-slate-700 ring-slate-200",
-      archived: "bg-slate-100 text-slate-600 ring-slate-200",
+      draft: "bg-canvasDeep text-ink ring-slate-200",
+      archived: "bg-canvasDeep text-muted ring-slate-200",
       trashed: "bg-red-50 text-red-700 ring-red-200",
-      inactive: "bg-slate-100 text-slate-600 ring-slate-200",
+      inactive: "bg-canvasDeep text-muted ring-slate-200",
       rejected: "bg-red-50 text-red-700 ring-red-200",
-    }[status] || "bg-slate-100 text-slate-700 ring-slate-200";
+    }[status] || "bg-canvasDeep text-ink ring-slate-200";
 
   return (
     <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1 ${tone}`}>

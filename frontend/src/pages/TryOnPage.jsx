@@ -280,7 +280,7 @@ function TryOnPage() {
                 Use a clear full-body image for best results.
               </p>
 
-              <label className="group relative flex flex-grow cursor-pointer overflow-hidden rounded-[1.5rem] border border-line/50 bg-panelSoft">
+              <label className="group relative flex flex-grow cursor-pointer overflow-hidden rounded-[1.5rem] border border-white/10/50 bg-panelSoft">
                 <img
                   alt="User silhouette preview"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -338,7 +338,7 @@ function TryOnPage() {
               </p>
 
               <div className="flex flex-grow flex-col gap-4">
-                <label className="group relative flex flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border border-line/50 bg-white p-4">
+                <label className="group relative flex flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10/50 bg-white p-4">
                   {currentGarmentPreview ? (
                     <img
                       alt="Garment preview"
@@ -364,7 +364,7 @@ function TryOnPage() {
                 </label>
 
                 {tryOnType === "upper_lower" ? (
-                  <label className="group relative flex h-40 cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border border-line/50 bg-white p-4">
+                  <label className="group relative flex h-40 cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10/50 bg-white p-4">
                     {previews.lowerImage ? (
                       <img
                         alt="Lower garment preview"
@@ -398,7 +398,7 @@ function TryOnPage() {
               </div>
 
               {taskId ? (
-                <div className="mt-4 rounded-[1.5rem] border border-line/50 bg-white/70 px-4 py-3">
+                <div className="mt-4 rounded-[1.5rem] border border-white/10/50 bg-white/70 px-4 py-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted">
                     Current task
                   </p>
@@ -427,7 +427,7 @@ function TryOnPage() {
                   <img
                     src={resultUrl}
                     alt="Try-on result"
-                    className="max-h-full rounded-[1.5rem] object-contain shadow-glow"
+                    className="max-h-full rounded-[1.5rem] object-contain shadow-glass"
                   />
                 ) : (
                   <>
@@ -497,7 +497,7 @@ function TryOnPage() {
         </div>
       </main>
 
-      <footer className="w-full border-t border-line/30 bg-white px-5 py-12 md:px-16">
+      <footer className="w-full border-t border-white/10/30 bg-white px-5 py-12 md:px-16">
         <div className="section-shell flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="text-2xl font-bold text-ink">MIROIR</div>
           <div className="flex gap-6 text-sm text-muted">

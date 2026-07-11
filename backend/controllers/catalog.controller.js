@@ -6,7 +6,6 @@ import {
 } from "../services/catalog.service.js";
 import { submitProductFeedback as submitProductFeedbackService } from "../services/productFeedback.service.js";
 import { trackShopEvent } from "../services/shopAnalytics.service.js";
-import { PLAN_CODES } from "../services/subscription.service.js";
 
 export const listProducts = async (req, res, next) => {
   try {
@@ -30,16 +29,9 @@ export const listOutfits = async (req, res, next) => {
 
 export const getShop = async (req, res, next) => {
   try {
-    if (!req.user?.subscription?.isPremium) {
-      return res.status(403).json({
-        success: false,
-        message: "MIROIR Premium is required to view shop details.",
-        subscriptionRequired: true,
-        planCode: PLAN_CODES.USER_PREMIUM_MONTHLY,
-      });
-    }
-
-    const shop = await getCatalogShop(req.params.shopId);
+    const shop = await getCatalogShop(req.params.shopId, {
+      viewerIsPremium: Boolean(req.user?.subscription?.isPremium),
+    });
     return res.json({ success: true, shop });
   } catch (error) {
     next(error);
@@ -74,7 +66,11 @@ export const getProduct = async (req, res, next) => {
               description: shop.description || "",
               logoUrl: shop.logoUrl || "",
               coverUrl: shop.coverUrl || "",
-              contact: shop.contact || {},
+              contact: {
+                address: shop.contact?.address || "",
+                email: shop.contact?.email || "",
+                phone: shop.contact?.phone || "",
+              },
             }
           : null,
         premiumShopDetailsRequired: !viewerIsPremium,

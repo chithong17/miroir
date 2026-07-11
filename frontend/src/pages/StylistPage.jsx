@@ -25,7 +25,7 @@ const initialForm = {
 const feedbackTypes = ["liked", "disliked", "tried_on", "purchased", "returned"];
 
 const inputClass =
-  "w-full rounded-lg border border-line/70 bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-tertiary";
+  "w-full rounded-lg border border-white/10 bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-tertiary";
 
 const labelClass = "text-xs font-semibold uppercase tracking-[0.12em] text-muted";
 
@@ -191,13 +191,13 @@ function StylistPage() {
             <button
               type="button"
               onClick={() => setShowProfile((value) => !value)}
-              className="rounded-lg border border-line/70 bg-white px-4 py-2 text-left text-sm font-semibold text-ink transition hover:border-tertiary"
+              className="rounded-lg border border-white/10 bg-white px-4 py-2 text-left text-sm font-semibold text-ink transition hover:border-tertiary"
             >
               {showProfile ? "Hide optional profile" : "Show optional profile"}
             </button>
 
             {showProfile ? (
-              <div className="grid gap-4 rounded-lg border border-line/70 bg-white p-4">
+              <div className="grid gap-4 rounded-lg border border-white/10 bg-white p-4">
                 <div className="grid grid-cols-2 gap-3">
                   <label className="grid gap-2">
                     <span className={labelClass}>Gender</span>
@@ -284,22 +284,22 @@ function StylistPage() {
             {status === "success" && result ? (
               <div className="space-y-6">
                 {result.noMatch ? (
-                  <div className="rounded-lg border border-line/70 bg-white p-4">
+                  <div className="rounded-lg border border-white/10 bg-white p-4">
                     <h2 className="text-xl font-semibold text-ink">No match found</h2>
                     <p className="mt-2 text-sm text-muted">{result.message}</p>
                   </div>
                 ) : (
                   <>
                     <div className="grid gap-4 md:grid-cols-3">
-                      <div className="rounded-lg border border-line/70 bg-white p-4">
+                      <div className="rounded-lg border border-white/10 bg-white p-4">
                         <p className={labelClass}>Outfits</p>
                         <p className="mt-2 text-sm text-ink">{outfits.length}</p>
                       </div>
-                      <div className="rounded-lg border border-line/70 bg-white p-4">
+                      <div className="rounded-lg border border-white/10 bg-white p-4">
                         <p className={labelClass}>Products</p>
                         <p className="mt-2 text-sm text-ink">{result.retrieval?.productCount || 0}</p>
                       </div>
-                      <div className="rounded-lg border border-line/70 bg-white p-4">
+                      <div className="rounded-lg border border-white/10 bg-white p-4">
                         <p className={labelClass}>Match</p>
                         <p className="mt-2 text-sm text-ink">{result.analysis?.styleMatch || "Prompt based"}</p>
                       </div>
@@ -316,7 +316,7 @@ function StylistPage() {
 
                     <div className="space-y-6">
                       {outfits.map((outfit, index) => (
-                        <article key={outfit.id || index} className="rounded-lg border border-line/70 bg-white p-4">
+                        <article key={outfit.id || index} className="rounded-lg border border-white/10 bg-white p-4">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <p className={labelClass}>Outfit {index + 1}</p>
@@ -334,7 +334,7 @@ function StylistPage() {
 
                           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                             {(outfit.items || []).map((item) => (
-                              <div key={item.product.id} className="rounded-lg border border-line/70 bg-panelSoft p-3">
+                              <div key={item.product.id} className="rounded-lg border border-white/10 bg-panelSoft p-3">
                                 <div className="aspect-[4/5] overflow-hidden rounded-lg bg-white">
                                   {item.product.imageUrl ? (
                                     <img
@@ -349,7 +349,7 @@ function StylistPage() {
                                   {item.product.category} - {Number(item.product.price || 0).toLocaleString()} VND
                                 </p>
                                 {item.product.shop?.name ? (
-                                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-tertiary">
+                                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-roseDeep">
                                     {item.product.shop.name}
                                   </p>
                                 ) : null}
@@ -359,7 +359,7 @@ function StylistPage() {
                           </div>
 
                           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                            <div className="rounded-lg border border-line/70 bg-panelSoft p-4">
+                            <div className="rounded-lg border border-white/10 bg-panelSoft p-4">
                               <h3 className="font-semibold text-ink">Fit Warnings</h3>
                               <ul className="mt-3 space-y-2 text-sm text-muted">
                                 {(outfit.fitWarnings || []).map((item) => (
@@ -368,7 +368,7 @@ function StylistPage() {
                                 {!outfit.fitWarnings?.length ? <li>No major fit warnings.</li> : null}
                               </ul>
                             </div>
-                            <div className="rounded-lg border border-line/70 bg-panelSoft p-4">
+                            <div className="rounded-lg border border-white/10 bg-panelSoft p-4">
                               <h3 className="font-semibold text-ink">Fashion Tips</h3>
                               <ul className="mt-3 space-y-2 text-sm text-muted">
                                 {(outfit.fashionTips || []).map((item) => (
@@ -384,7 +384,7 @@ function StylistPage() {
                                 key={eventType}
                                 type="button"
                                 onClick={() => handleFeedback(outfit, eventType)}
-                                className="rounded-lg border border-line/70 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:border-tertiary"
+                                className="rounded-lg border border-white/10 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:border-tertiary"
                               >
                                 {eventType.replace("_", " ")}
                               </button>

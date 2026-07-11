@@ -1,6 +1,6 @@
 const statusStyles = {
-  pending: "border-line/70 bg-panelSoft text-muted",
-  processing: "border-tertiarySoft/50 bg-tertiarySoft/15 text-tertiary",
+  pending: "border-line/70 bg-white/8 text-muted",
+  processing: "border-tertiarySoft/50 bg-tertiarySoft/15 text-tertiarySoft",
   completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
   failed: "border-red-200 bg-red-50 text-red-700",
 };
@@ -28,7 +28,7 @@ function ResultViewer({ status, resultUrl, errorMessage, isPolling }) {
         </span>
       </div>
 
-      <div className="mt-6 flex min-h-[360px] items-center justify-center overflow-hidden rounded-[2rem] border border-line/60 bg-panelSoft/70 p-4">
+      <div className="mt-6 flex min-h-[360px] items-center justify-center overflow-hidden rounded-lg border border-line/60 bg-white/8 p-4">
         {resultUrl ? (
           <img
             src={resultUrl}
@@ -37,7 +37,7 @@ function ResultViewer({ status, resultUrl, errorMessage, isPolling }) {
           />
         ) : (
           <div className="max-w-md text-center">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full border border-line/60 bg-white" />
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full border border-line/60 bg-white/10" />
             <p className="text-lg font-medium text-ink">
               {resolvedStatus === "failed"
                 ? "We could not generate the try-on image."

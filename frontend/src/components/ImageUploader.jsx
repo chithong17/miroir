@@ -15,12 +15,12 @@ function ImageUploader({
           </p>
           <p className="mt-1 text-xs text-muted">{hint}</p>
         </div>
-        <span className="rounded-full border border-line/70 bg-panelSoft px-3 py-1 text-xs text-muted">
+        <span className="rounded-full border border-line/70 bg-white/8 px-3 py-1 text-xs text-muted">
           Image
         </span>
       </div>
 
-      <div className="flex min-h-56 items-center justify-center overflow-hidden rounded-[1.5rem] border border-dashed border-line/80 bg-panelSoft">
+      <div className="flex min-h-56 items-center justify-center overflow-hidden rounded-lg border border-dashed border-line/80 bg-white/8">
         {previewUrl ? (
           <img
             src={previewUrl}
@@ -36,7 +36,7 @@ function ImageUploader({
 
       <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted">
         <span>{file?.name || "No file selected yet"}</span>
-        <span className="font-semibold text-tertiary">Choose file</span>
+        <span className="font-semibold text-tertiarySoft">Choose file</span>
       </div>
 
       <input

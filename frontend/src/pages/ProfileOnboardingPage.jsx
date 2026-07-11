@@ -1,14 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  getUserMe,
-  saveUserProfile,
-  setUserToken,
-  skipUserProfile,
-  uploadUserProfilePhoto,
-} from "../api/userApi.js";
-import { UnifiedNav } from "./AuthPage.jsx";
+import { getUserMe, saveUserProfile, setUserToken, skipUserProfile, uploadUserProfilePhoto } from "../api/userApi.js";
+import { AppShell, Button, PageHeader, TextField, TopNav } from "../components/ui/index.jsx";
+import { useLanguage } from "../i18n.jsx";
 
-const fieldClass = "w-full rounded-lg border border-line/70 bg-white px-3 py-2 text-sm outline-none focus:border-tertiary";
 const emptyProfile = {
   gender: "",
   height: "",
@@ -23,6 +17,7 @@ const emptyProfile = {
 };
 
 function ProfileOnboardingPage() {
+  const { t } = useLanguage();
   const [user, setUser] = useState(null);
   const [form, setForm] = useState(emptyProfile);
   const [message, setMessage] = useState("");
@@ -47,7 +42,7 @@ function ProfileOnboardingPage() {
       window.location.href = "/app";
     } catch (error) {
       setStatus("error");
-      setMessage(error.response?.data?.message || "Could not save profile.");
+      setMessage(error.response?.data?.message || t("onboarding.saveError"));
     }
   };
 
@@ -65,50 +60,63 @@ function ProfileOnboardingPage() {
       const response = await getUserMe();
       setUser(response.user);
       setStatus("idle");
-      setMessage("Profile photo saved.");
+      setMessage(t("onboarding.photoSaved"));
     } catch (error) {
       setStatus("error");
-      setMessage(error.response?.data?.message || "Could not upload photo.");
+      setMessage(error.response?.data?.message || t("onboarding.photoError"));
     }
   };
 
   return (
-    <div className="min-h-screen bg-hero">
-      <UnifiedNav user={user} onLogout={() => { setUserToken(""); window.location.href = "/"; }} />
+    <AppShell nav={<TopNav user={user} onLogout={() => { setUserToken(""); window.location.href = "/"; }} />}>
       <main className="section-shell py-10">
-        <form onSubmit={save} className="glass-panel mx-auto max-w-3xl p-6">
-          <h1 className="editorial-title text-3xl font-bold">Complete your fitting profile</h1>
-          <p className="mt-2 text-sm text-muted">Measurements help try-on and styling feel more personal. You can skip this now.</p>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <Field label="Gender"><select className={fieldClass} value={form.gender} onChange={updateField("gender")}><option value="">Any</option><option value="female">Female</option><option value="male">Male</option><option value="unisex">Unisex</option></select></Field>
-            <Field label="Body shape"><input className={fieldClass} value={form.bodyShape} onChange={updateField("bodyShape")} /></Field>
-            <Field label="Skin tone"><input className={fieldClass} value={form.skinTone} onChange={updateField("skinTone")} /></Field>
-            <Field label="Style preferences"><input className={fieldClass} value={form.stylePreferences} onChange={updateField("stylePreferences")} placeholder="minimal, streetwear, elegant" /></Field>
-            {["height", "weight", "bust", "waist", "hips", "shoulder"].map((field) => (
-              <Field key={field} label={`${field} (cm/kg)`}>
-                <input className={fieldClass} value={form[field]} onChange={updateField(field)} />
-              </Field>
-            ))}
-            <Field label="Saved try-on photo">
-              <input className={fieldClass} type="file" accept="image/*" onChange={uploadPhoto} />
-            </Field>
-          </div>
-
-          {message ? <p className={`mt-4 text-sm ${status === "error" ? "text-red-700" : "text-emerald-700"}`}>{message}</p> : null}
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button className="dark-button rounded-lg" disabled={status === "loading"} type="submit">Save profile</button>
-            <button type="button" onClick={skip} className="soft-button rounded-lg">Skip for now</button>
-          </div>
+        <PageHeader
+          eyebrow={t("onboarding.eyebrow")}
+          title={t("onboarding.title")}
+          description={t("onboarding.description")}
+        />
+        <form onSubmit={save} className="mt-6 grid gap-5 lg:grid-cols-[340px_1fr]">
+          <aside className="glass-panel p-5">
+            <div className="aspect-[4/5] overflow-hidden rounded-lg border border-white/10 bg-white/5">
+              {user?.profile?.modelImageUrl ? (
+                <img src={user.profile.modelImageUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">{t("onboarding.uploadPhoto")}</div>
+              )}
+            </div>
+            <label className="mt-4 block">
+              <span className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-muted">{t("onboarding.savedPhoto")}</span>
+              <input className="miroir-field" type="file" accept="image/*" onChange={uploadPhoto} />
+            </label>
+          </aside>
+          <section className="glass-panel p-5">
+            <h2 className="text-2xl font-extrabold">{t("onboarding.fitData")}</h2>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <TextField label={t("common.gender")} value={form.gender} onChange={updateField("gender")} placeholder={t("onboarding.genderPlaceholder")} />
+              <TextField label={t("profile.bodyShape")} value={form.bodyShape} onChange={updateField("bodyShape")} />
+              <TextField label={t("profile.skinTone")} value={form.skinTone} onChange={updateField("skinTone")} />
+              <TextField label={t("profile.stylePreferences")} value={form.stylePreferences} onChange={updateField("stylePreferences")} placeholder={t("onboarding.stylePlaceholder")} />
+              {[
+                ["height", t("profile.height")],
+                ["weight", t("profile.weight")],
+                ["bust", t("profile.bust")],
+                ["waist", t("profile.waist")],
+                ["hips", t("profile.hips")],
+                ["shoulder", t("profile.shoulder")],
+              ].map(([field, label]) => (
+                <TextField key={field} label={`${label} (cm/kg)`} value={form[field]} onChange={updateField(field)} />
+              ))}
+            </div>
+            {message ? <p className={`mt-4 text-sm ${status === "error" ? "text-red-100" : "text-emerald-100"}`}>{message}</p> : null}
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button disabled={status === "loading"} type="submit">{t("common.saveProfile")}</Button>
+              <Button type="button" variant="secondary" onClick={skip}>{t("common.skipForNow")}</Button>
+            </div>
+          </section>
         </form>
       </main>
-    </div>
+    </AppShell>
   );
-}
-
-function Field({ label, children }) {
-  return <label className="grid gap-2"><span className="text-xs font-semibold uppercase text-muted">{label}</span>{children}</label>;
 }
 
 export default ProfileOnboardingPage;

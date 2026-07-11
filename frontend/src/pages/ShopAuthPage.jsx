@@ -6,7 +6,7 @@ import {
 } from "../api/shopApi.js";
 
 const inputClass =
-  "w-full rounded-lg border border-line/70 bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-tertiary";
+  "w-full rounded-lg border border-white/10 bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-tertiary";
 const labelClass = "text-xs font-semibold uppercase tracking-[0.12em] text-muted";
 
 function ShopAuthPage({ mode = "login" }) {
@@ -116,7 +116,7 @@ function ShopAuthPage({ mode = "login" }) {
             </button>
 
             <a
-              className="text-center text-sm font-semibold text-tertiary"
+              className="text-center text-sm font-semibold text-roseDeep"
               href={isRegister ? "/shop/login" : "/shop/register"}
             >
               {isRegister ? "Already have an account? Login" : "New shop owner? Register"}

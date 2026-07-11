@@ -6,6 +6,7 @@ import PaymentResultPage from "./pages/PaymentResultPage.jsx";
 import ProfileOnboardingPage from "./pages/ProfileOnboardingPage.jsx";
 import { getShopToken } from "./api/shopApi.js";
 import ShopDashboardPage from "./pages/ShopDashboardPage.jsx";
+import ShopPublicPage from "./pages/ShopPublicPage.jsx";
 import TryOnStudioPage from "./pages/TryOnStudioPage.jsx";
 import UserAppPage from "./pages/UserAppPage.jsx";
 import { getUserToken } from "./api/userApi.js";
@@ -60,6 +61,10 @@ function App() {
 
   if (pathname === "/app/profile") {
     return <UserAppPage initialView="profile" />;
+  }
+
+  if (pathname.startsWith("/app/shops/")) {
+    return <ShopPublicPage />;
   }
 
   if (pathname === "/shop/login") {

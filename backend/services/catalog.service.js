@@ -13,11 +13,27 @@ const pageParams = (query = {}) => {
 const publicShop = (shop) => ({
   id: shop.id,
   name: shop.name,
+  displayName: shop.name,
   slug: shop.slug,
   description: shop.description || "",
   logoUrl: shop.logoUrl || "",
   coverUrl: shop.coverUrl || "",
-  contact: shop.contact || {},
+  contact: {
+    address: shop.contact?.address || "",
+    email: shop.contact?.email || "",
+    phone: shop.contact?.phone || "",
+  },
+  profileHidden: false,
+  premiumShopDetailsRequired: false,
+});
+
+const anonymousShop = (shop) => ({
+  id: shop.id,
+  displayName: "MIROIR Shop",
+  logoUrl: "",
+  coverUrl: "",
+  profileHidden: true,
+  premiumShopDetailsRequired: true,
 });
 
 const withShopInfo = (products, shops, { includeShopDetails = false } = {}) => {
@@ -41,7 +57,9 @@ export const listCatalogProducts = async (query = {}, { viewerIsPremium = false 
   };
   const search = cleanString(query.search);
 
-  if (query.shopId) filter.shopId = query.shopId;
+  if (query.shopId) {
+    filter.shopId = activeShopIds.includes(query.shopId) ? query.shopId : "__missing_active_shop__";
+  }
   if (query.category) filter.category = query.category;
   if (query.gender) filter.gender = { $in: [query.gender, "unisex"] };
 
@@ -141,7 +159,7 @@ export const listCatalogOutfits = async (query = {}) => {
   };
 };
 
-export const getCatalogShop = async (shopId) => {
+export const getCatalogShop = async (shopId, { viewerIsPremium = false } = {}) => {
   const db = await getMongoDb();
   const shop = await db.collection("shops").findOne({ id: shopId, status: "active" });
   if (!shop) {
@@ -149,7 +167,7 @@ export const getCatalogShop = async (shopId) => {
     error.statusCode = 404;
     throw error;
   }
-  return publicShop(shop);
+  return viewerIsPremium ? publicShop(shop) : anonymousShop(shop);
 };
 
 export const getCatalogProduct = async (productId) => {

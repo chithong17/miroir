@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLanguage } from "../i18n.jsx";
 import {
   archiveProduct,
   createShopPayment,
@@ -40,6 +41,7 @@ const emptyShop = {
   status: "active",
   contactEmail: "",
   contactPhone: "",
+  contactAddress: "",
 };
 
 const emptyProduct = {
@@ -90,6 +92,7 @@ const shopToForm = (shop) => ({
   ...shop,
   contactEmail: shop.contact?.email || "",
   contactPhone: shop.contact?.phone || "",
+  contactAddress: shop.contact?.address || "",
 });
 
 const productToForm = (product) => ({
@@ -106,6 +109,7 @@ const formatMoney = (value) => `${Number(value || 0).toLocaleString()} VND`;
 const formatPercent = (value) => `${Math.round(Number(value || 0) * 100)}%`;
 
 function ShopDashboardPage() {
+  const { t } = useLanguage();
   const [view, setView] = useState("products");
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
@@ -214,7 +218,7 @@ function ShopDashboardPage() {
         setProductForm((previous) => ({ ...previous, shopId: nextShop.id }));
       }
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not load dashboard.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.loadDashboardError"), "error");
     }
   };
 
@@ -231,7 +235,7 @@ function ShopDashboardPage() {
       setPremiumDataStatus("idle");
     } catch (error) {
       setPremiumDataStatus("error");
-      showNotice(error.response?.data?.message || "Could not load analytics.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.loadAnalyticsError"), "error");
     }
   };
 
@@ -244,7 +248,7 @@ function ShopDashboardPage() {
       setPremiumDataStatus("idle");
     } catch (error) {
       setPremiumDataStatus("error");
-      showNotice(error.response?.data?.message || "Could not load insights.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.loadInsightsError"), "error");
     }
   };
 
@@ -271,7 +275,7 @@ function ShopDashboardPage() {
 
   const resetProductForm = () => {
     if (!hasActiveShopPlan) {
-      showNotice("Active shop owner subscription is required.", "error");
+      showNotice(t("shopAdmin.activePlanRequired"), "error");
       return;
     }
     setProductForm({ ...emptyProduct, shopId: shop?.id || "" });
@@ -282,7 +286,7 @@ function ShopDashboardPage() {
 
   const editProduct = (product) => {
     if (!hasActiveShopPlan) {
-      showNotice("Active shop owner subscription is required.", "error");
+      showNotice(t("shopAdmin.activePlanRequired"), "error");
       return;
     }
     setProductForm(productToForm(product));
@@ -299,7 +303,7 @@ function ShopDashboardPage() {
   const openBulkEditModal = () => {
     if (!selectedProductIds.length) return;
     if (!hasActiveShopPlan) {
-      showNotice("Active shop owner subscription is required.", "error");
+      showNotice(t("shopAdmin.activePlanRequired"), "error");
       return;
     }
     setBulkEditForm(emptyBulkEdit);
@@ -324,20 +328,21 @@ function ShopDashboardPage() {
       contact: {
         email: shopForm.contactEmail,
         phone: shopForm.contactPhone,
+        address: shopForm.contactAddress,
       },
     };
 
     try {
       if (shopForm.id) {
         await updateShop(shopForm.id, payload);
-        showNotice("Shop profile saved.");
+        showNotice(t("shopAdmin.shopSaved"));
       } else {
         await createShop(payload);
-        showNotice("Shop profile created.");
+        showNotice(t("shopAdmin.shopCreated"));
       }
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not save shop.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.shopSaveError"), "error");
     }
   };
 
@@ -346,10 +351,10 @@ function ShopDashboardPage() {
 
     try {
       await deleteShop(shop.id);
-      showNotice("Shop deactivated.");
+      showNotice(t("shopAdmin.shopDeactivated"));
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not deactivate shop.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.shopDeactivateError"), "error");
     }
   };
 
@@ -358,12 +363,12 @@ function ShopDashboardPage() {
 
     if (!shop) {
       setView("shop");
-      showNotice("Create your shop before adding products.", "error");
+      showNotice(t("shopAdmin.createShopBeforeProduct"), "error");
       return;
     }
 
     if (!hasActiveShopPlan) {
-      showNotice("Active shop owner subscription is required.", "error");
+      showNotice(t("shopAdmin.activePlanRequired"), "error");
       return;
     }
 
@@ -390,17 +395,17 @@ function ShopDashboardPage() {
     try {
       if (editingExistingProduct) {
         await updateProduct(productForm.id, payload);
-        showNotice("Product updated.");
+        showNotice(t("shopAdmin.productUpdated"));
       } else {
         await createProduct(payload);
-        showNotice("Product created.");
+        showNotice(t("shopAdmin.productCreated"));
       }
       setProductForm({ ...emptyProduct, shopId: shop?.id || "" });
       setIsProductModalOpen(false);
       setUploadNotice("");
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not save product.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.productSaveError"), "error");
     }
   };
 
@@ -408,10 +413,10 @@ function ShopDashboardPage() {
     try {
       await archiveProduct(productId);
       setSelectedProductIds((previous) => previous.filter((id) => id !== productId));
-      showNotice("Product archived.");
+      showNotice(t("shopAdmin.productArchived"));
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not archive product.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.productArchiveError"), "error");
     }
   };
 
@@ -419,10 +424,10 @@ function ShopDashboardPage() {
     try {
       await deleteProduct(productId);
       setSelectedProductIds((previous) => previous.filter((id) => id !== productId));
-      showNotice("Product moved to trash.");
+      showNotice(t("shopAdmin.productMovedToTrash"));
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not move product to trash.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.productMoveToTrashError"), "error");
     }
   };
 
@@ -430,24 +435,24 @@ function ShopDashboardPage() {
     try {
       await restoreProduct(productId);
       setSelectedProductIds((previous) => previous.filter((id) => id !== productId));
-      showNotice("Product recovered to draft.");
+      showNotice(t("shopAdmin.productRecovered"));
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not recover product.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.productRecoverError"), "error");
     }
   };
 
   const permanentlyDeleteProduct = async (productId) => {
-    const confirmed = window.confirm("Permanently delete this product from the database?");
+    const confirmed = window.confirm(t("shopAdmin.confirmDeleteProduct"));
     if (!confirmed) return;
 
     try {
       await hardDeleteProduct(productId);
       setSelectedProductIds((previous) => previous.filter((id) => id !== productId));
-      showNotice("Product permanently deleted.");
+      showNotice(t("shopAdmin.productDeleted"));
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not permanently delete product.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.productDeleteError"), "error");
     }
   };
 
@@ -479,11 +484,11 @@ function ShopDashboardPage() {
 
     try {
       await Promise.all(selectedProductIds.map((productId) => deleteProduct(productId)));
-      showNotice(`${selectedProductIds.length} products moved to trash.`);
+      showNotice(t("shopAdmin.selectedMovedToTrash", { count: selectedProductIds.length }));
       setSelectedProductIds([]);
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not move selected products to trash.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.selectedMoveToTrashError"), "error");
       await loadDashboard();
     }
   };
@@ -514,18 +519,18 @@ function ShopDashboardPage() {
     });
 
     if (!Object.keys(payload).length) {
-      showNotice("Choose at least one field to bulk edit.", "error");
+      showNotice(t("shopAdmin.chooseBulkField"), "error");
       return;
     }
 
     try {
       await Promise.all(selectedProductIds.map((productId) => updateProduct(productId, payload)));
-      showNotice(`${selectedProductIds.length} products updated.`);
+      showNotice(t("shopAdmin.productsUpdated", { count: selectedProductIds.length }));
       setSelectedProductIds([]);
       closeBulkEditModal();
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not bulk edit products.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.bulkEditError"), "error");
     }
   };
 
@@ -533,17 +538,17 @@ function ShopDashboardPage() {
     if (!selectedProductIds.length) return;
 
     const confirmed = window.confirm(
-      `Permanently delete ${selectedProductIds.length} products from the database?`
+      t("shopAdmin.confirmDeleteSelected", { count: selectedProductIds.length })
     );
     if (!confirmed) return;
 
     try {
       await Promise.all(selectedProductIds.map((productId) => hardDeleteProduct(productId)));
-      showNotice(`${selectedProductIds.length} products permanently deleted.`);
+      showNotice(t("shopAdmin.selectedDeleted", { count: selectedProductIds.length }));
       setSelectedProductIds([]);
       await loadDashboard();
     } catch (error) {
-      showNotice(error.response?.data?.message || "Could not permanently delete selected products.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.selectedDeleteError"), "error");
       await loadDashboard();
     }
   };
@@ -553,21 +558,21 @@ function ShopDashboardPage() {
     if (!file) return;
 
     if (!hasActiveShopPlan) {
-      setUploadNotice("Active shop owner subscription is required.");
+      setUploadNotice(t("shopAdmin.activePlanRequired"));
       return;
     }
 
     try {
-      setUploadNotice("Uploading...");
+      setUploadNotice(t("shopAdmin.uploading"));
       const response = await uploadProductImage(file);
       setProductForm((previous) => ({
         ...previous,
         imageUrl: response.imageUrl,
         imagePublicId: response.imagePublicId,
       }));
-      setUploadNotice("Image uploaded.");
+      setUploadNotice(t("shopAdmin.imageUploaded"));
     } catch (error) {
-      setUploadNotice(error.response?.data?.message || "Could not upload image.");
+      setUploadNotice(error.response?.data?.message || t("shopAdmin.imageUploadError"));
     }
   };
 
@@ -588,7 +593,7 @@ function ShopDashboardPage() {
     if (!file) return;
 
     if (!hasActiveShopPlan) {
-      showNotice("Active shop owner subscription is required.", "error");
+      showNotice(t("shopAdmin.activePlanRequired"), "error");
       return;
     }
 
@@ -597,13 +602,13 @@ function ShopDashboardPage() {
     try {
       const response = await importProductsExcel(file);
       setImportResult(response.importJob);
-      showNotice("Import completed.");
+      showNotice(t("shopAdmin.importCompleted"));
       await loadDashboard();
     } catch (error) {
       if (error.response?.data?.importJob) {
         setImportResult(error.response.data.importJob);
       }
-      showNotice(error.response?.data?.message || "Import failed.", "error");
+      showNotice(error.response?.data?.message || t("shopAdmin.importFailed"), "error");
     }
   };
 
@@ -614,11 +619,11 @@ function ShopDashboardPage() {
 
   const startShopCheckout = async () => {
     try {
-      setPaymentStatus("Creating PayOS checkout...");
+      setPaymentStatus(t("shopAdmin.creatingPayOS"));
       const response = await createShopPayment();
       window.location.href = response.checkoutUrl;
     } catch (error) {
-      setPaymentStatus(error.response?.data?.message || "Could not create payment.");
+      setPaymentStatus(error.response?.data?.message || t("shopAdmin.paymentCreateError"));
     }
   };
 
@@ -704,7 +709,7 @@ function ShopDashboardPage() {
                   status={premiumDataStatus}
                 />
               ) : (
-                <PremiumPaywall onCheckout={startShopCheckout} title="Analytics Dashboard" />
+                <PremiumPaywall onCheckout={startShopCheckout} titleKey="shopAdmin.analyticsDashboard" />
               )
             ) : null}
 
@@ -717,7 +722,7 @@ function ShopDashboardPage() {
                   status={premiumDataStatus}
                 />
               ) : (
-                <PremiumPaywall onCheckout={startShopCheckout} title="Customer Insights" />
+                <PremiumPaywall onCheckout={startShopCheckout} titleKey="shopAdmin.customerInsights" />
               )
             ) : null}
           </div>
@@ -752,35 +757,36 @@ function ShopDashboardPage() {
 }
 
 function DashboardSidebar({ logout, setView, shop, stats, view }) {
+  const { t, language, toggleLanguage } = useLanguage();
   const navItems = [
-    ["products", "Products"],
-    ["analytics", "Analytics"],
-    ["insights", "Customer Insights"],
-    ["trash", "Trash"],
-    ["shop", "Shop Profile"],
-    ["import", "Excel Import"],
+    ["products", t("shopAdmin.products") || "Products"],
+    ["analytics", t("shopAdmin.analytics") || "Analytics"],
+    ["insights", t("shopAdmin.insights") || "Customer Insights"],
+    ["trash", t("shopAdmin.trash") || "Trash"],
+    ["shop", t("shopAdmin.shopProfile") || "Shop Profile"],
+    ["import", t("shopAdmin.excelImport") || "Excel Import"],
   ];
 
   return (
-    <aside className="border-b border-slate-200 bg-white lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+    <aside className="border-b border-white/10 bg-white/5 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
       <div className="flex h-full flex-col">
-        <div className="border-b border-slate-200 p-5">
-          <a href="/" className="font-display text-2xl font-extrabold text-[#12356f]">
+        <div className="border-b border-white/10 p-5">
+          <a href="/" className="font-display text-2xl font-extrabold text-rose">
             MIROIR
           </a>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Shop Owner
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+            {t("shopAdmin.title") || "Shop Owner"}
           </p>
         </div>
 
         <div className="p-4">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className={labelClass}>Current shop</p>
-            <p className="mt-2 truncate text-base font-bold text-slate-900">
-              {shop?.name || "No shop yet"}
+          <div className="rounded-xl border border-white/10 bg-white/7 p-4">
+            <p className={labelClass}>{t("shopAdmin.currentShop") || "Current shop"}</p>
+            <p className="mt-2 truncate text-base font-bold text-ink">
+              {shop?.name || t("shopAdmin.noShopYet") || "No shop yet"}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
-              {shop ? `${shop.slug} / ${shop.status}` : "Create profile first"}
+            <p className="mt-1 text-sm text-muted">
+              {shop ? `${shop.slug} / ${shop.status}` : t("shopAdmin.createProfileFirst") || "Create profile first"}
             </p>
           </div>
         </div>
@@ -803,25 +809,32 @@ function DashboardSidebar({ logout, setView, shop, stats, view }) {
         </nav>
 
         <div className="grid grid-cols-2 gap-2 p-4">
-          <Metric label="Total" value={stats.total} />
-          <Metric label="Live" value={stats.published} />
-          <Metric label="Draft" value={stats.draft} />
-          <Metric label="Trash" value={stats.trashed} />
+          <Metric label={t("common.total")} value={stats.total} />
+          <Metric label={t("common.live")} value={stats.published} />
+          <Metric label={t("common.draft")} value={stats.draft} />
+          <Metric label={t("common.trash")} value={stats.trashed} />
         </div>
 
-        <div className="mt-auto grid gap-2 border-t border-slate-200 p-4">
+        <div className="mt-auto grid gap-2 border-t border-white/10 p-4">
           <a
             href="/stylist"
-            className="rounded-lg px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-4 py-3 text-sm font-semibold text-muted hover:bg-canvasDeep"
           >
             AI Stylist
           </a>
           <button
             type="button"
-            onClick={logout}
-            className="rounded-lg bg-slate-900 px-4 py-3 text-left text-sm font-semibold text-white"
+            onClick={toggleLanguage}
+            className="rounded-lg px-4 py-3 text-left text-sm font-semibold text-muted hover:bg-canvasDeep"
           >
-            Logout
+            {language === "en" ? "🇻🇳 Tiếng Việt" : "🇬🇧 English"}
+          </button>
+          <button
+            type="button"
+            onClick={logout}
+            className="rounded-lg bg-tertiarySoft px-4 py-3 text-left text-sm font-semibold text-canvas"
+          >
+            {t("shopAdmin.logout") || "Logout"}
           </button>
         </div>
       </div>
@@ -837,18 +850,19 @@ function DashboardHeader({
   updateFilter,
   view,
 }) {
+  const { t } = useLanguage();
   const title =
     view === "shop"
-      ? "Shop Profile"
+      ? t("shopAdmin.shopProfile")
       : view === "import"
-        ? "Excel Import"
+        ? t("shopAdmin.excelImport")
         : view === "analytics"
-          ? "Analytics"
+          ? t("shopAdmin.analytics")
           : view === "insights"
-            ? "Customer Insights"
+            ? t("shopAdmin.insights")
         : view === "trash"
-          ? "Trash"
-          : "Products";
+          ? t("shopAdmin.trash")
+          : t("shopAdmin.products");
 
   return (
     <header className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -856,7 +870,7 @@ function DashboardHeader({
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {shop ? "Manage one shop catalogue for AI Stylist." : "Create your shop to begin."}
+            {shop ? t("shopAdmin.headerDescription") : t("shopAdmin.createToBegin")}
           </p>
         </div>
 
@@ -867,7 +881,7 @@ function DashboardHeader({
             disabled={!shop || !hasActiveShopPlan}
             className={`${buttonBase} bg-[#12356f] text-white`}
           >
-            New Product
+            {t("product.new")}
           </button>
         ) : null}
       </div>
@@ -876,16 +890,16 @@ function DashboardHeader({
         <div className={`mt-4 grid gap-3 ${view === "trash" ? "" : "md:grid-cols-[minmax(0,1fr)_180px]"}`}>
           <input
             className={fieldClass}
-            placeholder="Search by product, category, material"
+            placeholder={t("product.searchPlaceholder")}
             value={filters.query}
             onChange={updateFilter("query")}
           />
           {view !== "trash" ? (
             <select className={fieldClass} value={filters.status} onChange={updateFilter("status")}>
-              <option value="all">All status</option>
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
+              <option value="all">{t("common.allStatus")}</option>
+              <option value="published">{t("common.published")}</option>
+              <option value="draft">{t("common.draft")}</option>
+              <option value="archived">{t("common.archived")}</option>
             </select>
           ) : null}
         </div>
@@ -901,37 +915,36 @@ function ShopSubscriptionBanner({
   plan,
   subscription,
 }) {
+  const { t } = useLanguage();
   return (
     <section className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <span className={`rounded-md px-2 py-1 text-xs font-bold ${hasActiveShopPlan ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
-            {hasActiveShopPlan ? "Shop Owner Active" : "Shop Owner Free"}
+            {hasActiveShopPlan ? t("shopAdmin.active") : t("shopAdmin.free")}
           </span>
           <p className="text-sm font-semibold text-slate-900">
-            {formatMoney(plan?.amount || 349000)} / {plan?.durationDays || 30} ngày để đăng sản phẩm và tiếp cận user MIROIR.
+            {t("shopAdmin.planSummary", { amount: formatMoney(plan?.amount || 349000), days: plan?.durationDays || 30 })}
           </p>
         </div>
         <p className="mt-1 text-xs text-slate-500">
-          Đăng sản phẩm lên nền tảng, tiếp cận user MIROIR, dashboard phân tích, ưu tiên hiển thị, truy cập insight khách hàng.
+          {t("shopAdmin.planBenefits")}
         </p>
         {hasActiveShopPlan && subscription?.expiresAt ? (
           <p className="mt-1 text-xs text-slate-500">
-            Hạn dùng đến {new Date(subscription.expiresAt).toLocaleDateString("vi-VN")}
+            {t("shopAdmin.expiresAt", { date: new Date(subscription.expiresAt).toLocaleDateString("vi-VN") })}
           </p>
         ) : null}
         {paymentStatus ? <p className="mt-1 text-xs text-slate-500">{paymentStatus}</p> : null}
       </div>
       {!hasActiveShopPlan ? (
         <button type="button" className={`${buttonBase} bg-[#12356f] text-white`} onClick={onCheckout}>
-          Thanh toán gói Shop Owner
+          {t("shopAdmin.checkout")}
         </button>
       ) : null}
     </section>
   );
-}
-
-function ProductsView({
+}function ProductsView({
   archiveProduct,
   deleteSelectedProducts,
   editProduct,
@@ -950,6 +963,7 @@ function ProductsView({
 }) {
   const selectedCount = selectedProductSet.size;
   const inTrash = view === "trash";
+  const { t } = useLanguage();
   const allVisibleSelected =
     filteredProducts.length > 0 &&
     filteredProducts.every((product) => selectedProductSet.has(product.id));
@@ -960,12 +974,12 @@ function ProductsView({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
           <div>
             <h2 className="text-base font-bold text-slate-900">
-              {inTrash ? "Trash" : "Product Catalogue"}
+              {inTrash ? t("shopAdmin.trash") : t("product.catalogueTitle")}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               {selectedCount
-                ? `${selectedCount} selected`
-                : `${filteredProducts.length} products shown`}
+                ? t("shopAdmin.selected", { count: selectedCount })
+                : t("shopAdmin.productsShown", { count: filteredProducts.length })}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -975,10 +989,10 @@ function ProductsView({
               onClick={openBulkEditModal}
               disabled={!hasActiveShopPlan}
               className={`${buttonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`}
-              title="Bulk edit selected products"
+              title={t("product.bulkEditSelected")}
             >
               <Icon name="edit" />
-              <span className="ml-2">Bulk edit</span>
+              <span className="ml-2">{t("product.bulkEdit")}</span>
             </button>
           ) : null}
           {selectedCount ? (
@@ -986,11 +1000,11 @@ function ProductsView({
               type="button"
               onClick={inTrash ? permanentlyDeleteSelectedProducts : deleteSelectedProducts}
               className={`${buttonBase} border border-red-200 bg-red-50 text-red-700 hover:bg-red-100`}
-              title={inTrash ? "Delete selected permanently" : "Move selected to trash"}
+              title={inTrash ? t("product.deleteSelectedPermanently") : t("product.moveSelectedToTrash")}
             >
               <Icon name={inTrash ? "deleteForever" : "trash"} />
               <span className="ml-2">
-                {inTrash ? "Delete selected" : "Move to trash"}
+                {inTrash ? t("product.deleteSelected") : t("product.moveSelectedToTrash")}
               </span>
             </button>
           ) : null}
@@ -1008,16 +1022,16 @@ function ProductsView({
                     disabled={!filteredProducts.length}
                     onChange={toggleVisibleProductSelection}
                     className="h-4 w-4 rounded border-slate-300 text-[#12356f] focus:ring-[#12356f]"
-                    aria-label="Select all visible products"
+                    aria-label={t("product.selectAllVisible")}
                   />
                 </th>
-                <th className="px-4 py-3">Product</th>
-                <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Price</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Stock</th>
+                <th className="px-4 py-3">{t("product.product")}</th>
+                <th className="px-4 py-3">{t("common.category")}</th>
+                <th className="px-4 py-3">{t("product.price")}</th>
+                <th className="px-4 py-3">{t("common.status")}</th>
+                <th className="px-4 py-3">{t("common.stock")}</th>
                 <th className="px-4 py-3">AI</th>
-                <th className="px-4 py-3">Actions</th>
+                <th className="px-4 py-3">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1039,7 +1053,7 @@ function ProductsView({
                       className={`h-4 w-4 rounded border-slate-300 text-[#12356f] focus:ring-[#12356f] ${
                         selected ? "opacity-100" : "opacity-0 transition group-hover:opacity-100"
                       }`}
-                      aria-label={`Select ${product.name}`}
+                      aria-label={t("product.selectProduct", { name: product.name })}
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -1065,7 +1079,7 @@ function ProductsView({
                     <StatusBadge status={product.status} />
                   </td>
                   <td className="px-4 py-3 text-slate-600">{product.availability}</td>
-                  <td className="px-4 py-3 text-slate-600">{product.embeddingStale ? "needs embed" : "ready"}</td>
+                  <td className="px-4 py-3 text-slate-600">{product.embeddingStale ? t("product.needsEmbed") : t("product.ready")}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       {!inTrash ? (
@@ -1074,8 +1088,8 @@ function ProductsView({
                           onClick={() => editProduct(product)}
                           disabled={!hasActiveShopPlan}
                           className={`${iconButtonClass} border-slate-200 text-slate-700`}
-                          title="Edit"
-                          aria-label={`Edit ${product.name}`}
+                          title={t("product.edit")}
+                          aria-label={t("product.editProduct", { name: product.name })}
                         >
                           <Icon name="edit" />
                         </button>
@@ -1086,8 +1100,8 @@ function ProductsView({
                             type="button"
                             onClick={() => archiveProduct(product.id)}
                             className={`${iconButtonClass} border-slate-200 text-slate-700`}
-                            title="Archive"
-                            aria-label={`Archive ${product.name}`}
+                            title={t("common.archived")}
+                            aria-label={t("product.archiveProduct", { name: product.name })}
                           >
                             <Icon name="archive" />
                           </button>
@@ -1095,8 +1109,8 @@ function ProductsView({
                             type="button"
                             onClick={() => removeProduct(product.id)}
                             className={`${iconButtonClass} border-red-200 text-red-700 hover:bg-red-50`}
-                            title="Move to trash"
-                            aria-label={`Move ${product.name} to trash`}
+                            title={t("product.moveSelectedToTrash")}
+                            aria-label={t("product.moveProductToTrash", { name: product.name })}
                           >
                             <Icon name="trash" />
                           </button>
@@ -1107,8 +1121,8 @@ function ProductsView({
                             type="button"
                             onClick={() => recoverProduct(product.id)}
                             className={`${iconButtonClass} border-green-200 text-green-700 hover:bg-green-50`}
-                            title="Recover"
-                            aria-label={`Recover ${product.name}`}
+                            title={t("product.recoverProduct", { name: product.name })}
+                            aria-label={t("product.recoverProduct", { name: product.name })}
                           >
                             <Icon name="recover" />
                           </button>
@@ -1116,8 +1130,8 @@ function ProductsView({
                             type="button"
                             onClick={() => permanentlyDeleteProduct(product.id)}
                             className={`${iconButtonClass} border-red-200 text-red-700 hover:bg-red-50`}
-                            title="Delete permanently"
-                            aria-label={`Permanently delete ${product.name}`}
+                            title={t("product.deleteProductPermanently", { name: product.name })}
+                            aria-label={t("product.deleteProductPermanently", { name: product.name })}
                           >
                             <Icon name="deleteForever" />
                           </button>
@@ -1131,7 +1145,7 @@ function ProductsView({
               {!filteredProducts.length ? (
                 <tr>
                   <td className="px-4 py-12 text-center text-sm text-slate-500" colSpan="8">
-                    No products found.
+                    {t("product.noProducts")}
                   </td>
                 </tr>
               ) : null}
@@ -1154,6 +1168,7 @@ function ProductModal({
   uploadNotice,
   updateProductField,
 }) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm">
       <form
@@ -1163,75 +1178,75 @@ function ProductModal({
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 p-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
-              {editingExistingProduct ? "Edit Product" : "Create Product"}
+              {editingExistingProduct ? t("product.edit") : t("product.create")}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">{shop?.name || "Shop profile required"}</p>
+            <p className="mt-1 text-sm text-slate-500">{shop?.name || t("shopAdmin.shopProfileRequired")}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
           >
-            Close
+            {t("common.close")}
           </button>
         </div>
 
         <div className="max-h-[calc(92vh-145px)] overflow-y-auto p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Product ID">
+            <Field label={t("product.productId")}>
               <input className={fieldClass} value={productForm.id} onChange={updateProductField("id")} />
             </Field>
-            <Field label="Name">
+            <Field label={t("common.name")}>
               <input className={fieldClass} value={productForm.name} onChange={updateProductField("name")} />
             </Field>
-          <Field label="Category">
+          <Field label={t("common.category")}>
             <input className={fieldClass} value={productForm.category} onChange={updateProductField("category")} />
           </Field>
-          <Field label="Price">
+          <Field label={t("product.price")}>
             <input className={fieldClass} value={productForm.price} onChange={updateProductField("price")} />
           </Field>
-          <Field label="Gender">
+          <Field label={t("profile.gender")}>
             <select className={fieldClass} value={productForm.gender} onChange={updateProductField("gender")}>
-              <option value="female">female</option>
-              <option value="male">male</option>
-              <option value="unisex">unisex</option>
+              <option value="female">{t("common.female")}</option>
+              <option value="male">{t("common.male")}</option>
+              <option value="unisex">{t("common.unisex")}</option>
             </select>
           </Field>
-          <Field label="Stock">
+          <Field label={t("common.stock")}>
             <select className={fieldClass} value={productForm.availability} onChange={updateProductField("availability")}>
               <option value="in_stock">in_stock</option>
               <option value="out_of_stock">out_of_stock</option>
             </select>
           </Field>
-          <Field label="Status">
+          <Field label={t("common.status")}>
             <select className={fieldClass} value={productForm.status} onChange={updateProductField("status")}>
-              <option value="draft">draft</option>
-              <option value="published">published</option>
-              <option value="archived">archived</option>
+              <option value="draft">{t("common.draft")}</option>
+              <option value="published">{t("common.published")}</option>
+              <option value="archived">{t("common.archived")}</option>
             </select>
           </Field>
-          <Field label="Colors">
+          <Field label={t("product.colors")}>
             <input className={fieldClass} value={productForm.colors} onChange={updateProductField("colors")} />
           </Field>
-          <Field label="Sizes">
+          <Field label={t("product.sizes")}>
             <input className={fieldClass} value={productForm.sizes} onChange={updateProductField("sizes")} />
           </Field>
-          <Field label="Material">
+          <Field label={t("product.material")}>
             <input className={fieldClass} value={productForm.material} onChange={updateProductField("material")} />
           </Field>
-          <Field label="Fit Type">
+          <Field label={t("product.fitType")}>
             <input className={fieldClass} value={productForm.fitType} onChange={updateProductField("fitType")} />
           </Field>
-            <Field label="Style Tags">
+            <Field label={t("product.styleTags")}>
               <input className={fieldClass} value={productForm.styleTags} onChange={updateProductField("styleTags")} />
             </Field>
-            <Field label="Occasion Tags">
+            <Field label={t("product.occasionTags")}>
               <input className={fieldClass} value={productForm.occasionTags} onChange={updateProductField("occasionTags")} />
             </Field>
-            <Field label="Image URL" wide>
+            <Field label={t("product.imageUrl")} wide>
               <input className={fieldClass} value={productForm.imageUrl} onChange={updateProductField("imageUrl")} />
             </Field>
-            <Field label="Upload Image" wide>
+            <Field label={t("product.uploadImage")} wide>
               <input
                 className={fieldClass}
                 type="file"
@@ -1240,7 +1255,7 @@ function ProductModal({
                 onChange={uploadImage}
               />
             </Field>
-            <Field label="Description" wide>
+            <Field label={t("product.description")} wide>
               <textarea
                 className={`${fieldClass} min-h-28 resize-none`}
                 value={productForm.description}
@@ -1257,14 +1272,14 @@ function ProductModal({
             onClick={onClose}
             className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="submit"
             disabled={!shop || !hasActiveShopPlan}
             className={`${buttonBase} bg-[#12356f] text-white`}
           >
-            Save Product
+            {t("product.save")}
           </button>
         </div>
       </form>
@@ -1279,6 +1294,7 @@ function BulkEditModal({
   selectedCount,
   updateBulkEditField,
 }) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm">
       <form
@@ -1287,131 +1303,131 @@ function BulkEditModal({
       >
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 p-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Bulk Edit</h2>
-            <p className="mt-1 text-sm text-slate-500">{selectedCount} selected products</p>
+            <h2 className="text-lg font-bold text-slate-900">{t("shopAdmin.bulkEdit")}</h2>
+            <p className="mt-1 text-sm text-slate-500">{t("shopAdmin.selectedProducts", { count: selectedCount })}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
           >
-            Close
+            {t("common.close")}
           </button>
         </div>
 
         <div className="max-h-[calc(92vh-145px)] overflow-y-auto p-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Category">
+            <Field label={t("common.category")}>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.category}
                 onChange={updateBulkEditField("category")}
               />
             </Field>
-            <Field label="Price">
+            <Field label={t("product.price")}>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.price}
                 onChange={updateBulkEditField("price")}
               />
             </Field>
-            <Field label="Gender">
+            <Field label={t("profile.gender")}>
               <select
                 className={fieldClass}
                 value={bulkEditForm.gender}
                 onChange={updateBulkEditField("gender")}
               >
-                <option value="">unchanged</option>
-                <option value="female">female</option>
-                <option value="male">male</option>
-                <option value="unisex">unisex</option>
+                <option value="">{t("common.unchanged")}</option>
+                <option value="female">{t("common.female")}</option>
+                <option value="male">{t("common.male")}</option>
+                <option value="unisex">{t("common.unisex")}</option>
               </select>
             </Field>
-            <Field label="Stock">
+            <Field label={t("common.stock")}>
               <select
                 className={fieldClass}
                 value={bulkEditForm.availability}
                 onChange={updateBulkEditField("availability")}
               >
-                <option value="">unchanged</option>
+                <option value="">{t("common.unchanged")}</option>
                 <option value="in_stock">in_stock</option>
                 <option value="out_of_stock">out_of_stock</option>
               </select>
             </Field>
-            <Field label="Status">
+            <Field label={t("common.status")}>
               <select
                 className={fieldClass}
                 value={bulkEditForm.status}
                 onChange={updateBulkEditField("status")}
               >
-                <option value="">unchanged</option>
-                <option value="draft">draft</option>
-                <option value="published">published</option>
-                <option value="archived">archived</option>
+                <option value="">{t("common.unchanged")}</option>
+                <option value="draft">{t("common.draft")}</option>
+                <option value="published">{t("common.published")}</option>
+                <option value="archived">{t("common.archived")}</option>
               </select>
             </Field>
-            <Field label="Colors">
+            <Field label={t("product.colors")}>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.colors}
                 onChange={updateBulkEditField("colors")}
               />
             </Field>
-            <Field label="Sizes">
+            <Field label={t("product.sizes")}>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.sizes}
                 onChange={updateBulkEditField("sizes")}
               />
             </Field>
-            <Field label="Material">
+            <Field label={t("product.material")}>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.material}
                 onChange={updateBulkEditField("material")}
               />
             </Field>
-            <Field label="Fit Type">
+            <Field label={t("product.fitType")}>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.fitType}
                 onChange={updateBulkEditField("fitType")}
               />
             </Field>
-            <Field label="Style Tags">
+            <Field label={t("product.styleTags")}>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.styleTags}
                 onChange={updateBulkEditField("styleTags")}
               />
             </Field>
-            <Field label="Occasion Tags">
+            <Field label={t("product.occasionTags")}>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.occasionTags}
                 onChange={updateBulkEditField("occasionTags")}
               />
             </Field>
-            <Field label="Image URL" wide>
+            <Field label={t("product.imageUrl")} wide>
               <input
                 className={fieldClass}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.imageUrl}
                 onChange={updateBulkEditField("imageUrl")}
               />
             </Field>
-            <Field label="Description" wide>
+            <Field label={t("product.description")} wide>
               <textarea
                 className={`${fieldClass} min-h-28 resize-none`}
-                placeholder="unchanged"
+                placeholder={t("common.unchanged")}
                 value={bulkEditForm.description}
                 onChange={updateBulkEditField("description")}
               />
@@ -1425,10 +1441,10 @@ function BulkEditModal({
             onClick={onClose}
             className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="submit" className={`${buttonBase} bg-[#12356f] text-white`}>
-            Apply Changes
+            {t("shopAdmin.applyChanges")}
           </button>
         </div>
       </form>
@@ -1437,16 +1453,17 @@ function BulkEditModal({
 }
 
 function ShopView({ deactivateShop, saveShop, shop, shopForm, updateShopField }) {
+  const { t } = useLanguage();
   return (
     <form onSubmit={saveShop} className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
         <div>
-          <h2 className="text-base font-bold text-slate-900">{shop ? "Edit Shop" : "Create Shop"}</h2>
-          <p className="mt-1 text-sm text-slate-500">One shop owner account manages one shop.</p>
+          <h2 className="text-base font-bold text-slate-900">{shop ? t("shopAdmin.editShop") : t("shopAdmin.createShop")}</h2>
+          <p className="mt-1 text-sm text-slate-500">{t("shopAdmin.oneShop")}</p>
         </div>
         <div className="flex gap-2">
           <button type="submit" className={`${buttonBase} bg-[#12356f] text-white`}>
-            Save Shop
+            {t("shopAdmin.saveShop")}
           </button>
           {shop ? (
             <button
@@ -1454,41 +1471,44 @@ function ShopView({ deactivateShop, saveShop, shop, shopForm, updateShopField })
               onClick={deactivateShop}
               className={`${buttonBase} border border-slate-200 bg-white text-slate-700`}
             >
-              Deactivate
+              {t("shopAdmin.deactivate")}
             </button>
           ) : null}
         </div>
       </div>
       <div className="grid gap-4 p-4 md:grid-cols-2">
-        <Field label="Name">
+        <Field label={t("common.name")}>
           <input className={fieldClass} value={shopForm.name} onChange={updateShopField("name")} />
         </Field>
         <Field label="Slug">
           <input className={fieldClass} value={shopForm.slug} onChange={updateShopField("slug")} />
         </Field>
-        <Field label="Description" wide>
+        <Field label={t("product.description")} wide>
           <textarea
             className={`${fieldClass} min-h-28 resize-none`}
             value={shopForm.description}
             onChange={updateShopField("description")}
           />
         </Field>
-        <Field label="Logo URL">
+        <Field label={t("shopAdmin.logoUrl")}>
           <input className={fieldClass} value={shopForm.logoUrl} onChange={updateShopField("logoUrl")} />
         </Field>
-        <Field label="Cover URL">
+        <Field label={t("shopAdmin.coverUrl")}>
           <input className={fieldClass} value={shopForm.coverUrl} onChange={updateShopField("coverUrl")} />
         </Field>
-        <Field label="Contact Email">
+        <Field label={t("shopAdmin.contactEmail")}>
           <input className={fieldClass} value={shopForm.contactEmail} onChange={updateShopField("contactEmail")} />
         </Field>
-        <Field label="Contact Phone">
+        <Field label={t("shopAdmin.contactPhone")}>
           <input className={fieldClass} value={shopForm.contactPhone} onChange={updateShopField("contactPhone")} />
         </Field>
-        <Field label="Status">
+        <Field label={t("shopAdmin.contactAddress")} wide>
+          <input className={fieldClass} value={shopForm.contactAddress} onChange={updateShopField("contactAddress")} />
+        </Field>
+        <Field label={t("common.status")}>
           <select className={fieldClass} value={shopForm.status} onChange={updateShopField("status")}>
-            <option value="active">active</option>
-            <option value="inactive">inactive</option>
+            <option value="active">{t("common.active")}</option>
+            <option value="inactive">{t("common.inactive")}</option>
           </select>
         </Field>
       </div>
@@ -1503,23 +1523,24 @@ function ImportView({
   importResult,
   shop,
 }) {
+  const { t } = useLanguage();
   return (
     <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-bold text-slate-900">Import Products</h2>
+        <h2 className="text-base font-bold text-slate-900">{t("shopAdmin.importProducts")}</h2>
         <p className="mt-1 text-sm text-slate-500">
           {shop && hasActiveShopPlan
-            ? "Download the template, fill it, then upload the .xlsx file."
-            : "Create a shop and activate your subscription before importing."}
+            ? t("shopAdmin.importReady")
+            : t("shopAdmin.importLocked")}
         </p>
         <button
           type="button"
           onClick={downloadTemplate}
           className={`${buttonBase} mt-5 w-full border border-slate-200 bg-white text-slate-700`}
         >
-          Download Template
+          {t("shopAdmin.downloadTemplate")}
         </button>
-        <Field label="Upload .xlsx">
+        <Field label={t("shopAdmin.uploadXlsx")}>
           <input
             className={fieldClass}
             type="file"
@@ -1530,22 +1551,22 @@ function ImportView({
         </Field>
       </section>
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-bold text-slate-900">Import Result</h2>
+        <h2 className="text-base font-bold text-slate-900">{t("shopAdmin.importResult")}</h2>
         {importResult ? (
           <div className="mt-4 grid gap-4">
             <div className="grid gap-3 md:grid-cols-4">
-              <Metric label="Status" value={importResult.status} />
-              <Metric label="Rows" value={importResult.totalRows} />
-              <Metric label="Success" value={importResult.successCount} />
-              <Metric label="Failed" value={importResult.failedCount} />
+              <Metric label={t("common.status")} value={importResult.status} />
+              <Metric label={t("common.rows")} value={importResult.totalRows} />
+              <Metric label={t("common.success")} value={importResult.successCount} />
+              <Metric label={t("common.failed")} value={importResult.failedCount} />
             </div>
             {importResult.errors?.length ? (
               <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                <p className="font-semibold">Errors</p>
+                <p className="font-semibold">{t("common.errors")}</p>
                 <ul className="mt-2 space-y-1">
                   {importResult.errors.map((error, index) => (
                     <li key={`${error.row}-${error.field}-${index}`}>
-                      Row {error.row}, {error.field}: {error.message}
+                      {t("shopAdmin.errorRow", { row: error.row, field: error.field, message: error.message })}
                     </li>
                   ))}
                 </ul>
@@ -1553,7 +1574,7 @@ function ImportView({
             ) : null}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-slate-500">No import result yet.</p>
+          <p className="mt-4 text-sm text-slate-500">{t("shopAdmin.noImportResult")}</p>
         )}
       </section>
     </div>
@@ -1579,20 +1600,20 @@ function RangeControl({ range, setRange }) {
   );
 }
 
-function PremiumPaywall({ onCheckout, title }) {
+function PremiumPaywall({ onCheckout, titleKey }) {
+  const { t } = useLanguage();
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+      <h2 className="text-lg font-bold text-slate-900">{t(titleKey)}</h2>
       <p className="mt-2 max-w-2xl text-sm text-slate-500">
-        Tính năng này nằm trong gói Shop Owner: dashboard phân tích, ưu tiên hiển thị,
-        và truy cập insight khách hàng tổng hợp ẩn danh.
+        {t("shopAdmin.premiumPaywall")}
       </p>
       <button
         type="button"
         onClick={onCheckout}
         className={`${buttonBase} mt-5 bg-[#12356f] text-white`}
       >
-        Thanh toán gói Shop Owner
+        {t("shopAdmin.checkout")}
       </button>
     </section>
   );
@@ -1600,47 +1621,48 @@ function PremiumPaywall({ onCheckout, title }) {
 
 function AnalyticsView({ analytics, range, setRange, status }) {
   const summary = analytics?.summary || {};
+  const { t } = useLanguage();
 
   return (
     <section className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Shop performance</h2>
+          <h2 className="text-base font-bold text-slate-900">{t("shopAdmin.analyticsTitle")}</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Product views, try-on clicks, and stylist recommendations.
+            {t("shopAdmin.analyticsDescription")}
           </p>
         </div>
         <RangeControl range={range} setRange={setRange} />
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
-        <Metric label="Products" value={summary.totalProducts ?? 0} />
-        <Metric label="Published" value={summary.publishedProducts ?? 0} />
-        <Metric label="Views" value={summary.productViews ?? 0} />
-        <Metric label="Try-ons" value={summary.tryOnClicks ?? 0} />
-        <Metric label="Stylist matches" value={summary.stylistMatches ?? 0} />
-        <Metric label="Feedback" value={summary.feedbackCount ?? 0} />
-        <Metric label="Out of stock" value={summary.outOfStockProducts ?? 0} />
-        <Metric label="Draft" value={summary.draftProducts ?? 0} />
-        <Metric label="Conversion" value={formatPercent(summary.conversionRate)} />
+        <Metric label={t("shopAdmin.products")} value={summary.totalProducts ?? 0} />
+        <Metric label={t("common.published")} value={summary.publishedProducts ?? 0} />
+        <Metric label={t("shopAdmin.productViews")} value={summary.productViews ?? 0} />
+        <Metric label={t("shopAdmin.tryOns")} value={summary.tryOnClicks ?? 0} />
+        <Metric label={t("shopAdmin.stylistMatches")} value={summary.stylistMatches ?? 0} />
+        <Metric label={t("shopAdmin.feedback")} value={summary.feedbackCount ?? 0} />
+        <Metric label={t("shopAdmin.outOfStock")} value={summary.outOfStockProducts ?? 0} />
+        <Metric label={t("common.draft")} value={summary.draftProducts ?? 0} />
+        <Metric label={t("shopAdmin.conversion")} value={formatPercent(summary.conversionRate)} />
       </div>
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-4">
-          <h2 className="text-base font-bold text-slate-900">Top products</h2>
-          {status === "loading" ? <p className="mt-1 text-sm text-slate-500">Loading...</p> : null}
+          <h2 className="text-base font-bold text-slate-900">{t("shopAdmin.topProducts")}</h2>
+          {status === "loading" ? <p className="mt-1 text-sm text-slate-500">{t("common.loading")}</p> : null}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
               <tr>
-                <th className="px-4 py-3">Product</th>
-                <th className="px-4 py-3">Views</th>
-                <th className="px-4 py-3">Try-ons</th>
+                <th className="px-4 py-3">{t("product.product")}</th>
+                <th className="px-4 py-3">{t("shopAdmin.productViews")}</th>
+                <th className="px-4 py-3">{t("shopAdmin.tryOns")}</th>
                 <th className="px-4 py-3">Stylist</th>
-                <th className="px-4 py-3">Feedback</th>
-                <th className="px-4 py-3">Rating</th>
-                <th className="px-4 py-3">Conversion</th>
+                <th className="px-4 py-3">{t("shopAdmin.feedback")}</th>
+                <th className="px-4 py-3">{t("shopAdmin.ratings")}</th>
+                <th className="px-4 py-3">{t("shopAdmin.conversion")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1658,7 +1680,7 @@ function AnalyticsView({ analytics, range, setRange, status }) {
               {!analytics?.topProducts?.length ? (
                 <tr>
                   <td className="px-4 py-8 text-center text-slate-500" colSpan="7">
-                    No analytics events yet.
+                    {t("shopAdmin.noAnalytics")}
                   </td>
                 </tr>
               ) : null}
@@ -1672,14 +1694,15 @@ function AnalyticsView({ analytics, range, setRange, status }) {
 
 function InsightsView({ insights, range, setRange, status }) {
   const breakdowns = insights?.breakdowns || {};
+  const { t } = useLanguage();
 
   return (
     <section className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Anonymous customer insights</h2>
+          <h2 className="text-base font-bold text-slate-900">{t("shopAdmin.anonymousInsights")}</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Privacy threshold applies before breakdowns are shown.
+            {t("shopAdmin.privacyDescription")}
           </p>
         </div>
         <RangeControl range={range} setRange={setRange} />
@@ -1687,28 +1710,31 @@ function InsightsView({ insights, range, setRange, status }) {
 
       {status === "loading" ? (
         <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
-          Loading insights...
+          {t("shopAdmin.loadingInsights")}
         </div>
       ) : null}
 
       {insights && !insights.enoughData ? (
         <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
-          {insights.message || "Not enough data yet."} Current sample: {insights.eventCount || 0} events
-          from {insights.userCount || 0} users.
+          {t("shopAdmin.currentSample", {
+            message: insights.message || t("shopAdmin.notEnoughData"),
+            events: insights.eventCount || 0,
+            users: insights.userCount || 0,
+          })}
         </div>
       ) : null}
 
       {insights?.enoughData ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          <InsightCard title="Gender" items={breakdowns.gender} />
-          <InsightCard title="Body shape" items={breakdowns.bodyShape} />
-          <InsightCard title="Skin tone" items={breakdowns.skinTone} />
-          <InsightCard title="Style preferences" items={breakdowns.stylePreferences} />
-          <InsightCard title="Occasions" items={breakdowns.occasions} />
-          <InsightCard title="Budget buckets" items={breakdowns.budgetBuckets} />
-          <InsightCard title="Interested style tags" items={breakdowns.styleTags} />
-          <InsightCard title="Interested colors" items={breakdowns.colors} />
-          <InsightCard title="Ratings" items={breakdowns.ratings} />
+          <InsightCard title={t("profile.gender")} items={breakdowns.gender} />
+          <InsightCard title={t("shopAdmin.bodyShape")} items={breakdowns.bodyShape} />
+          <InsightCard title={t("shopAdmin.skinTone")} items={breakdowns.skinTone} />
+          <InsightCard title={t("shopAdmin.stylePreferences")} items={breakdowns.stylePreferences} />
+          <InsightCard title={t("shopAdmin.occasions")} items={breakdowns.occasions} />
+          <InsightCard title={t("shopAdmin.budgetBuckets")} items={breakdowns.budgetBuckets} />
+          <InsightCard title={t("shopAdmin.interestedStyleTags")} items={breakdowns.styleTags} />
+          <InsightCard title={t("shopAdmin.interestedColors")} items={breakdowns.colors} />
+          <InsightCard title={t("shopAdmin.ratings")} items={breakdowns.ratings} />
         </div>
       ) : null}
     </section>
@@ -1717,6 +1743,7 @@ function InsightsView({ insights, range, setRange, status }) {
 
 function InsightCard({ items = [], title }) {
   const max = Math.max(...items.map((item) => item.count), 1);
+  const { t } = useLanguage();
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1736,7 +1763,7 @@ function InsightCard({ items = [], title }) {
             </div>
           </div>
         ))}
-        {!items.length ? <p className="text-sm text-slate-500">No signal yet.</p> : null}
+        {!items.length ? <p className="text-sm text-slate-500">{t("shopAdmin.noSignal")}</p> : null}
       </div>
     </section>
   );

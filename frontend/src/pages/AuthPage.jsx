@@ -2,10 +2,11 @@ import { useState } from "react";
 import { loginAdmin, setAdminToken } from "../api/adminApi.js";
 import { loginShopOwner, registerShopOwner, setShopToken } from "../api/shopApi.js";
 import { loginUser, registerUser, setUserToken } from "../api/userApi.js";
-
-const fieldClass = "w-full rounded-lg border border-line/70 bg-white px-3 py-2 text-sm outline-none focus:border-tertiary";
+import { AppShell, Button, SegmentedTabs, TextField, TopNav } from "../components/ui/index.jsx";
+import { useLanguage } from "../i18n.jsx";
 
 function AuthPage({ mode = "login" }) {
+  const { t } = useLanguage();
   const isRegister = mode === "register";
   const [role, setRole] = useState("user");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -28,7 +29,7 @@ function AuthPage({ mode = "login" }) {
       if (role === "shop") {
         const response = await registerShopOwner(form);
         setStatus("success");
-        setMessage(response.message || "Shop owner account is pending admin approval.");
+        setMessage(response.message || t("auth.pendingApproval"));
         return;
       }
 
@@ -38,65 +39,76 @@ function AuthPage({ mode = "login" }) {
       window.location.href = user.profileCompleted || user.profileSkipped ? "/app" : "/onboarding/profile";
     } catch (error) {
       setStatus("error");
-      setMessage(error.response?.data?.message || "Could not authenticate.");
+      setMessage(error.response?.data?.message || t("auth.error"));
     }
   };
 
   return (
-    <div className="min-h-screen bg-hero">
-      <UnifiedNav />
-      <main className="section-shell flex min-h-[calc(100vh-80px)] items-center justify-center py-12">
-        <form onSubmit={submit} className="glass-panel w-full max-w-md p-6">
-          <h1 className="editorial-title text-3xl font-bold">{isRegister ? "Create account" : "Login"}</h1>
-          <p className="mt-2 text-sm text-muted">
+    <AppShell nav={<UnifiedNav />}>
+      <main className="section-shell grid min-h-[calc(100vh-76px)] items-center gap-8 py-10 lg:grid-cols-[minmax(0,1fr)_460px]">
+        <section className="relative hidden min-h-[640px] overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-glass lg:block">
+          <img
+            src="https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=85"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-86"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-canvasDeep via-canvas/30 to-transparent" />
+          <div className="absolute left-8 top-8 rounded-full border border-white/10 bg-white/10 px-5 py-2 text-sm font-bold backdrop-blur-xl">
+            {t("auth.access")}
+          </div>
+          <h1 className="absolute bottom-8 left-8 right-8 font-display text-7xl font-extrabold leading-none text-ink">
+            {t("auth.imageTitle")}
+          </h1>
+        </section>
+
+        <form onSubmit={submit} className="glass-panel p-6 md:p-8">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose">
+            {isRegister ? t("auth.createWorkspace") : t("auth.welcomeBack")}
+          </p>
+          <h1 className="editorial-title mt-3 text-4xl font-extrabold">
+            {isRegister ? t("auth.join") : t("auth.login")}
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted">
             {isRegister
-              ? "Choose the account type you want to create."
-              : "Use your email and password. MIROIR will open the right workspace automatically."}
+              ? t("auth.registerDescription")
+              : t("auth.loginDescription")}
           </p>
 
           {isRegister ? (
-            <div className="mt-5 grid grid-cols-2 gap-2 rounded-lg bg-panelSoft p-1">
-              <button type="button" onClick={() => setRole("user")} className={`rounded-md py-2 text-sm font-semibold ${role === "user" ? "bg-white text-ink shadow-sm" : "text-muted"}`}>
-                User
-              </button>
-              <button type="button" onClick={() => setRole("shop")} className={`rounded-md py-2 text-sm font-semibold ${role === "shop" ? "bg-white text-ink shadow-sm" : "text-muted"}`}>
-                Shop Owner
-              </button>
-            </div>
+            <SegmentedTabs
+              className="mt-6"
+              items={[
+                { value: "user", label: t("common.user") },
+                { value: "shop", label: t("common.shopOwner") },
+              ]}
+              value={role}
+              onChange={setRole}
+            />
           ) : null}
 
-          <div className="mt-5 grid gap-4">
+          <div className="mt-6 grid gap-4">
             {isRegister ? (
-              <label className="grid gap-2">
-                <span className="text-xs font-semibold uppercase text-muted">Name</span>
-                <input className={fieldClass} value={form.name} onChange={updateField("name")} />
-              </label>
+              <TextField label={t("common.name")} value={form.name} onChange={updateField("name")} />
             ) : null}
-            <label className="grid gap-2">
-              <span className="text-xs font-semibold uppercase text-muted">Email</span>
-              <input className={fieldClass} value={form.email} onChange={updateField("email")} />
-            </label>
-            <label className="grid gap-2">
-              <span className="text-xs font-semibold uppercase text-muted">Password</span>
-              <input className={fieldClass} type="password" value={form.password} onChange={updateField("password")} />
-            </label>
+            <TextField label={t("common.email")} type="email" value={form.email} onChange={updateField("email")} />
+            <TextField label={t("common.password")} type="password" value={form.password} onChange={updateField("password")} />
 
             {message ? (
-              <div className={`rounded-lg border p-3 text-sm ${status === "error" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+              <div className={`rounded-lg border p-3 text-sm ${status === "error" ? "border-red-300/45 bg-red-300/14 text-red-100" : "border-emerald-300/45 bg-emerald-300/14 text-emerald-100"}`}>
                 {message}
               </div>
             ) : null}
 
-            <button disabled={status === "loading"} className="dark-button rounded-lg" type="submit">
-              {status === "loading" ? "Working..." : isRegister ? "Register" : "Login"}
-            </button>
-            <a className="text-center text-sm font-semibold text-tertiary" href={isRegister ? "/login" : "/register"}>
-              {isRegister ? "Already have an account? Login" : "Need an account? Register"}
+            <Button disabled={status === "loading"} type="submit" className="w-full">
+              {status === "loading" ? t("common.working") : isRegister ? t("auth.register") : t("auth.login")}
+            </Button>
+            <a className="text-center text-sm font-bold text-rose hover:text-ink" href={isRegister ? "/login" : "/register"}>
+              {isRegister ? t("auth.alreadyHave") : t("auth.needAccount")}
             </a>
           </div>
         </form>
       </main>
-    </div>
+    </AppShell>
   );
 }
 
@@ -117,7 +129,7 @@ const loginAnyRole = async ({ email, password }) => {
     window.location.href = "/admin/dashboard";
     return;
   } catch (_error) {
-    // Keep trying other account types. A single login form should not expose role lookup details.
+    // Keep trying other account types.
   }
 
   try {
@@ -153,28 +165,7 @@ const loginAnyRole = async ({ email, password }) => {
 };
 
 export function UnifiedNav({ user, onLogout }) {
-  return (
-    <nav className="sticky top-0 z-40 border-b border-line/50 bg-canvas/90 backdrop-blur-xl">
-      <div className="section-shell flex items-center justify-between py-4">
-        <a href={user ? "/app" : "/"} className="font-display text-2xl font-extrabold">MIROIR</a>
-        <div className="flex items-center gap-4 text-sm font-semibold">
-          <a href="/app" className="text-muted hover:text-ink">Marketplace</a>
-          <a href="/app/stylist" className="text-muted hover:text-ink">Stylist</a>
-          {user ? (
-            <>
-              <a href="/app/profile" className="text-muted hover:text-ink">{user.name}</a>
-              <button type="button" onClick={onLogout} className="rounded-full border border-line px-4 py-2">Logout</button>
-            </>
-          ) : (
-            <>
-              <a href="/login" className="text-muted hover:text-ink">Login</a>
-              <a href="/register" className="dark-button px-4 py-2">Register</a>
-            </>
-          )}
-        </div>
-      </div>
-    </nav>
-  );
+  return <TopNav user={user} onLogout={onLogout} />;
 }
 
 export default AuthPage;
