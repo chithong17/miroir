@@ -556,3 +556,4 @@ class _FeatureTool {
   final String imageUrl;
   final _MiniFeatureDestination destination;
 }
+

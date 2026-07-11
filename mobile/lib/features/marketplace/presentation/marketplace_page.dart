@@ -437,7 +437,7 @@ class _ProductGrid extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.57,
+        mainAxisExtent: 330,
       ),
       itemBuilder: (context, index) {
         final product = products[index];
@@ -462,14 +462,14 @@ class _ProductGrid extends StatelessWidget {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(18),
                       child: AspectRatio(
-                        aspectRatio: 1,
+                        aspectRatio: 1.06,
                         child: product.imageUrl.isNotEmpty
                             ? Image.network(
                                 product.imageUrl,
@@ -481,7 +481,7 @@ class _ProductGrid extends StatelessWidget {
                             : Container(color: AppColors.elevated),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 9),
                     Text(
                       product.name,
                       maxLines: 2,
@@ -500,7 +500,7 @@ class _ProductGrid extends StatelessWidget {
                         color: AppColors.muted,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
                       _formatMoney(product.price),
                       maxLines: 1,
@@ -518,10 +518,10 @@ class _ProductGrid extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.ink,
                           foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(40),
+                          minimumSize: const Size.fromHeight(36),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 10,
+                            vertical: 8,
                           ),
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(
@@ -631,3 +631,4 @@ String _formatMoney(double value) {
   }
   return '${buffer.toString()} VND';
 }
+

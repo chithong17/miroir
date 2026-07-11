@@ -25,9 +25,11 @@ class PaymentPlan {
       code: (json['code'] ?? json['planCode'] ?? '').toString(),
       name: (json['name'] ?? '').toString(),
       accountType: (json['accountType'] ?? '').toString(),
-      price: json['price'] is num
-          ? (json['price'] as num).toDouble()
-          : double.tryParse((json['price'] ?? '0').toString()) ?? 0,
+      price: json['amount'] is num
+          ? (json['amount'] as num).toDouble()
+          : json['price'] is num
+              ? (json['price'] as num).toDouble()
+              : double.tryParse((json['amount'] ?? json['price'] ?? '0').toString()) ?? 0,
       currency: (json['currency'] ?? 'VND').toString(),
       durationDays: json['durationDays'] is num
           ? (json['durationDays'] as num).toInt()
