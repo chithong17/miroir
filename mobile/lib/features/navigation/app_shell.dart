@@ -4,14 +4,13 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/glass_surface.dart';
 import '../account/presentation/account_page.dart';
 import '../home/presentation/home_page.dart';
-import '../marketplace/presentation/marketplace_page.dart';
 import '../stylist/presentation/stylist_page.dart';
 import '../try_on/presentation/try_on_page.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({
     super.key,
-    this.initialIndex = 1,
+    this.initialIndex = 0,
   });
 
   final int initialIndex;
@@ -25,7 +24,6 @@ class _AppShellState extends State<AppShell> {
 
   late final List<Widget> _pages = [
     const HomePage(),
-    const MarketplacePage(),
     const TryOnPage(),
     const StylistPage(),
     const AccountPage(),
@@ -33,7 +31,6 @@ class _AppShellState extends State<AppShell> {
 
   final _items = const [
     (Icons.home_outlined, Icons.home_rounded, 'Home'),
-    (Icons.storefront_outlined, Icons.storefront_rounded, 'Shop'),
     (Icons.checkroom_outlined, Icons.checkroom, 'Try On'),
     (Icons.auto_awesome_outlined, Icons.auto_awesome, 'Stylist'),
     (Icons.person_outline, Icons.person, 'Account'),

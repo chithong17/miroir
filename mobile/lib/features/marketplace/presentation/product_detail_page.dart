@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../core/app/app_session_scope.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_pill.dart';
+import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
-import '../../../shared/widgets/surface_icon_button.dart';
+import '../../../shared/widgets/section_card.dart';
 import '../../payments/presentation/premium_paywall_sheet.dart';
 import '../../try_on/presentation/try_on_page.dart';
 import '../data/catalog_models.dart';
 import '../data/catalog_service.dart';
+import 'widgets/product_feedback_card.dart';
 
 class ProductDetailPage extends StatelessWidget {
   const ProductDetailPage({
@@ -20,8 +22,11 @@ class ProductDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = AppSessionScope.of(context);
     final textTheme = Theme.of(context).textTheme;
     final shop = product.shop;
+    final isFavorite =
+        session.currentUser?.favoriteProductIds.contains(product.id) ?? false;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -37,18 +42,18 @@ class ProductDetailPage extends StatelessWidget {
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(28)),
+                        BorderRadius.vertical(top: Radius.circular(32)),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 132),
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 132),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _HeaderBlock(product: product),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
                             if (product.gender.isNotEmpty)
                               _InfoChip(
@@ -65,7 +70,7 @@ class ProductDetailPage extends StatelessWidget {
                           ],
                         ),
                         if (product.description.isNotEmpty) ...[
-                          const SizedBox(height: 22),
+                          const SizedBox(height: 28),
                           Text(
                             'About this piece',
                             style: textTheme.titleLarge?.copyWith(
@@ -75,65 +80,74 @@ class ProductDetailPage extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             product.description,
-                            style: textTheme.bodyLarge?.copyWith(
+                            style: textTheme.bodyMedium?.copyWith(
                               color: AppColors.muted,
                               height: 1.5,
                             ),
                           ),
                         ],
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 28),
                         Text(
                           'Product profile',
-                          style: textTheme.headlineSmall?.copyWith(
+                          style: textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Key details for styling and fit.',
-                          style: textTheme.bodyLarge?.copyWith(
+                          style: textTheme.bodySmall?.copyWith(
                             color: AppColors.muted,
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
+                        Column(
                           children: [
-                            _MetaCard(
-                              label: 'Material',
-                              value: _fallbackValue(product.material),
+                            Row(
+                              children: [
+                                _MetaCard(
+                                  label: 'Material',
+                                  value: _fallbackValue(product.material),
+                                ),
+                                const SizedBox(width: 12),
+                                _MetaCard(
+                                  label: 'Fit',
+                                  value: _fallbackValue(product.fitType),
+                                ),
+                              ],
                             ),
-                            _MetaCard(
-                              label: 'Fit',
-                              value: _fallbackValue(product.fitType),
-                            ),
-                            _MetaCard(
-                              label: 'Gender',
-                              value: _fallbackValue(product.gender),
-                            ),
-                            _MetaCard(
-                              label: 'Status',
-                              value: _fallbackValue(
-                                product.availability.replaceAll('_', ' '),
-                              ),
-                              emphasizeSuccess:
-                                  product.availability == 'in_stock',
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                _MetaCard(
+                                  label: 'Gender',
+                                  value: _fallbackValue(product.gender),
+                                ),
+                                const SizedBox(width: 12),
+                                _MetaCard(
+                                  label: 'Status',
+                                  value: _fallbackValue(
+                                    product.availability.replaceAll('_', ' '),
+                                  ),
+                                  emphasizeSuccess:
+                                      product.availability == 'in_stock',
+                                ),
+                              ],
                             ),
                           ],
                         ),
                         if (product.sizes.isNotEmpty) ...[
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           Text(
                             'Available sizes',
-                            style: textTheme.headlineSmall?.copyWith(
+                            style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             'Quick view for supported sizing.',
-                            style: textTheme.bodyLarge?.copyWith(
+                            style: textTheme.bodySmall?.copyWith(
                               color: AppColors.muted,
                             ),
                           ),
@@ -147,10 +161,10 @@ class ProductDetailPage extends StatelessWidget {
                           ),
                         ],
                         if (product.colors.isNotEmpty) ...[
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           Text(
                             'Color story',
-                            style: textTheme.headlineSmall?.copyWith(
+                            style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -165,10 +179,10 @@ class ProductDetailPage extends StatelessWidget {
                         ],
                         if (product.styleTags.isNotEmpty ||
                             product.occasionTags.isNotEmpty) ...[
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           Text(
                             'Styling tags',
-                            style: textTheme.headlineSmall?.copyWith(
+                            style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -176,20 +190,20 @@ class ProductDetailPage extends StatelessWidget {
                           if (product.styleTags.isNotEmpty)
                             _TagBlock(label: 'Style', tags: product.styleTags),
                           if (product.occasionTags.isNotEmpty) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             _TagBlock(
                                 label: 'Occasion', tags: product.occasionTags),
                           ],
                         ],
                         if (shop != null) ...[
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           _ShopSection(shop: shop),
                         ] else if (product.premiumShopDetailsRequired) ...[
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           _PremiumShopHint(product: product),
                         ],
-                        const SizedBox(height: 24),
-                        _FeedbackCard(product: product),
+                        const SizedBox(height: 28),
+                        ProductFeedbackCard(product: product),
                       ],
                     ),
                   ),
@@ -201,25 +215,38 @@ class ProductDetailPage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SurfaceIconButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onPressed: () => Navigator.of(context).maybePop(),
+                  GlassSurface(
+                    radius: 999,
+                    blurSigma: 14,
+                    padding: EdgeInsets.zero,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                          color: AppColors.ink, size: 20),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
                   ),
-                  const Spacer(),
-                  Column(
-                    children: [
-                      SurfaceIconButton(
-                        icon: Icons.favorite_border_rounded,
-                        onPressed: null,
+                  GlassSurface(
+                    radius: 999,
+                    blurSigma: 14,
+                    padding: EdgeInsets.zero,
+                    child: IconButton(
+                      icon: Icon(
+                        isFavorite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: isFavorite ? Colors.red : AppColors.ink,
+                        size: 20,
                       ),
-                      const SizedBox(height: 10),
-                      SurfaceIconButton(
-                        icon: Icons.ios_share_rounded,
-                        onPressed: null,
-                      ),
-                    ],
+                      onPressed: () {
+                        if (session.requiresLogin) {
+                          session.openLogin();
+                        } else {
+                          session.toggleFavorite(product.id);
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -229,21 +256,12 @@ class ProductDetailPage extends StatelessWidget {
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: AppColors.line),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x120E1420),
-                blurRadius: 24,
-                offset: Offset(0, 10),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        minimum: const EdgeInsets.fromLTRB(18, 8, 18, 12),
+        child: GlassSurface(
+          radius: 34,
+          blurSigma: 18,
+          shadowOpacity: 0.15,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               Expanded(
@@ -253,7 +271,7 @@ class ProductDetailPage extends StatelessWidget {
                   children: [
                     Text(
                       _formatMoney(product.price),
-                      style: textTheme.headlineSmall?.copyWith(
+                      style: textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.4,
                       ),
@@ -261,7 +279,7 @@ class ProductDetailPage extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'Price',
-                      style: textTheme.bodyLarge?.copyWith(
+                      style: textTheme.bodySmall?.copyWith(
                         color: AppColors.muted,
                       ),
                     ),
@@ -270,9 +288,9 @@ class ProductDetailPage extends StatelessWidget {
               ),
               const SizedBox(width: 14),
               Expanded(
-                flex: 2,
+                flex: 1,
                 child: MiroirButton(
-                  label: 'Open Studio',
+                  label: 'Try On',
                   onPressed: () => _openTryOn(context),
                   icon: Icons.checkroom_rounded,
                 ),
@@ -347,7 +365,7 @@ class _ProductHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 404,
+      height: 480,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -364,51 +382,14 @@ class _ProductHero extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withValues(alpha: 0.04),
-                  Colors.transparent,
                   Colors.black.withValues(alpha: 0.08),
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: 0.15),
                 ],
               ),
             ),
           ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 18,
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _DotIndicator(isActive: true),
-                    _DotIndicator(),
-                    _DotIndicator(),
-                    _DotIndicator(),
-                    _DotIndicator(),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            right: 18,
-            bottom: 18,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.38),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Text(
-                '1 / 6',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
+
         ],
       ),
     );
@@ -424,62 +405,21 @@ class _HeaderBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'FEATURED PIECE',
-                style: textTheme.labelLarge?.copyWith(
-                  color: AppColors.mutedSoft,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                product.name,
-                style: textTheme.displaySmall?.copyWith(
-                  fontSize: 31,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                  height: 1.0,
-                ),
-              ),
-            ],
-          ),
+        const GlassPill(
+          label: 'FEATURED PIECE',
+          icon: Icons.auto_awesome,
         ),
-        const SizedBox(width: 14),
-        Container(
-          constraints: const BoxConstraints(minWidth: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.line),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                _formatMoney(product.price),
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-                textAlign: TextAlign.right,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Curated item',
-                style: textTheme.bodyLarge?.copyWith(
-                  color: AppColors.muted,
-                ),
-              ),
-            ],
+        const SizedBox(height: 12),
+        Text(
+          product.name,
+          style: textTheme.displaySmall?.copyWith(
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
+            height: 1.1,
           ),
         ),
       ],
@@ -501,20 +441,19 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.line),
+        color: AppColors.canvas,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: iconColor ?? AppColors.muted),
-          const SizedBox(width: 8),
+          Icon(icon, size: 14, color: iconColor ?? AppColors.ink),
+          const SizedBox(width: 4),
           Text(
             label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -537,29 +476,25 @@ class _MetaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 150, maxWidth: 220),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFEAECEF)),
-        ),
+    return Expanded(
+      child: SectionCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        radius: 16,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.mutedSoft,
                   ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontSize: 22,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: emphasizeSuccess
                         ? const Color(0xFF28AF63)
@@ -581,10 +516,12 @@ class _SizeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      width: 44,
+      height: 44,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        shape: BoxShape.circle,
         border: Border.all(color: AppColors.line),
       ),
       child: Text(
@@ -604,26 +541,21 @@ class _ShopSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SectionCard(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.line),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Shop',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             'Seller details attached to this catalog item.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.muted,
                 ),
           ),
@@ -632,10 +564,10 @@ class _ShopSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 child: SizedBox(
-                  width: 64,
-                  height: 64,
+                  width: 54,
+                  height: 54,
                   child: shop.logoUrl.isNotEmpty
                       ? Image.network(
                           shop.logoUrl,
@@ -645,31 +577,33 @@ class _ShopSection extends StatelessWidget {
                       : _shopLogoFallback(),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       shop.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                     ),
                     if (shop.slug.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         '@${shop.slug}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppColors.muted,
                             ),
                       ),
                     ],
                     if (shop.description.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         shop.description,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ],
@@ -686,7 +620,7 @@ class _ShopSection extends StatelessWidget {
     return Container(
       color: AppColors.elevated,
       alignment: Alignment.center,
-      child: const Icon(Icons.storefront_rounded, color: AppColors.ink),
+      child: const Icon(Icons.storefront_rounded, color: AppColors.ink, size: 20),
     );
   }
 }
@@ -704,8 +638,9 @@ class _TagBlock extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
+                color: AppColors.muted,
               ),
         ),
         const SizedBox(height: 8),
@@ -763,13 +698,9 @@ class _PremiumShopHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = AppSessionScope.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.line),
-      ),
+    return SectionCard(
+      padding: const EdgeInsets.all(18),
+      color: const Color(0xFFF7F9FC),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -777,13 +708,17 @@ class _PremiumShopHint extends StatelessWidget {
             'Shop details are Premium',
             style: Theme.of(context)
                 .textTheme
-                .titleLarge
+                .titleMedium
                 ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
-          const Text(
-              'Upgrade to view shop name, contact details, and more trusted buying context.'),
-          const SizedBox(height: 12),
+          Text(
+            'Upgrade to view shop name, contact details, and more trusted buying context.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.muted,
+                ),
+          ),
+          const SizedBox(height: 14),
           MiroirButton(
             label:
                 session.isSignedIn ? 'Upgrade to Premium' : 'Login to unlock',
@@ -808,127 +743,6 @@ class _PremiumShopHint extends StatelessWidget {
   }
 }
 
-class _FeedbackCard extends StatefulWidget {
-  const _FeedbackCard({required this.product});
-
-  final CatalogProduct product;
-
-  @override
-  State<_FeedbackCard> createState() => _FeedbackCardState();
-}
-
-class _FeedbackCardState extends State<_FeedbackCard> {
-  final _service = CatalogService();
-  final _commentController = TextEditingController();
-  int _rating = 5;
-  String _fitFeedback = 'not_sure';
-  String _message = '';
-  bool _isSubmitting = false;
-
-  @override
-  void dispose() {
-    _commentController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final session = AppSessionScope.of(context);
-    if (!session.isSignedIn) {
-      Navigator.of(context).maybePop();
-      session.openLogin();
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-      _message = '';
-    });
-
-    try {
-      await _service.submitProductFeedback(
-        token: session.authToken,
-        productId: widget.product.id,
-        rating: _rating,
-        fitFeedback: _fitFeedback,
-        comment: _commentController.text,
-      );
-      setState(() => _message = 'Thanks, your feedback was saved.');
-    } catch (error) {
-      setState(() => _message = error.toString());
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Review this product',
-              style:
-                  textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
-          Row(
-            children: List.generate(5, (index) {
-              final value = index + 1;
-              return IconButton(
-                onPressed: () => setState(() => _rating = value),
-                icon: Icon(
-                  value <= _rating
-                      ? Icons.star_rounded
-                      : Icons.star_outline_rounded,
-                  color: AppColors.ink,
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _fitFeedback,
-            decoration: const InputDecoration(labelText: 'Fit feedback'),
-            items: const [
-              DropdownMenuItem(
-                  value: 'true_to_size', child: Text('True to size')),
-              DropdownMenuItem(value: 'runs_small', child: Text('Runs small')),
-              DropdownMenuItem(value: 'runs_large', child: Text('Runs large')),
-              DropdownMenuItem(value: 'not_sure', child: Text('Not sure')),
-            ],
-            onChanged: (value) =>
-                setState(() => _fitFeedback = value ?? 'not_sure'),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _commentController,
-            maxLines: 3,
-            decoration: const InputDecoration(labelText: 'Comment'),
-          ),
-          if (_message.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(_message),
-          ],
-          const SizedBox(height: 12),
-          MiroirButton(
-            label: _isSubmitting ? 'Submitting...' : 'Submit feedback',
-            onPressed: _isSubmitting ? null : _submit,
-            icon: Icons.rate_review_outlined,
-            isSecondary: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 String _formatMoney(double value) {
   final rounded = value.round().toString();

@@ -25,7 +25,7 @@ class TryOnService {
   }) async {
     final formData = FormData.fromMap({
       'productId': productId,
-      'modelImage': _toMultipart(modelImage),
+      'image': _toMultipart(modelImage),
     });
     return _postTask(
       path: '/tryon/catalog',

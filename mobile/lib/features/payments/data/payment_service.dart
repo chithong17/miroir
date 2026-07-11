@@ -49,13 +49,13 @@ class PaymentService {
     }
   }
 
-  Future<PaymentStatusResult> getMyPaymentState(String token) async {
+  Future<PaymentProfileResult> getMyPaymentState(String token) async {
     try {
       final response = await _client.instance.get<Map<String, dynamic>>(
         '/payments/me',
         options: _client.authorizedOptions(token),
       );
-      return PaymentStatusResult.fromJson(response.data ?? const {});
+      return PaymentProfileResult.fromJson(response.data ?? const {});
     } catch (error) {
       throw ApiError.from(error);
     }

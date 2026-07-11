@@ -7,6 +7,7 @@ import '../../features/account/data/account_models.dart';
 import '../../features/account/data/account_service.dart';
 import '../../features/customer/data/customer_models.dart';
 import '../../features/customer/data/customer_service.dart';
+import '../../features/payments/data/payment_service.dart';
 import '../constants/app_constants.dart';
 import '../network/api_error.dart';
 
@@ -25,15 +26,19 @@ class AppSessionController extends ChangeNotifier {
   AppSessionController({
     AccountService? accountService,
     CustomerService? customerService,
+    PaymentService? paymentService,
   })  : _accountService = accountService ?? AccountService(),
-        _customerService = customerService ?? CustomerService();
+        _customerService = customerService ?? CustomerService(),
+        _paymentService = paymentService ?? PaymentService();
 
   static const _sessionKey = 'miroir.customer_session';
+  static const _ownerSessionKey = 'miroir.shop_owner_session';
   static const _guestKey = 'miroir.customer_guest_mode';
   static const _onboardingKey = 'miroir.has_seen_onboarding';
 
   final AccountService _accountService;
   final CustomerService _customerService;
+  final PaymentService _paymentService;
 
   bool _isRestoring = true;
   bool _isCheckingHealth = false;
@@ -46,6 +51,7 @@ class AppSessionController extends ChangeNotifier {
   bool? _backendHealthy;
   CustomerAuthFlow _authFlow = CustomerAuthFlow.login;
   UserSession? _session;
+  ShopOwnerSession? _ownerSession;
 
   bool get isRestoring => _isRestoring;
   bool get isCheckingHealth => _isCheckingHealth;
@@ -62,6 +68,12 @@ class AppSessionController extends ChangeNotifier {
   UserSession? get session => _session;
   CustomerUser? get currentUser => _session?.user;
   String get authToken => _session?.token ?? '';
+  ShopOwnerSession? get shopOwnerSession => _ownerSession;
+  ShopOwner? get currentShopOwner => _ownerSession?.owner;
+  String get shopOwnerToken => _ownerSession?.token ?? '';
+  bool get hasShopOwnerSession => _ownerSession != null;
+  bool get isShopOwnerPremium =>
+      _ownerSession?.owner.subscription.isPremium ?? false;
   bool get isPremium => currentUser?.subscription.isPremium ?? false;
   UserUsageQuota? get tryOnUsage => currentUser?.subscription.usage;
   int? get tryOnRemaining => tryOnUsage?.remaining;
@@ -70,13 +82,8 @@ class AppSessionController extends ChangeNotifier {
   bool get requiresLogin => _session == null;
 
   AppEntryStage get entryStage {
-    if (_isRestoring) {
-      return AppEntryStage.restoring;
-    }
-
-    if (!_hasSeenOnboarding) {
-      return AppEntryStage.onboarding;
-    }
+    if (_isRestoring) return AppEntryStage.restoring;
+    if (!_hasSeenOnboarding) return AppEntryStage.onboarding;
 
     if (_session != null) {
       if (_session!.user.needsProfileOnboarding || _forceProfileEditor) {
@@ -85,14 +92,8 @@ class AppSessionController extends ChangeNotifier {
       return AppEntryStage.app;
     }
 
-    if (_showingAuthScreen) {
-      return AppEntryStage.auth;
-    }
-
-    if (_isGuestMode) {
-      return AppEntryStage.app;
-    }
-
+    if (_showingAuthScreen) return AppEntryStage.auth;
+    if (_isGuestMode) return AppEntryStage.app;
     return AppEntryStage.authChoice;
   }
 
@@ -103,8 +104,8 @@ class AppSessionController extends ChangeNotifier {
     final preferences = await SharedPreferences.getInstance();
     _hasSeenOnboarding = preferences.getBool(_onboardingKey) ?? false;
     _isGuestMode = preferences.getBool(_guestKey) ?? false;
-    final rawSession = preferences.getString(_sessionKey);
 
+    final rawSession = preferences.getString(_sessionKey);
     if (rawSession != null && rawSession.isNotEmpty) {
       try {
         _session = UserSession.fromJson(
@@ -112,6 +113,19 @@ class AppSessionController extends ChangeNotifier {
         );
       } catch (_) {
         await preferences.remove(_sessionKey);
+      }
+    }
+
+    final rawOwnerSession = preferences.getString(_ownerSessionKey);
+    if (rawOwnerSession != null && rawOwnerSession.isNotEmpty) {
+      try {
+        _ownerSession = ShopOwnerSession.fromJson(
+          jsonDecode(rawOwnerSession) as Map<String, dynamic>,
+        );
+        await refreshShopOwnerSubscription(silent: true);
+      } catch (_) {
+        _ownerSession = null;
+        await preferences.remove(_ownerSessionKey);
       }
     }
 
@@ -177,9 +191,7 @@ class AppSessionController extends ChangeNotifier {
   }
 
   void openProfileOnboarding() {
-    if (_session == null) {
-      return;
-    }
+    if (_session == null) return;
     _forceProfileEditor = true;
     notifyListeners();
   }
@@ -198,10 +210,7 @@ class AppSessionController extends ChangeNotifier {
   }
 
   Future<void> refreshCurrentUser() async {
-    if (_session == null) {
-      return;
-    }
-
+    if (_session == null) return;
     try {
       final refreshedUser = await _customerService.getMe(_session!.token);
       await updateCurrentUser(refreshedUser);
@@ -211,14 +220,98 @@ class AppSessionController extends ChangeNotifier {
   }
 
   Future<void> updateCurrentUser(CustomerUser user) async {
-    if (_session == null) {
-      return;
-    }
-
+    if (_session == null) return;
     _session = UserSession(user: user, token: _session!.token);
     _forceProfileEditor = false;
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString(_sessionKey, jsonEncode(_session!.toJson()));
+    notifyListeners();
+  }
+
+  Future<void> toggleFavorite(String productId) async {
+    if (_session == null) return;
+    
+    final currentFavorites = List<String>.from(_session!.user.favoriteProductIds);
+    final isFavorited = currentFavorites.contains(productId);
+    
+    if (isFavorited) {
+      currentFavorites.remove(productId);
+    } else {
+      currentFavorites.add(productId);
+    }
+    
+    // Optimistic update
+    final optimisticUser = _session!.user.copyWith(favoriteProductIds: currentFavorites);
+    await updateCurrentUser(optimisticUser);
+    
+    // API call
+    try {
+      final updatedIds = await _customerService.toggleFavoriteProduct(
+        token: _session!.token,
+        productId: productId,
+      );
+      // Ensure sync with backend
+      final syncedUser = _session!.user.copyWith(favoriteProductIds: updatedIds);
+      await updateCurrentUser(syncedUser);
+    } catch (error) {
+      // Revert on failure
+      final originalFavorites = List<String>.from(_session!.user.favoriteProductIds);
+      if (isFavorited) {
+        originalFavorites.add(productId);
+      } else {
+        originalFavorites.remove(productId);
+      }
+      final revertedUser = _session!.user.copyWith(favoriteProductIds: originalFavorites);
+      await updateCurrentUser(revertedUser);
+    }
+  }
+
+  Future<void> saveShopOwnerAuthResult(OwnerAuthResult authResult) async {
+    if (authResult.token.isEmpty) {
+      _sessionMessage = authResult.message.isNotEmpty
+          ? authResult.message
+          : 'Shop owner account created. Please wait for approval before login.';
+      notifyListeners();
+      return;
+    }
+
+    _ownerSession =
+        ShopOwnerSession(owner: authResult.owner, token: authResult.token);
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(
+        _ownerSessionKey, jsonEncode(_ownerSession!.toJson()));
+    await refreshShopOwnerSubscription(silent: true);
+    notifyListeners();
+  }
+
+  Future<void> refreshShopOwnerSubscription({bool silent = false}) async {
+    if (_ownerSession == null) return;
+    try {
+      final profile =
+          await _paymentService.getMyPaymentState(_ownerSession!.token);
+      final subscription = ShopOwnerSubscription(
+        planCode: profile.planCode,
+        status: profile.status,
+        expiresAt: profile.expiresAt,
+        isPremium: profile.isPremium,
+        features: profile.features,
+      );
+      _ownerSession = _ownerSession!.copyWith(
+        owner: _ownerSession!.owner.copyWith(subscription: subscription),
+      );
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(
+          _ownerSessionKey, jsonEncode(_ownerSession!.toJson()));
+    } catch (_) {
+      // Keep the stored owner snapshot if subscription refresh fails.
+    }
+    if (!silent) notifyListeners();
+  }
+
+  Future<void> logoutShopOwner() async {
+    _ownerSession = null;
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_ownerSessionKey);
     notifyListeners();
   }
 

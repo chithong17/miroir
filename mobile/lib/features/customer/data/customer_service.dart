@@ -4,6 +4,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/models/local_image_data.dart';
+import '../../marketplace/data/catalog_models.dart';
 import 'customer_models.dart';
 
 class CustomerService {
@@ -119,6 +120,39 @@ class CustomerService {
       return CustomerUser.fromJson(
         (response.data?['user'] as Map<String, dynamic>?) ?? const {},
       );
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
+
+  Future<List<CatalogProduct>> getFavoriteProducts(String token) async {
+    try {
+      final response = await _client.instance.get<Map<String, dynamic>>(
+        '/users/me/favorites',
+        options: _client.authorizedOptions(token),
+      );
+      final json = response.data ?? const {};
+      final list = (json['products'] as List?) ?? const [];
+      return list
+          .map((item) => CatalogProduct.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
+
+  Future<List<String>> toggleFavoriteProduct({
+    required String token,
+    required String productId,
+  }) async {
+    try {
+      final response = await _client.instance.post<Map<String, dynamic>>(
+        '/users/me/favorites/$productId/toggle',
+        options: _client.authorizedOptions(token),
+      );
+      final json = response.data ?? const {};
+      final list = (json['favoriteProductIds'] as List?) ?? const [];
+      return list.map((e) => e.toString()).toList();
     } catch (error) {
       throw ApiError.from(error);
     }

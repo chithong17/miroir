@@ -1,4 +1,5 @@
 import { uploadImageBuffer } from "../services/cloudinary.service.js";
+import { toPublicProduct } from "../services/product.service.js";
 import {
   skipUserProfile,
   updateUserProfile,
@@ -50,3 +51,52 @@ export const uploadMyProfilePhoto = async (req, res, next) => {
     next(error);
   }
 };
+
+import { toggleUserFavoriteProduct, getUserFavoriteProducts } from "../services/userAuth.service.js";
+
+export const toggleFavoriteProduct = async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    const favoriteProductIds = await toggleUserFavoriteProduct(req.user.id, productId);
+    return res.json({ success: true, favoriteProductIds });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listFavoriteProducts = async (req, res, next) => {
+  try {
+    const { products, shops } = await getUserFavoriteProducts(req.user.id);
+    
+    const publicShop = (shop) => ({
+      id: shop.id,
+      name: shop.name,
+      displayName: shop.name,
+      slug: shop.slug,
+      description: shop.description || "",
+      logoUrl: shop.logoUrl || "",
+      coverUrl: shop.coverUrl || "",
+      contact: {
+        address: shop.contact?.address || "",
+        email: shop.contact?.email || "",
+        phone: shop.contact?.phone || "",
+      },
+      profileHidden: false,
+      premiumShopDetailsRequired: false,
+    });
+
+    const shopById = new Map(shops.map((shop) => [shop.id, publicShop(shop)]));
+    const formattedProducts = products.map((product) => ({
+      ...toPublicProduct(product),
+      shop: shopById.get(product.shopId) || null,
+      premiumShopDetailsRequired: false,
+    }));
+
+    return res.json({ success: true, products: formattedProducts });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+

@@ -29,7 +29,9 @@ class PaymentPlan {
           ? (json['amount'] as num).toDouble()
           : json['price'] is num
               ? (json['price'] as num).toDouble()
-              : double.tryParse((json['amount'] ?? json['price'] ?? '0').toString()) ?? 0,
+              : double.tryParse(
+                      (json['amount'] ?? json['price'] ?? '0').toString()) ??
+                  0,
       currency: (json['currency'] ?? 'VND').toString(),
       durationDays: json['durationDays'] is num
           ? (json['durationDays'] as num).toInt()
@@ -125,6 +127,41 @@ class PaymentStatusResult {
       status: status,
       isPaid: status.toLowerCase() == 'paid' || json['isPaid'] == true,
       message: (json['message'] ?? '').toString(),
+    );
+  }
+}
+
+class PaymentProfileResult {
+  const PaymentProfileResult({
+    required this.planCode,
+    required this.status,
+    required this.expiresAt,
+    required this.isPremium,
+    required this.features,
+  });
+
+  final String planCode;
+  final String status;
+  final String expiresAt;
+  final bool isPremium;
+  final List<String> features;
+
+  factory PaymentProfileResult.fromJson(Map<String, dynamic> json) {
+    final data = json['subscription'] is Map<String, dynamic>
+        ? json['subscription'] as Map<String, dynamic>
+        : json;
+    final rawFeatures = data['features'];
+    return PaymentProfileResult(
+      planCode: (data['planCode'] ?? 'FREE').toString(),
+      status: (data['status'] ?? 'inactive').toString(),
+      expiresAt: (data['expiresAt'] ?? '').toString(),
+      isPremium: data['isPremium'] == true,
+      features: rawFeatures is List
+          ? rawFeatures
+              .map((item) => item.toString())
+              .where((item) => item.isNotEmpty)
+              .toList()
+          : const [],
     );
   }
 }

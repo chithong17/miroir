@@ -229,6 +229,7 @@ class CustomerUser {
     required this.profileCompleted,
     required this.profileSkipped,
     this.subscription = UserSubscription.free,
+    this.favoriteProductIds = const [],
   });
 
   final String id;
@@ -239,6 +240,31 @@ class CustomerUser {
   final bool profileCompleted;
   final bool profileSkipped;
   final UserSubscription subscription;
+  final List<String> favoriteProductIds;
+
+  CustomerUser copyWith({
+    String? id,
+    String? email,
+    String? name,
+    String? status,
+    UserProfile? profile,
+    bool? profileCompleted,
+    bool? profileSkipped,
+    UserSubscription? subscription,
+    List<String>? favoriteProductIds,
+  }) {
+    return CustomerUser(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      status: status ?? this.status,
+      profile: profile ?? this.profile,
+      profileCompleted: profileCompleted ?? this.profileCompleted,
+      profileSkipped: profileSkipped ?? this.profileSkipped,
+      subscription: subscription ?? this.subscription,
+      favoriteProductIds: favoriteProductIds ?? this.favoriteProductIds,
+    );
+  }
 
   bool get needsProfileOnboarding => !profileCompleted && !profileSkipped;
 
@@ -256,6 +282,10 @@ class CustomerUser {
       subscription: UserSubscription.fromJson(
         (json['subscription'] as Map<String, dynamic>?) ?? const {},
       ),
+      favoriteProductIds: (json['favoriteProductIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 
@@ -269,6 +299,7 @@ class CustomerUser {
       'profileCompleted': profileCompleted,
       'profileSkipped': profileSkipped,
       'subscription': subscription.toJson(),
+      'favoriteProductIds': favoriteProductIds,
     };
   }
 }

@@ -26,24 +26,32 @@ class ShopDashboardController extends ChangeNotifier {
   ShopDashboardState _state = ShopDashboardState.idle;
   OwnerShop? _shop;
   List<ShopProduct> _products = const [];
+  Map<String, dynamic>? _analytics;
+  Map<String, dynamic>? _insights;
   String _errorMessage = '';
   String _statusMessage = '';
   bool _isSavingShop = false;
   bool _isSavingProduct = false;
   bool _isMutatingProduct = false;
+  bool _isLoadingAnalytics = false;
 
   ShopDashboardState get state => _state;
   OwnerShop? get shop => _shop;
   List<ShopProduct> get products => _products;
+  Map<String, dynamic>? get analytics => _analytics;
+  Map<String, dynamic>? get insights => _insights;
   String get errorMessage => _errorMessage;
   String get statusMessage => _statusMessage;
   bool get isSavingShop => _isSavingShop;
   bool get isSavingProduct => _isSavingProduct;
   bool get isMutatingProduct => _isMutatingProduct;
+  bool get isLoadingAnalytics => _isLoadingAnalytics;
+  bool get isPremium => _sessionController.isShopOwnerPremium;
+
+  String get _token => _sessionController.shopOwnerToken;
 
   Future<void> loadDashboard() async {
-    final session = _sessionController.session;
-    if (session == null) {
+    if (_token.isEmpty) {
       _state = ShopDashboardState.idle;
       _shop = null;
       _products = const [];
@@ -58,31 +66,54 @@ class ShopDashboardController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final shops = await _service.listMyShops(session.token);
+      await _sessionController.refreshShopOwnerSubscription(silent: true);
+      final shops = await _service.listMyShops(_token);
       _shop = shops.isEmpty ? null : shops.first;
-      _products = await _service.listProducts(session.token);
+      _products = await _service.listProducts(_token);
       _state = ShopDashboardState.loaded;
     } catch (error) {
       final apiError = ApiError.from(error);
       _errorMessage = apiError.message;
       _state = ShopDashboardState.error;
-      await _sessionController.handleApiError(apiError);
+      if (apiError.isUnauthorized) {
+        await _sessionController.logoutShopOwner();
+      }
     }
 
     notifyListeners();
+  }
+
+  Future<void> loadAnalytics({String range = '30d'}) async {
+    if (_token.isEmpty || !isPremium) return;
+    _isLoadingAnalytics = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      _analytics = await _service.getAnalytics(_token, range: range);
+      _insights = await _service.getInsights(_token, range: range);
+    } catch (error) {
+      final apiError = ApiError.from(error);
+      _errorMessage = apiError.message;
+      if (apiError.isUnauthorized) {
+        await _sessionController.logoutShopOwner();
+      }
+    } finally {
+      _isLoadingAnalytics = false;
+      notifyListeners();
+    }
   }
 
   Future<void> saveShop({
     required String name,
     required String slug,
     required String description,
-    required String logoUrl,
-    required String coverUrl,
+    String logoUrl = '',
+    String coverUrl = '',
+    LocalImageData? logoImage,
+    LocalImageData? coverImage,
   }) async {
-    final session = _sessionController.session;
-    if (session == null) {
-      return;
-    }
+    if (_token.isEmpty) return;
 
     _isSavingShop = true;
     _errorMessage = '';
@@ -90,26 +121,36 @@ class ShopDashboardController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      var finalLogoUrl = logoUrl;
+      var finalCoverUrl = coverUrl;
+
+      if (logoImage != null) {
+        final uploaded = await _service.uploadShopImage(_token, logoImage);
+        finalLogoUrl = uploaded.imageUrl;
+      }
+      if (coverImage != null) {
+        final uploaded = await _service.uploadShopImage(_token, coverImage);
+        finalCoverUrl = uploaded.imageUrl;
+      }
+
       final payload = {
         'name': name.trim(),
         'slug': slug.trim(),
         'description': description.trim(),
-        'logoUrl': logoUrl.trim(),
-        'coverUrl': coverUrl.trim(),
+        'logoUrl': finalLogoUrl.trim(),
+        'coverUrl': finalCoverUrl.trim(),
       };
 
       final isCreating = _shop == null;
       _shop = _shop == null
-          ? await _service.createShop(session.token, payload)
-          : await _service.updateShop(session.token, _shop!.id, payload);
+          ? await _service.createShop(_token, payload)
+          : await _service.updateShop(_token, _shop!.id, payload);
       _statusMessage = isCreating
           ? 'Shop created successfully.'
           : 'Shop saved successfully.';
       await loadDashboard();
     } catch (error) {
-      final apiError = ApiError.from(error);
-      _errorMessage = apiError.message;
-      await _sessionController.handleApiError(apiError);
+      _errorMessage = ApiError.from(error).message;
     } finally {
       _isSavingShop = false;
       notifyListeners();
@@ -123,10 +164,7 @@ class ShopDashboardController extends ChangeNotifier {
     String existingImageUrl = '',
     String existingImagePublicId = '',
   }) async {
-    final session = _sessionController.session;
-    if (session == null) {
-      return;
-    }
+    if (_token.isEmpty) return;
 
     _isSavingProduct = true;
     _errorMessage = '';
@@ -138,8 +176,7 @@ class ShopDashboardController extends ChangeNotifier {
       var imagePublicId = existingImagePublicId;
 
       if (localImage != null) {
-        final uploaded =
-            await _service.uploadProductImage(session.token, localImage);
+        final uploaded = await _service.uploadProductImage(_token, localImage);
         imageUrl = uploaded.imageUrl;
         imagePublicId = uploaded.imagePublicId;
       }
@@ -150,18 +187,16 @@ class ShopDashboardController extends ChangeNotifier {
       );
 
       if (productId == null || productId.isEmpty) {
-        await _service.createProduct(session.token, payload);
+        await _service.createProduct(_token, payload);
         _statusMessage = 'Product created successfully.';
       } else {
-        await _service.updateProduct(session.token, productId, payload);
+        await _service.updateProduct(_token, productId, payload);
         _statusMessage = 'Product updated successfully.';
       }
 
       await loadDashboard();
     } catch (error) {
-      final apiError = ApiError.from(error);
-      _errorMessage = apiError.message;
-      await _sessionController.handleApiError(apiError);
+      _errorMessage = ApiError.from(error).message;
     } finally {
       _isSavingProduct = false;
       notifyListeners();
@@ -193,10 +228,7 @@ class ShopDashboardController extends ChangeNotifier {
     required Future<ShopProduct> Function(String token) action,
     required String successMessage,
   }) async {
-    final session = _sessionController.session;
-    if (session == null) {
-      return;
-    }
+    if (_token.isEmpty) return;
 
     _isMutatingProduct = true;
     _errorMessage = '';
@@ -204,13 +236,11 @@ class ShopDashboardController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await action(session.token);
+      await action(_token);
       _statusMessage = successMessage;
       await loadDashboard();
     } catch (error) {
-      final apiError = ApiError.from(error);
-      _errorMessage = apiError.message;
-      await _sessionController.handleApiError(apiError);
+      _errorMessage = ApiError.from(error).message;
     } finally {
       _isMutatingProduct = false;
       notifyListeners();

@@ -177,4 +177,61 @@ class OwnerShopService {
       throw ApiError.from(error);
     }
   }
+
+  Future<UploadedProductImage> uploadShopImage(
+    String token,
+    LocalImageData image,
+  ) async {
+    try {
+      final formData = FormData.fromMap({
+        'image': MultipartFile.fromBytes(
+          image.bytes,
+          filename: image.name,
+          contentType: MediaType.parse(image.mimeType ?? 'image/jpeg'),
+        ),
+      });
+      final response = await _client.instance.post<Map<String, dynamic>>(
+        '/shops/upload-image',
+        data: formData,
+        options: _client.authorizedOptions(token),
+      );
+      return UploadedProductImage.fromJson(response.data ?? const {});
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
+
+  Future<Map<String, dynamic>> getAnalytics(
+    String token, {
+    String range = '30d',
+  }) async {
+    try {
+      final response = await _client.instance.get<Map<String, dynamic>>(
+        '/shops/me/analytics',
+        queryParameters: {'range': range},
+        options: _client.authorizedOptions(token),
+      );
+      final data = response.data ?? const {};
+      return (data['analytics'] as Map<String, dynamic>?) ?? data;
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
+
+  Future<Map<String, dynamic>> getInsights(
+    String token, {
+    String range = '30d',
+  }) async {
+    try {
+      final response = await _client.instance.get<Map<String, dynamic>>(
+        '/shops/me/insights',
+        queryParameters: {'range': range},
+        options: _client.authorizedOptions(token),
+      );
+      final data = response.data ?? const {};
+      return (data['insights'] as Map<String, dynamic>?) ?? data;
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
 }

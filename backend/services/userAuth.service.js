@@ -25,6 +25,7 @@ export const toPublicUser = (user, usage = null) => ({
   name: user.name,
   status: user.status,
   profile: user.profile || {},
+  favoriteProductIds: user.favoriteProductIds || [],
   profileCompleted: Boolean(user.profileCompleted),
   profileSkipped: Boolean(user.profileSkipped),
   subscription: buildSubscriptionSummary({
@@ -208,3 +209,40 @@ export const skipUserProfile = async ({ userId }) => {
   await db.collection("users").updateOne({ id: userId }, { $set: patch });
   return toPublicUser({ ...user, ...patch });
 };
+
+export const toggleUserFavoriteProduct = async (userId, productId) => {
+  const db = await getMongoDb();
+  const user = await db.collection("users").findOne({ id: userId });
+  if (!user) throw new Error("User not found");
+
+  const favoriteProductIds = user.favoriteProductIds || [];
+  const isFavorited = favoriteProductIds.includes(productId);
+
+  const updateOp = isFavorited
+    ? { $pull: { favoriteProductIds: productId } }
+    : { $addToSet: { favoriteProductIds: productId } };
+
+  await db.collection("users").updateOne({ id: userId }, updateOp);
+  const updatedUser = await db.collection("users").findOne({ id: userId });
+  return updatedUser.favoriteProductIds || [];
+};
+
+export const getUserFavoriteProducts = async (userId) => {
+  const db = await getMongoDb();
+  const user = await db.collection("users").findOne({ id: userId });
+  if (!user) throw new Error("User not found");
+
+  const favoriteProductIds = user.favoriteProductIds || [];
+  if (favoriteProductIds.length === 0) return { products: [], shops: [] };
+
+  const products = await db.collection("products").find({ id: { $in: favoriteProductIds }, status: "published" }).toArray();
+  const shopIds = [...new Set(products.map(p => p.shopId))];
+  const shops = await db.collection("shops").find({ id: { $in: shopIds } }).toArray();
+  
+  // Note: we can import toPublicProduct and withShopInfo from catalog.service.js but since we only have toPublicProduct in product.service.js, we should probably do a quick mapping or let the controller handle it.
+  // We need to return them in a format similar to listCatalogProducts.
+  // I'll return the raw products and shops, and the controller will format them.
+  return { products, shops };
+};
+
+

@@ -105,13 +105,17 @@ class TryOnController extends ChangeNotifier {
   void prefillFromCatalogProduct(CatalogProduct product) {
     _catalogProduct = product;
     _prefillLabel = product.name;
-    _tryOnType = 'dress';
+    
+    final searchStr = '${product.category} ${product.name}'.toLowerCase();
+    final isDress = ['dress', 'đầm', 'váy liền', 'jumpsuit', 'one-piece'].any(searchStr.contains);
+    _tryOnType = isDress ? 'dress' : 'upper_lower';
+    
     _dressImage = null;
     _upperImage = null;
     _lowerImage = null;
     _errorMessage = '';
     _resultUrl = '';
-    _log('catalog prefill product=${product.id} ${product.name}');
+    _log('catalog prefill product=${product.id} ${product.name} inferredType=$_tryOnType');
     notifyListeners();
   }
 

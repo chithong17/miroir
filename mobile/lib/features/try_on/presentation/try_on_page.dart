@@ -8,6 +8,7 @@ import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../../shared/widgets/surface_icon_button.dart';
 import '../../marketplace/data/catalog_models.dart';
+import '../../marketplace/presentation/widgets/product_feedback_card.dart';
 import '../../payments/presentation/premium_paywall_sheet.dart';
 import 'controllers/try_on_controller.dart';
 
@@ -306,7 +307,10 @@ class _TryOnPageState extends State<TryOnPage> {
                   ),
                 ],
                 const SizedBox(height: 14),
-                _PreviewPanel(controller: _controller),
+                _PreviewPanel(
+                  controller: _controller,
+                  prefilledProduct: widget.prefilledProduct,
+                ),
                 if (_controller.state != TryOnViewState.idle) ...[
                   const SizedBox(height: 14),
                   MiroirButton(
@@ -483,9 +487,13 @@ class _CatalogProductCard extends StatelessWidget {
   }
 }
 class _PreviewPanel extends StatelessWidget {
-  const _PreviewPanel({required this.controller});
+  const _PreviewPanel({
+    required this.controller,
+    this.prefilledProduct,
+  });
 
   final TryOnController controller;
+  final CatalogProduct? prefilledProduct;
 
   @override
   Widget build(BuildContext context) {
@@ -507,6 +515,13 @@ class _PreviewPanel extends StatelessWidget {
               errorBuilder: (_, __, ___) => SelectableText(controller.resultUrl),
             ),
           ),
+          if (prefilledProduct != null) ...[
+            const SizedBox(height: 16),
+            ProductFeedbackCard(
+              product: prefilledProduct!,
+              context: 'tryon',
+            ),
+          ],
         ],
       );
     } else if (controller.state == TryOnViewState.polling) {
