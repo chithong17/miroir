@@ -5,38 +5,96 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../features/account/data/account_models.dart';
 import '../../features/account/data/account_service.dart';
+import '../../features/customer/data/customer_models.dart';
+import '../../features/customer/data/customer_service.dart';
 import '../constants/app_constants.dart';
 import '../network/api_error.dart';
+
+enum CustomerAuthFlow { login, register }
+
+enum AppEntryStage {
+  restoring,
+  onboarding,
+  authChoice,
+  auth,
+  profileOnboarding,
+  app,
+}
 
 class AppSessionController extends ChangeNotifier {
   AppSessionController({
     AccountService? accountService,
-  }) : _accountService = accountService ?? AccountService();
+    CustomerService? customerService,
+  })  : _accountService = accountService ?? AccountService(),
+        _customerService = customerService ?? CustomerService();
 
-  static const _sessionKey = 'miroir.shop_owner_session';
+  static const _sessionKey = 'miroir.customer_session';
+  static const _guestKey = 'miroir.customer_guest_mode';
   static const _onboardingKey = 'miroir.has_seen_onboarding';
 
   final AccountService _accountService;
+  final CustomerService _customerService;
 
   bool _isRestoring = true;
   bool _isCheckingHealth = false;
   bool _hasSeenOnboarding = false;
+  bool _isGuestMode = false;
+  bool _showingAuthScreen = false;
+  bool _forceProfileEditor = false;
   String _sessionMessage = '';
   String _healthMessage = '';
   bool? _backendHealthy;
-  ShopOwnerSession? _session;
+  CustomerAuthFlow _authFlow = CustomerAuthFlow.login;
+  UserSession? _session;
 
   bool get isRestoring => _isRestoring;
   bool get isCheckingHealth => _isCheckingHealth;
-  bool get isSignedIn => _session != null;
   bool get hasSeenOnboarding => _hasSeenOnboarding;
-  bool get shouldShowOnboarding => !_isRestoring && !_hasSeenOnboarding;
+  bool get isGuestMode => _isGuestMode && _session == null;
+  bool get isSignedIn => _session != null;
+  bool get hasCustomerSession => _session != null;
   bool? get backendHealthy => _backendHealthy;
   String get sessionMessage => _sessionMessage;
   String get healthMessage => _healthMessage;
-  ShopOwnerSession? get session => _session;
   String get apiBaseUrl => AppConstants.defaultApiBaseUrl;
   String get platformLabel => AppConstants.platformLabel;
+  CustomerAuthFlow get authFlow => _authFlow;
+  UserSession? get session => _session;
+  CustomerUser? get currentUser => _session?.user;
+  String get authToken => _session?.token ?? '';
+  bool get isPremium => currentUser?.subscription.isPremium ?? false;
+  UserUsageQuota? get tryOnUsage => currentUser?.subscription.usage;
+  int? get tryOnRemaining => tryOnUsage?.remaining;
+  bool get isTryOnQuotaExhausted =>
+      !isPremium && (tryOnUsage?.isExhausted ?? false);
+  bool get requiresLogin => _session == null;
+
+  AppEntryStage get entryStage {
+    if (_isRestoring) {
+      return AppEntryStage.restoring;
+    }
+
+    if (!_hasSeenOnboarding) {
+      return AppEntryStage.onboarding;
+    }
+
+    if (_session != null) {
+      if (_session!.user.needsProfileOnboarding || _forceProfileEditor) {
+        return AppEntryStage.profileOnboarding;
+      }
+      return AppEntryStage.app;
+    }
+
+    if (_showingAuthScreen) {
+      return AppEntryStage.auth;
+    }
+
+    if (_isGuestMode) {
+      return AppEntryStage.app;
+    }
+
+    return AppEntryStage.authChoice;
+  }
 
   Future<void> restoreSession() async {
     _isRestoring = true;
@@ -44,15 +102,37 @@ class AppSessionController extends ChangeNotifier {
 
     final preferences = await SharedPreferences.getInstance();
     _hasSeenOnboarding = preferences.getBool(_onboardingKey) ?? false;
+    _isGuestMode = preferences.getBool(_guestKey) ?? false;
     final rawSession = preferences.getString(_sessionKey);
 
     if (rawSession != null && rawSession.isNotEmpty) {
       try {
-        _session = ShopOwnerSession.fromJson(
+        _session = UserSession.fromJson(
           jsonDecode(rawSession) as Map<String, dynamic>,
         );
       } catch (_) {
         await preferences.remove(_sessionKey);
+      }
+    }
+
+    if (_session != null) {
+      try {
+        final refreshedUser = await _customerService.getMe(_session!.token);
+        _session = UserSession(user: refreshedUser, token: _session!.token);
+        await preferences.setString(
+            _sessionKey, jsonEncode(_session!.toJson()));
+        _isGuestMode = false;
+        await preferences.setBool(_guestKey, false);
+      } catch (error) {
+        final apiError = ApiError.from(error);
+        if (apiError.isUnauthorized) {
+          _session = null;
+          _forceProfileEditor = false;
+          _sessionMessage = 'Your session expired. Please sign in again.';
+          await preferences.remove(_sessionKey);
+        } else {
+          _sessionMessage = apiError.message;
+        }
       }
     }
 
@@ -67,13 +147,76 @@ class AppSessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveAuthResult(OwnerAuthResult authResult) async {
-    _session = ShopOwnerSession(
-      owner: authResult.owner,
-      token: authResult.token,
-    );
+  void openLogin() {
+    _authFlow = CustomerAuthFlow.login;
+    _showingAuthScreen = true;
+    notifyListeners();
+  }
+
+  void openRegister() {
+    _authFlow = CustomerAuthFlow.register;
+    _showingAuthScreen = true;
+    notifyListeners();
+  }
+
+  void showAuthChoice() {
+    _showingAuthScreen = false;
+    notifyListeners();
+  }
+
+  Future<void> continueAsGuest() async {
+    _session = null;
+    _forceProfileEditor = false;
+    _isGuestMode = true;
+    _showingAuthScreen = false;
+    _sessionMessage = '';
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_guestKey, true);
+    await preferences.remove(_sessionKey);
+    notifyListeners();
+  }
+
+  void openProfileOnboarding() {
+    if (_session == null) {
+      return;
+    }
+    _forceProfileEditor = true;
+    notifyListeners();
+  }
+
+  Future<void> saveUserAuthResult(UserAuthResult authResult) async {
+    _session = UserSession(user: authResult.user, token: authResult.token);
+    _forceProfileEditor = false;
+    _isGuestMode = false;
+    _showingAuthScreen = false;
     _sessionMessage = '';
 
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_sessionKey, jsonEncode(_session!.toJson()));
+    await preferences.setBool(_guestKey, false);
+    notifyListeners();
+  }
+
+  Future<void> refreshCurrentUser() async {
+    if (_session == null) {
+      return;
+    }
+
+    try {
+      final refreshedUser = await _customerService.getMe(_session!.token);
+      await updateCurrentUser(refreshedUser);
+    } catch (error) {
+      await handleApiError(ApiError.from(error));
+    }
+  }
+
+  Future<void> updateCurrentUser(CustomerUser user) async {
+    if (_session == null) {
+      return;
+    }
+
+    _session = UserSession(user: user, token: _session!.token);
+    _forceProfileEditor = false;
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString(_sessionKey, jsonEncode(_session!.toJson()));
     notifyListeners();
@@ -81,9 +224,13 @@ class AppSessionController extends ChangeNotifier {
 
   Future<void> logout({String message = ''}) async {
     _session = null;
+    _forceProfileEditor = false;
+    _isGuestMode = true;
+    _showingAuthScreen = false;
     _sessionMessage = message;
     final preferences = await SharedPreferences.getInstance();
     await preferences.remove(_sessionKey);
+    await preferences.setBool(_guestKey, true);
     notifyListeners();
   }
 

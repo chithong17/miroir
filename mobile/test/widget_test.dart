@@ -1,10 +1,11 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:miroir_mobile/app/app.dart';
 
 void main() {
-  testWidgets('first launch shows onboarding flow', (WidgetTester tester) async {
+  testWidgets('first launch shows onboarding then auth choice',
+      (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
 
     await tester.pumpWidget(const MiroirApp());
@@ -13,39 +14,35 @@ void main() {
     expect(find.text('Welcome to MIROIR'), findsOneWidget);
     expect(find.text('Skip'), findsOneWidget);
     expect(find.text('Next'), findsOneWidget);
+
+    await tester.tap(find.text('Skip'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Start your fashion flow'), findsOneWidget);
+    expect(find.text('Continue as guest'), findsOneWidget);
   });
 
-  testWidgets(
-    'app shell renders navigation, customer flows, and signed-out owner entry',
-    (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({
-        'miroir.has_seen_onboarding': true,
-      });
+  testWidgets('guest session opens customer shell and guest account actions',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({
+      'miroir.has_seen_onboarding': true,
+      'miroir.customer_guest_mode': true,
+    });
 
-      await tester.pumpWidget(const MiroirApp());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(const MiroirApp());
+    await tester.pumpAndSettle();
 
-      expect(find.text('Home'), findsOneWidget);
-      expect(find.text('Try On'), findsOneWidget);
-      expect(find.text('Stylist'), findsOneWidget);
-      expect(find.text('Account'), findsOneWidget);
-      expect(find.text('Hello, Vanessa'), findsOneWidget);
+    expect(find.text('Marketplace'), findsOneWidget);
+    expect(find.text('Shop'), findsOneWidget);
+    expect(find.text('Try On'), findsOneWidget);
+    expect(find.text('Stylist'), findsOneWidget);
+    expect(find.text('Account'), findsOneWidget);
 
-      await tester.tap(find.text('Try On'));
-      await tester.pumpAndSettle();
-      expect(find.text('Virtual Try-On'), findsOneWidget);
-      expect(find.text('Your Photo'), findsOneWidget);
-      expect(find.text('Mode'), findsOneWidget);
+    await tester.tap(find.text('Account'));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Stylist'));
-      await tester.pumpAndSettle();
-      expect(find.text('AI Stylist'), findsOneWidget);
-      expect(find.text('Generate 5 Outfits'), findsOneWidget);
-
-      await tester.tap(find.text('Account'));
-      await tester.pumpAndSettle();
-      expect(find.text('Shop Owner Access'), findsOneWidget);
-      expect(find.text('Run Health Check'), findsOneWidget);
-    },
-  );
+    expect(find.text('Guest mode'), findsOneWidget);
+    expect(find.text('Run Health Check'), findsOneWidget);
+    expect(find.text('Login'), findsWidgets);
+  });
 }

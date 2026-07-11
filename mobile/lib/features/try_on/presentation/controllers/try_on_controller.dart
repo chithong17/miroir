@@ -1,11 +1,11 @@
 import 'dart:async';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http_parser/http_parser.dart';
 
 import '../../../../core/network/api_error.dart';
 import '../../../../shared/models/local_image_data.dart';
+import '../../../marketplace/data/catalog_models.dart';
 import '../../data/try_on_service.dart';
 
 enum TryOnViewState {
@@ -38,6 +38,8 @@ class TryOnController extends ChangeNotifier {
   String _taskId = '';
   String _resultUrl = '';
   String _errorMessage = '';
+  String _prefillLabel = '';
+  CatalogProduct? _catalogProduct;
   Timer? _pollTimer;
 
   String get tryOnType => _tryOnType;
@@ -50,6 +52,14 @@ class TryOnController extends ChangeNotifier {
   String get taskId => _taskId;
   String get resultUrl => _resultUrl;
   String get errorMessage => _errorMessage;
+  String get prefillLabel => _prefillLabel;
+  CatalogProduct? get catalogProduct => _catalogProduct;
+  bool get isCatalogTryOn => _catalogProduct != null;
+  bool get hasPrefilledGarment =>
+      isCatalogTryOn ||
+      _dressImage != null ||
+      _upperImage != null ||
+      _lowerImage != null;
   bool get isBusy =>
       _state == TryOnViewState.creating || _state == TryOnViewState.polling;
 
@@ -92,9 +102,26 @@ class TryOnController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void prefillFromCatalogProduct(CatalogProduct product) {
+    _catalogProduct = product;
+    _prefillLabel = product.name;
+    _tryOnType = 'dress';
+    _dressImage = null;
+    _upperImage = null;
+    _lowerImage = null;
+    _errorMessage = '';
+    _resultUrl = '';
+    _log('catalog prefill product=${product.id} ${product.name}');
+    notifyListeners();
+  }
+
   String validateSelection() {
     if (_modelImage == null) {
       return 'Please upload a full-body model image.';
+    }
+
+    if (isCatalogTryOn) {
+      return '';
     }
 
     if (_tryOnType == 'dress' && _dressImage == null) {
@@ -114,7 +141,14 @@ class TryOnController extends ChangeNotifier {
     return '';
   }
 
-  Future<void> submit() async {
+  Future<void> submit(String token) async {
+    if (token.isEmpty) {
+      _state = TryOnViewState.failed;
+      _errorMessage = 'Please sign in before starting a try-on.';
+      notifyListeners();
+      return;
+    }
+
     final validationError = validateSelection();
     if (validationError.isNotEmpty) {
       _state = TryOnViewState.failed;
@@ -137,16 +171,27 @@ class TryOnController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final formData = FormData.fromMap({
-        'tryOnType': _tryOnType,
-        'batchSize': '1',
-        'modelImage': _toMultipart(_modelImage!),
-        if (_dressImage != null) 'dressImage': _toMultipart(_dressImage!),
-        if (_upperImage != null) 'upperImage': _toMultipart(_upperImage!),
-        if (_lowerImage != null) 'lowerImage': _toMultipart(_lowerImage!),
-      });
-
-      final response = await _service.createTask(formData);
+      final catalogProduct = _catalogProduct;
+      final response = catalogProduct != null
+          ? await _service.createCatalogTask(
+              token: token,
+              productId: catalogProduct.id,
+              modelImage: _modelImage!,
+            )
+          : await _service.createCustomTask(
+              token: token,
+              formData: FormData.fromMap({
+                'tryOnType': _tryOnType,
+                'batchSize': '1',
+                'modelImage': _toMultipart(_modelImage!),
+                if (_dressImage != null)
+                  'dressImage': _toMultipart(_dressImage!),
+                if (_upperImage != null)
+                  'upperImage': _toMultipart(_upperImage!),
+                if (_lowerImage != null)
+                  'lowerImage': _toMultipart(_lowerImage!),
+              }),
+            );
       _taskId = response.taskId;
       _taskStatus = 'processing';
       _state = TryOnViewState.polling;
@@ -235,6 +280,8 @@ class TryOnController extends ChangeNotifier {
     _taskId = '';
     _resultUrl = '';
     _errorMessage = '';
+    _prefillLabel = '';
+    _catalogProduct = null;
     _log('reset');
     notifyListeners();
   }

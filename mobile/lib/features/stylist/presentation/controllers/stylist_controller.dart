@@ -30,7 +30,7 @@ class StylistController extends ChangeNotifier {
   String get feedbackMessage => _feedbackMessage;
   bool get isSubmittingFeedback => _isSubmittingFeedback;
 
-  Future<void> submit(StylistRequest payload) async {
+  Future<void> submit(StylistRequest payload, {required String token}) async {
     _state = StylistViewState.loading;
     _errorMessage = '';
     _feedbackMessage = '';
@@ -38,7 +38,7 @@ class StylistController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _service.getRecommendation(payload);
+      final response = await _service.getRecommendation(payload, token: token);
       _result = response;
       _state = response.noMatch
           ? StylistViewState.noMatch
@@ -55,6 +55,7 @@ class StylistController extends ChangeNotifier {
     required String userId,
     required StylistOutfit outfit,
     required String eventType,
+    required String token,
   }) async {
     if (userId.trim().isEmpty) {
       _feedbackMessage = 'Enter a user ID to record stylist feedback.';
@@ -72,7 +73,7 @@ class StylistController extends ChangeNotifier {
         'outfitId': outfit.id,
         'eventType': eventType,
         'productIds': outfit.items.map((item) => item.product.id).toList(),
-      });
+      }, token: token);
       _feedbackMessage = eventType == 'liked'
           ? 'Saved as positive style feedback.'
           : 'Saved as negative style feedback.';

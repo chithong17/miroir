@@ -1,20 +1,15 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/app/app_session_controller.dart';
-import '../../../../core/network/api_error.dart';
-import '../../data/account_service.dart';
 
 enum ShopAuthMode { login, register }
 
 class ShopAuthController extends ChangeNotifier {
   ShopAuthController({
     required AppSessionController sessionController,
-    AccountService? accountService,
-  })  : _sessionController = sessionController,
-        _accountService = accountService ?? AccountService();
+  }) : _sessionController = sessionController;
 
   final AppSessionController _sessionController;
-  final AccountService _accountService;
 
   ShopAuthMode _mode = ShopAuthMode.login;
   bool _isSubmitting = false;
@@ -39,25 +34,13 @@ class ShopAuthController extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
 
-    try {
-      final authResult = _mode == ShopAuthMode.register
-          ? await _accountService.register(
-              name: name,
-              email: email,
-              password: password,
-            )
-          : await _accountService.login(
-              email: email,
-              password: password,
-            );
-      await _sessionController.saveAuthResult(authResult);
-      return true;
-    } catch (error) {
-      _errorMessage = ApiError.from(error).message;
-      return false;
-    } finally {
-      _isSubmitting = false;
-      notifyListeners();
-    }
+    await Future<void>.delayed(Duration.zero);
+
+    _isSubmitting = false;
+    _errorMessage =
+        'Shop-owner mobile flow is not enabled in this customer-first build.';
+    _sessionController.showAuthChoice();
+    notifyListeners();
+    return false;
   }
 }

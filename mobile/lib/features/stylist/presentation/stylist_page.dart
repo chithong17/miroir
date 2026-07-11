@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/app/app_session_scope.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_pill.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/surface_icon_button.dart';
+import '../../payments/presentation/premium_paywall_sheet.dart';
 import '../data/stylist_models.dart';
 import 'controllers/stylist_controller.dart';
 
@@ -45,6 +47,20 @@ class _StylistPageState extends State<StylistPage> {
   }
 
   Future<void> _submit() async {
+    final session = AppSessionScope.of(context);
+    if (!session.isSignedIn) {
+      session.openLogin();
+      return;
+    }
+    if (!session.isPremium) {
+      await showPremiumPaywall(
+        context,
+        session: session,
+        reason: 'AI Stylist is a Premium feature. Upgrade to generate grounded outfit boards.',
+      );
+      return;
+    }
+
     final form = _formKey.currentState;
     if (form == null || !form.validate()) {
       return;
@@ -53,7 +69,9 @@ class _StylistPageState extends State<StylistPage> {
     await _controller.submit(
       StylistRequest(
         prompt: _promptController.text,
-        userId: _userIdController.text,
+        userId: _userIdController.text.trim().isEmpty
+            ? AppSessionScope.of(context).currentUser?.id ?? ''
+            : _userIdController.text,
         gender: _gender,
         skinTone: _skinToneController.text,
         bodyShape: _bodyShapeController.text,
@@ -66,6 +84,7 @@ class _StylistPageState extends State<StylistPage> {
         budgetMin: double.tryParse(_budgetMinController.text),
         budgetMax: double.tryParse(_budgetMaxController.text),
       ),
+      token: session.authToken,
     );
   }
 
@@ -239,7 +258,7 @@ class _StylistPageState extends State<StylistPage> {
                     const SizedBox(height: 16),
                     MiroirButton(
                       label: _controller.state == StylistViewState.loading ? 'Generating...' : 'Generate 5 Outfits',
-                      onPressed: _controller.state == StylistViewState.loading ? null : _submit,
+                      onPressed: _controller.state == StylistViewState.loading ? null : () => _submit(),
                       icon: Icons.auto_awesome,
                     ),
                   ],
@@ -268,7 +287,11 @@ class _StylistPageState extends State<StylistPage> {
               ),
             ],
             const SizedBox(height: 14),
-            _ResultSection(controller: _controller, userId: _userIdController.text),
+            _ResultSection(
+              controller: _controller,
+              userId: AppSessionScope.of(context).currentUser?.id ?? _userIdController.text,
+              token: AppSessionScope.of(context).authToken,
+            ),
               ],
             ),
           ),
@@ -348,10 +371,11 @@ class _StylistHeroCard extends StatelessWidget {
 }
 
 class _ResultSection extends StatelessWidget {
-  const _ResultSection({required this.controller, required this.userId});
+  const _ResultSection({required this.controller, required this.userId, required this.token});
 
   final StylistController controller;
   final String userId;
+  final String token;
 
   @override
   Widget build(BuildContext context) {
@@ -439,7 +463,7 @@ class _ResultSection extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         for (final outfit in result.outfits) ...[
-          _OutfitCard(controller: controller, outfit: outfit, userId: userId),
+          _OutfitCard(controller: controller, outfit: outfit, userId: userId, token: token),
           const SizedBox(height: 14),
         ],
       ],
@@ -448,11 +472,12 @@ class _ResultSection extends StatelessWidget {
 }
 
 class _OutfitCard extends StatelessWidget {
-  const _OutfitCard({required this.controller, required this.outfit, required this.userId});
+  const _OutfitCard({required this.controller, required this.outfit, required this.userId, required this.token});
 
   final StylistController controller;
   final StylistOutfit outfit;
   final String userId;
+  final String token;
 
   @override
   Widget build(BuildContext context) {
@@ -540,14 +565,14 @@ class _OutfitCard extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.isSubmittingFeedback
                     ? null
-                    : () => controller.submitFeedback(userId: userId, outfit: outfit, eventType: 'liked'),
+                    : () => controller.submitFeedback(userId: userId, outfit: outfit, eventType: 'liked', token: token),
                 icon: const Icon(Icons.thumb_up_alt_outlined, size: 18),
                 label: const Text('Liked'),
               ),
               OutlinedButton.icon(
                 onPressed: controller.isSubmittingFeedback
                     ? null
-                    : () => controller.submitFeedback(userId: userId, outfit: outfit, eventType: 'disliked'),
+                    : () => controller.submitFeedback(userId: userId, outfit: outfit, eventType: 'disliked', token: token),
                 icon: const Icon(Icons.thumb_down_alt_outlined, size: 18),
                 label: const Text('Disliked'),
               ),

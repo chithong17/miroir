@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../core/app/app_session_controller.dart';
 import '../core/app/app_session_scope.dart';
 import '../core/theme/app_theme.dart';
+import '../features/customer/presentation/auth_choice_page.dart';
+import '../features/customer/presentation/customer_auth_page.dart';
+import '../features/customer/presentation/user_profile_onboarding_page.dart';
 import '../features/navigation/app_shell.dart';
 import '../features/onboarding/presentation/onboarding_page.dart';
 
@@ -40,11 +43,16 @@ class _MiroirAppState extends State<MiroirApp> {
             title: 'MIROIR',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(),
-            home: _sessionController.isRestoring
-                ? const _AppBootstrapScreen()
-                : _sessionController.shouldShowOnboarding
-                    ? const OnboardingPage()
-                    : const AppShell(),
+            home: switch (_sessionController.entryStage) {
+              AppEntryStage.restoring => const _AppBootstrapScreen(),
+              AppEntryStage.onboarding => const OnboardingPage(),
+              AppEntryStage.authChoice => const AuthChoicePage(),
+              AppEntryStage.auth =>
+                CustomerAuthPage(mode: _sessionController.authFlow),
+              AppEntryStage.profileOnboarding =>
+                const UserProfileOnboardingPage(),
+              AppEntryStage.app => const AppShell(),
+            },
           );
         },
       ),

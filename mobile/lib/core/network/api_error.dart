@@ -6,7 +6,8 @@ class ApiError implements Exception {
   final String message;
   final int? statusCode;
 
-  bool get isUnauthorized => statusCode == 401 || statusCode == 403;
+  bool get isUnauthorized => statusCode == 401;
+  bool get isForbidden => statusCode == 403;
 
   factory ApiError.from(Object error) {
     if (error is ApiError) {
