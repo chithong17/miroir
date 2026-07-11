@@ -15,17 +15,26 @@ class AuthChoicePage extends StatelessWidget {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFAFBFC),
-              Color(0xFFF3F6F9),
-            ],
-          ),
-        ),
-        child: SafeArea(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/auth-bg.png',
+              fit: BoxFit.cover,
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFFFAFBFC).withValues(alpha: 0.6),
+                    const Color(0xFFF3F6F9).withValues(alpha: 0.8),
+                  ],
+                ),
+              ),
+            ),
+            SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
@@ -83,6 +92,8 @@ class AuthChoicePage extends StatelessWidget {
             ),
           ),
         ),
+        ],
+      ),
       ),
     );
   }

@@ -315,8 +315,8 @@ class _StylistHeroCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              _StylistPageState._heroImageUrl,
+            Image.asset(
+              'assets/images/ai-stylist.png',
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(color: AppColors.elevated),
             ),
@@ -667,7 +667,7 @@ class _OutfitItemTile extends StatelessWidget {
                 Text(product.name, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 4),
                 Text(
-                  '${product.category} • ${product.price.toStringAsFixed(0)} VND',
+                  '${product.category}  ${product.price.toStringAsFixed(0)} VND',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink.withValues(alpha: 0.72)),
                 ),
                 if (product.shopName.isNotEmpty) ...[

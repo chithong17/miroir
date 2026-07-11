@@ -95,8 +95,8 @@ class _CustomerAuthPageState extends State<CustomerAuthPage> {
                 left: 0,
                 right: 0,
                 height: MediaQuery.of(context).size.height * 0.5,
-                child: Image.network(
-                  'https://picsum.photos/800/1000?fashion-auth-2',
+                child: Image.asset(
+                  'assets/images/auth-bg.png',
                   fit: BoxFit.cover,
                 ),
               ),

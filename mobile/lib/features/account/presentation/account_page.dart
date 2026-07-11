@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/section_card.dart';
+import '../../../core/i18n/app_localizations.dart';
 import '../../payments/presentation/premium_paywall_sheet.dart';
 import 'favorite_products_page.dart';
 import 'owner_center_page.dart';
@@ -93,9 +94,31 @@ class AccountPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 32),
                       _MenuSection(
+
                         title: 'SETTINGS',
+
                         items: [
+
                           _MenuItem(
+
+                            icon: Icons.language_rounded,
+
+                            label: AppLocalizations.t(context, 'account.language'),
+
+                            onTap: () {
+
+                              final current = LanguageController.of(context).languageCode;
+
+                              final next = current == 'en' ? 'vi' : 'en';
+
+                              LanguageController.of(context).setLanguage(next);
+
+                            },
+
+                          ),
+
+                          _MenuItem(
+
                             icon: Icons.logout_rounded,
                             label: 'Logout',
                             isDestructive: true,

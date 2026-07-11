@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app/app_session_controller.dart';
 import '../core/app/app_session_scope.dart';
+import '../core/i18n/app_localizations.dart';
 import '../core/theme/app_theme.dart';
 import '../features/customer/presentation/auth_choice_page.dart';
 import '../features/customer/presentation/customer_auth_page.dart';
@@ -18,17 +19,20 @@ class MiroirApp extends StatefulWidget {
 
 class _MiroirAppState extends State<MiroirApp> {
   late final AppSessionController _sessionController;
+  late final LanguageController _languageController;
 
   @override
   void initState() {
     super.initState();
     _sessionController = AppSessionController();
+    _languageController = LanguageController();
     _sessionController.restoreSession();
   }
 
   @override
   void dispose() {
     _sessionController.dispose();
+    _languageController.dispose();
     super.dispose();
   }
 
@@ -36,10 +40,12 @@ class _MiroirAppState extends State<MiroirApp> {
   Widget build(BuildContext context) {
     return AppSessionScope(
       controller: _sessionController,
-      child: AnimatedBuilder(
-        animation: _sessionController,
-        builder: (context, _) {
-          return MaterialApp(
+      child: LanguageScope(
+        controller: _languageController,
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_sessionController, _languageController]),
+          builder: (context, _) {
+            return MaterialApp(
             title: 'MIROIR',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(),
@@ -55,6 +61,7 @@ class _MiroirAppState extends State<MiroirApp> {
             },
           );
         },
+        ),
       ),
     );
   }
