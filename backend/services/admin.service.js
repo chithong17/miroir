@@ -6,6 +6,10 @@ import {
   productNeedsEmbeddingReset,
   toPublicProduct,
 } from "./product.service.js";
+import {
+  listPaymentPlans,
+  updatePaymentPlan,
+} from "./subscription.service.js";
 
 const SHOP_STATUSES = ["active", "inactive"];
 const EXCEL_COLUMNS = [
@@ -198,6 +202,11 @@ export const listAdminShopOwners = async ({ status = "pending" } = {}) => {
 
   return owners.map(toPublicOwner);
 };
+
+export const listAdminPaymentPlans = async () => listPaymentPlans();
+
+export const updateAdminPaymentPlan = async ({ planCode, body }) =>
+  updatePaymentPlan({ planCode, body });
 
 export const setShopOwnerStatus = async ({ ownerId, status }) => {
   if (!["active", "pending", "rejected", "inactive"].includes(status)) {

@@ -9,12 +9,14 @@ import {
   deleteShop,
   exportProducts,
   importProducts,
+  listPaymentPlans,
   listProducts,
   listShopOwners,
   listShops,
   rejectShopOwner,
   restoreProduct,
   updateProduct,
+  updatePaymentPlan,
   updateShop,
 } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middlewares/adminAuth.middleware.js";
@@ -23,6 +25,9 @@ import { uploadProductImportFile } from "../middlewares/upload.middleware.js";
 const router = Router();
 
 router.use(requireAdmin);
+
+router.get("/payment-plans", listPaymentPlans);
+router.put("/payment-plans/:planCode", updatePaymentPlan);
 
 router.get("/shop-owners", listShopOwners);
 router.patch("/shop-owners/:ownerId/approve", approveShopOwner);

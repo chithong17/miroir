@@ -1,0 +1,8 @@
+MIROIR backend listening on port 5000
+Loaded PIAPI_KEY env info: {
+  present: true,
+  prefix: '305c',
+  suffix: '2829',
+  length: 64,
+  hasLeadingOrTrailingWhitespace: false
+}

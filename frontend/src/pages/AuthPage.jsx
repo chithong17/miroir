@@ -156,7 +156,7 @@ export function UnifiedNav({ user, onLogout }) {
   return (
     <nav className="sticky top-0 z-40 border-b border-line/50 bg-canvas/90 backdrop-blur-xl">
       <div className="section-shell flex items-center justify-between py-4">
-        <a href="/" className="font-display text-2xl font-extrabold">MIROIR</a>
+        <a href={user ? "/app" : "/"} className="font-display text-2xl font-extrabold">MIROIR</a>
         <div className="flex items-center gap-4 text-sm font-semibold">
           <a href="/app" className="text-muted hover:text-ink">Marketplace</a>
           <a href="/app/stylist" className="text-muted hover:text-ink">Stylist</a>

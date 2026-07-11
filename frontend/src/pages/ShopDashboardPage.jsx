@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   archiveProduct,
+  createShopPayment,
   createProduct,
   createShop,
   deleteProduct,
   deleteShop,
   downloadProductImportTemplate,
+  getShopAnalytics,
+  getShopInsights,
+  getShopPaymentMe,
   hardDeleteProduct,
   importProductsExcel,
   listMyShops,
+  listPaymentPlans,
   listShopProducts,
   restoreProduct,
   setShopToken,
@@ -98,6 +103,7 @@ const productToForm = (product) => ({
 });
 
 const formatMoney = (value) => `${Number(value || 0).toLocaleString()} VND`;
+const formatPercent = (value) => `${Math.round(Number(value || 0) * 100)}%`;
 
 function ShopDashboardPage() {
   const [view, setView] = useState("products");
@@ -114,8 +120,17 @@ function ShopDashboardPage() {
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   const [bulkEditForm, setBulkEditForm] = useState(emptyBulkEdit);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [ownerSubscription, setOwnerSubscription] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState("");
+  const [paymentPlans, setPaymentPlans] = useState([]);
+  const [analyticsRange, setAnalyticsRange] = useState("30d");
+  const [analytics, setAnalytics] = useState(null);
+  const [insights, setInsights] = useState(null);
+  const [premiumDataStatus, setPremiumDataStatus] = useState("idle");
 
   const shop = shops[0] || null;
+  const hasActiveShopPlan = Boolean(ownerSubscription?.isPremium);
+  const shopOwnerPlan = paymentPlans.find((plan) => plan.code === "SHOP_OWNER_MONTHLY");
   const editingExistingProduct = Boolean(
     productForm.id && products.some((product) => product.id === productForm.id)
   );
@@ -180,15 +195,19 @@ function ShopDashboardPage() {
 
   const loadDashboard = async () => {
     try {
-      const [shopResponse, productResponse] = await Promise.all([
+      const [shopResponse, productResponse, paymentResponse, plansResponse] = await Promise.all([
         listMyShops(),
         listShopProducts(),
+        getShopPaymentMe(),
+        listPaymentPlans(),
       ]);
       const nextShops = shopResponse.shops || [];
       const nextShop = nextShops[0] || null;
 
       setShops(nextShops);
       setProducts(productResponse.products || []);
+      setOwnerSubscription(paymentResponse.subscription || null);
+      setPaymentPlans(plansResponse.plans || []);
 
       if (nextShop) {
         setShopForm(shopToForm(nextShop));
@@ -202,6 +221,37 @@ function ShopDashboardPage() {
   useEffect(() => {
     loadDashboard();
   }, []);
+
+  const loadAnalytics = async (range = analyticsRange) => {
+    if (!hasActiveShopPlan) return;
+    try {
+      setPremiumDataStatus("loading");
+      const response = await getShopAnalytics({ range });
+      setAnalytics(response.analytics);
+      setPremiumDataStatus("idle");
+    } catch (error) {
+      setPremiumDataStatus("error");
+      showNotice(error.response?.data?.message || "Could not load analytics.", "error");
+    }
+  };
+
+  const loadInsights = async (range = analyticsRange) => {
+    if (!hasActiveShopPlan) return;
+    try {
+      setPremiumDataStatus("loading");
+      const response = await getShopInsights({ range });
+      setInsights(response.insights);
+      setPremiumDataStatus("idle");
+    } catch (error) {
+      setPremiumDataStatus("error");
+      showNotice(error.response?.data?.message || "Could not load insights.", "error");
+    }
+  };
+
+  useEffect(() => {
+    if (view === "analytics") loadAnalytics(analyticsRange);
+    if (view === "insights") loadInsights(analyticsRange);
+  }, [view, analyticsRange, hasActiveShopPlan]);
 
   const updateShopField = (field) => (event) => {
     setShopForm((previous) => ({ ...previous, [field]: event.target.value }));
@@ -220,6 +270,10 @@ function ShopDashboardPage() {
   };
 
   const resetProductForm = () => {
+    if (!hasActiveShopPlan) {
+      showNotice("Active shop owner subscription is required.", "error");
+      return;
+    }
     setProductForm({ ...emptyProduct, shopId: shop?.id || "" });
     setUploadNotice("");
     setView("products");
@@ -227,6 +281,10 @@ function ShopDashboardPage() {
   };
 
   const editProduct = (product) => {
+    if (!hasActiveShopPlan) {
+      showNotice("Active shop owner subscription is required.", "error");
+      return;
+    }
     setProductForm(productToForm(product));
     setUploadNotice("");
     setView("products");
@@ -240,6 +298,10 @@ function ShopDashboardPage() {
 
   const openBulkEditModal = () => {
     if (!selectedProductIds.length) return;
+    if (!hasActiveShopPlan) {
+      showNotice("Active shop owner subscription is required.", "error");
+      return;
+    }
     setBulkEditForm(emptyBulkEdit);
     setIsBulkEditModalOpen(true);
   };
@@ -297,6 +359,11 @@ function ShopDashboardPage() {
     if (!shop) {
       setView("shop");
       showNotice("Create your shop before adding products.", "error");
+      return;
+    }
+
+    if (!hasActiveShopPlan) {
+      showNotice("Active shop owner subscription is required.", "error");
       return;
     }
 
@@ -485,6 +552,11 @@ function ShopDashboardPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!hasActiveShopPlan) {
+      setUploadNotice("Active shop owner subscription is required.");
+      return;
+    }
+
     try {
       setUploadNotice("Uploading...");
       const response = await uploadProductImage(file);
@@ -515,6 +587,11 @@ function ShopDashboardPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!hasActiveShopPlan) {
+      showNotice("Active shop owner subscription is required.", "error");
+      return;
+    }
+
     setImportResult(null);
 
     try {
@@ -535,6 +612,16 @@ function ShopDashboardPage() {
     window.location.href = "/login";
   };
 
+  const startShopCheckout = async () => {
+    try {
+      setPaymentStatus("Creating PayOS checkout...");
+      const response = await createShopPayment();
+      window.location.href = response.checkoutUrl;
+    } catch (error) {
+      setPaymentStatus(error.response?.data?.message || "Could not create payment.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <div className="min-h-screen lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -549,11 +636,20 @@ function ShopDashboardPage() {
         <main className="min-w-0 p-4 md:p-6">
           <div className="mx-auto max-w-[1440px]">
             <DashboardHeader
+              hasActiveShopPlan={hasActiveShopPlan}
               filters={filters}
               resetProductForm={resetProductForm}
               shop={shop}
               updateFilter={updateFilter}
               view={view}
+            />
+
+            <ShopSubscriptionBanner
+              hasActiveShopPlan={hasActiveShopPlan}
+              paymentStatus={paymentStatus}
+              plan={shopOwnerPlan}
+              subscription={ownerSubscription}
+              onCheckout={startShopCheckout}
             />
 
             {notice ? <Notice message={notice} type={noticeType} /> : null}
@@ -571,6 +667,7 @@ function ShopDashboardPage() {
                 removeProduct={removeProduct}
                 resetProductForm={resetProductForm}
                 selectedProductSet={selectedProductSet}
+                hasActiveShopPlan={hasActiveShopPlan}
                 shop={shop}
                 toggleProductSelection={toggleProductSelection}
                 toggleVisibleProductSelection={toggleVisibleProductSelection}
@@ -591,10 +688,37 @@ function ShopDashboardPage() {
             {view === "import" ? (
               <ImportView
                 downloadTemplate={downloadTemplate}
+                hasActiveShopPlan={hasActiveShopPlan}
                 importExcel={importExcel}
                 importResult={importResult}
                 shop={shop}
               />
+            ) : null}
+
+            {view === "analytics" ? (
+              hasActiveShopPlan ? (
+                <AnalyticsView
+                  analytics={analytics}
+                  range={analyticsRange}
+                  setRange={setAnalyticsRange}
+                  status={premiumDataStatus}
+                />
+              ) : (
+                <PremiumPaywall onCheckout={startShopCheckout} title="Analytics Dashboard" />
+              )
+            ) : null}
+
+            {view === "insights" ? (
+              hasActiveShopPlan ? (
+                <InsightsView
+                  insights={insights}
+                  range={analyticsRange}
+                  setRange={setAnalyticsRange}
+                  status={premiumDataStatus}
+                />
+              ) : (
+                <PremiumPaywall onCheckout={startShopCheckout} title="Customer Insights" />
+              )
             ) : null}
           </div>
         </main>
@@ -605,6 +729,7 @@ function ShopDashboardPage() {
           editingExistingProduct={editingExistingProduct}
           productForm={productForm}
           saveProduct={saveProduct}
+          hasActiveShopPlan={hasActiveShopPlan}
           shop={shop}
           uploadImage={uploadImage}
           uploadNotice={uploadNotice}
@@ -629,6 +754,8 @@ function ShopDashboardPage() {
 function DashboardSidebar({ logout, setView, shop, stats, view }) {
   const navItems = [
     ["products", "Products"],
+    ["analytics", "Analytics"],
+    ["insights", "Customer Insights"],
     ["trash", "Trash"],
     ["shop", "Shop Profile"],
     ["import", "Excel Import"],
@@ -702,12 +829,23 @@ function DashboardSidebar({ logout, setView, shop, stats, view }) {
   );
 }
 
-function DashboardHeader({ filters, resetProductForm, shop, updateFilter, view }) {
+function DashboardHeader({
+  filters,
+  hasActiveShopPlan,
+  resetProductForm,
+  shop,
+  updateFilter,
+  view,
+}) {
   const title =
     view === "shop"
       ? "Shop Profile"
       : view === "import"
         ? "Excel Import"
+        : view === "analytics"
+          ? "Analytics"
+          : view === "insights"
+            ? "Customer Insights"
         : view === "trash"
           ? "Trash"
           : "Products";
@@ -726,7 +864,7 @@ function DashboardHeader({ filters, resetProductForm, shop, updateFilter, view }
           <button
             type="button"
             onClick={resetProductForm}
-            disabled={!shop}
+            disabled={!shop || !hasActiveShopPlan}
             className={`${buttonBase} bg-[#12356f] text-white`}
           >
             New Product
@@ -756,11 +894,49 @@ function DashboardHeader({ filters, resetProductForm, shop, updateFilter, view }
   );
 }
 
+function ShopSubscriptionBanner({
+  hasActiveShopPlan,
+  onCheckout,
+  paymentStatus,
+  plan,
+  subscription,
+}) {
+  return (
+    <section className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`rounded-md px-2 py-1 text-xs font-bold ${hasActiveShopPlan ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
+            {hasActiveShopPlan ? "Shop Owner Active" : "Shop Owner Free"}
+          </span>
+          <p className="text-sm font-semibold text-slate-900">
+            {formatMoney(plan?.amount || 349000)} / {plan?.durationDays || 30} ngày để đăng sản phẩm và tiếp cận user MIROIR.
+          </p>
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          Đăng sản phẩm lên nền tảng, tiếp cận user MIROIR, dashboard phân tích, ưu tiên hiển thị, truy cập insight khách hàng.
+        </p>
+        {hasActiveShopPlan && subscription?.expiresAt ? (
+          <p className="mt-1 text-xs text-slate-500">
+            Hạn dùng đến {new Date(subscription.expiresAt).toLocaleDateString("vi-VN")}
+          </p>
+        ) : null}
+        {paymentStatus ? <p className="mt-1 text-xs text-slate-500">{paymentStatus}</p> : null}
+      </div>
+      {!hasActiveShopPlan ? (
+        <button type="button" className={`${buttonBase} bg-[#12356f] text-white`} onClick={onCheckout}>
+          Thanh toán gói Shop Owner
+        </button>
+      ) : null}
+    </section>
+  );
+}
+
 function ProductsView({
   archiveProduct,
   deleteSelectedProducts,
   editProduct,
   filteredProducts,
+  hasActiveShopPlan,
   openBulkEditModal,
   permanentlyDeleteSelectedProducts,
   permanentlyDeleteProduct,
@@ -797,6 +973,7 @@ function ProductsView({
             <button
               type="button"
               onClick={openBulkEditModal}
+              disabled={!hasActiveShopPlan}
               className={`${buttonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`}
               title="Bulk edit selected products"
             >
@@ -895,6 +1072,7 @@ function ProductsView({
                         <button
                           type="button"
                           onClick={() => editProduct(product)}
+                          disabled={!hasActiveShopPlan}
                           className={`${iconButtonClass} border-slate-200 text-slate-700`}
                           title="Edit"
                           aria-label={`Edit ${product.name}`}
@@ -967,6 +1145,7 @@ function ProductsView({
 
 function ProductModal({
   editingExistingProduct,
+  hasActiveShopPlan,
   onClose,
   productForm,
   saveProduct,
@@ -1053,7 +1232,13 @@ function ProductModal({
               <input className={fieldClass} value={productForm.imageUrl} onChange={updateProductField("imageUrl")} />
             </Field>
             <Field label="Upload Image" wide>
-              <input className={fieldClass} type="file" accept="image/*" onChange={uploadImage} />
+              <input
+                className={fieldClass}
+                type="file"
+                accept="image/*"
+                disabled={!hasActiveShopPlan}
+                onChange={uploadImage}
+              />
             </Field>
             <Field label="Description" wide>
               <textarea
@@ -1074,7 +1259,11 @@ function ProductModal({
           >
             Cancel
           </button>
-          <button type="submit" disabled={!shop} className={`${buttonBase} bg-[#12356f] text-white`}>
+          <button
+            type="submit"
+            disabled={!shop || !hasActiveShopPlan}
+            className={`${buttonBase} bg-[#12356f] text-white`}
+          >
             Save Product
           </button>
         </div>
@@ -1307,13 +1496,21 @@ function ShopView({ deactivateShop, saveShop, shop, shopForm, updateShopField })
   );
 }
 
-function ImportView({ downloadTemplate, importExcel, importResult, shop }) {
+function ImportView({
+  downloadTemplate,
+  hasActiveShopPlan,
+  importExcel,
+  importResult,
+  shop,
+}) {
   return (
     <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="text-base font-bold text-slate-900">Import Products</h2>
         <p className="mt-1 text-sm text-slate-500">
-          {shop ? "Download the template, fill it, then upload the .xlsx file." : "Create a shop before importing."}
+          {shop && hasActiveShopPlan
+            ? "Download the template, fill it, then upload the .xlsx file."
+            : "Create a shop and activate your subscription before importing."}
         </p>
         <button
           type="button"
@@ -1323,7 +1520,13 @@ function ImportView({ downloadTemplate, importExcel, importResult, shop }) {
           Download Template
         </button>
         <Field label="Upload .xlsx">
-          <input className={fieldClass} type="file" accept=".xlsx" disabled={!shop} onChange={importExcel} />
+          <input
+            className={fieldClass}
+            type="file"
+            accept=".xlsx"
+            disabled={!shop || !hasActiveShopPlan}
+            onChange={importExcel}
+          />
         </Field>
       </section>
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1354,6 +1557,188 @@ function ImportView({ downloadTemplate, importExcel, importResult, shop }) {
         )}
       </section>
     </div>
+  );
+}
+
+function RangeControl({ range, setRange }) {
+  return (
+    <div className="flex rounded-lg bg-slate-100 p-1">
+      {["7d", "30d", "90d"].map((item) => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => setRange(item)}
+          className={`rounded-md px-3 py-2 text-sm font-semibold ${
+            range === item ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+          }`}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PremiumPaywall({ onCheckout, title }) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+      <p className="mt-2 max-w-2xl text-sm text-slate-500">
+        Tính năng này nằm trong gói Shop Owner: dashboard phân tích, ưu tiên hiển thị,
+        và truy cập insight khách hàng tổng hợp ẩn danh.
+      </p>
+      <button
+        type="button"
+        onClick={onCheckout}
+        className={`${buttonBase} mt-5 bg-[#12356f] text-white`}
+      >
+        Thanh toán gói Shop Owner
+      </button>
+    </section>
+  );
+}
+
+function AnalyticsView({ analytics, range, setRange, status }) {
+  const summary = analytics?.summary || {};
+
+  return (
+    <section className="grid gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div>
+          <h2 className="text-base font-bold text-slate-900">Shop performance</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Product views, try-on clicks, and stylist recommendations.
+          </p>
+        </div>
+        <RangeControl range={range} setRange={setRange} />
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <Metric label="Products" value={summary.totalProducts ?? 0} />
+        <Metric label="Published" value={summary.publishedProducts ?? 0} />
+        <Metric label="Views" value={summary.productViews ?? 0} />
+        <Metric label="Try-ons" value={summary.tryOnClicks ?? 0} />
+        <Metric label="Stylist matches" value={summary.stylistMatches ?? 0} />
+        <Metric label="Feedback" value={summary.feedbackCount ?? 0} />
+        <Metric label="Out of stock" value={summary.outOfStockProducts ?? 0} />
+        <Metric label="Draft" value={summary.draftProducts ?? 0} />
+        <Metric label="Conversion" value={formatPercent(summary.conversionRate)} />
+      </div>
+
+      <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-4">
+          <h2 className="text-base font-bold text-slate-900">Top products</h2>
+          {status === "loading" ? <p className="mt-1 text-sm text-slate-500">Loading...</p> : null}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase tracking-[0.12em] text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3">Views</th>
+                <th className="px-4 py-3">Try-ons</th>
+                <th className="px-4 py-3">Stylist</th>
+                <th className="px-4 py-3">Feedback</th>
+                <th className="px-4 py-3">Rating</th>
+                <th className="px-4 py-3">Conversion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(analytics?.topProducts || []).map((product) => (
+                <tr key={product.productId} className="border-t border-slate-100">
+                  <td className="px-4 py-3 font-semibold text-slate-900">{product.name}</td>
+                  <td className="px-4 py-3">{product.views}</td>
+                  <td className="px-4 py-3">{product.tryOns}</td>
+                  <td className="px-4 py-3">{product.stylistMatches}</td>
+                  <td className="px-4 py-3">{product.feedbackCount}</td>
+                  <td className="px-4 py-3">{product.averageRating || "-"}</td>
+                  <td className="px-4 py-3">{formatPercent(product.conversionRate)}</td>
+                </tr>
+              ))}
+              {!analytics?.topProducts?.length ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-slate-500" colSpan="7">
+                    No analytics events yet.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  );
+}
+
+function InsightsView({ insights, range, setRange, status }) {
+  const breakdowns = insights?.breakdowns || {};
+
+  return (
+    <section className="grid gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div>
+          <h2 className="text-base font-bold text-slate-900">Anonymous customer insights</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Privacy threshold applies before breakdowns are shown.
+          </p>
+        </div>
+        <RangeControl range={range} setRange={setRange} />
+      </div>
+
+      {status === "loading" ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
+          Loading insights...
+        </div>
+      ) : null}
+
+      {insights && !insights.enoughData ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+          {insights.message || "Not enough data yet."} Current sample: {insights.eventCount || 0} events
+          from {insights.userCount || 0} users.
+        </div>
+      ) : null}
+
+      {insights?.enoughData ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <InsightCard title="Gender" items={breakdowns.gender} />
+          <InsightCard title="Body shape" items={breakdowns.bodyShape} />
+          <InsightCard title="Skin tone" items={breakdowns.skinTone} />
+          <InsightCard title="Style preferences" items={breakdowns.stylePreferences} />
+          <InsightCard title="Occasions" items={breakdowns.occasions} />
+          <InsightCard title="Budget buckets" items={breakdowns.budgetBuckets} />
+          <InsightCard title="Interested style tags" items={breakdowns.styleTags} />
+          <InsightCard title="Interested colors" items={breakdowns.colors} />
+          <InsightCard title="Ratings" items={breakdowns.ratings} />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function InsightCard({ items = [], title }) {
+  const max = Math.max(...items.map((item) => item.count), 1);
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h3 className="text-sm font-bold text-slate-900">{title}</h3>
+      <div className="mt-4 grid gap-3">
+        {items.map((item) => (
+          <div key={item.label}>
+            <div className="mb-1 flex justify-between gap-3 text-sm">
+              <span className="font-semibold text-slate-700">{item.label}</span>
+              <span className="text-slate-500">{item.count}</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-[#12356f]"
+                style={{ width: `${Math.max((item.count / max) * 100, 8)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+        {!items.length ? <p className="text-sm text-slate-500">No signal yet.</p> : null}
+      </div>
+    </section>
   );
 }
 

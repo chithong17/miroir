@@ -1,5 +1,6 @@
 import { getMongoDb } from "./mongo.service.js";
 import { toPublicProduct } from "./product.service.js";
+import { getPremiumShopIds } from "./subscription.service.js";
 
 const cleanString = (value) => String(value || "").trim();
 
@@ -19,15 +20,16 @@ const publicShop = (shop) => ({
   contact: shop.contact || {},
 });
 
-const withShopInfo = (products, shops) => {
+const withShopInfo = (products, shops, { includeShopDetails = false } = {}) => {
   const shopById = new Map(shops.map((shop) => [shop.id, publicShop(shop)]));
   return products.map((product) => ({
     ...toPublicProduct(product),
-    shop: shopById.get(product.shopId) || null,
+    shop: includeShopDetails ? shopById.get(product.shopId) || null : null,
+    premiumShopDetailsRequired: !includeShopDetails,
   }));
 };
 
-export const listCatalogProducts = async (query = {}) => {
+export const listCatalogProducts = async (query = {}, { viewerIsPremium = false } = {}) => {
   const db = await getMongoDb();
   const { page, limit, skip } = pageParams(query);
   const activeShops = await db.collection("shops").find({ status: "active" }).toArray();
@@ -57,13 +59,32 @@ export const listCatalogProducts = async (query = {}) => {
     ];
   }
 
+  const premiumShopIds = await getPremiumShopIds(activeShopIds);
   const [total, products] = await Promise.all([
     db.collection("products").countDocuments(filter),
-    db.collection("products").find(filter).sort({ updatedAt: -1 }).skip(skip).limit(limit).toArray(),
+    db
+      .collection("products")
+      .aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            premiumRank: {
+              $cond: [{ $in: ["$shopId", [...premiumShopIds]] }, 1, 0],
+            },
+          },
+        },
+        { $sort: { premiumRank: -1, updatedAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+        { $project: { premiumRank: 0 } },
+      ])
+      .toArray(),
   ]);
 
   return {
-    products: withShopInfo(products, activeShops),
+    products: withShopInfo(products, activeShops, {
+      includeShopDetails: viewerIsPremium,
+    }),
     pagination: { page, limit, total, totalPages: Math.max(Math.ceil(total / limit), 1) },
   };
 };

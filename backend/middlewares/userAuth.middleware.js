@@ -28,3 +28,28 @@ export const requireUser = async (req, res, next) => {
     next(error);
   }
 };
+
+export const optionalUser = async (req, _res, next) => {
+  try {
+    const authorization = req.get("authorization") || "";
+    const [scheme, token] = authorization.split(" ");
+
+    if (scheme !== "Bearer" || !token) {
+      return next();
+    }
+
+    const payload = verifyUserToken(token);
+    if (payload.role !== "user" || !payload.userId) {
+      return next();
+    }
+
+    const user = await getUserById(payload.userId);
+    if (user?.status === "active") {
+      req.user = user;
+    }
+
+    return next();
+  } catch (_error) {
+    return next();
+  }
+};

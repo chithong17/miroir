@@ -124,3 +124,13 @@ export const importAdminProducts = async (shopId, file) => {
   });
   return response.data;
 };
+
+export const listPaymentPlans = async () => {
+  const response = await adminClient.get("/admin/payment-plans");
+  return response.data;
+};
+
+export const updatePaymentPlan = async (planCode, payload) => {
+  const response = await adminClient.put(`/admin/payment-plans/${planCode}`, payload);
+  return response.data;
+};

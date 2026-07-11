@@ -1,8 +1,15 @@
 import axios from "axios";
+import { getUserToken } from "./userApi.js";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
   timeout: 90000,
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = getUserToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
 export const listCatalogProducts = async (params = {}) => {
@@ -22,5 +29,10 @@ export const listCatalogOutfits = async (params = {}) => {
 
 export const getCatalogShop = async (shopId) => {
   const response = await apiClient.get(`/catalog/shops/${shopId}`);
+  return response.data;
+};
+
+export const submitProductFeedback = async (productId, payload) => {
+  const response = await apiClient.post(`/catalog/products/${productId}/feedback`, payload);
   return response.data;
 };

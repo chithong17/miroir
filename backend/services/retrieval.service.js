@@ -2,6 +2,7 @@ import { generateEmbedding } from "./gemini.service.js";
 import { getMongoDb } from "./mongo.service.js";
 import { getReviewSummariesByProductIds } from "./reviewSummary.service.js";
 import { getActiveShopsByIds } from "./shop.service.js";
+import { getPremiumShopIds } from "./subscription.service.js";
 
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -160,6 +161,7 @@ export const retrieveStylistContext = async ({ request, memory }) => {
     ...new Set(rawProducts.map((product) => product.shopId).filter(Boolean)),
   ]);
   const activeShopById = new Map(activeShops.map((shop) => [shop.id, shop]));
+  const premiumShopIds = await getPremiumShopIds(activeShops.map((shop) => shop.id));
   const shopFilteredProducts = rawProducts
     .filter(
       (product) =>
@@ -202,12 +204,14 @@ export const retrieveStylistContext = async ({ request, memory }) => {
   const products = shopFilteredProducts
     .map((product) => ({
       ...product,
-      rerankScore: scoreProduct({
-        product,
-        request,
-        memory,
-        reviewSummary: reviewByProductId.get(product.id),
-      }),
+      premiumBoostApplied: premiumShopIds.has(product.shopId),
+      rerankScore:
+        scoreProduct({
+          product,
+          request,
+          memory,
+          reviewSummary: reviewByProductId.get(product.id),
+        }) + (premiumShopIds.has(product.shopId) ? 0.08 : 0),
     }))
     .sort((a, b) => b.rerankScore - a.rerankScore)
     .slice(0, 30);

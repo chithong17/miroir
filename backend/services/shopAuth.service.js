@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { getMongoDb } from "./mongo.service.js";
+import { buildSubscriptionSummary } from "./subscription.service.js";
 
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 
@@ -20,6 +21,10 @@ const publicOwner = (owner) => ({
   email: owner.email,
   name: owner.name,
   status: owner.status,
+  subscription: buildSubscriptionSummary({
+    accountType: "shop_owner",
+    subscription: owner.subscription,
+  }),
   createdAt: owner.createdAt,
   updatedAt: owner.updatedAt,
 });
@@ -121,8 +126,11 @@ export const loginShopOwner = async ({ email, password }) => {
 };
 
 export const getShopOwnerById = async (ownerId) => {
-  const db = await getMongoDb();
-  const owner = await db.collection("shop_owners").findOne({ id: ownerId });
-
+  const owner = await getRawShopOwnerById(ownerId);
   return owner ? publicOwner(owner) : null;
+};
+
+export const getRawShopOwnerById = async (ownerId) => {
+  const db = await getMongoDb();
+  return db.collection("shop_owners").findOne({ id: ownerId });
 };

@@ -5,6 +5,7 @@ import {
   findInvalidProductIds,
 } from "../services/groundingValidation.service.js";
 import { retrieveStylistContext } from "../services/retrieval.service.js";
+import { trackShopEvents } from "../services/shopAnalytics.service.js";
 
 const validateRecommendationRequest = (body) => {
   if (!body || typeof body !== "object") {
@@ -133,7 +134,8 @@ const buildFallbackRecommendation = ({ body, context }) => {
 
 export const recommendOutfit = async (req, res, next) => {
   try {
-    const validationError = validateRecommendationRequest(req.body);
+    const body = req.user ? { ...(req.body || {}), userId: req.user.id } : req.body;
+    const validationError = validateRecommendationRequest(body);
 
     if (validationError) {
       return res.status(400).json({
@@ -142,11 +144,11 @@ export const recommendOutfit = async (req, res, next) => {
       });
     }
 
-    const memory = req.body.userId
-      ? await getUserFashionMemory(req.body.userId)
+    const memory = body.userId
+      ? await getUserFashionMemory(body.userId)
       : null;
     const context = await retrieveStylistContext({
-      request: buildRetrievalRequest(req.body),
+      request: buildRetrievalRequest(body),
       memory,
     });
 
@@ -156,8 +158,8 @@ export const recommendOutfit = async (req, res, next) => {
         noMatch: true,
         message: "No eligible products were found for this styling request.",
         analysis: {
-          bodyShape: getProfile(req.body).bodyShape || "",
-          skinTone: getProfile(req.body).skinTone || "",
+          bodyShape: getProfile(body).bodyShape || "",
+          skinTone: getProfile(body).skinTone || "",
           styleMatch: "No product context was available for generation.",
         },
         recommended_outfit: {
@@ -173,7 +175,7 @@ export const recommendOutfit = async (req, res, next) => {
     }
 
     const generationPayload = buildGenerationPayload({
-      body: req.body,
+      body,
       memory,
       context,
     });
@@ -184,7 +186,7 @@ export const recommendOutfit = async (req, res, next) => {
     } catch (generationError) {
       console.error("Gemini stylist generation failed, using fallback:", generationError);
       recommendation = buildFallbackRecommendation({
-        body: req.body,
+        body,
         context,
       });
     }
@@ -208,7 +210,7 @@ export const recommendOutfit = async (req, res, next) => {
       } catch (generationError) {
         console.error("Gemini stylist correction failed, using fallback:", generationError);
         recommendation = buildFallbackRecommendation({
-          body: req.body,
+          body,
           context,
         });
       }
@@ -230,19 +232,51 @@ export const recommendOutfit = async (req, res, next) => {
     let enrichedRecommendation = enrichRecommendation({
       recommendation,
       products: context.products,
-      desiredOutfitCount: normalizeDesiredOutfitCount(req.body.desiredOutfitCount),
+      desiredOutfitCount: normalizeDesiredOutfitCount(body.desiredOutfitCount),
     });
 
     if (!enrichedRecommendation.outfits.length && context.products.length) {
       enrichedRecommendation = enrichRecommendation({
         recommendation: buildFallbackRecommendation({
-          body: req.body,
+          body,
           context,
         }),
         products: context.products,
-        desiredOutfitCount: normalizeDesiredOutfitCount(req.body.desiredOutfitCount),
+        desiredOutfitCount: normalizeDesiredOutfitCount(body.desiredOutfitCount),
       });
     }
+
+    const trackedProducts = new Map();
+    (enrichedRecommendation.outfits || []).forEach((outfit) => {
+      (outfit.items || []).forEach((item) => {
+        if (item.product?.id && item.product?.shopId) {
+          trackedProducts.set(item.product.id, item.product);
+        }
+      });
+    });
+
+    await trackShopEvents(
+      [...trackedProducts.values()].map((product) => ({
+        eventType: "stylist_product_recommended",
+        shopId: product.shopId,
+        productId: product.id,
+        userId: body.userId,
+        metadata: {
+          prompt: body.prompt,
+          occasion: getProfile(body).occasion || body.occasion || "",
+          budget: body.budget,
+          profile: {
+            gender: body.gender || getProfile(body).gender || "",
+            bodyShape: getProfile(body).bodyShape || "",
+            skinTone: getProfile(body).skinTone || "",
+            stylePreferences:
+              getProfile(body).stylePreferences || body.stylePreferences || [],
+          },
+          productStyleTags: product.styleTags || [],
+          productColors: product.colors || [],
+        },
+      }))
+    );
 
     return res.json({
       success: true,

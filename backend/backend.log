@@ -6,3 +6,17 @@ Loaded PIAPI_KEY env info: {
   length: 64,
   hasLeadingOrTrailingWhitespace: false
 }
+Creating PiAPI task with input keys: [ 'model_input', 'dress_input', 'batch_size' ]
+PiAPI key runtime info: {
+  present: true,
+  prefix: '305c',
+  suffix: '2829',
+  length: 64,
+  hasLeadingOrTrailingWhitespace: false
+}
+PiAPI create task success: {
+  status: 200,
+  taskId: 'f52e2679-a67f-4dca-a80b-c70830f216e1',
+  taskStatus: 'pending'
+}
+PiAPI task created successfully: f52e2679-a67f-4dca-a80b-c70830f216e1

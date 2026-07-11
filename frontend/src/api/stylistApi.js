@@ -1,8 +1,15 @@
 import axios from "axios";
+import { getUserToken } from "./userApi.js";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
   timeout: 90000,
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = getUserToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
 export const getStylistRecommendation = async (payload) => {

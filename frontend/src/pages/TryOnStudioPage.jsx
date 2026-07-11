@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   getCatalogProduct,
   listCatalogProducts,
+  submitProductFeedback,
 } from "../api/catalogApi.js";
 import {
   createCatalogTryOnTask,
@@ -9,7 +10,13 @@ import {
   createCustomTryOnTask,
   getTryOnTaskStatus,
 } from "../api/tryonApi.js";
-import { getUserMe, getUserToken, setUserToken } from "../api/userApi.js";
+import {
+  createUserPayment,
+  getUserMe,
+  getUserToken,
+  listPaymentPlans,
+  setUserToken,
+} from "../api/userApi.js";
 import { UnifiedNav } from "./AuthPage.jsx";
 
 const fieldClass =
@@ -32,10 +39,24 @@ function TryOnStudioPage() {
   const [modelFile, setModelFile] = useState(null);
   const [modelPreview, setModelPreview] = useState("");
   const [resultUrl, setResultUrl] = useState("");
+  const [completedTryOnProductId, setCompletedTryOnProductId] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const [paymentPlans, setPaymentPlans] = useState([]);
+  const [feedbackForm, setFeedbackForm] = useState({
+    rating: "5",
+    fitFeedback: "true_to_size",
+    comment: "",
+  });
+  const [feedbackNotice, setFeedbackNotice] = useState("");
+  const userPremiumPlan = paymentPlans.find((plan) => plan.code === "USER_PREMIUM_MONTHLY");
 
   useEffect(() => {
+    listPaymentPlans()
+      .then((response) => setPaymentPlans(response.plans || []))
+      .catch(() => setPaymentPlans([]));
+
     if (!getUserToken()) return;
 
     getUserMe()
@@ -60,6 +81,8 @@ function TryOnStudioPage() {
     const response = await getCatalogProduct(productId);
     setProduct(response.product);
     setResultUrl("");
+    setCompletedTryOnProductId("");
+    setFeedbackNotice("");
     const related = await listCatalogProducts({
       category: response.product.category,
       shopId: response.product.shopId,
@@ -110,7 +133,7 @@ function TryOnStudioPage() {
     }
   };
 
-  const poll = async (taskId) => {
+  const poll = async (taskId, feedbackProductId = "") => {
     setStatus("processing");
     setMessage("Task created. Waiting for the first result check...");
 
@@ -119,6 +142,7 @@ function TryOnStudioPage() {
       const response = await getTryOnTaskStatus(taskId);
       if (response.status === "completed" && response.resultUrl) {
         setResultUrl(response.resultUrl);
+        setCompletedTryOnProductId(feedbackProductId);
         setStatus("completed");
         setMessage("");
         return;
@@ -168,7 +192,10 @@ function TryOnStudioPage() {
     }
     setStatus("loading");
     setMessage("");
+    setPaymentRequired(false);
     setResultUrl("");
+    setCompletedTryOnProductId("");
+    setFeedbackNotice("");
 
     try {
       let response;
@@ -197,10 +224,54 @@ function TryOnStudioPage() {
         response = await createTryOnTask(formData);
       }
 
-      await poll(response.taskId);
+      if (response.usage) {
+        setUser((previous) =>
+          previous
+            ? {
+                ...previous,
+                subscription: {
+                  ...(previous.subscription || {}),
+                  usage: response.usage,
+                },
+              }
+            : previous
+        );
+      }
+      await poll(response.taskId, garmentSource === "platform" ? product.id : "");
     } catch (error) {
       setStatus("error");
+      setPaymentRequired(Boolean(error.response?.data?.subscriptionRequired));
       setMessage(error.response?.data?.message || "Could not start try-on.");
+    }
+  };
+
+  const startPremiumCheckout = async () => {
+    try {
+      setMessage("Đang tạo liên kết thanh toán...");
+      const response = await createUserPayment();
+      window.location.href = response.checkoutUrl;
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Không thể tạo thanh toán.");
+    }
+  };
+
+  const updateFeedback = (field) => (event) =>
+    setFeedbackForm((previous) => ({ ...previous, [field]: event.target.value }));
+
+  const sendTryOnFeedback = async (event) => {
+    event.preventDefault();
+    if (!product?.id) return;
+
+    try {
+      setFeedbackNotice("Saving feedback...");
+      await submitProductFeedback(product.id, {
+        ...feedbackForm,
+        rating: Number(feedbackForm.rating),
+        context: "tryon",
+      });
+      setFeedbackNotice("Feedback saved. Thank you.");
+    } catch (error) {
+      setFeedbackNotice(error.response?.data?.message || "Could not save feedback.");
     }
   };
 
@@ -224,6 +295,26 @@ function TryOnStudioPage() {
             Back to marketplace
           </a>
         </div>
+
+        {user ? (
+          <section className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/60 bg-white/85 p-4">
+            <div>
+              <span className={`rounded-md px-2 py-1 text-xs font-bold ${user.subscription?.isPremium ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
+                {user.subscription?.isPremium ? "Premium" : "Free"}
+              </span>
+              <p className="mt-2 text-sm text-muted">
+                {user.subscription?.isPremium
+                  ? "Không giới hạn số lần thử đồ trong tháng."
+                  : `Còn ${user.subscription?.usage?.remaining ?? 5}/5 lần thử đồ miễn phí trong tháng. Premium: ${formatMoney(userPremiumPlan?.amount || 49000)}.`}
+              </p>
+            </div>
+            {!user.subscription?.isPremium ? (
+              <button type="button" className="dark-button rounded-lg" onClick={startPremiumCheckout}>
+                Nâng cấp {formatMoney(userPremiumPlan?.amount || 49000)}
+              </button>
+            ) : null}
+          </section>
+        ) : null}
 
         <section className="mt-6 grid gap-5 lg:grid-cols-3">
           <StudioPanel title="1. Original photo">
@@ -281,7 +372,9 @@ function TryOnStudioPage() {
             {garmentSource === "platform" && product ? (
               <div className="mt-4">
                 <h2 className="font-bold">{product.name}</h2>
-                <p className="text-sm text-muted">{product.shop?.name}</p>
+                <p className="text-sm text-muted">
+                  {product.shop?.name || "Shop details for Premium"}
+                </p>
                 <p className="mt-1 font-semibold">{formatMoney(product.price)}</p>
               </div>
             ) : null}
@@ -343,6 +436,36 @@ function TryOnStudioPage() {
               <p className={`mt-3 text-sm ${status === "error" ? "text-red-700" : "text-muted"}`}>
                 {message}
               </p>
+            ) : null}
+            {paymentRequired ? (
+              <button type="button" className="dark-button mt-3 w-full rounded-lg" onClick={startPremiumCheckout}>
+                Nâng cấp Premium
+              </button>
+            ) : null}
+            {status === "completed" && resultUrl && product && completedTryOnProductId === product.id ? (
+              <form onSubmit={sendTryOnFeedback} className="mt-4 grid gap-3 rounded-lg border border-line/60 p-3">
+                <p className="text-sm font-bold">Rate this try-on product</p>
+                <select className={fieldClass} value={feedbackForm.rating} onChange={updateFeedback("rating")}>
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <option key={rating} value={rating}>{rating} stars</option>
+                  ))}
+                </select>
+                <select className={fieldClass} value={feedbackForm.fitFeedback} onChange={updateFeedback("fitFeedback")}>
+                  <option value="true_to_size">True to size</option>
+                  <option value="runs_small">Runs small</option>
+                  <option value="runs_large">Runs large</option>
+                  <option value="not_sure">Not sure</option>
+                </select>
+                <textarea
+                  className={fieldClass}
+                  rows="3"
+                  placeholder="Feedback about this product"
+                  value={feedbackForm.comment}
+                  onChange={updateFeedback("comment")}
+                />
+                <button type="submit" className="soft-button rounded-lg">Submit feedback</button>
+                {feedbackNotice ? <p className="text-xs text-muted">{feedbackNotice}</p> : null}
+              </form>
             ) : null}
           </StudioPanel>
         </section>

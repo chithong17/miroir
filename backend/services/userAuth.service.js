@@ -2,6 +2,10 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { getMongoDb } from "./mongo.service.js";
+import {
+  buildSubscriptionSummary,
+  getMonthlyTryOnUsage,
+} from "./subscription.service.js";
 
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const cleanString = (value) => String(value || "").trim();
@@ -15,7 +19,7 @@ const getJwtSecret = () => {
   return process.env.JWT_SECRET;
 };
 
-export const toPublicUser = (user) => ({
+export const toPublicUser = (user, usage = null) => ({
   id: user.id,
   email: user.email,
   name: user.name,
@@ -23,6 +27,11 @@ export const toPublicUser = (user) => ({
   profile: user.profile || {},
   profileCompleted: Boolean(user.profileCompleted),
   profileSkipped: Boolean(user.profileSkipped),
+  subscription: buildSubscriptionSummary({
+    accountType: "user",
+    subscription: user.subscription,
+    usage,
+  }),
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
 });
@@ -79,7 +88,7 @@ export const registerUser = async ({ email, password, name }) => {
   };
 
   await db.collection("users").insertOne(user);
-  return { user: toPublicUser(user), token: signUserToken(user) };
+  return { user: toPublicUser(user, await getMonthlyTryOnUsage(user.id)), token: signUserToken(user) };
 };
 
 export const loginUser = async ({ email, password }) => {
@@ -106,7 +115,7 @@ export const loginUser = async ({ email, password }) => {
     throw error;
   }
 
-  return { user: toPublicUser(user), token: signUserToken(user) };
+  return { user: toPublicUser(user, await getMonthlyTryOnUsage(user.id)), token: signUserToken(user) };
 };
 
 export const getRawUserById = async (userId) => {
@@ -116,7 +125,7 @@ export const getRawUserById = async (userId) => {
 
 export const getUserById = async (userId) => {
   const user = await getRawUserById(userId);
-  return user ? toPublicUser(user) : null;
+  return user ? toPublicUser(user, await getMonthlyTryOnUsage(user.id)) : null;
 };
 
 const toPositiveNumber = (value) => {

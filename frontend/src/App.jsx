@@ -1,10 +1,14 @@
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
+import { getAdminToken } from "./api/adminApi.js";
 import AuthPage from "./pages/AuthPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
+import PaymentResultPage from "./pages/PaymentResultPage.jsx";
 import ProfileOnboardingPage from "./pages/ProfileOnboardingPage.jsx";
+import { getShopToken } from "./api/shopApi.js";
 import ShopDashboardPage from "./pages/ShopDashboardPage.jsx";
 import TryOnStudioPage from "./pages/TryOnStudioPage.jsx";
 import UserAppPage from "./pages/UserAppPage.jsx";
+import { getUserToken } from "./api/userApi.js";
 
 function App() {
   const pathname = window.location.pathname;
@@ -28,6 +32,14 @@ function App() {
 
   if (pathname === "/onboarding/profile") {
     return <ProfileOnboardingPage />;
+  }
+
+  if (pathname === "/payment/success") {
+    return <PaymentResultPage result="success" />;
+  }
+
+  if (pathname === "/payment/cancel") {
+    return <PaymentResultPage result="cancel" />;
   }
 
   if (pathname === "/app" || pathname === "/app/products") {
@@ -70,6 +82,23 @@ function App() {
 
   if (pathname === "/admin/dashboard") {
     return <AdminDashboardPage />;
+  }
+
+  if (pathname === "/") {
+    if (getAdminToken()) {
+      window.location.replace("/admin/dashboard");
+      return null;
+    }
+
+    if (getShopToken()) {
+      window.location.replace("/shop/dashboard");
+      return null;
+    }
+
+    if (getUserToken()) {
+      window.location.replace("/app");
+      return null;
+    }
   }
 
   return <LandingPage />;

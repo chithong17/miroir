@@ -4,14 +4,37 @@ import {
   deactivateAdminShop,
   exportAdminProductsWorkbook,
   importAdminProductsWorkbook,
+  listAdminPaymentPlans,
   listAdminProducts,
   listAdminShopOwners,
   listAdminShops,
   setAdminProductStatus,
   setShopOwnerStatus,
   updateAdminProduct,
+  updateAdminPaymentPlan,
   updateAdminShop,
 } from "../services/admin.service.js";
+
+export const listPaymentPlans = async (_req, res, next) => {
+  try {
+    const plans = await listAdminPaymentPlans();
+    return res.json({ success: true, plans });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updatePaymentPlan = async (req, res, next) => {
+  try {
+    const plan = await updateAdminPaymentPlan({
+      planCode: req.params.planCode,
+      body: req.body || {},
+    });
+    return res.json({ success: true, plan });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const listShopOwners = async (req, res, next) => {
   try {

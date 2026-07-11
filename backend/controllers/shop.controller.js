@@ -4,6 +4,10 @@ import {
   listOwnerShops,
   updateShop,
 } from "../services/shop.service.js";
+import {
+  getShopAnalytics,
+  getShopInsights,
+} from "../services/shopAnalytics.service.js";
 
 export const listMyShops = async (req, res, next) => {
   try {
@@ -61,6 +65,30 @@ export const deleteMyShop = async (req, res, next) => {
       success: true,
       shop,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const myShopAnalytics = async (req, res, next) => {
+  try {
+    const analytics = await getShopAnalytics({
+      ownerId: req.owner.id,
+      range: req.query.range || "30d",
+    });
+    return res.json({ success: true, analytics });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const myShopInsights = async (req, res, next) => {
+  try {
+    const insights = await getShopInsights({
+      ownerId: req.owner.id,
+      range: req.query.range || "30d",
+    });
+    return res.json({ success: true, insights });
   } catch (error) {
     next(error);
   }

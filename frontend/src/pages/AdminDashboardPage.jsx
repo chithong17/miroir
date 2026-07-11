@@ -10,6 +10,7 @@ import {
   exportAdminProducts,
   getAdminMe,
   importAdminProducts,
+  listPaymentPlans as listAdminPaymentPlans,
   listAdminProducts,
   listAdminShops,
   listShopOwners,
@@ -17,6 +18,7 @@ import {
   restoreAdminProduct,
   setAdminToken,
   updateAdminProduct,
+  updatePaymentPlan,
   updateAdminShop,
 } from "../api/adminApi.js";
 
@@ -93,6 +95,8 @@ function AdminDashboardPage() {
   const [shopSearch, setShopSearch] = useState("");
   const [selectedShopId, setSelectedShopId] = useState("");
   const [products, setProducts] = useState([]);
+  const [paymentPlans, setPaymentPlans] = useState([]);
+  const [savingPlanCode, setSavingPlanCode] = useState("");
   const [productFilters, setProductFilters] = useState({
     search: "",
     status: "all",
@@ -159,12 +163,17 @@ function AdminDashboardPage() {
     setProducts(response.products || []);
   };
 
+  const loadPaymentPlans = async () => {
+    const response = await listAdminPaymentPlans();
+    setPaymentPlans(response.plans || []);
+  };
+
   useEffect(() => {
     const boot = async () => {
       try {
         const response = await getAdminMe();
         setAdmin(response.admin);
-        await Promise.all([loadOwners("all"), loadShops()]);
+        await Promise.all([loadOwners("all"), loadShops(), loadPaymentPlans()]);
       } catch (_error) {
         setAdminToken("");
         window.location.href = "/login";
@@ -183,8 +192,43 @@ function AdminDashboardPage() {
   }, [selectedShopId]);
 
   const refreshAll = async () => {
-    await Promise.all([loadOwners(ownerStatus), loadShops()]);
+    await Promise.all([loadOwners(ownerStatus), loadShops(), loadPaymentPlans()]);
     if (selectedShopId) await loadProducts(selectedShopId);
+  };
+
+  const updatePlanField = (planCode, field, value) => {
+    setPaymentPlans((previous) =>
+      previous.map((plan) =>
+        plan.code === planCode ? { ...plan, [field]: value } : plan
+      )
+    );
+  };
+
+  const savePaymentPlan = async (plan) => {
+    try {
+      setSavingPlanCode(plan.code);
+      const payload = {
+        name: plan.name,
+        description: plan.description,
+        amount: Number(plan.amount),
+        durationDays: Number(plan.durationDays),
+        features: Array.isArray(plan.features)
+          ? plan.features
+          : String(plan.features || "")
+              .split("\n")
+              .map((item) => item.trim())
+              .filter(Boolean),
+      };
+      const response = await updatePaymentPlan(plan.code, payload);
+      setPaymentPlans((previous) =>
+        previous.map((item) => (item.code === plan.code ? response.plan : item))
+      );
+      showNotice("Payment plan updated.");
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Could not update payment plan.", "error");
+    } finally {
+      setSavingPlanCode("");
+    }
   };
 
   const openShop = async (shop) => {
@@ -400,6 +444,9 @@ function AdminDashboardPage() {
             <NavButton active={view === "owners"} icon="users" onClick={() => setView("owners")}>
               Shop Owners
             </NavButton>
+            <NavButton active={view === "plans"} icon="payment" onClick={() => setView("plans")}>
+              Payment Plans
+            </NavButton>
 
             {selectedShop ? (
               <div className="mt-4 grid gap-1 border-t border-slate-200 pt-4">
@@ -475,6 +522,15 @@ function AdminDashboardPage() {
               shops={shops}
               shopStatus={shopStatus}
               reloadShops={loadShops}
+            />
+          ) : null}
+
+          {view === "plans" ? (
+            <PaymentPlansView
+              paymentPlans={paymentPlans}
+              savingPlanCode={savingPlanCode}
+              savePaymentPlan={savePaymentPlan}
+              updatePlanField={updatePlanField}
             />
           ) : null}
 
@@ -558,6 +614,8 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
       }[view] || selectedShop.name
     : view === "owners"
       ? "Shop Owners"
+      : view === "plans"
+        ? "Payment Plans"
       : "Shops";
 
   return (
@@ -632,6 +690,91 @@ function OwnersView({ owners, ownerAction, ownerStatus, setOwnerStatus }) {
           </tr>
         ))}
       </Table>
+    </section>
+  );
+}
+
+function PaymentPlansView({
+  paymentPlans,
+  savePaymentPlan,
+  savingPlanCode,
+  updatePlanField,
+}) {
+  return (
+    <section className="mt-6 grid gap-4">
+      {paymentPlans.map((plan) => (
+        <article key={plan.code} className="rounded-md border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-bold">{plan.name}</h2>
+              <p className="mt-1 text-xs font-semibold uppercase text-slate-400">{plan.code}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Default: {formatMoney(plan.defaultAmount)} / {plan.defaultDurationDays} days
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={savingPlanCode === plan.code}
+              onClick={() => savePaymentPlan(plan)}
+              className={`${buttonClass} bg-slate-950 text-white`}
+            >
+              <Icon name="check" />
+              {savingPlanCode === plan.code ? "Saving..." : "Save plan"}
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <Field label="Plan name">
+              <input
+                className={fieldClass}
+                value={plan.name || ""}
+                onChange={(event) => updatePlanField(plan.code, "name", event.target.value)}
+              />
+            </Field>
+            <Field label="Price (VND)">
+              <input
+                className={fieldClass}
+                type="number"
+                min="0"
+                step="1000"
+                value={plan.amount ?? ""}
+                onChange={(event) => updatePlanField(plan.code, "amount", event.target.value)}
+              />
+            </Field>
+            <Field label="Duration days">
+              <input
+                className={fieldClass}
+                type="number"
+                min="1"
+                step="1"
+                value={plan.durationDays ?? ""}
+                onChange={(event) => updatePlanField(plan.code, "durationDays", event.target.value)}
+              />
+            </Field>
+            <Field label="Description">
+              <input
+                className={fieldClass}
+                value={plan.description || ""}
+                onChange={(event) => updatePlanField(plan.code, "description", event.target.value)}
+              />
+            </Field>
+            <label className="grid gap-1 md:col-span-2">
+              <span className="text-xs font-semibold uppercase text-slate-500">Features, one per line</span>
+              <textarea
+                className={fieldClass}
+                rows="4"
+                value={Array.isArray(plan.features) ? plan.features.join("\n") : plan.features || ""}
+                onChange={(event) => updatePlanField(plan.code, "features", event.target.value)}
+              />
+            </label>
+          </div>
+        </article>
+      ))}
+      {!paymentPlans.length ? (
+        <div className="rounded-md border border-slate-200 bg-white p-6 text-sm text-slate-500">
+          No payment plans found.
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1194,6 +1337,13 @@ function Icon({ name }) {
         <path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" />
         <path d="m4 7 8 4 8-4" />
         <path d="M12 11v10" />
+      </>
+    ),
+    payment: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="M3 10h18" />
+        <path d="M7 15h4" />
       </>
     ),
     plus: (

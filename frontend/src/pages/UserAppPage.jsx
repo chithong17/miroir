@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { listCatalogOutfits, listCatalogProducts } from "../api/catalogApi.js";
+import {
+  listCatalogOutfits,
+  listCatalogProducts,
+  submitProductFeedback,
+} from "../api/catalogApi.js";
 import { getStylistRecommendation } from "../api/stylistApi.js";
-import { getUserMe, saveUserProfile, setUserToken } from "../api/userApi.js";
+import {
+  createUserPayment,
+  getUserMe,
+  listPaymentPlans,
+  saveUserProfile,
+  setUserToken,
+} from "../api/userApi.js";
 import { UnifiedNav } from "./AuthPage.jsx";
 
 const fieldClass = "w-full rounded-lg border border-line/70 bg-white px-3 py-2 text-sm outline-none focus:border-tertiary";
@@ -19,6 +29,15 @@ function UserAppPage({ initialView = "products" }) {
   const [stylistResult, setStylistResult] = useState(null);
   const [stylistStatus, setStylistStatus] = useState("idle");
   const [profileForm, setProfileForm] = useState({});
+  const [paymentStatus, setPaymentStatus] = useState("");
+  const [paymentPlans, setPaymentPlans] = useState([]);
+  const [feedbackNotice, setFeedbackNotice] = useState("");
+
+  const subscription = user?.subscription || {};
+  const isPremium = Boolean(subscription.isPremium);
+  const tryOnUsage = subscription.usage;
+  const freeTryOnRemaining = tryOnUsage?.remaining ?? 5;
+  const userPremiumPlan = paymentPlans.find((plan) => plan.code === "USER_PREMIUM_MONTHLY");
 
   useEffect(() => {
     getUserMe()
@@ -30,6 +49,9 @@ function UserAppPage({ initialView = "products" }) {
         setUserToken("");
         window.location.href = "/login";
       });
+    listPaymentPlans()
+      .then((response) => setPaymentPlans(response.plans || []))
+      .catch(() => setPaymentPlans([]));
   }, []);
 
   useEffect(() => {
@@ -56,7 +78,32 @@ function UserAppPage({ initialView = "products" }) {
 
   const goToTryOn = (product) => {
     if (!product?.id) return;
+    if (!isPremium && freeTryOnRemaining <= 0) {
+      setPaymentStatus("Bạn đã dùng hết 5 lần thử đồ miễn phí trong tháng.");
+      return;
+    }
     window.location.href = `/app/try-on?productId=${encodeURIComponent(product.id)}`;
+  };
+
+  const startPremiumCheckout = async () => {
+    try {
+      setPaymentStatus("Đang tạo liên kết thanh toán...");
+      const response = await createUserPayment();
+      window.location.href = response.checkoutUrl;
+    } catch (error) {
+      setPaymentStatus(error.response?.data?.message || "Không thể tạo thanh toán.");
+    }
+  };
+
+  const sendProductFeedback = async (product, payload) => {
+    if (!product?.id) return;
+    try {
+      setFeedbackNotice("Saving feedback...");
+      await submitProductFeedback(product.id, payload);
+      setFeedbackNotice("Feedback saved. Thank you.");
+    } catch (error) {
+      setFeedbackNotice(error.response?.data?.message || "Could not save feedback.");
+    }
   };
 
   const runStylist = async (event) => {
@@ -110,6 +157,15 @@ function UserAppPage({ initialView = "products" }) {
           </div>
         </div>
 
+        <SubscriptionBanner
+          isPremium={isPremium}
+          paymentStatus={paymentStatus}
+          plan={userPremiumPlan}
+          subscription={subscription}
+          tryOnUsage={tryOnUsage}
+          onUpgrade={startPremiumCheckout}
+        />
+
         {view === "products" || view === "outfits" ? (
           <CatalogFilters filters={filters} setFilters={setFilters} applyFilters={applyFilters} />
         ) : null}
@@ -129,6 +185,8 @@ function UserAppPage({ initialView = "products" }) {
         {view === "stylist" ? (
           <StylistPanel
             budget={stylistBudget}
+            isPremium={isPremium}
+            plan={userPremiumPlan}
             prompt={stylistPrompt}
             result={stylistResult}
             status={stylistStatus}
@@ -136,6 +194,8 @@ function UserAppPage({ initialView = "products" }) {
             setPrompt={setStylistPrompt}
             onSubmit={runStylist}
             onTryOn={goToTryOn}
+            onUpgrade={startPremiumCheckout}
+            onDetail={setSelectedProduct}
           />
         ) : null}
 
@@ -144,7 +204,18 @@ function UserAppPage({ initialView = "products" }) {
         ) : null}
       </main>
 
-      {selectedProduct ? <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onTryOn={goToTryOn} /> : null}
+      {selectedProduct ? (
+        <ProductModal
+          feedbackNotice={feedbackNotice}
+          product={selectedProduct}
+          onClose={() => {
+            setSelectedProduct(null);
+            setFeedbackNotice("");
+          }}
+          onFeedback={sendProductFeedback}
+          onTryOn={goToTryOn}
+        />
+      ) : null}
     </div>
   );
 }
@@ -160,6 +231,48 @@ function CatalogFilters({ applyFilters, filters, setFilters }) {
       <input className={fieldClass} placeholder="Max price" value={filters.maxPrice} onChange={update("maxPrice")} />
       <button className="dark-button rounded-lg" onClick={applyFilters}>Filter</button>
     </div>
+  );
+}
+
+function SubscriptionBanner({
+  isPremium,
+  onUpgrade,
+  paymentStatus,
+  plan,
+  subscription,
+  tryOnUsage,
+}) {
+  return (
+    <section className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-line/60 bg-white/85 p-4">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`rounded-md px-2 py-1 text-xs font-bold ${isPremium ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
+            {isPremium ? "Premium" : "Free"}
+          </span>
+          <p className="text-sm font-semibold text-ink">
+            {isPremium
+              ? "Không giới hạn số lần thử đồ, phối đồ theo sự kiện, tư vấn phong cách AI"
+              : `Còn ${tryOnUsage?.remaining ?? 5}/5 lần thử đồ trong tháng`}
+          </p>
+        </div>
+        {!isPremium && plan ? (
+          <p className="mt-1 text-xs text-muted">
+            Premium hiện tại: {formatMoney(plan.amount)} / {plan.durationDays} ngày
+          </p>
+        ) : null}
+        {isPremium && subscription.expiresAt ? (
+          <p className="mt-1 text-xs text-muted">
+            Hạn dùng đến {new Date(subscription.expiresAt).toLocaleDateString("vi-VN")}
+          </p>
+        ) : null}
+        {paymentStatus ? <p className="mt-1 text-xs text-muted">{paymentStatus}</p> : null}
+      </div>
+      {!isPremium ? (
+        <button type="button" className="dark-button rounded-lg" onClick={onUpgrade}>
+          Nâng cấp {formatMoney(plan?.amount || 49000)}
+        </button>
+      ) : null}
+    </section>
   );
 }
 
@@ -180,7 +293,9 @@ function ProductCard({ onDetail, onTryOn, product }) {
       </button>
       <div className="p-4">
         <p className="font-semibold">{product.name}</p>
-        <p className="text-sm text-muted">{product.shop?.name || "Shop"}</p>
+        <p className="text-sm text-muted">
+          {product.shop?.name || "Shop details for Premium"}
+        </p>
         <p className="mt-2 font-bold">{formatMoney(product.price)}</p>
         <button className="mt-3 w-full rounded-lg bg-ink px-3 py-2 text-sm font-semibold text-white" onClick={() => onTryOn(product)}>Try on</button>
       </div>
@@ -209,8 +324,36 @@ function OutfitGrid({ onTryOn, outfits }) {
   );
 }
 
-function StylistPanel({ budget, onSubmit, onTryOn, prompt, result, setBudget, setPrompt, status }) {
+function StylistPanel({
+  budget,
+  isPremium,
+  onSubmit,
+  onDetail,
+  onTryOn,
+  onUpgrade,
+  plan,
+  prompt,
+  result,
+  setBudget,
+  setPrompt,
+  status,
+}) {
   const outfits = result?.outfits || [];
+
+  if (!isPremium) {
+    return (
+      <section className="mt-6 rounded-lg border border-line/60 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold">Premium stylist</h2>
+        <p className="mt-2 text-sm text-muted">
+          Tư vấn phong cách AI và phối đồ theo sự kiện dành cho gói Premium {formatMoney(plan?.amount || 49000)}.
+        </p>
+        <button type="button" className="dark-button mt-5 rounded-lg" onClick={onUpgrade}>
+          Nâng cấp Premium
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section className="mt-6 grid gap-5 lg:grid-cols-[420px_1fr]">
       <form onSubmit={onSubmit} className="glass-panel p-5">
@@ -226,7 +369,14 @@ function StylistPanel({ budget, onSubmit, onTryOn, prompt, result, setBudget, se
             <h3 className="font-bold">{outfit.title}</h3>
             <p className="mt-1 text-sm text-muted">{outfit.whyItMatches}</p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              {(outfit.items || []).map((item) => item.product ? <ProductCard key={item.product.id} product={item.product} onDetail={() => {}} onTryOn={onTryOn} /> : null)}
+              {(outfit.items || []).map((item) => item.product ? (
+                <ProductCard
+                  key={item.product.id}
+                  product={item.product}
+                  onDetail={onDetail}
+                  onTryOn={onTryOn}
+                />
+              ) : null)}
             </div>
           </div>
         ))}
@@ -250,7 +400,25 @@ function ProfilePanel({ form, onSubmit, setForm }) {
   );
 }
 
-function ProductModal({ onClose, onTryOn, product }) {
+function ProductModal({ feedbackNotice, onClose, onFeedback, onTryOn, product }) {
+  const [feedbackForm, setFeedbackForm] = useState({
+    rating: "5",
+    fitFeedback: "true_to_size",
+    comment: "",
+  });
+
+  const updateFeedback = (field) => (event) =>
+    setFeedbackForm((previous) => ({ ...previous, [field]: event.target.value }));
+
+  const submitFeedback = (event) => {
+    event.preventDefault();
+    onFeedback(product, {
+      ...feedbackForm,
+      rating: Number(feedbackForm.rating),
+      context: "product",
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4" onMouseDown={onClose}>
       <div className="w-full max-w-3xl rounded-lg bg-white p-5" onMouseDown={(event) => event.stopPropagation()}>
@@ -263,9 +431,40 @@ function ProductModal({ onClose, onTryOn, product }) {
           <div>
             <p className="font-bold">{formatMoney(product.price)}</p>
             <p className="mt-3 text-sm text-muted">{product.description}</p>
-            <p className="mt-4 text-sm"><strong>Shop:</strong> {product.shop?.name}</p>
-            <p className="text-sm"><strong>Address/contact:</strong> {product.shop?.contact?.address || product.shop?.contact?.email || "Not provided"}</p>
+            {product.shop ? (
+              <>
+                <p className="mt-4 text-sm"><strong>Shop:</strong> {product.shop.name}</p>
+                <p className="text-sm"><strong>Address/contact:</strong> {product.shop.contact?.address || product.shop.contact?.email || "Not provided"}</p>
+              </>
+            ) : (
+              <p className="mt-4 rounded-lg bg-panelSoft p-3 text-sm text-muted">
+                Shop name and address are available for Premium users.
+              </p>
+            )}
             <button className="dark-button mt-5 rounded-lg" onClick={() => onTryOn(product)}>Try on</button>
+            <form onSubmit={submitFeedback} className="mt-5 grid gap-3 rounded-lg border border-line/60 p-3">
+              <p className="text-sm font-bold">Feedback / rating</p>
+              <select className={fieldClass} value={feedbackForm.rating} onChange={updateFeedback("rating")}>
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <option key={rating} value={rating}>{rating} stars</option>
+                ))}
+              </select>
+              <select className={fieldClass} value={feedbackForm.fitFeedback} onChange={updateFeedback("fitFeedback")}>
+                <option value="true_to_size">True to size</option>
+                <option value="runs_small">Runs small</option>
+                <option value="runs_large">Runs large</option>
+                <option value="not_sure">Not sure</option>
+              </select>
+              <textarea
+                className={fieldClass}
+                rows="3"
+                placeholder="Share feedback about this product"
+                value={feedbackForm.comment}
+                onChange={updateFeedback("comment")}
+              />
+              <button type="submit" className="soft-button rounded-lg">Submit feedback</button>
+              {feedbackNotice ? <p className="text-xs text-muted">{feedbackNotice}</p> : null}
+            </form>
           </div>
         </div>
       </div>

@@ -43,6 +43,16 @@ export const listMyShops = async () => {
   return response.data;
 };
 
+export const getShopAnalytics = async (params = {}) => {
+  const response = await shopClient.get("/shops/me/analytics", { params });
+  return response.data;
+};
+
+export const getShopInsights = async (params = {}) => {
+  const response = await shopClient.get("/shops/me/insights", { params });
+  return response.data;
+};
+
 export const createShop = async (payload) => {
   const response = await shopClient.post("/shops", payload);
   return response.data;
@@ -115,5 +125,22 @@ export const importProductsExcel = async (file) => {
   const response = await shopClient.post("/shop-products/import", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+  return response.data;
+};
+
+export const createShopPayment = async () => {
+  const response = await shopClient.post("/payments/create", {
+    planCode: "SHOP_OWNER_MONTHLY",
+  });
+  return response.data;
+};
+
+export const getShopPaymentMe = async () => {
+  const response = await shopClient.get("/payments/me");
+  return response.data;
+};
+
+export const listPaymentPlans = async () => {
+  const response = await shopClient.get("/payments/plans");
   return response.data;
 };

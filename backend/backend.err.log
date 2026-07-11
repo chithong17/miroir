@@ -1,8 +1,436 @@
-Gemini stylist generation failed, using fallback: Error: Gemini generation failed for model "gemini-3.5-flash" with status 503: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
-    at generateStylistRecommendation (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/gemini.service.js:151:11)
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 0,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 0,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 3,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 8,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 11,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: PoolClearedError [MongoPoolClearedError]: Connection pool for ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017 was cleared because another operation failed with: "A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+"
+    at ConnectionPool.processWaitQueue (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connection_pool.js:449:82)
+    at ConnectionPool.clear (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connection_pool.js:243:14)
+    at updateServers (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\sdam\topology.js:518:29)
+    at Topology.serverUpdateHandler (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\sdam\topology.js:394:9)
+    at Server.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\sdam\topology.js:501:77)
+    at Server.emit (node:events:519:28)
+    at markServerUnknown (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\sdam\server.js:358:12)
+    at Server.handleError (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\sdam\server.js:249:17)
+    at D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connection_pool.js:395:25
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  errorLabelSet: Set(1) { 'PoolRequstedRetry' },
+  beforeHandshake: false,
+  address: 'ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017',
+  [cause]: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  
+      at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+      at Object.onceWrapper (node:events:634:26)
+      at TLSSocket.emit (node:events:519:28)
+      at emitErrorNT (node:internal/streams/destroy:170:8)
+      at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    errorLabelSet: Set(1) { 'ResetPool' },
+    beforeHandshake: false,
+    connectionGeneration: 11,
+    [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+    ] {
+      library: 'SSL routines',
+      reason: 'tlsv1 alert internal error',
+      code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+    }
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 15,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 20,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 28,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: PoolClearedError [MongoPoolClearedError]: Connection pool for ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017 was cleared because another operation failed with: "A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+"
+    at D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connection_pool.js:366:77
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  errorLabelSet: Set(1) { 'PoolRequstedRetry' },
+  beforeHandshake: false,
+  address: 'ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017',
+  [cause]: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  
+      at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+      at Object.onceWrapper (node:events:634:26)
+      at TLSSocket.emit (node:events:519:28)
+      at emitErrorNT (node:internal/streams/destroy:170:8)
+      at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    errorLabelSet: Set(1) { 'ResetPool' },
+    beforeHandshake: false,
+    [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+    ] {
+      library: 'SSL routines',
+      reason: 'tlsv1 alert internal error',
+      code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+    }
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 32,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: PoolClearedError [MongoPoolClearedError]: Connection pool for ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017 was cleared because another operation failed with: "A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+"
+    at D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connection_pool.js:366:77
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  errorLabelSet: Set(1) { 'PoolRequstedRetry' },
+  beforeHandshake: false,
+  address: 'ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017',
+  [cause]: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  
+      at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+      at Object.onceWrapper (node:events:634:26)
+      at TLSSocket.emit (node:events:519:28)
+      at emitErrorNT (node:internal/streams/destroy:170:8)
+      at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    errorLabelSet: Set(1) { 'ResetPool' },
+    beforeHandshake: false,
+    connectionGeneration: 32,
+    [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+    ] {
+      library: 'SSL routines',
+      reason: 'tlsv1 alert internal error',
+      code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+    }
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 36,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: PoolClearedError [MongoPoolClearedError]: Connection pool for ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017 was cleared because another operation failed with: "A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+"
+    at D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connection_pool.js:366:77
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  errorLabelSet: Set(1) { 'PoolRequstedRetry' },
+  beforeHandshake: false,
+  address: 'ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017',
+  [cause]: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  
+      at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+      at Object.onceWrapper (node:events:634:26)
+      at TLSSocket.emit (node:events:519:28)
+      at emitErrorNT (node:internal/streams/destroy:170:8)
+      at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    errorLabelSet: Set(1) { 'ResetPool' },
+    beforeHandshake: false,
+    connectionGeneration: 37,
+    [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+    ] {
+      library: 'SSL routines',
+      reason: 'tlsv1 alert internal error',
+      code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+    }
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 39,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 44,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: PoolClearedError [MongoPoolClearedError]: Connection pool for ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017 was cleared because another operation failed with: "A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+"
+    at D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connection_pool.js:366:77
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  errorLabelSet: Set(1) { 'PoolRequstedRetry' },
+  beforeHandshake: false,
+  address: 'ac-ieowsrw-shard-00-01.dmfj3mg.mongodb.net:27017',
+  [cause]: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  
+      at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+      at Object.onceWrapper (node:events:634:26)
+      at TLSSocket.emit (node:events:519:28)
+      at emitErrorNT (node:internal/streams/destroy:170:8)
+      at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    errorLabelSet: Set(1) { 'ResetPool' },
+    beforeHandshake: false,
+    [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+    ] {
+      library: 'SSL routines',
+      reason: 'tlsv1 alert internal error',
+      code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+    }
+  }
+}
+Unhandled server error: MongoNetworkError: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+
+    at TLSSocket.<anonymous> (D:\FPT_PROCESS\semeters\S7_SU26\EXE101\miroir\backend\node_modules\mongodb\lib\cmap\connect.js:286:44)
+    at Object.onceWrapper (node:events:634:26)
+    at TLSSocket.emit (node:events:519:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  errorLabelSet: Set(1) { 'ResetPool' },
+  beforeHandshake: false,
+  connectionGeneration: 57,
+  [cause]: [Error: A8430000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:c:\ws\deps\openssl\openssl\ssl\record\rec_layer_s3.c:916:SSL alert number 80
+  ] {
+    library: 'SSL routines',
+    reason: 'tlsv1 alert internal error',
+    code: 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+  }
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginShopOwner (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/shopAuth.service.js:102:19)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async recommendOutfit (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/stylist.controller.js:183:24)
-Gemini stylist generation failed, using fallback: Error: Gemini generation failed for model "gemini-3.5-flash" with status 503: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
-    at generateStylistRecommendation (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/gemini.service.js:151:11)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/shopAuth.controller.js:20:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginShopOwner (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/shopAuth.service.js:102:19)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async recommendOutfit (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/stylist.controller.js:183:24)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/shopAuth.controller.js:20:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginShopOwner (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/shopAuth.service.js:102:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/shopAuth.controller.js:20:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginShopOwner (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/shopAuth.service.js:102:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/shopAuth.controller.js:20:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginShopOwner (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/shopAuth.service.js:102:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/shopAuth.controller.js:20:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginShopOwner (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/shopAuth.service.js:102:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/shopAuth.controller.js:20:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginShopOwner (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/shopAuth.service.js:102:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/shopAuth.controller.js:20:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginShopOwner (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/shopAuth.service.js:102:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/shopAuth.controller.js:20:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginUser (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/userAuth.service.js:98:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/userAuth.controller.js:18:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginAdmin (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/adminAuth.service.js:99:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/adminAuth.controller.js:5:20) {
+  statusCode: 401
+}
+Unhandled server error: Error: Invalid email or password.
+    at loginAdmin (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/services/adminAuth.service.js:99:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async login (file:///D:/FPT_PROCESS/semeters/S7_SU26/EXE101/miroir/backend/controllers/adminAuth.controller.js:5:20) {
+  statusCode: 401
+}
