@@ -93,7 +93,7 @@ function ShopPublicPage() {
         />
 
         {message ? (
-          <div className="mt-6 rounded-2xl border border-red-300/45 bg-red-300/14 p-4 text-red-100">
+          <div className="mt-6 rounded-2xl border border-red-300/45 bg-red-300/14 p-4 text-red-700">
             {message}
           </div>
         ) : null}
@@ -177,13 +177,13 @@ function ShopHero({ profileHidden, shop }) {
 
   return (
     <section className="glass-panel mt-6 overflow-hidden">
-      <div className="relative min-h-52 bg-canvasDeep/70">
+      <div className="relative min-h-52 bg-white/85">
         {!profileHidden && shop.coverUrl ? (
           <img src={shop.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-canvasDeep via-canvasDeep/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-ink/20 to-transparent" />
         <div className="relative flex min-h-52 flex-wrap items-end gap-5 p-6">
-          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border border-white/15 bg-white/10 text-3xl font-black text-rose shadow-glass">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border border-white/80 bg-white/10 text-3xl font-black text-rose shadow-glass">
             {!profileHidden && shop.logoUrl ? (
               <img src={shop.logoUrl} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -205,11 +205,11 @@ function ShopHero({ profileHidden, shop }) {
       </div>
 
       {profileHidden ? (
-        <div className="border-t border-white/10 p-5 text-sm text-muted">
+        <div className="border-t border-line p-5 text-sm text-muted">
           {t("shopPage.hiddenDescription")}
         </div>
       ) : (
-        <div className="grid gap-3 border-t border-white/10 p-5 text-sm text-muted md:grid-cols-3">
+        <div className="grid gap-3 border-t border-line p-5 text-sm text-muted md:grid-cols-3">
           <InfoLine label={t("shopPage.address")} value={contact.address} />
           <InfoLine label={t("shopPage.email")} value={contact.email} />
           <InfoLine label={t("shopPage.phone")} value={contact.phone} />
@@ -222,7 +222,7 @@ function ShopHero({ profileHidden, shop }) {
 function InfoLine({ label, value }) {
   const { t } = useLanguage();
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="rounded-2xl border border-line bg-white/80 p-4">
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">{label}</p>
       <p className="mt-2 font-semibold text-ink">{value || t("product.notProvided")}</p>
     </div>
@@ -235,7 +235,7 @@ function ShopProductModal({ onClose, onTryOn, product }) {
   return (
     <Modal onClose={onClose} maxWidth="max-w-4xl">
       <div className="grid gap-5 p-5 md:grid-cols-[0.9fr_1fr]">
-        <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-white/5">
+        <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-white/80">
           {product.imageUrl ? (
             <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
           ) : null}

@@ -9,8 +9,11 @@ import {
   createUserPayment,
   getUserMe,
   listPaymentPlans,
+  listUserFavoriteProducts,
   saveUserProfile,
   setUserToken,
+  toggleUserFavoriteProduct,
+  uploadUserProfilePhoto,
 } from "../api/userApi.js";
 import {
   AppShell,
@@ -34,6 +37,8 @@ function UserAppPage({ initialView = "products" }) {
   const [view, setView] = useState(initialView);
   const [products, setProducts] = useState([]);
   const [outfits, setOutfits] = useState([]);
+  const [favoriteProducts, setFavoriteProducts] = useState([]);
+  const [favoriteProductIds, setFavoriteProductIds] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [filters, setFilters] = useState({ search: "", category: "", gender: "", minPrice: "", maxPrice: "", page: 1 });
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -45,6 +50,7 @@ function UserAppPage({ initialView = "products" }) {
   const [paymentStatus, setPaymentStatus] = useState("");
   const [paymentPlans, setPaymentPlans] = useState([]);
   const [feedbackNotice, setFeedbackNotice] = useState("");
+  const [profilePhotoNotice, setProfilePhotoNotice] = useState("");
 
   const subscription = user?.subscription || {};
   const isPremium = Boolean(subscription.isPremium);
@@ -56,6 +62,7 @@ function UserAppPage({ initialView = "products" }) {
     getUserMe()
       .then((response) => {
         setUser(response.user);
+        setFavoriteProductIds(response.user?.favoriteProductIds || []);
         setProfileForm(flattenProfile(response.user.profile || {}));
       })
       .catch(() => {
@@ -70,6 +77,7 @@ function UserAppPage({ initialView = "products" }) {
   useEffect(() => {
     if (view === "outfits") loadOutfits();
     if (view === "products") loadProducts();
+    if (view === "favorites") loadFavorites();
   }, [view, filters.page]);
 
   const loadProducts = async () => {
@@ -82,6 +90,12 @@ function UserAppPage({ initialView = "products" }) {
     const response = await listCatalogOutfits(compact(filters));
     setOutfits(response.outfits || []);
     setPagination(response.pagination || { page: 1, totalPages: 1, total: 0 });
+  };
+
+  const loadFavorites = async () => {
+    const response = await listUserFavoriteProducts();
+    const nextProducts = response.products || [];
+    setFavoriteProducts(nextProducts);
   };
 
   const applyFilters = () => {
@@ -147,21 +161,66 @@ function UserAppPage({ initialView = "products" }) {
     setUser(response.user);
   };
 
+  const toggleFavorite = async (product) => {
+    if (!product?.id) return;
+    try {
+      const response = await toggleUserFavoriteProduct(product.id);
+      const nextIds = response.favoriteProductIds || [];
+      setFavoriteProductIds(nextIds);
+      setUser((previous) => previous ? { ...previous, favoriteProductIds: nextIds } : previous);
+      if (view === "favorites") {
+        setFavoriteProducts((previous) => previous.filter((item) => nextIds.includes(item.id)));
+      }
+      if (selectedProduct?.id === product.id) {
+        setSelectedProduct((previous) => previous ? { ...previous } : previous);
+      }
+    } catch (error) {
+      setPaymentStatus(error.response?.data?.message || t("app.favoriteError"));
+    }
+  };
+
+  const uploadProfilePhoto = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setProfilePhotoNotice(t("common.working"));
+      await uploadUserProfilePhoto(file);
+      const response = await getUserMe();
+      setUser(response.user);
+      setProfileForm(flattenProfile(response.user.profile || {}));
+      setProfilePhotoNotice(t("onboarding.photoSaved"));
+    } catch (error) {
+      setProfilePhotoNotice(error.response?.data?.message || t("onboarding.photoError"));
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   const onLogout = () => {
     setUserToken("");
     window.location.href = "/";
   };
 
   const shownProducts = useMemo(() => (view === "products" ? products : []), [products, view]);
+  const pageTitle = view === "stylist"
+    ? t("app.stylistTitle")
+    : view === "profile"
+      ? t("app.profileTitle")
+      : view === "favorites"
+        ? t("app.favoritesTitle")
+        : t("app.title");
+  const pageDescription = view === "favorites" ? t("app.favoritesDescription") : t("app.description");
+  const favoriteIdSet = useMemo(() => new Set(favoriteProductIds), [favoriteProductIds]);
 
   return (
     <AppShell nav={<TopNav user={user} onLogout={onLogout} />}>
       <main className="section-shell py-8">
         <PageHeader
           eyebrow={t("app.eyebrow")}
-          title={view === "stylist" ? t("app.stylistTitle") : view === "profile" ? t("app.profileTitle") : t("app.title")}
-          description={t("app.description")}
-          action={
+          title={pageTitle}
+          description={pageDescription}
+          action={view === "products" || view === "outfits" ? (
             <SegmentedTabs
               items={[
                 { value: "products", label: t("app.products") },
@@ -170,7 +229,7 @@ function UserAppPage({ initialView = "products" }) {
               value={view}
               onChange={setView}
             />
-          }
+          ) : null}
         />
 
         {view === "products" || view === "outfits" ? (
@@ -178,7 +237,24 @@ function UserAppPage({ initialView = "products" }) {
         ) : null}
 
         {view === "products" ? (
-          <ProductGrid products={shownProducts} onDetail={setSelectedProduct} onTryOn={goToTryOn} />
+          <ProductGrid
+            favoriteProductIds={favoriteIdSet}
+            products={shownProducts}
+            onDetail={setSelectedProduct}
+            onFavoriteToggle={toggleFavorite}
+            onTryOn={goToTryOn}
+          />
+        ) : null}
+
+        {view === "favorites" ? (
+          <ProductGrid
+            emptyText={t("app.noFavorites")}
+            favoriteProductIds={favoriteIdSet}
+            products={favoriteProducts}
+            onDetail={setSelectedProduct}
+            onFavoriteToggle={toggleFavorite}
+            onTryOn={goToTryOn}
+          />
         ) : null}
 
         {view === "outfits" ? (
@@ -207,7 +283,14 @@ function UserAppPage({ initialView = "products" }) {
         ) : null}
 
         {view === "profile" ? (
-          <ProfilePanel form={profileForm} setForm={setProfileForm} onSubmit={saveProfile} user={user} />
+          <ProfilePanel
+            form={profileForm}
+            photoNotice={profilePhotoNotice}
+            setForm={setProfileForm}
+            onPhotoUpload={uploadProfilePhoto}
+            onSubmit={saveProfile}
+            user={user}
+          />
         ) : null}
       </main>
 
@@ -220,6 +303,8 @@ function UserAppPage({ initialView = "products" }) {
             setFeedbackNotice("");
           }}
           onFeedback={sendProductFeedback}
+          isFavorite={favoriteIdSet.has(selectedProduct.id)}
+          onFavoriteToggle={toggleFavorite}
           onTryOn={goToTryOn}
         />
       ) : null}
@@ -230,8 +315,8 @@ function UserAppPage({ initialView = "products" }) {
 function CatalogFilters({ applyFilters, filters, setFilters }) {
   const { t } = useLanguage();
   const update = (field) => (event) => setFilters((previous) => ({ ...previous, [field]: event.target.value }));
-  return (
-    <div className="miroir-card mt-6 grid gap-3 p-4 md:grid-cols-6">
+  const fields = (
+    <>
       <TextField placeholder={t("common.search")} value={filters.search} onChange={update("search")} />
       <TextField placeholder={t("common.category")} value={filters.category} onChange={update("category")} />
       <SelectField value={filters.gender} onChange={update("gender")}>
@@ -243,7 +328,25 @@ function CatalogFilters({ applyFilters, filters, setFilters }) {
       <TextField placeholder={t("common.minPrice")} value={filters.minPrice} onChange={update("minPrice")} />
       <TextField placeholder={t("common.maxPrice")} value={filters.maxPrice} onChange={update("maxPrice")} />
       <Button onClick={applyFilters}>{t("common.filter")}</Button>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      <details className="miroir-card mt-5 md:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-ink [&::-webkit-details-marker]:hidden">
+          <span>{t("common.filter")}</span>
+          <span className="rounded-full bg-accentSoft px-3 py-1 text-xs text-ink">v</span>
+        </summary>
+        <div className="mt-4 grid gap-3">
+          {fields}
+        </div>
+      </details>
+
+      <div className="miroir-card mt-6 hidden gap-3 md:grid md:grid-cols-6">
+        {fields}
+      </div>
+    </>
   );
 }
 
@@ -274,12 +377,21 @@ function SubscriptionBanner({ isPremium, onUpgrade, paymentStatus, plan, subscri
   );
 }
 
-function ProductGrid({ onDetail, onTryOn, products }) {
+function ProductGrid({ emptyText, favoriteProductIds = new Set(), onDetail, onFavoriteToggle, onTryOn, products }) {
   const { t } = useLanguage();
-  if (!products.length) return <div className="mt-6"><EmptyState text={t("app.noProducts")} /></div>;
+  if (!products.length) return <div className="mt-6"><EmptyState text={emptyText || t("app.noProducts")} /></div>;
   return (
     <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {products.map((product) => <ProductCard key={product.id} product={product} onDetail={onDetail} onTryOn={onTryOn} />)}
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          isFavorite={favoriteProductIds.has(product.id)}
+          product={product}
+          onDetail={onDetail}
+          onFavoriteToggle={onFavoriteToggle}
+          onTryOn={onTryOn}
+        />
+      ))}
     </div>
   );
 }
@@ -295,7 +407,7 @@ function OutfitGrid({ onTryOn, outfits }) {
           <p className="mt-1 text-sm text-muted">{outfit.description || t("app.outfitItems", { count: outfit.products.length })}</p>
           <div className="mt-4 grid grid-cols-3 gap-2">
             {outfit.products.slice(0, 3).map((product) => (
-              <button key={product.id} type="button" className="aspect-square overflow-hidden rounded-lg bg-white/5" onClick={() => onTryOn(product)}>
+              <button key={product.id} type="button" className="aspect-square overflow-hidden rounded-lg bg-white/80" onClick={() => onTryOn(product)}>
                 {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-full w-full object-cover" /> : null}
               </button>
             ))}
@@ -340,7 +452,7 @@ function StylistPanel({ budget, isPremium, onSubmit, onDetail, onTryOn, onUpgrad
         </Button>
       </form>
       <div className="grid gap-4">
-        {result?.message ? <div className="rounded-lg border border-red-300/45 bg-red-300/14 p-4 text-red-100">{result.message}</div> : null}
+        {result?.message ? <div className="rounded-lg border border-red-300/45 bg-red-300/14 p-4 text-red-700">{result.message}</div> : null}
         {outfits.map((outfit) => (
           <div key={outfit.id} className="miroir-card p-4">
             <h3 className="text-xl font-extrabold text-ink">{outfit.title}</h3>
@@ -358,15 +470,15 @@ function StylistPanel({ budget, isPremium, onSubmit, onDetail, onTryOn, onUpgrad
   );
 }
 
-function ProfilePanel({ form, onSubmit, setForm, user }) {
+function ProfilePanel({ form, onPhotoUpload, onSubmit, photoNotice, setForm, user }) {
   const { t } = useLanguage();
   const update = (field) => (event) => setForm((previous) => ({ ...previous, [field]: event.target.value }));
 
   return (
     <form onSubmit={onSubmit} className="mt-6 grid gap-6 lg:grid-cols-[340px_1fr]">
       {/* LEFT: Model Photo */}
-      <aside className="glass-panel p-6 flex flex-col">
-        <div className="aspect-[3/4] w-full overflow-hidden rounded-[2rem] bg-white/5 border border-white/10 shadow-inner">
+      <aside className="glass-panel flex flex-col p-4 sm:p-6">
+        <div className="aspect-[3/4] w-full overflow-hidden rounded-[2rem] bg-white/80 border border-line shadow-inner">
           {user?.profile?.modelImageUrl ? (
             <img src={user.profile.modelImageUrl} alt="" className="h-full w-full object-cover" />
           ) : (
@@ -375,20 +487,25 @@ function ProfilePanel({ form, onSubmit, setForm, user }) {
             </div>
           )}
         </div>
-        <div className="mt-6 p-4 rounded-2xl bg-rose/5 border border-rose/10">
+        <div className="mt-5 rounded-2xl border border-rose/10 bg-rose/5 p-4 sm:mt-6">
           <p className="text-sm leading-relaxed text-roseDeep/80">{t("app.profileHelp")}</p>
         </div>
+        <label className="mt-4 block">
+          <span className="mb-2 block text-xs font-bold uppercase tracking-[0.14em] text-muted">{t("onboarding.savedPhoto")}</span>
+          <input className="miroir-field" type="file" accept="image/*" onChange={onPhotoUpload} />
+        </label>
+        {photoNotice ? <p className="mt-3 text-xs font-semibold text-muted">{photoNotice}</p> : null}
       </aside>
 
       {/* RIGHT: Profile Info & Measurements */}
-      <section className="glass-panel p-6 md:p-8 flex flex-col">
-        <header className="mb-8">
-          <h2 className="editorial-title text-3xl font-extrabold text-ink">{t("app.profileDetails")}</h2>
-          <p className="mt-2 text-base text-muted">{t("app.profileDescription")}</p>
+      <section className="glass-panel flex flex-col p-4 sm:p-6 md:p-8">
+        <header className="mb-6 sm:mb-8">
+          <h2 className="editorial-title text-2xl font-extrabold text-ink sm:text-3xl">{t("app.profileDetails")}</h2>
+          <p className="mt-2 text-sm text-muted sm:text-base">{t("app.profileDescription")}</p>
         </header>
 
         {/* BASIC INFO */}
-        <div className="grid gap-5 sm:grid-cols-2 mb-10">
+        <div className="mb-6 grid gap-4 sm:mb-10 sm:grid-cols-2 sm:gap-5">
           <SelectField label={t("profile.gender")} value={form.gender || ""} onChange={update("gender")}>
             <option value="" disabled>{t("profile.gender")}</option>
             <option value="female">{t("common.female")}</option>
@@ -422,8 +539,17 @@ function ProfilePanel({ form, onSubmit, setForm, user }) {
           </SelectField>
         </div>
 
+        <div className="grid gap-4 sm:grid-cols-2 md:hidden">
+          <TextField type="number" label={t("profile.height")} placeholder="cm" value={form.height || ""} onChange={update("height")} />
+          <TextField type="number" label={t("profile.weight")} placeholder="kg" value={form.weight || ""} onChange={update("weight")} />
+          <TextField type="number" label={t("profile.shoulder")} placeholder="cm" value={form.shoulder || ""} onChange={update("shoulder")} />
+          <TextField type="number" label={t("profile.bust")} placeholder="cm" value={form.bust || ""} onChange={update("bust")} />
+          <TextField type="number" label={t("profile.waist")} placeholder="cm" value={form.waist || ""} onChange={update("waist")} />
+          <TextField type="number" label={t("profile.hips")} placeholder="cm" value={form.hips || ""} onChange={update("hips")} />
+        </div>
+
         {/* MEASUREMENTS WITH HUMAN SHAPE */}
-        <div className="relative w-full rounded-[2rem] bg-canvasDeep/50 border border-white/5 py-12 px-4 md:px-8 shadow-inner overflow-hidden min-h-[550px] flex items-center justify-center">
+        <div className="relative hidden w-full items-center justify-center overflow-hidden rounded-[2rem] border border-white/5 bg-panel px-4 py-12 shadow-inner md:flex md:min-h-[550px] md:px-8">
           
           {/* SVG Silhouette */}
           <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none">
@@ -479,15 +605,15 @@ function ProfilePanel({ form, onSubmit, setForm, user }) {
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
-          <Button type="submit" className="!px-12 !py-4 shadow-glow">{t("common.saveProfile")}</Button>
+        <div className="mt-6 flex justify-end border-t border-line pt-6 sm:mt-8">
+          <Button type="submit" className="w-full !px-8 !py-3.5 shadow-glow sm:w-auto sm:!px-12 sm:!py-4">{t("common.saveProfile")}</Button>
         </div>
       </section>
     </form>
   );
 }
 
-function ProductModal({ feedbackNotice, onClose, onFeedback, onTryOn, product }) {
+function ProductModal({ feedbackNotice, isFavorite, onClose, onFavoriteToggle, onFeedback, onTryOn, product }) {
   const { t } = useLanguage();
   const [feedbackForm, setFeedbackForm] = useState({ rating: "5", fitFeedback: "true_to_size", comment: "" });
   const updateFeedback = (field) => (event) => setFeedbackForm((previous) => ({ ...previous, [field]: event.target.value }));
@@ -499,7 +625,7 @@ function ProductModal({ feedbackNotice, onClose, onFeedback, onTryOn, product })
   return (
     <Modal onClose={onClose} maxWidth="max-w-5xl">
       <div className="grid gap-5 p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]">
-        <div className="aspect-[4/5] overflow-hidden rounded-lg bg-white/5">
+        <div className="aspect-[4/5] overflow-hidden rounded-lg bg-white/80">
           {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-full w-full object-cover" /> : null}
         </div>
         <div>
@@ -513,22 +639,27 @@ function ProductModal({ feedbackNotice, onClose, onFeedback, onTryOn, product })
           </div>
           <p className="mt-5 text-sm leading-7 text-muted">{product.description}</p>
           {product.shop ? (
-            <div className="mt-5 rounded-lg border border-white/10 bg-white/7 p-4 text-sm text-muted">
+            <div className="mt-5 rounded-lg border border-line bg-white/80 p-4 text-sm text-muted">
               <p><strong className="text-ink">{t("product.shop")}</strong> {product.shop.name}</p>
               <p><strong className="text-ink">{t("product.contact")}</strong> {product.shop.contact?.address || product.shop.contact?.email || t("product.notProvided")}</p>
             </div>
           ) : (
-            <p className="mt-5 rounded-lg border border-white/10 bg-white/7 p-4 text-sm text-muted">{t("product.shopPremium")}</p>
+            <p className="mt-5 rounded-lg border border-line bg-white/80 p-4 text-sm text-muted">{t("product.shopPremium")}</p>
           )}
           <div className="mt-5 flex flex-wrap gap-3">
             <Button onClick={() => onTryOn(product)}>{t("common.tryOn")}</Button>
+            {onFavoriteToggle ? (
+              <Button variant="secondary" onClick={() => onFavoriteToggle(product)}>
+                {isFavorite ? t("product.removeFavorite") : t("product.addFavorite")}
+              </Button>
+            ) : null}
             {product.shopId ? (
               <a className="soft-button px-5 py-3" href={`/app/shops/${encodeURIComponent(product.shopId)}`}>
                 {t("shopPage.viewShop")}
               </a>
             ) : null}
           </div>
-          <form onSubmit={submitFeedback} className="mt-5 grid gap-3 rounded-lg border border-white/10 bg-white/7 p-4">
+          <form onSubmit={submitFeedback} className="mt-5 grid gap-3 rounded-lg border border-line bg-white/80 p-4">
             <p className="text-sm font-bold text-ink">{t("product.feedback")}</p>
             <SelectField value={feedbackForm.rating} onChange={updateFeedback("rating")}>
               {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{t("product.feedbackStars", { count: rating })}</option>)}

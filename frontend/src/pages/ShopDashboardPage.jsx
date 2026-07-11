@@ -638,7 +638,7 @@ function ShopDashboardPage() {
           view={view}
         />
 
-        <main className="min-w-0 p-4 md:p-6">
+        <main className="min-w-0 p-3 sm:p-4 md:p-6">
           <div className="mx-auto max-w-[1440px]">
             <DashboardHeader
               hasActiveShopPlan={hasActiveShopPlan}
@@ -768,9 +768,9 @@ function DashboardSidebar({ logout, setView, shop, stats, view }) {
   ];
 
   return (
-    <aside className="border-b border-white/10 bg-white/5 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
-      <div className="flex h-full flex-col">
-        <div className="border-b border-white/10 p-5">
+    <aside className="border-b border-line bg-white/80 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
+      <div className="flex min-h-full flex-col">
+        <div className="border-b border-line p-4 sm:p-5">
           <a href="/" className="font-display text-2xl font-extrabold text-rose">
             MIROIR
           </a>
@@ -779,8 +779,8 @@ function DashboardSidebar({ logout, setView, shop, stats, view }) {
           </p>
         </div>
 
-        <div className="p-4">
-          <div className="rounded-xl border border-white/10 bg-white/7 p-4">
+        <div className="p-3 sm:p-4">
+          <div className="rounded-xl border border-line bg-white/80 p-4">
             <p className={labelClass}>{t("shopAdmin.currentShop") || "Current shop"}</p>
             <p className="mt-2 truncate text-base font-bold text-ink">
               {shop?.name || t("shopAdmin.noShopYet") || "No shop yet"}
@@ -791,13 +791,13 @@ function DashboardSidebar({ logout, setView, shop, stats, view }) {
           </div>
         </div>
 
-        <nav className="grid gap-1 px-3">
+        <nav className="flex gap-2 overflow-x-auto px-3 pb-1 lg:grid lg:gap-1 lg:overflow-visible lg:pb-0">
           {navItems.map(([key, label]) => (
             <button
               key={key}
               type="button"
               onClick={() => setView(key)}
-              className={`rounded-lg px-4 py-3 text-left text-sm font-semibold transition ${
+              className={`shrink-0 rounded-lg px-4 py-3 text-left text-sm font-semibold transition lg:shrink ${
                 view === key
                   ? "bg-[#12356f] text-white"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -808,31 +808,31 @@ function DashboardSidebar({ logout, setView, shop, stats, view }) {
           ))}
         </nav>
 
-        <div className="grid grid-cols-2 gap-2 p-4">
+        <div className="hidden grid-cols-2 gap-2 p-4 sm:grid">
           <Metric label={t("common.total")} value={stats.total} />
           <Metric label={t("common.live")} value={stats.published} />
           <Metric label={t("common.draft")} value={stats.draft} />
           <Metric label={t("common.trash")} value={stats.trashed} />
         </div>
 
-        <div className="mt-auto grid gap-2 border-t border-white/10 p-4">
+        <div className="mt-3 grid gap-2 border-t border-line p-3 sm:p-4 lg:mt-auto">
           <a
             href="/stylist"
-            className="rounded-lg px-4 py-3 text-sm font-semibold text-muted hover:bg-canvasDeep"
+            className="rounded-lg px-4 py-3 text-sm font-semibold text-muted hover:bg-accentSoft/70 hover:text-ink"
           >
             AI Stylist
           </a>
           <button
             type="button"
             onClick={toggleLanguage}
-            className="rounded-lg px-4 py-3 text-left text-sm font-semibold text-muted hover:bg-canvasDeep"
+            className="rounded-lg px-4 py-3 text-left text-sm font-semibold text-muted hover:bg-accentSoft/70 hover:text-ink"
           >
             {language === "en" ? "🇻🇳 Tiếng Việt" : "🇬🇧 English"}
           </button>
           <button
             type="button"
             onClick={logout}
-            className="rounded-lg bg-tertiarySoft px-4 py-3 text-left text-sm font-semibold text-canvas"
+            className="rounded-lg bg-tertiarySoft px-4 py-3 text-left text-sm font-semibold text-ink"
           >
             {t("shopAdmin.logout") || "Logout"}
           </button>

@@ -269,7 +269,7 @@ function TryOnPage() {
           </div>
 
           <section className="lg:col-span-3 flex flex-col gap-6">
-            <div className="glass-panel ambient-shadow flex h-[600px] flex-col rounded-[2rem] p-6">
+            <div className="glass-panel ambient-shadow flex min-h-[460px] flex-col rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[600px]">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-2xl font-semibold text-ink">
                   Your Silhouette
@@ -280,7 +280,7 @@ function TryOnPage() {
                 Use a clear full-body image for best results.
               </p>
 
-              <label className="group relative flex flex-grow cursor-pointer overflow-hidden rounded-[1.5rem] border border-white/10/50 bg-panelSoft">
+              <label className="group relative flex flex-grow cursor-pointer overflow-hidden rounded-[1.5rem] border border-line bg-panelSoft">
                 <img
                   alt="User silhouette preview"
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -302,7 +302,7 @@ function TryOnPage() {
           </section>
 
           <section className="lg:col-span-4 flex flex-col gap-6">
-            <div className="glass-panel ambient-shadow flex h-[600px] flex-col rounded-[2rem] p-6">
+            <div className="glass-panel ambient-shadow flex min-h-[460px] flex-col rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[600px]">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-2xl font-semibold text-ink">The Garment</h2>
                 <span className="text-lg text-muted">Style</span>
@@ -338,7 +338,7 @@ function TryOnPage() {
               </p>
 
               <div className="flex flex-grow flex-col gap-4">
-                <label className="group relative flex flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10/50 bg-white p-4">
+                <label className="group relative flex flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border border-line bg-white p-4">
                   {currentGarmentPreview ? (
                     <img
                       alt="Garment preview"
@@ -364,7 +364,7 @@ function TryOnPage() {
                 </label>
 
                 {tryOnType === "upper_lower" ? (
-                  <label className="group relative flex h-40 cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border border-white/10/50 bg-white p-4">
+                  <label className="group relative flex h-40 cursor-pointer items-center justify-center overflow-hidden rounded-[1.5rem] border border-line bg-white p-4">
                     {previews.lowerImage ? (
                       <img
                         alt="Lower garment preview"
@@ -398,7 +398,7 @@ function TryOnPage() {
               </div>
 
               {taskId ? (
-                <div className="mt-4 rounded-[1.5rem] border border-white/10/50 bg-white/70 px-4 py-3">
+                <div className="mt-4 rounded-[1.5rem] border border-line bg-white/80 px-4 py-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-muted">
                     Current task
                   </p>
@@ -414,7 +414,7 @@ function TryOnPage() {
           </section>
 
           <section className="lg:col-span-4 flex flex-col gap-6">
-            <div className="glass-panel ambient-shadow relative flex h-[600px] flex-col overflow-hidden rounded-[2rem] p-6">
+            <div className="glass-panel ambient-shadow relative flex min-h-[460px] flex-col overflow-hidden rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[600px]">
               <div className="absolute inset-0 bg-gradient-to-tr from-white to-tertiarySoft/10 opacity-50" />
               <div
                 className={`absolute inset-0 rounded-[2rem] border ${
@@ -497,7 +497,7 @@ function TryOnPage() {
         </div>
       </main>
 
-      <footer className="w-full border-t border-white/10/30 bg-white px-5 py-12 md:px-16">
+      <footer className="w-full border-t border-line bg-white px-5 py-12 md:px-16">
         <div className="section-shell flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="text-2xl font-bold text-ink">MIROIR</div>
           <div className="flex gap-6 text-sm text-muted">

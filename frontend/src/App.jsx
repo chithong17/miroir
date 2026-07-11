@@ -51,6 +51,10 @@ function App() {
     return <UserAppPage initialView="outfits" />;
   }
 
+  if (pathname === "/app/favorites") {
+    return <UserAppPage initialView="favorites" />;
+  }
+
   if (pathname === "/app/stylist") {
     return <UserAppPage initialView="stylist" />;
   }

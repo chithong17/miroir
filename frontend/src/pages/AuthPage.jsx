@@ -46,14 +46,14 @@ function AuthPage({ mode = "login" }) {
   return (
     <AppShell nav={<UnifiedNav />}>
       <main className="section-shell grid min-h-[calc(100vh-76px)] items-center gap-8 py-10 lg:grid-cols-[minmax(0,1fr)_460px]">
-        <section className="relative hidden min-h-[640px] overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-glass lg:block">
+        <section className="relative hidden min-h-[640px] overflow-hidden rounded-lg border border-line bg-white/80 shadow-glass lg:block">
           <img
             src="https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=85"
             alt=""
             className="absolute inset-0 h-full w-full object-cover opacity-86"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-canvasDeep via-canvas/30 to-transparent" />
-          <div className="absolute left-8 top-8 rounded-full border border-white/10 bg-white/10 px-5 py-2 text-sm font-bold backdrop-blur-xl">
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-canvas/30 to-transparent" />
+          <div className="absolute left-8 top-8 rounded-full border border-line bg-white/10 px-5 py-2 text-sm font-bold backdrop-blur-xl">
             {t("auth.access")}
           </div>
           <h1 className="absolute bottom-8 left-8 right-8 font-display text-7xl font-extrabold leading-none text-ink">
@@ -94,7 +94,7 @@ function AuthPage({ mode = "login" }) {
             <TextField label={t("common.password")} type="password" value={form.password} onChange={updateField("password")} />
 
             {message ? (
-              <div className={`rounded-lg border p-3 text-sm ${status === "error" ? "border-red-300/45 bg-red-300/14 text-red-100" : "border-emerald-300/45 bg-emerald-300/14 text-emerald-100"}`}>
+              <div className={`rounded-lg border p-3 text-sm ${status === "error" ? "border-red-300/45 bg-red-300/14 text-red-700" : "border-emerald-300/45 bg-emerald-300/14 text-emerald-700"}`}>
                 {message}
               </div>
             ) : null}

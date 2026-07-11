@@ -1,5 +1,5 @@
 const statusStyles = {
-  pending: "border-line/70 bg-white/8 text-muted",
+  pending: "border-line/70 bg-white/80 text-muted",
   processing: "border-tertiarySoft/50 bg-tertiarySoft/15 text-tertiarySoft",
   completed: "border-emerald-200 bg-emerald-50 text-emerald-700",
   failed: "border-red-200 bg-red-50 text-red-700",
@@ -28,7 +28,7 @@ function ResultViewer({ status, resultUrl, errorMessage, isPolling }) {
         </span>
       </div>
 
-      <div className="mt-6 flex min-h-[360px] items-center justify-center overflow-hidden rounded-lg border border-line/60 bg-white/8 p-4">
+      <div className="mt-6 flex min-h-[360px] items-center justify-center overflow-hidden rounded-lg border border-line/60 bg-white/80 p-4">
         {resultUrl ? (
           <img
             src={resultUrl}

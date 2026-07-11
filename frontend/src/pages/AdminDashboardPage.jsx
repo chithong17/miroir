@@ -56,7 +56,7 @@ const productDefaults = {
 };
 
 const fieldClass =
-  "w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-ink outline-none transition focus:border-tertiarySoft focus:ring-2 focus:ring-tertiarySoft/15";
+  "w-full rounded-md border border-line bg-white/80 px-3 py-2 text-sm text-ink outline-none transition focus:border-tertiarySoft focus:ring-2 focus:ring-tertiarySoft/15";
 const buttonClass =
   "inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -429,9 +429,9 @@ function AdminDashboardPage() {
   return (
     <main className="min-h-screen bg-canvasDeep text-ink">
       <div className="grid min-h-screen lg:grid-cols-[248px_1fr]">
-        <aside className="border-r border-white/10 bg-white/5 px-4 py-5">
+        <aside className="border-r border-line bg-white/80 px-4 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-tertiarySoft text-sm font-bold text-canvas">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-tertiarySoft text-sm font-bold text-ink">
               MA
             </div>
             <div>
@@ -452,7 +452,7 @@ function AdminDashboardPage() {
             </NavButton>
 
             {selectedShop ? (
-              <div className="mt-4 grid gap-1 border-t border-white/10 pt-4">
+              <div className="mt-4 grid gap-1 border-t border-line pt-4">
                 <p className="px-3 text-xs font-semibold uppercase text-muted">
                   {selectedShop.name}
                 </p>
@@ -475,7 +475,7 @@ function AdminDashboardPage() {
           <button
             type="button"
             onClick={logout}
-            className="mt-8 w-full rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-ink hover:bg-white/7"
+            className="mt-8 w-full rounded-md border border-line px-3 py-2 text-sm font-semibold text-ink hover:bg-white/80"
           >
             Logout
           </button>
@@ -539,13 +539,13 @@ function AdminDashboardPage() {
 
           {selectedShop && view === "profile" ? (
             <section className="mt-6 max-w-3xl">
-              <div className="rounded-md border border-white/10 bg-white/5 p-4">
+              <div className="rounded-md border border-line bg-white/80 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="font-bold">{selectedShop.name}</h2>
                     <p className="text-sm text-muted">{selectedShop.slug}</p>
                   </div>
-                  <button type="button" onClick={() => openEditShop(selectedShop)} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
+                  <button type="button" onClick={() => openEditShop(selectedShop)} className={`${buttonClass} bg-ink text-white`}>
                     <Icon name="edit" />
                     Edit shop
                   </button>
@@ -630,7 +630,7 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
               type="button"
               onClick={backToShops}
               title="Back to shops"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-white/5 text-ink hover:bg-white/7"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-line bg-white/80 text-ink hover:bg-white/80"
             >
               <Icon name="back" />
             </button>
@@ -648,7 +648,7 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
       <button
         type="button"
         onClick={refreshAll}
-        className={`${buttonClass} border border-white/10 bg-white/5 text-ink hover:bg-white/7`}
+        className={`${buttonClass} border border-line bg-white/80 text-ink hover:bg-white/80`}
       >
         <Icon name="refresh" />
         Refresh
@@ -659,8 +659,8 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
 
 function OwnersView({ owners, ownerAction, ownerStatus, setOwnerStatus }) {
   return (
-    <section className="mt-6 rounded-md border border-white/10 bg-white/5">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-4">
+    <section className="mt-6 rounded-md border border-line bg-white/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
         <h2 className="font-bold">Shop owner accounts</h2>
         <select
           className={`${fieldClass} max-w-48`}
@@ -676,7 +676,7 @@ function OwnersView({ owners, ownerAction, ownerStatus, setOwnerStatus }) {
       </div>
       <Table headers={["Name", "Email", "Status", "Created", "Actions"]}>
         {owners.map((owner) => (
-          <tr key={owner.id} className="border-t border-white/10/60 hover:bg-white/7/70">
+          <tr key={owner.id} className="border-t border-line hover:bg-accentSoft/60">
             <td className="px-4 py-3 font-medium">{owner.name}</td>
             <td className="px-4 py-3 text-muted">{owner.email}</td>
             <td className="px-4 py-3">
@@ -706,7 +706,7 @@ function PaymentPlansView({
   return (
     <section className="mt-6 grid gap-4">
       {paymentPlans.map((plan) => (
-        <article key={plan.code} className="rounded-md border border-white/10 bg-white/5 p-4">
+        <article key={plan.code} className="rounded-md border border-line bg-white/80 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-bold">{plan.name}</h2>
@@ -719,7 +719,7 @@ function PaymentPlansView({
               type="button"
               disabled={savingPlanCode === plan.code}
               onClick={() => savePaymentPlan(plan)}
-              className={`${buttonClass} bg-tertiarySoft text-canvas`}
+              className={`${buttonClass} bg-ink text-white`}
             >
               <Icon name="check" />
               {savingPlanCode === plan.code ? "Saving..." : "Save plan"}
@@ -774,7 +774,7 @@ function PaymentPlansView({
         </article>
       ))}
       {!paymentPlans.length ? (
-        <div className="rounded-md border border-white/10 bg-white/5 p-6 text-sm text-muted">
+        <div className="rounded-md border border-line bg-white/80 p-6 text-sm text-muted">
           No payment plans found.
         </div>
       ) : null}
@@ -796,18 +796,18 @@ function ShopsView({
 }) {
   return (
     <section className="mt-6">
-      <div className="rounded-md border border-white/10 bg-white/5">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-4">
+      <div className="rounded-md border border-line bg-white/80">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
           <div>
             <h2 className="font-bold">Shops</h2>
             <p className="text-sm text-muted">{shops.length} shops loaded</p>
           </div>
-          <button type="button" onClick={openNewShop} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
+          <button type="button" onClick={openNewShop} className={`${buttonClass} bg-ink text-white`}>
             <Icon name="plus" />
             New shop
           </button>
         </div>
-        <div className="grid gap-3 border-b border-white/10 p-4 md:grid-cols-[1fr_160px_auto]">
+        <div className="grid gap-3 border-b border-line p-4 md:grid-cols-[1fr_160px_auto]">
           <input
             className={fieldClass}
             placeholder="Search shops"
@@ -819,14 +819,14 @@ function ShopsView({
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <button type="button" onClick={reloadShops} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
+          <button type="button" onClick={reloadShops} className={`${buttonClass} bg-ink text-white`}>
             <Icon name="search" />
             Search
           </button>
         </div>
         <Table headers={["Shop", "Owner", "Status", "Products", "Actions"]}>
           {shops.map((shop) => (
-            <tr key={shop.id} className="border-t border-white/10/60 hover:bg-white/7/70">
+            <tr key={shop.id} className="border-t border-line hover:bg-accentSoft/60">
               <td className="px-4 py-3">
                 <button type="button" className="text-left" onClick={() => openShop(shop)}>
                   <p className="font-semibold text-ink">{shop.name}</p>
@@ -857,7 +857,7 @@ function ShopModal({ children, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-tertiarySoft/45 p-4" onMouseDown={onClose}>
       <div
-        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white/5 shadow-2xl"
+        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white/80 shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         {children}
@@ -874,7 +874,7 @@ function ShopForm({ activeOwners, onClose, saveShop, setShopForm, shopForm, upda
         <button
           type="button"
           title="Close"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 text-muted hover:bg-white/7"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line text-muted hover:bg-white/80"
           onClick={() => {
             setShopForm(shopDefaults);
             onClose?.();
@@ -924,7 +924,7 @@ function ShopForm({ activeOwners, onClose, saveShop, setShopForm, shopForm, upda
         <Field label="Contact address">
           <input className={fieldClass} value={shopForm.contactAddress} onChange={updateShopField("contactAddress")} />
         </Field>
-        <button className={`${buttonClass} bg-tertiarySoft text-canvas`} type="submit">
+        <button className={`${buttonClass} bg-ink text-white`} type="submit">
           Save shop
         </button>
       </div>
@@ -954,8 +954,8 @@ function ProductsView({
 
   return (
     <section className="mt-6">
-      <div className="rounded-md border border-white/10 bg-white/5">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-4">
+      <div className="rounded-md border border-line bg-white/80">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
           <div>
             <h2 className="font-bold">{isTrash ? "Trashed products" : "Product catalogue"}</h2>
             <p className="text-sm text-muted">
@@ -963,13 +963,13 @@ function ProductsView({
             </p>
           </div>
           {!isTrash ? (
-            <button type="button" onClick={openNewProduct} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
+            <button type="button" onClick={openNewProduct} className={`${buttonClass} bg-ink text-white`}>
               <Icon name="plus" />
               New product
             </button>
           ) : null}
         </div>
-        <div className="grid gap-3 border-b border-white/10 p-4 lg:grid-cols-[1fr_150px_140px_auto]">
+        <div className="grid gap-3 border-b border-line p-4 lg:grid-cols-[1fr_150px_140px_auto]">
           <input
             className={fieldClass}
             placeholder="Search products"
@@ -995,14 +995,14 @@ function ProductsView({
             />
             Missing only
           </label>
-          <button type="button" onClick={() => loadProducts()} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
+          <button type="button" onClick={() => loadProducts()} className={`${buttonClass} bg-ink text-white`}>
             <Icon name="search" />
             Filter
           </button>
         </div>
         <Table headers={["Product", "Category", "Price", "Status", "Availability", "Actions"]}>
           {products.map((product) => (
-            <tr key={product.id} className="border-t border-white/10/60 hover:bg-white/7/70">
+            <tr key={product.id} className="border-t border-line hover:bg-accentSoft/60">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 overflow-hidden rounded-md bg-canvasDeep">
@@ -1060,7 +1060,7 @@ function ProductModal({ children, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-tertiarySoft/45 p-4" onMouseDown={onClose}>
       <div
-        className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-md bg-white/5 shadow-2xl"
+        className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-md bg-white/80 shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         {children}
@@ -1080,7 +1080,7 @@ function ProductForm({ onClose, productForm, saveProduct, selectedShop, setProdu
         <button
           type="button"
           title="Close"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 text-muted hover:bg-white/7"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line text-muted hover:bg-white/80"
           onClick={() => {
             setProductForm(productDefaults);
             onClose?.();
@@ -1151,7 +1151,7 @@ function ProductForm({ onClose, productForm, saveProduct, selectedShop, setProdu
           <span className="text-xs font-semibold uppercase text-muted">Description</span>
           <textarea className={fieldClass} rows="4" value={productForm.description} onChange={updateProductField("description")} />
         </label>
-        <button className={`${buttonClass} bg-tertiarySoft text-canvas md:col-span-2`} type="submit">
+        <button className={`${buttonClass} bg-ink text-white md:col-span-2`} type="submit">
           Save product
         </button>
       </div>
@@ -1162,15 +1162,15 @@ function ProductForm({ onClose, productForm, saveProduct, selectedShop, setProdu
 function ExcelView({ downloadProducts, importResult, products, selectedShop, uploadProducts }) {
   return (
     <section className="mt-6 grid gap-5 xl:grid-cols-[400px_1fr]">
-      <div className="rounded-md border border-white/10 bg-white/5 p-4">
+      <div className="rounded-md border border-line bg-white/80 p-4">
         <h2 className="font-bold">Product Excel</h2>
         <p className="mt-1 text-sm text-muted">{selectedShop.name}</p>
         <div className="mt-4 grid gap-3">
-          <button type="button" onClick={() => downloadProducts("all")} className={`${buttonClass} bg-tertiarySoft text-canvas`}>
+          <button type="button" onClick={() => downloadProducts("all")} className={`${buttonClass} bg-ink text-white`}>
             <Icon name="download" />
             Download all products
           </button>
-          <button type="button" onClick={() => downloadProducts("missing")} className={`${buttonClass} border border-white/10 bg-white/5`}>
+          <button type="button" onClick={() => downloadProducts("missing")} className={`${buttonClass} border border-line bg-white/80`}>
             <Icon name="download" />
             Download missing fields
           </button>
@@ -1178,7 +1178,7 @@ function ExcelView({ downloadProducts, importResult, products, selectedShop, upl
         </div>
       </div>
 
-      <div className="rounded-md border border-white/10 bg-white/5 p-4">
+      <div className="rounded-md border border-line bg-white/80 p-4">
         <h2 className="font-bold">Import result</h2>
         {importResult ? (
           <div className="mt-4">
@@ -1212,7 +1212,7 @@ function NavButton({ active, children, icon, onClick }) {
       type="button"
       onClick={onClick}
       className={`inline-flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold ${
-        active ? "bg-tertiarySoft text-canvas" : "text-muted hover:bg-canvasDeep"
+        active ? "bg-ink text-white" : "text-muted hover:bg-canvasDeep"
       }`}
     >
       <Icon name={icon} />
@@ -1235,7 +1235,7 @@ function Table({ children, headers }) {
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-sm">
         <thead>
-          <tr className="bg-white/7 text-xs uppercase text-muted">
+          <tr className="bg-white/80 text-xs uppercase text-muted">
             {headers.map((header) => (
               <th key={header} className="px-4 py-3 font-semibold">
                 {header}
@@ -1256,7 +1256,7 @@ function ActionButton({ icon, onClick, title }) {
       title={title}
       aria-label={title}
       onClick={onClick}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/5 text-ink hover:bg-white/7"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line bg-white/80 text-ink hover:bg-white/80"
     >
       <Icon name={icon} />
     </button>
@@ -1265,7 +1265,7 @@ function ActionButton({ icon, onClick, title }) {
 
 function Metric({ label, value }) {
   return (
-    <div className="rounded-md bg-white/7 p-3">
+    <div className="rounded-md bg-white/80 p-3">
       <p className="text-xs uppercase text-muted">{label}</p>
       <p className="mt-1 font-bold">{value}</p>
     </div>

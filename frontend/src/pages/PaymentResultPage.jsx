@@ -56,7 +56,7 @@ function PaymentResultPage({ result }) {
   return (
     <main className="grid min-h-screen place-items-center bg-canvas p-4 text-ink">
       <section className="glass-panel w-full max-w-md p-7 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/10 text-2xl font-black text-rose">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-line bg-white/10 text-2xl font-black text-rose">
           {status === "success" ? "✓" : status === "cancel" ? "×" : "…"}
         </div>
         <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-rose">{t("payment.miroir")}</p>

@@ -38,10 +38,10 @@ function LandingPage() {
     <AppShell nav={<TopNav />}>
       <main className="overflow-hidden">
         {/* HERO SECTION */}
-        <section className="section-shell grid min-h-[calc(100vh-100px)] items-end gap-8 pb-12 pt-8 lg:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="relative min-h-[680px] overflow-hidden rounded-[40px] bg-canvasDeep shadow-glow">
+        <section className="section-shell grid items-start gap-6 pb-10 pt-6 sm:gap-8 sm:pb-12 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_420px]">
+          <div className="relative min-h-[560px] overflow-hidden rounded-[28px] border border-line bg-canvasDeep shadow-glow sm:rounded-[40px] lg:min-h-[640px]">
             {/* Background huge text */}
-            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 select-none text-center font-display text-[15vw] font-black leading-none text-rose/10 md:text-[220px]">
+            <div className="absolute inset-x-0 top-[42%] -translate-y-1/2 select-none text-center font-display text-[22vw] font-black leading-none text-rose/10 sm:top-[48%] sm:text-[15vw] md:text-[190px]">
               DIVINE
               <br />
               DRAPE
@@ -51,26 +51,28 @@ function LandingPage() {
             <img
               src="https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=90"
               alt=""
-              className="absolute bottom-0 left-1/2 h-[90%] -translate-x-1/2 object-contain drop-shadow-2xl mix-blend-luminosity opacity-90"
+              className="absolute left-1/2 top-10 h-[48%] -translate-x-1/2 object-contain drop-shadow-2xl opacity-95 sm:top-14 sm:h-[58%] md:top-16 md:h-[60%]"
             />
             
             {/* Glass gradient overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-canvasDeep via-canvasDeep/50 to-transparent p-8 md:p-12">
-              <p className="max-w-xl text-sm font-bold uppercase tracking-[0.3em] text-rose">
-                {t("landing.eyebrow")}
-              </p>
-              <h1 className="editorial-title mt-4 max-w-3xl text-5xl font-extrabold leading-none md:text-7xl">
-                {t("landing.heroTitle")}
-              </h1>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <a href="/register" className="dark-button !px-10 !py-4 text-base">{t("landing.startStyling")}</a>
-                <a href="/app" className="soft-button !px-10 !py-4 text-base">{t("landing.browseMarketplace")}</a>
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-canvas/95 via-canvas/60 to-transparent p-3 sm:p-4 md:p-8">
+              <div className="mx-auto max-w-[920px] rounded-[24px] border border-white/80 bg-white/75 p-4 shadow-glass backdrop-blur-xl sm:rounded-[30px] sm:p-5 md:p-7">
+                <p className="max-w-xl text-sm font-bold uppercase tracking-[0.2em] text-accentStrong">
+                  {t("landing.eyebrow")}
+                </p>
+                <h1 className="editorial-title mt-3 max-w-3xl text-3xl font-extrabold leading-[1.02] sm:mt-4 sm:text-4xl md:text-5xl xl:text-6xl">
+                  {t("landing.heroTitle")}
+                </h1>
+                <div className="mt-5 grid gap-3 sm:mt-6 sm:flex sm:flex-wrap">
+                  <a href="/register" className="dark-button w-full !px-6 !py-3.5 text-base sm:w-auto sm:!px-8 sm:!py-4">{t("landing.startStyling")}</a>
+                  <a href="/app" className="soft-button w-full !px-6 !py-3.5 text-base sm:w-auto sm:!px-8 sm:!py-4">{t("landing.browseMarketplace")}</a>
+                </div>
               </div>
             </div>
           </div>
 
-          <aside className="grid gap-6">
-            <div className="glass-panel-pink p-8 text-center lg:text-left">
+          <aside className="grid gap-4 sm:gap-6">
+            <div className="glass-panel-pink p-5 text-center sm:p-8 lg:text-left">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-roseDeep">{t("landing.newCollection")}</p>
               <h2 className="mt-4 font-display text-3xl font-extrabold text-ink">{t("landing.realShops")}</h2>
               <p className="mt-4 text-base leading-relaxed text-roseDeep/80">
@@ -79,9 +81,9 @@ function LandingPage() {
               <a href="/login" className="dark-button mt-8 w-full">{t("landing.joinCommunity")}</a>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {showcaseProducts.slice(0, 2).map((product) => (
-                <div key={product.id} className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-glass">
+                <div key={product.id} className="overflow-hidden rounded-3xl border border-line bg-white/80 shadow-glass">
                   <div className="aspect-[4/5]">
                     <img src={product.imageUrl} alt="" className="h-full w-full object-cover opacity-80" />
                   </div>
@@ -89,20 +91,20 @@ function LandingPage() {
               ))}
             </div>
             
-            <div className="glass-panel p-6 text-center flex items-center justify-between">
+            <div className="glass-panel flex items-center justify-between p-5 text-center sm:p-6">
               <div className="text-left">
                 <p className="text-sm font-bold text-muted">{t("landing.freeTryOns")}</p>
                 <p className="text-xs text-muted/60 mt-1">{t("landing.availableThisMonth")}</p>
               </div>
-              <p className="font-display text-5xl font-black text-rose">5</p>
+              <p className="font-display text-4xl font-black text-rose sm:text-5xl">5</p>
             </div>
           </aside>
         </section>
 
         {/* TRENDING STYLES */}
-        <section className="section-shell py-20">
-          <div className="flex flex-col items-center text-center mb-12">
-            <h2 className="editorial-title text-5xl font-extrabold md:text-6xl">{t("landing.trending")}</h2>
+        <section className="section-shell py-14 sm:py-20">
+          <div className="mb-8 flex flex-col items-center text-center sm:mb-12">
+            <h2 className="editorial-title text-3xl font-extrabold sm:text-5xl md:text-6xl">{t("landing.trending")}</h2>
             <p className="mt-4 text-xl font-bold text-rose">{t("landing.everyWardrobe")}</p>
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -116,9 +118,9 @@ function LandingPage() {
         </section>
 
         {/* STUDIO SECTION */}
-        <section className="section-shell grid gap-8 py-20 lg:grid-cols-2 lg:items-center">
-          <div className="relative min-h-[600px] overflow-hidden rounded-[40px] border border-rose/20 bg-canvasSoft/40 shadow-glowDeep">
-            <div className="absolute inset-0 flex items-center justify-center p-6 text-center font-display text-[150px] font-black leading-[0.8] text-rose/5 md:text-[200px] select-none">
+        <section className="section-shell grid gap-8 py-14 sm:py-20 lg:grid-cols-2 lg:items-center">
+          <div className="relative min-h-[420px] overflow-hidden rounded-[28px] border border-rose/20 bg-canvasSoft/40 shadow-glowDeep sm:min-h-[600px] sm:rounded-[40px]">
+            <div className="absolute inset-0 flex items-center justify-center p-6 text-center font-display text-[88px] font-black leading-[0.8] text-rose/5 sm:text-[150px] md:text-[200px] select-none">
               DESIGN<br />MODERN
             </div>
             <img
@@ -128,7 +130,7 @@ function LandingPage() {
             />
           </div>
           <div className="flex flex-col justify-center px-4 lg:px-12">
-            <h2 className="editorial-title text-5xl font-extrabold leading-[1.1] md:text-7xl">
+            <h2 className="editorial-title text-3xl font-extrabold leading-[1.1] sm:text-5xl md:text-7xl">
               {t("landing.designModern").split("\n").map((line, index) => (
                 <span key={line}>{index > 0 ? <br /> : null}{line}</span>
               ))}
@@ -143,9 +145,9 @@ function LandingPage() {
         </section>
 
         {/* FAQ SECTION */}
-        <section className="section-shell py-24">
-          <div className="mx-auto max-w-3xl text-center mb-16">
-            <h2 className="editorial-title text-4xl font-extrabold md:text-5xl">
+        <section className="section-shell py-16 sm:py-24">
+          <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-16">
+            <h2 className="editorial-title text-3xl font-extrabold md:text-5xl">
               {t("landing.faqTitle").split("\n").map((line, index) => (
                 <span key={line}>{index > 0 ? <br /> : null}{line}</span>
               ))}
@@ -156,8 +158,8 @@ function LandingPage() {
               <details key={question} className="group glass-panel overflow-hidden transition-all duration-300 open:border-rose/30">
                 <summary className="flex cursor-pointer items-center justify-between p-6 font-display text-lg font-bold text-ink transition-colors hover:text-rose">
                   {t(question)}
-                  <span className="ml-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-rose transition-transform group-open:rotate-180">
-                    ↓
+                  <span className="ml-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-rose transition-transform group-open:rotate-180">
+                    v
                   </span>
                 </summary>
                 <div className="px-6 pb-6 text-base leading-relaxed text-muted">

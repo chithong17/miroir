@@ -52,6 +52,16 @@ export const uploadUserProfilePhoto = async (file) => {
   return response.data;
 };
 
+export const listUserFavoriteProducts = async () => {
+  const response = await userClient.get("/users/me/favorites");
+  return response.data;
+};
+
+export const toggleUserFavoriteProduct = async (productId) => {
+  const response = await userClient.post(`/users/me/favorites/${encodeURIComponent(productId)}/toggle`);
+  return response.data;
+};
+
 export const createUserPayment = async () => {
   const response = await userClient.post("/payments/create", {
     planCode: "USER_PREMIUM_MONTHLY",

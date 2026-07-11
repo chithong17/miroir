@@ -205,7 +205,7 @@ function TryOnStudioPage() {
 
   return (
     <AppShell nav={<TopNav user={user} onLogout={logout} />}>
-      <main className="section-shell py-8">
+      <main className="section-shell py-6 sm:py-8">
         <PageHeader
           eyebrow={t("tryon.eyebrow")}
           title={t("tryon.title")}
@@ -214,7 +214,7 @@ function TryOnStudioPage() {
         />
 
         {user ? (
-          <section className="miroir-card mt-6 flex flex-wrap items-center justify-between gap-3 p-4">
+          <section className="miroir-card mt-5 grid gap-3 sm:mt-6 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
             <div>
               <StatusBadge status={user.subscription?.isPremium ? t("app.premium") : t("app.free")} tone={user.subscription?.isPremium ? "success" : "neutral"} />
               <p className="mt-2 text-sm text-muted">
@@ -223,11 +223,11 @@ function TryOnStudioPage() {
                   : t("tryon.freeUsage", { remaining: user.subscription?.usage?.remaining ?? 5, amount: formatMoney(userPremiumPlan?.amount || 49000) })}
               </p>
             </div>
-            {!user.subscription?.isPremium ? <Button onClick={startPremiumCheckout}>{t("app.upgrade", { amount: formatMoney(userPremiumPlan?.amount || 49000) })}</Button> : null}
+            {!user.subscription?.isPremium ? <Button className="w-full sm:w-auto" onClick={startPremiumCheckout}>{t("app.upgrade", { amount: formatMoney(userPremiumPlan?.amount || 49000) })}</Button> : null}
           </section>
         ) : null}
 
-        <section className="mt-6 grid gap-5 xl:grid-cols-3">
+        <section className="mt-5 grid gap-4 sm:mt-6 sm:gap-5 xl:grid-cols-3">
           <StudioPanel eyebrow="01" title={t("tryon.originalPhoto")}>
             <PreviewFrame image={modelPreview} empty={t("tryon.savedOrUpload")} />
             <div className="mt-auto pt-4">
@@ -241,13 +241,13 @@ function TryOnStudioPage() {
           <StudioPanel eyebrow="02" title={t("tryon.productOutfit")}>
             <GarmentPreview product={product} dressPreview={dressPreview} upperPreview={upperPreview} lowerPreview={lowerPreview} />
             {product && !dressFile && !upperFile && !lowerFile ? (
-              <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3">
-                <h2 className="text-xl font-extrabold text-ink">{product.name}</h2>
+              <div className="mt-4 rounded-xl border border-line bg-white/80 p-3">
+                <h2 className="text-lg font-extrabold text-ink sm:text-xl">{product.name}</h2>
                 <p className="text-sm text-muted">{product.shop?.name || t("product.detailsForPremium")}</p>
                 <p className="mt-1 font-bold text-rose">{formatMoney(product.price)}</p>
               </div>
             ) : null}
-            <div className="mt-auto pt-4 border-t border-white/10">
+            <div className="mt-auto pt-4 border-t border-line">
               <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">{t("tryon.uploadGarment")}</p>
               <div className="grid gap-3">
                 <SelectField value={customTryOnType} onChange={(event) => setCustomTryOnType(event.target.value)}>
@@ -267,15 +267,20 @@ function TryOnStudioPage() {
           </StudioPanel>
 
           <StudioPanel eyebrow="03" title={t("tryon.result")}>
-            <PreviewFrame image={resultUrl} empty={t("tryon.resultEmpty")} />
+            <PreviewFrame
+              image={resultUrl}
+              empty={t("tryon.resultEmpty")}
+              isLoading={status === "loading" || status === "processing"}
+              loadingText={status === "loading" ? "Creating try-on task..." : "Rendering your preview..."}
+            />
             <div className="mt-auto pt-4">
               <Button className="w-full" disabled={status === "loading" || status === "processing"} onClick={startTryOn}>
                 {status === "loading" || status === "processing" ? t("tryon.generating") : t("tryon.generate")}
               </Button>
-              {message ? <p className={`mt-3 text-sm ${status === "error" ? "text-red-100" : "text-muted"}`}>{message}</p> : null}
+              {message ? <p className={`mt-3 text-sm ${status === "error" ? "text-red-700" : "text-muted"}`}>{message}</p> : null}
               {paymentRequired ? <Button className="mt-3 w-full" onClick={startPremiumCheckout}>{t("app.upgradePremium")}</Button> : null}
               {status === "completed" && resultUrl && product && completedTryOnProductId === product.id ? (
-                <form onSubmit={sendTryOnFeedback} className="mt-4 grid gap-3 rounded-lg border border-white/10 bg-white/7 p-3">
+                <form onSubmit={sendTryOnFeedback} className="mt-4 grid gap-3 rounded-lg border border-line bg-white/80 p-3">
                   <p className="text-sm font-bold text-ink">{t("product.feedback")}</p>
                   <SelectField value={feedbackForm.rating} onChange={updateFeedback("rating")}>
                     {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
@@ -296,11 +301,11 @@ function TryOnStudioPage() {
         </section>
 
         {relatedProducts.length > 0 ? (
-          <section className="mt-10">
+          <section className="mt-8 sm:mt-10">
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose">{t("tryon.continue")}</p>
-                <h2 className="mt-2 text-2xl font-extrabold text-ink">{t("tryon.related")}</h2>
+                <h2 className="mt-2 text-xl font-extrabold text-ink sm:text-2xl">{t("tryon.related")}</h2>
               </div>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -315,9 +320,9 @@ function TryOnStudioPage() {
 
 function StudioPanel({ children, eyebrow, title }) {
   return (
-    <section className="glass-panel p-5 flex flex-col h-full">
+    <section className="glass-panel flex h-full flex-col p-4 sm:p-5">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-rose">{eyebrow}</p>
-      <h2 className="mb-4 mt-1 text-xl font-extrabold text-ink">{title}</h2>
+      <h2 className="mb-4 mt-1 text-lg font-extrabold text-ink sm:text-xl">{title}</h2>
       <div className="flex-1 flex flex-col">
         {children}
       </div>
@@ -325,10 +330,31 @@ function StudioPanel({ children, eyebrow, title }) {
   );
 }
 
-function PreviewFrame({ empty, image }) {
+function PreviewFrame({ empty, image, isLoading = false, loadingText = "" }) {
   return (
-    <div className="aspect-[4/5] overflow-hidden rounded-lg border border-white/10 bg-white/5">
-      {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">{empty}</div>}
+    <div className={`aspect-[4/5] overflow-hidden rounded-lg border border-line bg-white/80 ${isLoading ? "tryon-result-active" : ""}`}>
+      {image ? (
+        <img src={image} alt="" className="h-full w-full object-cover" />
+      ) : isLoading ? (
+        <div className="relative z-10 flex h-full flex-col items-center justify-center p-4 text-center sm:p-6">
+          <div className="relative mb-5 flex h-20 w-20 items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-2 border-accentStrong/25 border-t-ink tryon-orbit" />
+            <div className="absolute inset-3 rounded-full border border-white/80 bg-white/70 shadow-glow" />
+            <div className="relative grid grid-cols-2 gap-1">
+              <span className="h-2.5 w-2.5 rounded-full bg-ink tryon-pulse-dot" />
+              <span className="h-2.5 w-2.5 rounded-full bg-accentStrong tryon-pulse-dot [animation-delay:120ms]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-accentStrong tryon-pulse-dot [animation-delay:240ms]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-ink tryon-pulse-dot [animation-delay:360ms]" />
+            </div>
+          </div>
+          <p className="text-sm font-black text-ink">{loadingText}</p>
+          <p className="mt-2 max-w-[220px] text-xs leading-relaxed text-muted">
+            MIROIR is fitting the garment and checking the generated result.
+          </p>
+        </div>
+      ) : (
+        <div className="flex h-full items-center justify-center p-4 text-center text-sm text-muted sm:p-6">{empty}</div>
+      )}
     </div>
   );
 }
@@ -338,7 +364,7 @@ function GarmentPreview({ dressPreview, lowerPreview, product, upperPreview }) {
 
   if (dressPreview || upperPreview || lowerPreview) {
     return (
-      <div className="aspect-[4/5] overflow-hidden rounded-lg border border-white/10 bg-white/5">
+      <div className="aspect-[4/5] overflow-hidden rounded-lg border border-line bg-white/80">
         <div className="grid h-full grid-cols-2 gap-2 p-2">
           {dressPreview ? <img src={dressPreview} alt="" className="col-span-2 h-full w-full rounded-lg object-cover" /> : null}
           {upperPreview ? <img src={upperPreview} alt="" className="h-full w-full rounded-lg object-cover" /> : null}

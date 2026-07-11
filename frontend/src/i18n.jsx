@@ -98,6 +98,7 @@ const translations = {
     "app.products": "Products",
     "app.outfits": "Outfits",
     "app.profile": "Profile",
+    "app.favorites": "Favorite products",
     "app.free": "Free",
     "app.premium": "Premium",
     "app.premiumMessage": "Unlimited try-ons, event outfit planning, and AI style consulting.",
@@ -106,8 +107,12 @@ const translations = {
     "app.expiresAt": "Expires on {date}",
     "app.upgrade": "Upgrade {amount}",
     "app.noProducts": "No products found.",
+    "app.noFavorites": "No favorite products yet.",
     "app.noOutfits": "No outfit sets available yet.",
     "app.noProductsTitle": "Nothing here yet",
+    "app.favoritesTitle": "Favorite products",
+    "app.favoritesDescription": "Products you saved for try-on, shopping, or a second look later.",
+    "app.favoriteError": "Could not update favorite product.",
     "app.premiumStylist": "Premium stylist",
     "app.unlockStylist": "Unlock event-ready outfit intelligence.",
     "app.premiumStylistDescription": "AI style consulting and event outfit planning are available with Premium {amount}.",
@@ -133,6 +138,8 @@ const translations = {
     "product.notProvided": "Not provided",
     "product.feedback": "Feedback / rating",
     "product.shareFeedback": "Share feedback about this product",
+    "product.addFavorite": "Add favorite",
+    "product.removeFavorite": "Remove favorite",
     "tryon.limitReached": "You have used all 5 free try-ons this month.",
     "payment.creating": "Creating payment link...",
     "payment.createError": "Could not create payment.",
@@ -461,6 +468,7 @@ const translations = {
     "app.products": "Sản phẩm",
     "app.outfits": "Outfit",
     "app.profile": "Hồ sơ",
+    "app.favorites": "Sản phẩm yêu thích",
     "app.free": "Miễn phí",
     "app.premium": "Premium",
     "app.premiumMessage": "Không giới hạn thử đồ, phối đồ theo sự kiện và tư vấn phong cách AI.",
@@ -469,8 +477,12 @@ const translations = {
     "app.expiresAt": "Hạn dùng đến {date}",
     "app.upgrade": "Nâng cấp {amount}",
     "app.noProducts": "Không tìm thấy sản phẩm.",
+    "app.noFavorites": "Bạn chưa có sản phẩm yêu thích.",
     "app.noOutfits": "Chưa có bộ outfit nào.",
     "app.noProductsTitle": "Chưa có dữ liệu",
+    "app.favoritesTitle": "Sản phẩm yêu thích",
+    "app.favoritesDescription": "Các sản phẩm bạn đã lưu để thử đồ, mua sắm hoặc xem lại sau.",
+    "app.favoriteError": "Không thể cập nhật sản phẩm yêu thích.",
     "app.premiumStylist": "Stylist Premium",
     "app.unlockStylist": "Mở khóa gợi ý outfit theo sự kiện.",
     "app.premiumStylistDescription": "Tư vấn phong cách AI và phối đồ theo sự kiện dành cho gói Premium {amount}.",
@@ -496,6 +508,8 @@ const translations = {
     "product.notProvided": "Chưa cung cấp",
     "product.feedback": "Đánh giá / phản hồi",
     "product.shareFeedback": "Chia sẻ cảm nhận về sản phẩm này",
+    "product.addFavorite": "Thêm yêu thích",
+    "product.removeFavorite": "Bỏ yêu thích",
     "tryon.limitReached": "Bạn đã dùng hết 5 lượt thử đồ miễn phí trong tháng.",
     "payment.creating": "Đang tạo liên kết thanh toán...",
     "payment.createError": "Không thể tạo thanh toán.",
@@ -769,7 +783,7 @@ export function LanguageToggle({ className = "" }) {
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className={`inline-flex rounded-full border border-white/10 bg-canvasDeep/70 p-1 shadow-glass backdrop-blur-xl ${className}`}>
+    <div className={`inline-flex rounded-full border border-line bg-white/85 p-1 shadow-glass backdrop-blur-xl ${className}`}>
       {[
         ["en", "EN"],
         ["vi", "VI"],
@@ -779,7 +793,7 @@ export function LanguageToggle({ className = "" }) {
           type="button"
           onClick={() => setLanguage(value)}
           className={`rounded-full px-3 py-1.5 text-xs font-black transition ${
-            language === value ? "bg-rose text-canvasDeep" : "text-muted hover:bg-white/10 hover:text-ink"
+            language === value ? "bg-rose text-ink" : "text-muted hover:bg-white hover:text-ink"
           }`}
         >
           {label}
