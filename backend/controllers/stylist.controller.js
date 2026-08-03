@@ -107,7 +107,7 @@ const buildFallbackRecommendation = ({ body, context }) => {
       score: Math.max(70, Math.round((primary?.rerankScore || 0.7) * 100)),
       items,
       whyItMatches:
-        "Gemini styling generation was unavailable, so this outfit was assembled from the highest ranked retrieved products.",
+        "MIROIR matched this outfit from the strongest catalog results for your prompt.",
       fitWarnings: [],
       fashionTips: ["Review sizes and availability before trying on."],
     };
@@ -118,7 +118,7 @@ const buildFallbackRecommendation = ({ body, context }) => {
       bodyShape: "",
       skinTone: "",
       styleMatch:
-        "Fallback catalog ranking was used because AI generation did not finish in time.",
+        "MIROIR used catalog ranking to keep this recommendation grounded in available products.",
     },
     outfits,
     recommended_outfit: outfits[0] || {
@@ -304,3 +304,4 @@ export const submitStylistFeedback = async (req, res, next) => {
     next(error);
   }
 };
+

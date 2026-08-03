@@ -1,6 +1,8 @@
 import axios from "axios";
 
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 90000);
+const GEMINI_RETRY_COUNT = Number(process.env.GEMINI_RETRY_COUNT || 1);
 
 const getGeminiErrorMessage = (error, action, model) => {
   if (!axios.isAxiosError(error)) {
@@ -32,7 +34,7 @@ const getApiKey = () => {
 
 export const generateEmbedding = async (text) => {
   const apiKey = getApiKey();
-  const model = process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-001";
+  const model = process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-2";
   const url = `${GEMINI_BASE_URL}/models/${model}:embedContent?key=${apiKey}`;
 
   let response;
@@ -64,9 +66,57 @@ export const generateEmbedding = async (text) => {
 const parseGeminiJson = (text) => {
   const trimmed = text.trim();
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const jsonText = fenced ? fenced[1].trim() : trimmed;
+  const unfenced = fenced ? fenced[1].trim() : trimmed;
+  const jsonMatch = unfenced.match(/\{[\s\S]*\}/);
+  const jsonText = jsonMatch ? jsonMatch[0] : unfenced;
   return JSON.parse(jsonText);
 };
+
+const isTransientGeminiError = (error) => {
+  if (!axios.isAxiosError(error)) {
+    return false;
+  }
+
+  const status = error.response?.status;
+  return (
+    !status ||
+    status === 408 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  );
+};
+
+const shouldOmitSamplingConfig = (model) => /^gemini-3/i.test(model);
+
+const buildGenerationConfig = (model) => ({
+  responseMimeType: "application/json",
+  ...(!shouldOmitSamplingConfig(model) ? { temperature: 0.35 } : {}),
+});
+
+const postGeminiGeneration = async ({ url, systemPrompt, payload, model }) =>
+  axios.post(
+    url,
+    {
+      systemInstruction: {
+        parts: [{ text: systemPrompt }],
+      },
+      generationConfig: buildGenerationConfig(model),
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: JSON.stringify(payload),
+            },
+          ],
+        },
+      ],
+    },
+    { timeout: GEMINI_TIMEOUT_MS }
+  );
 
 export const generateStylistRecommendation = async (payload) => {
   const apiKey = getApiKey();
@@ -123,42 +173,40 @@ Set recommended_outfit to the first item in outfits for backward compatibility.`
 
   let response;
 
+  for (let attempt = 0; attempt <= GEMINI_RETRY_COUNT; attempt += 1) {
+    try {
+      response = await postGeminiGeneration({
+        url,
+        systemPrompt,
+        payload,
+        model,
+      });
+      break;
+    } catch (error) {
+      if (attempt >= GEMINI_RETRY_COUNT || !isTransientGeminiError(error)) {
+        throw new Error(getGeminiErrorMessage(error, "generation", model));
+      }
+    }
+  }
+
+  if (!response) {
+    throw new Error(`Gemini generation failed for model "${model}": no response`);
+  }
+
   try {
-    response = await axios.post(
-      url,
-      {
-        systemInstruction: {
-          parts: [{ text: systemPrompt }],
-        },
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.35,
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: JSON.stringify(payload),
-              },
-            ],
-          },
-        ],
-      },
-      { timeout: 60000 }
-    );
+    const text =
+      response.data?.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text || "")
+        .join("") || "";
+
+    if (!text) {
+      throw new Error("Gemini generation response was empty.");
+    }
+
+    return parseGeminiJson(text);
   } catch (error) {
-    throw new Error(getGeminiErrorMessage(error, "generation", model));
+    throw new Error(
+      `Gemini generation returned invalid JSON for model "${model}": ${error.message}`
+    );
   }
-
-  const text =
-    response.data?.candidates?.[0]?.content?.parts
-      ?.map((part) => part.text || "")
-      .join("") || "";
-
-  if (!text) {
-    throw new Error("Gemini generation response was empty.");
-  }
-
-  return parseGeminiJson(text);
 };
