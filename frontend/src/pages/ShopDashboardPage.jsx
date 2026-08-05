@@ -1772,6 +1772,9 @@ function SalesDashboardSummary({ dashboard }) {
   const funnel = dashboard?.funnel || {};
   const inventory = dashboard?.inventoryHealth || {};
   const bestSellers = dashboard?.topProducts || [];
+  const salesSeries = dashboard?.salesSeries || [];
+  const orderStatuses = dashboard?.orderStatusBreakdown || [];
+  const paymentStatuses = dashboard?.paymentStatusBreakdown || [];
 
   return (
     <section className="grid gap-5">
@@ -1784,8 +1787,10 @@ function SalesDashboardSummary({ dashboard }) {
         <Metric label="Refund value" value={formatMoney(summary.refundValue)} />
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
+        <RevenueDashboardChart series={salesSeries} />
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h3 className="font-bold text-slate-900">Customer journey</h3>
+          <FunnelDashboardChart funnel={funnel} />
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {[["Views", funnel.views], ["Try-ons", funnel.tryOns], ["Stylist", funnel.stylistMatches], ["Feedback", funnel.feedback], ["Orders", funnel.orders], ["Paid", funnel.paidOrders]].map(([label, value]) => <Metric key={label} label={label} value={value || 0} />)}
           </div>
@@ -1800,6 +1805,10 @@ function SalesDashboardSummary({ dashboard }) {
           </div>
         </section>
       </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <BreakdownDashboardChart title="Order status" items={orderStatuses} />
+        <BreakdownDashboardChart title="Payment status" items={paymentStatuses} />
+      </div>
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h3 className="font-bold text-slate-900">Best sellers by collected revenue</h3>
         {!bestSellers.length ? <p className="mt-3 text-sm text-slate-500">No paid orders in this period.</p> : <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead className="text-xs uppercase tracking-[0.1em] text-slate-500"><tr><th className="pb-2">Product</th><th className="pb-2">Sold</th><th className="pb-2">Orders</th><th className="pb-2">Collected revenue</th></tr></thead><tbody>{bestSellers.map((product) => <tr key={product.productId || product.name} className="border-t border-slate-100"><td className="py-3 font-semibold text-slate-900">{product.name}</td><td>{product.quantity}</td><td>{product.orderCount}</td><td className="font-semibold">{formatMoney(product.collectedRevenue)}</td></tr>)}</tbody></table></div>}
@@ -1808,6 +1817,54 @@ function SalesDashboardSummary({ dashboard }) {
   );
 }
 
+function RevenueDashboardChart({ series = [] }) {
+  const width = 620;
+  const height = 230;
+  const padding = { top: 20, right: 16, bottom: 30, left: 16 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  const maxValue = Math.max(1, ...series.flatMap((item) => [Number(item.collectedRevenue || 0), Number(item.projectedRevenue || 0)]));
+  const xAt = (index) => padding.left + (series.length <= 1 ? plotWidth / 2 : (index / (series.length - 1)) * plotWidth);
+  const yAt = (value) => padding.top + plotHeight - (Number(value || 0) / maxValue) * plotHeight;
+  const pathFor = (key) => series.map((item, index) => `${index ? "L" : "M"} ${xAt(index)} ${yAt(item[key])}`).join(" ");
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h3 className="font-bold text-slate-900">Revenue trend</h3>
+      <p className="mt-1 text-sm text-slate-500">Collected versus projected revenue.</p>
+      {!series.length ? <EmptyChart /> : <>
+        <svg viewBox={`0 0 ${width} ${height}`} className="mt-4 h-56 w-full overflow-visible">
+          {[0, 1, 2, 3].map((index) => <line key={index} x1={padding.left} x2={width - padding.right} y1={padding.top + (plotHeight * index) / 3} y2={padding.top + (plotHeight * index) / 3} stroke="#e7eedc" strokeDasharray="4 4" />)}
+          <path d={pathFor("projectedRevenue")} fill="none" stroke="#B3D07E" strokeWidth="3" strokeLinecap="round" />
+          <path d={pathFor("collectedRevenue")} fill="none" stroke="#94B16F" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+        <div className="flex gap-4 text-xs font-semibold text-slate-600"><span><i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-mintDeep" />Collected</span><span><i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-mint" />Projected</span></div>
+      </>}
+    </section>
+  );
+}
+
+function FunnelDashboardChart({ funnel = {} }) {
+  const steps = [["Views", funnel.views], ["Try-ons", funnel.tryOns], ["Stylist", funnel.stylistMatches], ["Orders", funnel.orders], ["Paid", funnel.paidOrders]];
+  const maxValue = Math.max(1, ...steps.map(([, value]) => Number(value || 0)));
+  return <div className="mt-4 space-y-3">{steps.map(([label, value]) => <div key={label} className="grid grid-cols-[78px_1fr_32px] items-center gap-3 text-sm"><span className="font-medium text-slate-600">{label}</span><div className="h-2.5 overflow-hidden rounded-full bg-mintSoft"><div className="h-full rounded-full bg-mintDeep" style={{ width: `${(Number(value || 0) / maxValue) * 100}%` }} /></div><strong className="text-right">{value || 0}</strong></div>)}</div>;
+}
+
+function BreakdownDashboardChart({ title, items = [] }) {
+  const validItems = items.filter((item) => Number(item.count || 0) > 0);
+  const total = validItems.reduce((sum, item) => sum + Number(item.count || 0), 0);
+  const colors = ["#94B16F", "#B3D07E", "#BEDA9D", "#5E9C5D", "#9BA891"];
+  let cursor = 0;
+  const stops = validItems.map((item, index) => {
+    const start = total ? (cursor / total) * 100 : 0;
+    cursor += Number(item.count || 0);
+    return `${colors[index % colors.length]} ${start}% ${(cursor / total) * 100}%`;
+  });
+  return <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><h3 className="font-bold text-slate-900">{title}</h3>{!validItems.length ? <EmptyChart /> : <div className="mt-4 flex items-center gap-5"><div className="h-28 w-28 shrink-0 rounded-full" style={{ background: `conic-gradient(${stops.join(",")})`, mask: "radial-gradient(transparent 54%, #000 55%)", WebkitMask: "radial-gradient(transparent 54%, #000 55%)" }} /><div className="min-w-0 flex-1 space-y-2">{validItems.slice(0, 4).map((item, index) => <div key={item.key} className="flex items-center gap-2 text-sm"><i className="h-2.5 w-2.5 rounded-full" style={{ background: colors[index % colors.length] }} /><span className="flex-1 truncate capitalize">{String(item.key || "unknown").replaceAll("_", " ")}</span><strong>{item.count}</strong></div>)}</div></div>}</section>;
+}
+
+function EmptyChart() {
+  return <div className="flex h-32 items-center justify-center text-sm text-slate-500">No data for this period.</div>;
+}
 function AnalyticsTrendChart({ series = [], loading = false }) {
   const { language, t } = useLanguage();
   const [hoveredIndex, setHoveredIndex] = useState(null);

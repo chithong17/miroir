@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
+
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -1580,7 +1582,7 @@ class _InlineError extends StatelessWidget {
   }
 }
 
-String _formatMoney(double value) {
+String _formatMoney(num value) {
   final raw = value.round().toString();
   final buffer = StringBuffer();
   for (var i = 0; i < raw.length; i++) {
@@ -1636,6 +1638,9 @@ class _PerformanceAnalyticsView extends StatelessWidget {
     final sales = _asMap(commerce?['summary']);
     final funnel = _asMap(commerce?['funnel']);
     final inventory = _asMap(commerce?['inventoryHealth']);
+    final salesSeries = _asList(commerce?['salesSeries']);
+    final orderStatuses = _asList(commerce?['orderStatusBreakdown']);
+    final paymentStatuses = _asList(commerce?['paymentStatusBreakdown']);
     final engagementProducts = _asList(data['topProducts']);
     final salesProducts = _asList(commerce?['topProducts']);
     final engagementMetrics = [
@@ -1667,17 +1672,20 @@ class _PerformanceAnalyticsView extends StatelessWidget {
         const SizedBox(height: 10),
         _MetricGrid(metrics: salesMetrics),
         const SizedBox(height: 16),
+        _RevenueTrendCard(series: salesSeries),
+        const SizedBox(height: 16),
+        _BreakdownCharts(
+          orderStatuses: orderStatuses,
+          paymentStatuses: paymentStatuses,
+        ),
+        const SizedBox(height: 16),
         SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Customer journey', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
               const SizedBox(height: 14),
-              _FunnelRow(label: 'Views', value: _number(funnel['views'])),
-              _FunnelRow(label: 'Try-ons', value: _number(funnel['tryOns'])),
-              _FunnelRow(label: 'Stylist matches', value: _number(funnel['stylistMatches'])),
-              _FunnelRow(label: 'Orders', value: _number(funnel['orders'])),
-              _FunnelRow(label: 'Paid orders', value: _number(funnel['paidOrders']), isLast: true),
+              _FunnelChart(data: funnel),
             ],
           ),
         ),
@@ -1726,6 +1734,238 @@ class _PerformanceAnalyticsView extends StatelessWidget {
   }
 }
 
+class _RevenueTrendCard extends StatelessWidget {
+  const _RevenueTrendCard({required this.series});
+  final List<dynamic> series;
+
+  @override
+  Widget build(BuildContext context) {
+    final points = series.map(_asMap).toList();
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Revenue trend', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 4),
+          const Text('Collected versus projected revenue in the selected period.', style: TextStyle(color: AppColors.muted)),
+          const SizedBox(height: 16),
+          const Wrap(
+            spacing: 16,
+            children: [
+              _ChartLegend(color: AppColors.accentStrong, label: 'Collected'),
+              _ChartLegend(color: AppColors.moss, label: 'Projected'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (points.isEmpty)
+            const _ChartEmptyState()
+          else
+            SizedBox(height: 180, width: double.infinity, child: CustomPaint(painter: _RevenueTrendPainter(points))),
+        ],
+      ),
+    );
+  }
+}
+
+class _BreakdownCharts extends StatelessWidget {
+  const _BreakdownCharts({required this.orderStatuses, required this.paymentStatuses});
+  final List<dynamic> orderStatuses;
+  final List<dynamic> paymentStatuses;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          _BreakdownChartCard(title: 'Order status', items: orderStatuses),
+          const SizedBox(height: 16),
+          _BreakdownChartCard(title: 'Payment status', items: paymentStatuses),
+        ],
+      );
+}
+
+class _BreakdownChartCard extends StatelessWidget {
+  const _BreakdownChartCard({required this.title, required this.items});
+  final String title;
+  final List<dynamic> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = items.map(_asMap).where((item) => _number(item['count']) > 0).toList();
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 16),
+          if (data.isEmpty)
+            const _ChartEmptyState()
+          else
+            Row(
+              children: [
+                SizedBox(width: 116, height: 116, child: CustomPaint(painter: _DonutPainter(data))),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    children: data.take(4).map((item) {
+                      final index = data.indexOf(item);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Container(width: 10, height: 10, decoration: BoxDecoration(color: _chartColor(index), shape: BoxShape.circle)),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(_displayStatus(item['key']), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
+                            Text('${_number(item['count'])}', style: const TextStyle(fontWeight: FontWeight.w900)),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FunnelChart extends StatelessWidget {
+  const _FunnelChart({required this.data});
+  final Map<String, dynamic> data;
+
+  @override
+  Widget build(BuildContext context) {
+    final steps = [
+      ('Views', _number(data['views'])),
+      ('Try-ons', _number(data['tryOns'])),
+      ('Stylist', _number(data['stylistMatches'])),
+      ('Orders', _number(data['orders'])),
+      ('Paid', _number(data['paidOrders'])),
+    ];
+    final maxValue = math.max(1, steps.map((step) => step.$2).fold(0, math.max));
+    return Column(
+      children: steps.map((step) {
+        final ratio = step.$2 / maxValue;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              SizedBox(width: 72, child: Text(step.$1, style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700))),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    value: ratio.toDouble(),
+                    minHeight: 10,
+                    color: AppColors.accentStrong,
+                    backgroundColor: AppColors.accentSoft,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(width: 36, child: Text('${step.$2}', textAlign: TextAlign.end, style: const TextStyle(fontWeight: FontWeight.w900))),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _ChartLegend extends StatelessWidget {
+  const _ChartLegend({required this.color, required this.label});
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted, fontWeight: FontWeight.w700)),
+        ],
+      );
+}
+
+class _ChartEmptyState extends StatelessWidget {
+  const _ChartEmptyState();
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+        height: 116,
+        child: Center(child: Text('No data for this period.', style: TextStyle(color: AppColors.muted))),
+      );
+}
+
+class _RevenueTrendPainter extends CustomPainter {
+  _RevenueTrendPainter(this.points);
+  final List<Map<String, dynamic>> points;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const inset = 8.0;
+    final values = points.expand((point) => [_number(point['collectedRevenue']), _number(point['projectedRevenue'])]);
+    final maxValue = math.max(1, values.fold(0, math.max));
+    final gridPaint = Paint()..color = AppColors.line..strokeWidth = 1;
+    for (var index = 0; index < 4; index++) {
+      final y = inset + ((size.height - inset * 2) * index / 3);
+      canvas.drawLine(Offset(inset, y), Offset(size.width - inset, y), gridPaint);
+    }
+    _drawLine(canvas, size, 'collectedRevenue', maxValue, AppColors.accentStrong);
+    _drawLine(canvas, size, 'projectedRevenue', maxValue, AppColors.moss);
+  }
+
+  void _drawLine(Canvas canvas, Size size, String key, num maxValue, Color color) {
+    final path = Path();
+    final width = size.width - 16;
+    final height = size.height - 16;
+    for (var index = 0; index < points.length; index++) {
+      final x = (8 + (points.length == 1 ? width / 2 : width * index / (points.length - 1))).toDouble();
+      final y = (8 + height - (height * _number(points[index][key]) / maxValue)).toDouble();
+      if (index == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    final paint = Paint()..color = color..strokeWidth = 3..style = PaintingStyle.stroke..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RevenueTrendPainter oldDelegate) => oldDelegate.points != points;
+}
+
+class _DonutPainter extends CustomPainter {
+  _DonutPainter(this.items);
+  final List<Map<String, dynamic>> items;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final total = math.max(1, items.fold(0, (sum, item) => sum + _number(item['count'])));
+    final rect = Offset.zero & size;
+    final center = rect.center;
+    final radius = (math.min(size.width, size.height) / 2 - 10).toDouble();
+    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 20..strokeCap = StrokeCap.butt;
+    var start = -math.pi / 2;
+    for (var index = 0; index < items.length; index++) {
+      final sweep = (math.pi * 2 * _number(items[index]['count']) / total).toDouble();
+      paint.color = _chartColor(index);
+      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start, sweep, false, paint);
+      start += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter oldDelegate) => oldDelegate.items != items;
+}
+
+Color _chartColor(int index) {
+  const colors = [AppColors.accentStrong, AppColors.moss, AppColors.mossSoft, AppColors.success, AppColors.mutedSoft];
+  return colors[index % colors.length];
+}
+
+String _displayStatus(Object? value) => (value ?? 'Unknown').toString().replaceAll('_', ' ');
 class _MetricGrid extends StatelessWidget {
   const _MetricGrid({required this.metrics});
   final List<_MetricData> metrics;
