@@ -81,15 +81,12 @@ export const listFavoriteProducts = async (req, res, next) => {
         email: shop.contact?.email || "",
         phone: shop.contact?.phone || "",
       },
-      profileHidden: false,
-      premiumShopDetailsRequired: false,
     });
 
     const shopById = new Map(shops.map((shop) => [shop.id, publicShop(shop)]));
     const formattedProducts = products.map((product) => ({
       ...toPublicProduct(product),
       shop: shopById.get(product.shopId) || null,
-      premiumShopDetailsRequired: false,
     }));
 
     return res.json({ success: true, products: formattedProducts });

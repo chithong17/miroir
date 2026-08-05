@@ -9,9 +9,7 @@ import { trackShopEvent } from "../services/shopAnalytics.service.js";
 
 export const listProducts = async (req, res, next) => {
   try {
-    const result = await listCatalogProducts(req.query || {}, {
-      viewerIsPremium: Boolean(req.user?.subscription?.isPremium),
-    });
+    const result = await listCatalogProducts(req.query || {});
     return res.json({ success: true, ...result });
   } catch (error) {
     next(error);
@@ -29,9 +27,7 @@ export const listOutfits = async (req, res, next) => {
 
 export const getShop = async (req, res, next) => {
   try {
-    const shop = await getCatalogShop(req.params.shopId, {
-      viewerIsPremium: Boolean(req.user?.subscription?.isPremium),
-    });
+    const shop = await getCatalogShop(req.params.shopId);
     return res.json({ success: true, shop });
   } catch (error) {
     next(error);
@@ -41,7 +37,6 @@ export const getShop = async (req, res, next) => {
 export const getProduct = async (req, res, next) => {
   try {
     const { product, shop } = await getCatalogProduct(req.params.productId);
-    const viewerIsPremium = Boolean(req.user?.subscription?.isPremium);
     await trackShopEvent({
       eventType: "product_view",
       shopId: product.shopId,
@@ -58,8 +53,7 @@ export const getProduct = async (req, res, next) => {
       product: {
         ...product,
         embedding: undefined,
-        shop: viewerIsPremium
-          ? {
+        shop: {
               id: shop.id,
               name: shop.name,
               slug: shop.slug,
@@ -71,9 +65,7 @@ export const getProduct = async (req, res, next) => {
                 email: shop.contact?.email || "",
                 phone: shop.contact?.phone || "",
               },
-            }
-          : null,
-        premiumShopDetailsRequired: !viewerIsPremium,
+            },
       },
     });
   } catch (error) {

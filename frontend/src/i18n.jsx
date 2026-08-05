@@ -297,6 +297,15 @@ const translations = {
     "shopAdmin.analyticsDashboard": "Analytics Dashboard",
     "shopAdmin.analyticsTitle": "Shop performance",
     "shopAdmin.analyticsDescription": "Product views, try-on clicks, and stylist recommendations.",
+    "shopAdmin.engagementTrend": "Engagement trend",
+    "shopAdmin.dailyActivity": "Daily activity across the selected period.",
+    "shopAdmin.productComparison": "Product performance comparison",
+    "shopAdmin.tryOnConversion": "Try-on conversion",
+    "shopAdmin.conversionDescription": "Share of product views that led to a try-on.",
+    "shopAdmin.trendChartLabel": "Line chart showing daily views, try-ons, and stylist matches.",
+    "shopAdmin.productChartLabel": "Column chart comparing engagement for top products.",
+    "shopAdmin.conversionChartLabel": "Try-on conversion is {percentage} percent.",
+    "shopAdmin.noChartData": "No chart data is available for this period.",
     "shopAdmin.productViews": "Views",
     "shopAdmin.tryOns": "Try-ons",
     "shopAdmin.stylistMatches": "Stylist matches",
@@ -667,6 +676,15 @@ const translations = {
     "shopAdmin.analyticsDashboard": "Dashboard phân tích",
     "shopAdmin.analyticsTitle": "Hiệu suất shop",
     "shopAdmin.analyticsDescription": "Lượt xem sản phẩm, lượt thử đồ và lượt được AI Stylist gợi ý.",
+    "shopAdmin.engagementTrend": "Xu hướng tương tác",
+    "shopAdmin.dailyActivity": "Hoạt động theo ngày trong khoảng thời gian đã chọn.",
+    "shopAdmin.productComparison": "So sánh hiệu suất sản phẩm",
+    "shopAdmin.tryOnConversion": "Tỷ lệ chuyển đổi thử đồ",
+    "shopAdmin.conversionDescription": "Tỷ lệ lượt xem sản phẩm dẫn đến lượt thử đồ.",
+    "shopAdmin.trendChartLabel": "Biểu đồ đường thể hiện lượt xem, lượt thử và lượt Stylist gợi ý theo ngày.",
+    "shopAdmin.productChartLabel": "Biểu đồ cột so sánh tương tác của các sản phẩm nổi bật.",
+    "shopAdmin.conversionChartLabel": "Tỷ lệ chuyển đổi thử đồ là {percentage} phần trăm.",
+    "shopAdmin.noChartData": "Chưa có dữ liệu biểu đồ trong khoảng thời gian này.",
     "shopAdmin.productViews": "Lượt xem",
     "shopAdmin.tryOns": "Lượt thử",
     "shopAdmin.stylistMatches": "Lượt Stylist gợi ý",
@@ -793,7 +811,7 @@ export function LanguageToggle({ className = "" }) {
           type="button"
           onClick={() => setLanguage(value)}
           className={`rounded-full px-3 py-1.5 text-xs font-black transition ${
-            language === value ? "bg-rose text-ink" : "text-muted hover:bg-white hover:text-ink"
+            language === value ? "bg-rose text-white" : "text-muted hover:bg-white hover:text-ink"
           }`}
         >
           {label}

@@ -18,6 +18,39 @@ const getRangeStart = (range = "30d") => {
   return start;
 };
 
+const toDateKey = (date) => new Date(date).toISOString().slice(0, 10);
+
+const buildDailySeries = (events = [], range = "30d") => {
+  const days = RANGE_DAYS[normalizeRange(range)];
+  const end = new Date();
+  end.setUTCHours(0, 0, 0, 0);
+  const buckets = new Map();
+
+  for (let offset = days - 1; offset >= 0; offset -= 1) {
+    const date = new Date(end);
+    date.setUTCDate(end.getUTCDate() - offset);
+    const key = toDateKey(date);
+    buckets.set(key, {
+      date: key,
+      views: 0,
+      tryOns: 0,
+      stylistMatches: 0,
+      feedback: 0,
+    });
+  }
+
+  events.forEach((event) => {
+    const bucket = buckets.get(toDateKey(event.createdAt));
+    if (!bucket) return;
+    if (event.eventType === "product_view") bucket.views += 1;
+    if (event.eventType === "tryon_started") bucket.tryOns += 1;
+    if (event.eventType === "stylist_product_recommended") bucket.stylistMatches += 1;
+    if (event.eventType === "product_feedback") bucket.feedback += 1;
+  });
+
+  return [...buckets.values()];
+};
+
 const incrementMap = (map, key, amount = 1) => {
   const normalizedKey = String(key || "").trim();
   if (!normalizedKey) return;
@@ -172,6 +205,7 @@ export const getShopAnalytics = async ({ ownerId, range = "30d" }) => {
     range: normalizeRange(range),
     shop: { id: shop.id, name: shop.name },
     summary,
+    timeSeries: buildDailySeries(events, range),
     topProducts,
   };
 };

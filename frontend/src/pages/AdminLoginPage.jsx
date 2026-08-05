@@ -2,7 +2,7 @@ import { useState } from "react";
 import { loginAdmin, setAdminToken } from "../api/adminApi.js";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-[#67558c]";
+  "w-full rounded-lg border border-mintSoft bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-mintDeep focus:ring-2 focus:ring-mintSoft/50";
 
 function AdminLoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -29,7 +29,7 @@ function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f8fa] px-5 py-10">
+    <main className="min-h-screen bg-gradient-to-b from-white to-mintPale px-5 py-10">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-md items-center">
         <form onSubmit={submit} className="w-full rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <a href="/" className="text-xl font-extrabold text-slate-950">
@@ -64,7 +64,7 @@ function AdminLoginPage() {
             <button
               type="submit"
               disabled={status === "loading"}
-              className="rounded-lg bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              className="rounded-lg bg-mintDeep px-4 py-3 text-sm font-semibold text-white transition hover:bg-mint disabled:opacity-60"
             >
               {status === "loading" ? "Signing in..." : "Sign in"}
             </button>

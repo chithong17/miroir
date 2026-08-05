@@ -8,7 +8,6 @@ import { uploadImageBuffer } from "../services/cloudinary.service.js";
 import { getCatalogProduct } from "../services/catalog.service.js";
 import { trackShopEvent } from "../services/shopAnalytics.service.js";
 import { getRawUserById } from "../services/userAuth.service.js";
-import { incrementMonthlyTryOnUsage } from "../services/subscription.service.js";
 import { findResultUrl } from "../utils/findResultUrl.js";
 
 const parseBatchSize = (rawValue) => {
@@ -234,9 +233,6 @@ export const createCatalogTryOnTask = async (req, res, next) => {
       });
     }
 
-    const usage = req.tryOnAccess?.isPremium
-      ? null
-      : await incrementMonthlyTryOnUsage(req.user.id);
     await trackShopEvent({
       eventType: "tryon_started",
       shopId: product.shopId,
@@ -262,7 +258,6 @@ export const createCatalogTryOnTask = async (req, res, next) => {
       taskId,
       productId: product.id,
       tryOnType,
-      usage,
       message: "Catalog try-on task created successfully",
     });
   } catch (error) {
@@ -327,15 +322,10 @@ export const createCustomTryOnTask = async (req, res, next) => {
       });
     }
 
-    const usage = req.tryOnAccess?.isPremium
-      ? null
-      : await incrementMonthlyTryOnUsage(req.user.id);
-
     return res.status(201).json({
       success: true,
       taskId,
       tryOnType,
-      usage,
       message: "Custom try-on task created successfully",
     });
   } catch (error) {

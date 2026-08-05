@@ -391,7 +391,7 @@ function TryOnPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={isSubmitting || isPolling}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-ink py-4 text-sm font-semibold uppercase tracking-wider text-white transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-mintDeep py-4 text-sm font-semibold uppercase tracking-wider text-white transition hover:bg-mint hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span>Generate Try-On</span>
                 </button>
@@ -431,7 +431,7 @@ function TryOnPage() {
                   />
                 ) : (
                   <>
-                    <div className={`mb-6 text-5xl text-[#B19CD9] ${isPolling ? "spin-slow" : ""}`}>
+                    <div className={`mb-6 text-5xl text-mintDeep ${isPolling ? "spin-slow" : ""}`}>
                       ✦
                     </div>
                     <h3 className="text-2xl font-semibold text-ink">
@@ -447,7 +447,7 @@ function TryOnPage() {
                     </p>
                     <div className="mt-8 h-1 w-48 overflow-hidden rounded-full bg-panel">
                       <div
-                        className={`h-full rounded-full bg-[#B19CD9] ${
+                        className={`h-full rounded-full bg-mintDeep ${
                           isPolling ? "w-1/2 animate-pulse" : "w-1/4"
                         }`}
                       />
@@ -479,8 +479,8 @@ function TryOnPage() {
                   rel="noreferrer"
                   className={`flex flex-1 items-center justify-center rounded-full py-3 text-sm font-semibold ${
                     resultUrl
-                      ? "bg-ink text-white"
-                      : "pointer-events-none bg-ink text-white opacity-30"
+                      ? "bg-mintDeep text-white hover:bg-mint"
+                      : "pointer-events-none bg-mintDeep text-white opacity-30"
                   }`}
                 >
                   Download

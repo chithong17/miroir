@@ -2,24 +2,10 @@ import { getMongoDb } from "./mongo.service.js";
 
 export const PLAN_CODES = {
   FREE: "FREE",
-  USER_PREMIUM_MONTHLY: "USER_PREMIUM_MONTHLY",
   SHOP_OWNER_MONTHLY: "SHOP_OWNER_MONTHLY",
 };
 
 export const PAYMENT_PLANS = {
-  [PLAN_CODES.USER_PREMIUM_MONTHLY]: {
-    code: PLAN_CODES.USER_PREMIUM_MONTHLY,
-    accountType: "user",
-    name: "MIROIR Premium",
-    description: "MIR User Premium",
-    amount: 49000,
-    durationDays: 30,
-    features: [
-      "Không giới hạn số lần thử đồ",
-      "Phối đồ theo sự kiện",
-      "Tư vấn phong cách AI",
-    ],
-  },
   [PLAN_CODES.SHOP_OWNER_MONTHLY]: {
     code: PLAN_CODES.SHOP_OWNER_MONTHLY,
     accountType: "shop_owner",
@@ -36,8 +22,6 @@ export const PAYMENT_PLANS = {
     ],
   },
 };
-
-export const FREE_TRYON_LIMIT = 5;
 
 export const listPaymentPlans = async () => {
   const db = await getMongoDb();
@@ -194,10 +178,20 @@ export const buildSubscriptionSummary = ({
   subscription = {},
   usage,
 } = {}) => {
+  if (accountType === "user") {
+    return {
+      planCode: PLAN_CODES.FREE,
+      status: "free",
+      expiresAt: null,
+      isPremium: false,
+      allFeaturesIncluded: true,
+      features: [],
+      usage: null,
+    };
+  }
+
   const premiumPlanCode =
-    accountType === "shop_owner"
-      ? PLAN_CODES.SHOP_OWNER_MONTHLY
-      : PLAN_CODES.USER_PREMIUM_MONTHLY;
+    PLAN_CODES.SHOP_OWNER_MONTHLY;
   const active = isSubscriptionActive(subscription, premiumPlanCode);
   const planCode = active ? premiumPlanCode : PLAN_CODES.FREE;
 
@@ -209,56 +203,4 @@ export const buildSubscriptionSummary = ({
     features: active ? getPlanFeatures(planCode) : [],
     usage: usage || null,
   };
-};
-
-export const getMonthlyTryOnUsage = async (userId, date = new Date()) => {
-  const db = await getMongoDb();
-  const period = getPeriodKey(date);
-  const usage = await db.collection("usage_counters").findOne({
-    accountType: "user",
-    accountId: userId,
-    feature: "tryon",
-    period,
-  });
-  const count = usage?.count || 0;
-
-  return {
-    feature: "tryon",
-    period,
-    count,
-    limit: FREE_TRYON_LIMIT,
-    remaining: Math.max(FREE_TRYON_LIMIT - count, 0),
-  };
-};
-
-export const incrementMonthlyTryOnUsage = async (userId, date = new Date()) => {
-  const db = await getMongoDb();
-  const period = getPeriodKey(date);
-  const now = new Date();
-
-  await db.collection("usage_counters").updateOne(
-    {
-      accountType: "user",
-      accountId: userId,
-      feature: "tryon",
-      period,
-    },
-    {
-      $inc: { count: 1 },
-      $set: {
-        limit: FREE_TRYON_LIMIT,
-        updatedAt: now,
-      },
-      $setOnInsert: {
-        accountType: "user",
-        accountId: userId,
-        feature: "tryon",
-        period,
-        createdAt: now,
-      },
-    },
-    { upsert: true }
-  );
-
-  return getMonthlyTryOnUsage(userId, date);
 };

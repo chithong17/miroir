@@ -19,6 +19,14 @@ const toPublicShop = (shop) => ({
   logoUrl: shop.logoUrl || "",
   coverUrl: shop.coverUrl || "",
   contact: shop.contact || {},
+  paymentSettings: shop.paymentSettings || {
+    bankTransferEnabled: false,
+    bankName: "",
+    accountHolder: "",
+    accountNumber: "",
+    qrImageUrl: "",
+    qrImagePublicId: "",
+  },
   status: shop.status,
   createdAt: shop.createdAt,
   updatedAt: shop.updatedAt,
@@ -105,6 +113,14 @@ export const createShop = async ({ ownerId, body }) => {
     logoUrl: cleanString(body.logoUrl),
     coverUrl: cleanString(body.coverUrl),
     contact: body.contact && typeof body.contact === "object" ? body.contact : {},
+    paymentSettings: {
+      bankTransferEnabled: false,
+      bankName: "",
+      accountHolder: "",
+      accountNumber: "",
+      qrImageUrl: "",
+      qrImagePublicId: "",
+    },
     status: ["active", "inactive"].includes(body.status) ? body.status : "active",
     createdAt: now,
     updatedAt: now,
@@ -150,6 +166,26 @@ export const updateShop = async ({ ownerId, shopId, body }) => {
 
   if (body.contact !== undefined) {
     patch.contact = body.contact && typeof body.contact === "object" ? body.contact : {};
+  }
+
+  if (body.paymentSettings !== undefined) {
+    const settings = body.paymentSettings && typeof body.paymentSettings === "object"
+      ? body.paymentSettings
+      : {};
+    const nextSettings = {
+      ...(shop.paymentSettings || {}),
+      bankName: cleanString(settings.bankName ?? shop.paymentSettings?.bankName),
+      accountHolder: cleanString(settings.accountHolder ?? shop.paymentSettings?.accountHolder),
+      accountNumber: cleanString(settings.accountNumber ?? shop.paymentSettings?.accountNumber),
+      qrImageUrl: cleanString(settings.qrImageUrl ?? shop.paymentSettings?.qrImageUrl),
+      qrImagePublicId: cleanString(settings.qrImagePublicId ?? shop.paymentSettings?.qrImagePublicId),
+    };
+    const complete = Boolean(
+      nextSettings.bankName && nextSettings.accountHolder &&
+      nextSettings.accountNumber && nextSettings.qrImageUrl
+    );
+    nextSettings.bankTransferEnabled = Boolean(settings.bankTransferEnabled) && complete;
+    patch.paymentSettings = nextSettings;
   }
 
   if (body.status !== undefined) {

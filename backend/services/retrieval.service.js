@@ -167,7 +167,9 @@ export const retrieveStylistContext = async ({ request, memory }) => {
       (product) =>
         product.status === "published" &&
         product.shopId &&
-        activeShopById.has(product.shopId)
+        activeShopById.has(product.shopId) &&
+        premiumShopIds.has(product.shopId) &&
+        product.variants?.some((variant) => variant.active && variant.stockQuantity > 0)
     )
     .map((product) => {
       const shop = activeShopById.get(product.shopId);
@@ -204,14 +206,14 @@ export const retrieveStylistContext = async ({ request, memory }) => {
   const products = shopFilteredProducts
     .map((product) => ({
       ...product,
-      premiumBoostApplied: premiumShopIds.has(product.shopId),
+      premiumBoostApplied: false,
       rerankScore:
         scoreProduct({
           product,
           request,
           memory,
           reviewSummary: reviewByProductId.get(product.id),
-        }) + (premiumShopIds.has(product.shopId) ? 0.08 : 0),
+        }),
     }))
     .sort((a, b) => b.rerankScore - a.rerankScore)
     .slice(0, 30);

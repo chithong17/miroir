@@ -45,6 +45,20 @@ export const getMongoDb = async () => {
   }
 };
 
+export const withMongoTransaction = async (work) => {
+  await getMongoDb();
+  const session = client.startSession();
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      result = await work(db, session);
+    });
+    return result;
+  } finally {
+    await session.endSession();
+  }
+};
+
 export const closeMongoConnection = async () => {
   if (client) {
     await client.close();

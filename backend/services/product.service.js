@@ -39,6 +39,39 @@ const parsePrice = (value) => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 };
 
+const normalizeVariants = (value) => {
+  if (!Array.isArray(value)) return { variants: undefined, errors: ["variants must be an array."] };
+  const errors = [];
+  const ids = new Set();
+  const skus = new Set();
+  const variants = value.map((item, index) => {
+    const id = cleanString(item?.id) || crypto.randomUUID();
+    const sku = cleanString(item?.sku).toUpperCase();
+    const color = cleanString(item?.color);
+    const size = cleanString(item?.size);
+    const stockQuantity = Number(item?.stockQuantity);
+    if (!sku) errors.push(`variants[${index}].sku is required.`);
+    if (!Number.isInteger(stockQuantity) || stockQuantity < 0) {
+      errors.push(`variants[${index}].stockQuantity must be a non-negative integer.`);
+    }
+    if (ids.has(id)) errors.push(`Duplicate variant id: ${id}.`);
+    if (skus.has(sku)) errors.push(`Duplicate SKU in product: ${sku}.`);
+    ids.add(id);
+    skus.add(sku);
+    return { id, sku, color, size, stockQuantity, active: item?.active !== false };
+  });
+  return { variants, errors };
+};
+
+const applyVariantDerivedFields = (normalized) => {
+  if (!normalized.variants) return;
+  normalized.colors = [...new Set(normalized.variants.map((item) => item.color).filter(Boolean))];
+  normalized.sizes = [...new Set(normalized.variants.map((item) => item.size).filter(Boolean))];
+  normalized.availability = normalized.variants.some(
+    (item) => item.active && item.stockQuantity > 0
+  ) ? "in_stock" : "out_of_stock";
+};
+
 export const productNeedsEmbeddingReset = (body) =>
   EMBEDDING_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field));
 
@@ -50,6 +83,7 @@ export const toPublicProduct = (product) => ({
   description: product.description || "",
   colors: product.colors || [],
   sizes: product.sizes || [],
+  variants: product.variants || [],
   price: product.price,
   gender: product.gender,
   availability: product.availability,
@@ -102,6 +136,13 @@ export const normalizeProductPayload = (body, { partial = false } = {}) => {
     }
   }
 
+  if (body.variants !== undefined) {
+    const result = normalizeVariants(body.variants);
+    errors.push(...result.errors);
+    normalized.variants = result.variants;
+    applyVariantDerivedFields(normalized);
+  }
+
   if (body.gender !== undefined) {
     if (!GENDERS.includes(body.gender)) {
       errors.push(`gender must be one of: ${GENDERS.join(", ")}.`);
@@ -132,7 +173,24 @@ export const normalizeProductPayload = (body, { partial = false } = {}) => {
     errors.push("imageUrl must be a valid http(s) URL.");
   }
 
+  applyVariantDerivedFields(normalized);
+
   return { normalized, errors };
+};
+
+const ensureShopSkusUnique = async ({ db, shopId, productId, variants = [] }) => {
+  const skus = variants.map((item) => item.sku).filter(Boolean);
+  if (!skus.length) return;
+  const existing = await db.collection("products").findOne({
+    shopId,
+    id: { $ne: productId },
+    "variants.sku": { $in: skus },
+  });
+  if (existing) {
+    const error = new Error("SKU must be unique within the shop.");
+    error.statusCode = 409;
+    throw error;
+  }
 };
 
 export const listOwnerProducts = async ({ ownerId, query }) => {
@@ -219,6 +277,7 @@ export const createProduct = async ({ ownerId, body }) => {
   };
 
   const db = await getMongoDb();
+  await ensureShopSkusUnique({ db, shopId, productId: product.id, variants: product.variants });
   const existing = await db.collection("products").findOne({ id: product.id });
 
   if (existing) {
@@ -242,6 +301,15 @@ export const updateProduct = async ({ ownerId, productId, body }) => {
     const error = new Error(errors.join(" "));
     error.statusCode = 400;
     throw error;
+  }
+
+  if (normalized.variants) {
+    await ensureShopSkusUnique({
+      db,
+      shopId: nextShopId,
+      productId: product.id,
+      variants: normalized.variants,
+    });
   }
 
   if (shop.status !== "active" && normalized.status === "published") {

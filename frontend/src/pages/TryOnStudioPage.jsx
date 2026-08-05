@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { getCatalogProduct, listCatalogProducts, submitProductFeedback } from "../api/catalogApi.js";
 import { createCatalogTryOnTask, createCustomTryOnTask, createTryOnTask, getTryOnTaskStatus } from "../api/tryonApi.js";
-import { createUserPayment, getUserMe, getUserToken, listPaymentPlans, setUserToken } from "../api/userApi.js";
-import { AppShell, Button, EmptyState, PageHeader, ProductCard, SegmentedTabs, SelectField, StatusBadge, TextField, TopNav, formatMoney } from "../components/ui/index.jsx";
+import { getUserMe, getUserToken, setUserToken } from "../api/userApi.js";
+import { AppShell, Button, EmptyState, PageHeader, ProductCard, ProductPurchaseActions, SegmentedTabs, SelectField, TextField, TopNav, formatMoney } from "../components/ui/index.jsx";
 import { useLanguage } from "../i18n.jsx";
 
 function TryOnStudioPage() {
@@ -25,14 +25,9 @@ function TryOnStudioPage() {
   const [completedTryOnProductId, setCompletedTryOnProductId] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
-  const [paymentRequired, setPaymentRequired] = useState(false);
-  const [paymentPlans, setPaymentPlans] = useState([]);
   const [feedbackForm, setFeedbackForm] = useState({ rating: "5", fitFeedback: "true_to_size", comment: "" });
   const [feedbackNotice, setFeedbackNotice] = useState("");
-  const userPremiumPlan = paymentPlans.find((plan) => plan.code === "USER_PREMIUM_MONTHLY");
-
   useEffect(() => {
-    listPaymentPlans().then((response) => setPaymentPlans(response.plans || [])).catch(() => setPaymentPlans([]));
     if (!getUserToken()) return;
     getUserMe()
       .then((response) => {
@@ -143,7 +138,6 @@ function TryOnStudioPage() {
 
     setStatus("loading");
     setMessage("");
-    setPaymentRequired(false);
     setResultUrl("");
     setCompletedTryOnProductId("");
     setFeedbackNotice("");
@@ -164,24 +158,10 @@ function TryOnStudioPage() {
         if (lowerFile) formData.append("lowerImage", lowerFile);
         response = await createTryOnTask(formData);
       }
-      if (response.usage) {
-        setUser((previous) => previous ? { ...previous, subscription: { ...(previous.subscription || {}), usage: response.usage } } : previous);
-      }
       await poll(response.taskId, isPlatform ? product.id : "");
     } catch (error) {
       setStatus("error");
-      setPaymentRequired(Boolean(error.response?.data?.subscriptionRequired));
       setMessage(error.response?.data?.message || "Could not start try-on.");
-    }
-  };
-
-  const startPremiumCheckout = async () => {
-    try {
-      setMessage(t("payment.creating"));
-      const response = await createUserPayment();
-      window.location.href = response.checkoutUrl;
-    } catch (error) {
-      setMessage(error.response?.data?.message || t("payment.createError"));
     }
   };
 
@@ -212,20 +192,6 @@ function TryOnStudioPage() {
           description={t("tryon.description")}
           action={<a className="soft-button px-5 py-2" href="/app">{t("tryon.back")}</a>}
         />
-
-        {user ? (
-          <section className="miroir-card mt-5 grid gap-3 sm:mt-6 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
-            <div>
-              <StatusBadge status={user.subscription?.isPremium ? t("app.premium") : t("app.free")} tone={user.subscription?.isPremium ? "success" : "neutral"} />
-              <p className="mt-2 text-sm text-muted">
-                {user.subscription?.isPremium
-                  ? t("tryon.premiumUsage")
-                  : t("tryon.freeUsage", { remaining: user.subscription?.usage?.remaining ?? 5, amount: formatMoney(userPremiumPlan?.amount || 49000) })}
-              </p>
-            </div>
-            {!user.subscription?.isPremium ? <Button className="w-full sm:w-auto" onClick={startPremiumCheckout}>{t("app.upgrade", { amount: formatMoney(userPremiumPlan?.amount || 49000) })}</Button> : null}
-          </section>
-        ) : null}
 
         <section className="mt-5 grid gap-4 sm:mt-6 sm:gap-5 xl:grid-cols-3">
           <StudioPanel eyebrow="01" title={t("tryon.originalPhoto")}>
@@ -278,9 +244,15 @@ function TryOnStudioPage() {
                 {status === "loading" || status === "processing" ? t("tryon.generating") : t("tryon.generate")}
               </Button>
               {message ? <p className={`mt-3 text-sm ${status === "error" ? "text-red-700" : "text-muted"}`}>{message}</p> : null}
-              {paymentRequired ? <Button className="mt-3 w-full" onClick={startPremiumCheckout}>{t("app.upgradePremium")}</Button> : null}
               {status === "completed" && resultUrl && product && completedTryOnProductId === product.id ? (
-                <form onSubmit={sendTryOnFeedback} className="mt-4 grid gap-3 rounded-lg border border-line bg-white/80 p-3">
+                <div className="mt-4 grid gap-4">
+                  <div className="rounded-2xl border border-mintSoft bg-accentSoft p-3">
+                    <p className="text-sm font-black text-ink">Ưng ý với sản phẩm này?</p>
+                    <p className="mt-1 text-xs text-muted">Chọn đúng màu sắc và kích thước trước khi mua.</p>
+                    <ProductPurchaseActions product={product} />
+                    <a className="mt-3 block text-center text-sm font-bold text-mintDeep underline" href={`/app/products/${encodeURIComponent(product.id)}`}>Xem chi tiết sản phẩm</a>
+                  </div>
+                <form onSubmit={sendTryOnFeedback} className="grid gap-3 rounded-lg border border-line bg-white/80 p-3">
                   <p className="text-sm font-bold text-ink">{t("product.feedback")}</p>
                   <SelectField value={feedbackForm.rating} onChange={updateFeedback("rating")}>
                     {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
@@ -295,6 +267,7 @@ function TryOnStudioPage() {
                   <Button type="submit" variant="secondary">{t("common.submitFeedback")}</Button>
                   {feedbackNotice ? <p className="text-xs text-muted">{feedbackNotice}</p> : null}
                 </form>
+                </div>
               ) : null}
             </div>
           </StudioPanel>
@@ -309,7 +282,7 @@ function TryOnStudioPage() {
               </div>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {relatedProducts.map((item) => <ProductCard key={item.id} product={item} onDetail={() => loadProduct(item.id)} onTryOn={() => loadProduct(item.id)} />)}
+              {relatedProducts.map((item) => <ProductCard key={item.id} product={item} onDetail={() => loadProduct(item.id)} onTryOn={() => loadProduct(item.id)} showPurchaseActions />)}
             </div>
           </section>
         ) : null}

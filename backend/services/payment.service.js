@@ -5,7 +5,6 @@ import {
   PLAN_CODES,
   buildSubscriptionSummary,
   getPaymentPlan,
-  getMonthlyTryOnUsage,
 } from "./subscription.service.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -344,14 +343,6 @@ export const getPaymentStatus = async (orderCode) => {
 };
 
 export const getPaymentProfile = async (account) => {
-  if (account.accountType === "user") {
-    return buildSubscriptionSummary({
-      accountType: "user",
-      subscription: account.subscription,
-      usage: await getMonthlyTryOnUsage(account.id),
-    });
-  }
-
   return buildSubscriptionSummary({
     accountType: "shop_owner",
     subscription: account.subscription,
@@ -361,4 +352,4 @@ export const getPaymentProfile = async (account) => {
 export const getCheckoutPlanForAccountType = (accountType) =>
   accountType === "shop_owner"
     ? PLAN_CODES.SHOP_OWNER_MONTHLY
-    : PLAN_CODES.USER_PREMIUM_MONTHLY;
+    : null;

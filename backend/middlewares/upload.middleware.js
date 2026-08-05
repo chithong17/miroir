@@ -27,6 +27,7 @@ export const uploadTryOnImages = upload.fields([
 ]);
 
 export const uploadProductImage = upload.single("image");
+export const uploadOrderAttachments = upload.array("images", 3);
 
 const excelUpload = multer({
   storage,

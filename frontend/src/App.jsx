@@ -3,16 +3,19 @@ import { getAdminToken } from "./api/adminApi.js";
 import AuthPage from "./pages/AuthPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import PaymentResultPage from "./pages/PaymentResultPage.jsx";
+import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 import ProfileOnboardingPage from "./pages/ProfileOnboardingPage.jsx";
 import { getShopToken } from "./api/shopApi.js";
 import ShopDashboardPage from "./pages/ShopDashboardPage.jsx";
 import ShopPublicPage from "./pages/ShopPublicPage.jsx";
 import TryOnStudioPage from "./pages/TryOnStudioPage.jsx";
 import UserAppPage from "./pages/UserAppPage.jsx";
+import CommercePage from "./pages/CommercePage.jsx";
 import { getUserToken } from "./api/userApi.js";
 
 function App() {
-  const pathname = window.location.pathname;
+  const rawPathname = window.location.pathname;
+  const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
 
   if (pathname === "/try-on") {
     return <TryOnStudioPage />;
@@ -47,6 +50,10 @@ function App() {
     return <UserAppPage initialView="products" />;
   }
 
+  if (pathname.startsWith("/app/products/")) {
+    return <ProductDetailPage productId={decodeURIComponent(pathname.split("/").pop())} />;
+  }
+
   if (pathname === "/app/outfits") {
     return <UserAppPage initialView="outfits" />;
   }
@@ -65,6 +72,14 @@ function App() {
 
   if (pathname === "/app/profile") {
     return <UserAppPage initialView="profile" />;
+  }
+
+  if (pathname === "/app/cart") return <CommercePage mode="cart" />;
+  if (pathname === "/app/checkout") return <CommercePage mode="checkout" />;
+  if (pathname === "/app/addresses") return <CommercePage mode="addresses" />;
+  if (pathname === "/app/orders") return <CommercePage mode="orders" />;
+  if (pathname.startsWith("/app/orders/")) {
+    return <CommercePage mode="order" orderId={decodeURIComponent(pathname.split("/").pop())} />;
   }
 
   if (pathname.startsWith("/app/shops/")) {

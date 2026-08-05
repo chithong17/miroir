@@ -1,5 +1,4 @@
 import { getRawShopOwnerById, verifyOwnerToken } from "../services/shopAuth.service.js";
-import { getRawUserById, verifyUserToken } from "../services/userAuth.service.js";
 
 const parseBearerToken = (req) => {
   const authorization = req.get("authorization") || "";
@@ -16,22 +15,6 @@ export const requirePaymentAccount = async (req, res, next) => {
         success: false,
         message: "Bearer token is required.",
       });
-    }
-
-    try {
-      const payload = verifyUserToken(token);
-      if (payload.role === "user" && payload.userId) {
-        const user = await getRawUserById(payload.userId);
-        if (user?.status === "active") {
-          req.paymentAccount = {
-            ...user,
-            accountType: "user",
-          };
-          return next();
-        }
-      }
-    } catch (_error) {
-      // Try shop owner token below.
     }
 
     try {

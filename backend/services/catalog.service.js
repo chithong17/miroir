@@ -23,37 +23,26 @@ const publicShop = (shop) => ({
     email: shop.contact?.email || "",
     phone: shop.contact?.phone || "",
   },
-  profileHidden: false,
-  premiumShopDetailsRequired: false,
 });
 
-const anonymousShop = (shop) => ({
-  id: shop.id,
-  displayName: "MIROIR Shop",
-  logoUrl: "",
-  coverUrl: "",
-  profileHidden: true,
-  premiumShopDetailsRequired: true,
-});
-
-const withShopInfo = (products, shops, { includeShopDetails = false } = {}) => {
+const withShopInfo = (products, shops) => {
   const shopById = new Map(shops.map((shop) => [shop.id, publicShop(shop)]));
   return products.map((product) => ({
     ...toPublicProduct(product),
-    shop: includeShopDetails ? shopById.get(product.shopId) || null : null,
-    premiumShopDetailsRequired: !includeShopDetails,
+    shop: shopById.get(product.shopId) || null,
   }));
 };
 
-export const listCatalogProducts = async (query = {}, { viewerIsPremium = false } = {}) => {
+export const listCatalogProducts = async (query = {}) => {
   const db = await getMongoDb();
   const { page, limit, skip } = pageParams(query);
   const activeShops = await db.collection("shops").find({ status: "active" }).toArray();
-  const activeShopIds = activeShops.map((shop) => shop.id);
+  const activeShopIds = [...await getPremiumShopIds(activeShops.map((shop) => shop.id))];
   const filter = {
     shopId: { $in: activeShopIds },
     status: "published",
     availability: "in_stock",
+    variants: { $elemMatch: { active: true, stockQuantity: { $gt: 0 } } },
   };
   const search = cleanString(query.search);
 
@@ -77,32 +66,21 @@ export const listCatalogProducts = async (query = {}, { viewerIsPremium = false 
     ];
   }
 
-  const premiumShopIds = await getPremiumShopIds(activeShopIds);
   const [total, products] = await Promise.all([
     db.collection("products").countDocuments(filter),
     db
       .collection("products")
       .aggregate([
         { $match: filter },
-        {
-          $addFields: {
-            premiumRank: {
-              $cond: [{ $in: ["$shopId", [...premiumShopIds]] }, 1, 0],
-            },
-          },
-        },
-        { $sort: { premiumRank: -1, updatedAt: -1 } },
+        { $sort: { updatedAt: -1 } },
         { $skip: skip },
         { $limit: limit },
-        { $project: { premiumRank: 0 } },
       ])
       .toArray(),
   ]);
 
   return {
-    products: withShopInfo(products, activeShops, {
-      includeShopDetails: viewerIsPremium,
-    }),
+    products: withShopInfo(products, activeShops),
     pagination: { page, limit, total, totalPages: Math.max(Math.ceil(total / limit), 1) },
   };
 };
@@ -135,13 +113,15 @@ export const listCatalogOutfits = async (query = {}) => {
     ),
   ];
   const products = productIds.length
-    ? await db.collection("products").find({ id: { $in: productIds }, status: "published" }).toArray()
+    ? await db.collection("products").find({ id: { $in: productIds }, status: "published", variants: { $elemMatch: { active: true, stockQuantity: { $gt: 0 } } } }).toArray()
     : [];
   const shopIds = [...new Set(products.map((product) => product.shopId).filter(Boolean))];
+  const activePaidShopIds = await getPremiumShopIds(shopIds);
   const shops = shopIds.length
     ? await db.collection("shops").find({ id: { $in: shopIds }, status: "active" }).toArray()
     : [];
-  const productById = new Map(withShopInfo(products, shops).map((product) => [product.id, product]));
+  const sellableProducts = products.filter((product) => activePaidShopIds.has(product.shopId));
+  const productById = new Map(withShopInfo(sellableProducts, shops).map((product) => [product.id, product]));
 
   return {
     outfits: outfits.map((outfit) => ({
@@ -159,7 +139,7 @@ export const listCatalogOutfits = async (query = {}) => {
   };
 };
 
-export const getCatalogShop = async (shopId, { viewerIsPremium = false } = {}) => {
+export const getCatalogShop = async (shopId) => {
   const db = await getMongoDb();
   const shop = await db.collection("shops").findOne({ id: shopId, status: "active" });
   if (!shop) {
@@ -167,7 +147,13 @@ export const getCatalogShop = async (shopId, { viewerIsPremium = false } = {}) =
     error.statusCode = 404;
     throw error;
   }
-  return viewerIsPremium ? publicShop(shop) : anonymousShop(shop);
+  const activeIds = await getPremiumShopIds([shop.id]);
+  if (!activeIds.has(shop.id)) {
+    const error = new Error("Shop subscription is inactive.");
+    error.statusCode = 404;
+    throw error;
+  }
+  return publicShop(shop);
 };
 
 export const getCatalogProduct = async (productId) => {
@@ -176,6 +162,7 @@ export const getCatalogProduct = async (productId) => {
     id: productId,
     status: "published",
     availability: "in_stock",
+    variants: { $elemMatch: { active: true, stockQuantity: { $gt: 0 } } },
   });
   if (!product) {
     const error = new Error("Product was not found.");
@@ -185,6 +172,12 @@ export const getCatalogProduct = async (productId) => {
   const shop = await db.collection("shops").findOne({ id: product.shopId, status: "active" });
   if (!shop) {
     const error = new Error("Shop was not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+  const activeIds = await getPremiumShopIds([shop.id]);
+  if (!activeIds.has(shop.id)) {
+    const error = new Error("Shop subscription is inactive.");
     error.statusCode = 404;
     throw error;
   }
