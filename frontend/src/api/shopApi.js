@@ -80,6 +80,11 @@ export const listShopProducts = async (params = {}) => {
   return response.data;
 };
 
+export const getShopProduct = async (id) => {
+  const response = await shopClient.get(`/shop-products/${encodeURIComponent(id)}`);
+  return response.data;
+};
+
 export const createProduct = async (payload) => {
   const response = await shopClient.post("/shop-products", payload);
   return response.data;

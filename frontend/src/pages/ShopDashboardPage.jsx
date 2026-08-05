@@ -311,21 +311,11 @@ function ShopDashboardPage() {
       showNotice(t("shopAdmin.activePlanRequired"), "error");
       return;
     }
-    setProductForm({ ...emptyProduct, shopId: shop?.id || "" });
-    setUploadNotice("");
-    setView("products");
-    setIsProductModalOpen(true);
+    window.location.href = "/shop/products/new";
   };
 
   const editProduct = (product) => {
-    if (!hasActiveShopPlan) {
-      showNotice(t("shopAdmin.activePlanRequired"), "error");
-      return;
-    }
-    setProductForm(productToForm(product));
-    setUploadNotice("");
-    setView("products");
-    setIsProductModalOpen(true);
+    window.location.href = `/shop/products/${encodeURIComponent(product.id)}`;
   };
 
   const closeProductModal = () => {
@@ -783,20 +773,6 @@ function ShopDashboardPage() {
         </main>
       </div>
 
-      {isProductModalOpen ? (
-        <ProductModal
-          editingExistingProduct={editingExistingProduct}
-          productForm={productForm}
-          saveProduct={saveProduct}
-          hasActiveShopPlan={hasActiveShopPlan}
-          shop={shop}
-          uploadImage={uploadImage}
-          uploadNotice={uploadNotice}
-          updateProductField={updateProductField}
-          onClose={closeProductModal}
-        />
-      ) : null}
-
       {isBulkEditModalOpen ? (
         <BulkEditModal
           bulkEditForm={bulkEditForm}
@@ -1137,7 +1113,7 @@ function ShopSubscriptionBanner({
                         ) : null}
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-900">{product.name}</p>
+                        <button type="button" className="block max-w-full truncate text-left font-semibold text-slate-900 hover:text-mintDeep hover:underline" onClick={() => editProduct(product)}>{product.name}</button>
                         <p className="truncate text-xs text-slate-500">{product.id}</p>
                       </div>
                     </div>
