@@ -4,6 +4,7 @@ import {
   deleteMyShop,
   listMyShops,
   myShopAnalytics,
+  myShopDashboard,
   myShopInsights,
   updateMyShop,
   uploadMyShopQr,
@@ -17,6 +18,7 @@ const router = Router();
 router.use(requireShopOwner);
 router.get("/me", listMyShops);
 router.get("/me/analytics", requireActiveShopSubscription, myShopAnalytics);
+router.get("/me/dashboard", requireActiveShopSubscription, myShopDashboard);
 router.get("/me/insights", requireActiveShopSubscription, myShopInsights);
 router.post("/me/payment-qr", uploadProductImage, uploadMyShopQr);
 router.post("/", createMyShop);

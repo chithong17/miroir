@@ -27,6 +27,7 @@ class ShopDashboardController extends ChangeNotifier {
   OwnerShop? _shop;
   List<ShopProduct> _products = const [];
   Map<String, dynamic>? _analytics;
+  Map<String, dynamic>? _commerceDashboard;
   Map<String, dynamic>? _insights;
   String _errorMessage = '';
   String _statusMessage = '';
@@ -39,6 +40,7 @@ class ShopDashboardController extends ChangeNotifier {
   OwnerShop? get shop => _shop;
   List<ShopProduct> get products => _products;
   Map<String, dynamic>? get analytics => _analytics;
+  Map<String, dynamic>? get commerceDashboard => _commerceDashboard;
   Map<String, dynamic>? get insights => _insights;
   String get errorMessage => _errorMessage;
   String get statusMessage => _statusMessage;
@@ -90,8 +92,14 @@ class ShopDashboardController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _analytics = await _service.getAnalytics(_token, range: range);
-      _insights = await _service.getInsights(_token, range: range);
+      final results = await Future.wait([
+        _service.getAnalytics(_token, range: range),
+        _service.getInsights(_token, range: range),
+        _service.getDashboard(_token, range: range),
+      ]);
+      _analytics = results[0];
+      _insights = results[1];
+      _commerceDashboard = results[2];
     } catch (error) {
       final apiError = ApiError.from(error);
       _errorMessage = apiError.message;

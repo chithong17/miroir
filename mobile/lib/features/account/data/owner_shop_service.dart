@@ -218,6 +218,23 @@ class OwnerShopService {
     }
   }
 
+  Future<Map<String, dynamic>> getDashboard(
+    String token, {
+    String range = '30d',
+  }) async {
+    try {
+      final response = await _client.instance.get<Map<String, dynamic>>(
+        '/shops/me/dashboard',
+        queryParameters: {'range': range},
+        options: _client.authorizedOptions(token),
+      );
+      final data = response.data ?? const {};
+      return (data['dashboard'] as Map<String, dynamic>?) ?? data;
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
+
   Future<Map<String, dynamic>> getInsights(
     String token, {
     String range = '30d',

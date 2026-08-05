@@ -6,6 +6,7 @@ import {
 } from "../services/shop.service.js";
 import {
   getShopAnalytics,
+  getShopDashboard,
   getShopInsights,
 } from "../services/shopAnalytics.service.js";
 import { uploadImageBuffer } from "../services/cloudinary.service.js";
@@ -91,6 +92,18 @@ export const myShopInsights = async (req, res, next) => {
       range: req.query.range || "30d",
     });
     return res.json({ success: true, insights });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const myShopDashboard = async (req, res, next) => {
+  try {
+    const dashboard = await getShopDashboard({
+      ownerId: req.owner.id,
+      range: req.query.range || "30d",
+    });
+    return res.json({ success: true, dashboard });
   } catch (error) {
     next(error);
   }

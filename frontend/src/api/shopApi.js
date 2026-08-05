@@ -48,6 +48,11 @@ export const getShopAnalytics = async (params = {}) => {
   return response.data;
 };
 
+export const getShopDashboard = async (params = {}) => {
+  const response = await shopClient.get("/shops/me/dashboard", { params });
+  return response.data;
+};
+
 export const getShopInsights = async (params = {}) => {
   const response = await shopClient.get("/shops/me/insights", { params });
   return response.data;

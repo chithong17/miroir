@@ -745,7 +745,7 @@ class _AnalyticsPanel extends StatelessWidget {
             onAction: onLoad,
           )
         else if (selectedIndex == 0)
-          _PerformanceAnalyticsView(data: data)
+          _PerformanceAnalyticsView(data: data, commerce: dashboard.commerceDashboard)
         else
           _CustomerInsightsView(data: data),
       ],
@@ -1625,67 +1625,99 @@ class _RangeSelector extends StatelessWidget {
 }
 
 class _PerformanceAnalyticsView extends StatelessWidget {
-  const _PerformanceAnalyticsView({required this.data});
+  const _PerformanceAnalyticsView({required this.data, required this.commerce});
+
   final Map<String, dynamic> data;
+  final Map<String, dynamic>? commerce;
 
   @override
   Widget build(BuildContext context) {
     final summary = _asMap(data['summary']);
-    final topProducts = _asList(data['topProducts']);
-    final metrics = [
-      _MetricData('Products', _metric(summary, 'totalProducts')),
-      _MetricData('Published', _metric(summary, 'publishedProducts')),
+    final sales = _asMap(commerce?['summary']);
+    final funnel = _asMap(commerce?['funnel']);
+    final inventory = _asMap(commerce?['inventoryHealth']);
+    final engagementProducts = _asList(data['topProducts']);
+    final salesProducts = _asList(commerce?['topProducts']);
+    final engagementMetrics = [
       _MetricData('Views', _metric(summary, 'productViews')),
       _MetricData('Try-ons', _metric(summary, 'tryOnClicks')),
       _MetricData('Stylist', _metric(summary, 'stylistMatches')),
       _MetricData('Feedback', _metric(summary, 'feedbackCount')),
-      _MetricData('Out of stock', _metric(summary, 'outOfStockProducts')),
-      _MetricData('Draft', _metric(summary, 'draftProducts')),
       _MetricData('Conversion', _percent(summary['conversionRate'])),
+      _MetricData('Published', _metric(summary, 'publishedProducts')),
+    ];
+    final salesMetrics = [
+      _MetricData('Collected revenue', _formatMoney(_number(sales['collectedRevenue']))),
+      _MetricData('Projected revenue', _formatMoney(_number(sales['projectedRevenue']))),
+      _MetricData('Orders', _metric(sales, 'totalOrders')),
+      _MetricData('Average order', _formatMoney(_number(sales['averageOrderValue']))),
+      _MetricData('Pending orders', _metric(sales, 'pendingOrders')),
+      _MetricData('Refund value', _formatMoney(_number(sales['refundValue']))),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _AnalyticsHero(
-          title: 'Shop performance',
-          subtitle:
-              'Product views, try-on clicks, and stylist recommendations.',
+          title: 'Performance dashboard',
+          subtitle: 'Sales, customer actions, and AI discovery for this shop.',
         ),
-        const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: metrics.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisExtent: 92,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemBuilder: (context, index) => _MetricCard(metric: metrics[index]),
-        ),
+        const SizedBox(height: 16),
+        const _AnalyticsSectionTitle('Sales overview'),
+        const SizedBox(height: 10),
+        _MetricGrid(metrics: salesMetrics),
         const SizedBox(height: 16),
         SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Top products',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
+              Text('Customer journey', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 14),
+              _FunnelRow(label: 'Views', value: _number(funnel['views'])),
+              _FunnelRow(label: 'Try-ons', value: _number(funnel['tryOns'])),
+              _FunnelRow(label: 'Stylist matches', value: _number(funnel['stylistMatches'])),
+              _FunnelRow(label: 'Orders', value: _number(funnel['orders'])),
+              _FunnelRow(label: 'Paid orders', value: _number(funnel['paidOrders']), isLast: true),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        const _AnalyticsSectionTitle('Product & AI engagement'),
+        const SizedBox(height: 10),
+        _MetricGrid(metrics: engagementMetrics),
+        const SizedBox(height: 16),
+        SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Catalog health', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
               const SizedBox(height: 12),
-              if (topProducts.isEmpty)
-                const Text(
-                  'No analytics events yet.',
-                  style: TextStyle(color: AppColors.muted),
-                )
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _HealthPill('Published', _number(inventory['published'])),
+                  _HealthPill('Draft', _number(inventory['draft'])),
+                  _HealthPill('Out of stock', _number(inventory['outOfStock'])),
+                  _HealthPill('Needs embedding', _number(inventory['needsEmbedding'])),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _SalesProductsCard(products: salesProducts),
+        const SizedBox(height: 16),
+        SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Top products by engagement', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 12),
+              if (engagementProducts.isEmpty)
+                const Text('No analytics events yet.', style: TextStyle(color: AppColors.muted))
               else
-                ...topProducts.map(
-                  (item) => _TopProductAnalyticsTile(data: _asMap(item)),
-                ),
+                ...engagementProducts.map((item) => _TopProductAnalyticsTile(data: _asMap(item))),
             ],
           ),
         ),
@@ -1694,6 +1726,95 @@ class _PerformanceAnalyticsView extends StatelessWidget {
   }
 }
 
+class _MetricGrid extends StatelessWidget {
+  const _MetricGrid({required this.metrics});
+  final List<_MetricData> metrics;
+
+  @override
+  Widget build(BuildContext context) => GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: metrics.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisExtent: 92,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+        ),
+        itemBuilder: (context, index) => _MetricCard(metric: metrics[index]),
+      );
+}
+
+class _AnalyticsSectionTitle extends StatelessWidget {
+  const _AnalyticsSectionTitle(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+      );
+}
+
+class _FunnelRow extends StatelessWidget {
+  const _FunnelRow({required this.label, required this.value, this.isLast = false});
+  final String label;
+  final int value;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700))),
+            Text('$value', style: const TextStyle(fontWeight: FontWeight.w900)),
+          ],
+        ),
+      );
+}
+
+class _HealthPill extends StatelessWidget {
+  const _HealthPill(this.label, this.value);
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) => Chip(
+        label: Text('$label: $value'),
+        backgroundColor: AppColors.accentSoft,
+        side: BorderSide.none,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.ink),
+      );
+}
+
+class _SalesProductsCard extends StatelessWidget {
+  const _SalesProductsCard({required this.products});
+  final List<dynamic> products;
+
+  @override
+  Widget build(BuildContext context) => SectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Best sellers', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            if (products.isEmpty)
+              const Text('No paid orders in this period.', style: TextStyle(color: AppColors.muted))
+            else
+              ...products.map((item) {
+                final product = _asMap(item);
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text((product['name'] ?? 'Product').toString(), style: const TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: Text('${_displayValue(product['quantity'])} sold'),
+                  trailing: Text(_formatMoney(_number(product['collectedRevenue'])), style: const TextStyle(fontWeight: FontWeight.w900)),
+                );
+              }),
+          ],
+        ),
+      );
+}
 class _AnalyticsHero extends StatelessWidget {
   const _AnalyticsHero({required this.title, required this.subtitle});
   final String title;
@@ -1972,6 +2093,11 @@ Map<String, dynamic> _asMap(Object? value) {
 List<dynamic> _asList(Object? value) {
   if (value is List) return value;
   return const [];
+}
+
+int _number(Object? value) {
+  if (value is num) return value.round();
+  return num.tryParse('$value')?.round() ?? 0;
 }
 
 String _metric(Map<String, dynamic> data, String key) {

@@ -51,6 +51,40 @@ const buildDailySeries = (events = [], range = "30d") => {
   return [...buckets.values()];
 };
 
+const buildSalesSeries = (orders = [], range = "30d") => {
+  const days = RANGE_DAYS[normalizeRange(range)];
+  const end = new Date();
+  end.setUTCHours(0, 0, 0, 0);
+  const buckets = new Map();
+
+  for (let offset = days - 1; offset >= 0; offset -= 1) {
+    const date = new Date(end);
+    date.setUTCDate(end.getUTCDate() - offset);
+    const key = toDateKey(date);
+    buckets.set(key, {
+      date: key,
+      orders: 0,
+      collectedRevenue: 0,
+      projectedRevenue: 0,
+      refunds: 0,
+    });
+  }
+
+  orders.forEach((order) => {
+    const bucket = buckets.get(toDateKey(order.createdAt));
+    if (!bucket) return;
+    const total = Number(order.total || 0);
+    bucket.orders += 1;
+    if (order.paymentStatus === "paid") bucket.collectedRevenue += total;
+    if (["cod_pending", "awaiting_transfer", "pending_verification"].includes(order.paymentStatus)) {
+      bucket.projectedRevenue += total;
+    }
+    if (["refund_pending", "refunded"].includes(order.paymentStatus)) bucket.refunds += total;
+  });
+
+  return [...buckets.values()];
+};
+
 const incrementMap = (map, key, amount = 1) => {
   const normalizedKey = String(key || "").trim();
   if (!normalizedKey) return;
@@ -210,6 +244,91 @@ export const getShopAnalytics = async ({ ownerId, range = "30d" }) => {
   };
 };
 
+export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
+  const db = await getMongoDb();
+  const shop = await getOwnerShopOrThrow(ownerId);
+  const normalizedRange = normalizeRange(range);
+  const start = getRangeStart(normalizedRange);
+  const [analytics, orders, products] = await Promise.all([
+    getShopAnalytics({ ownerId, range: normalizedRange }),
+    db.collection("orders").find({ shopId: shop.id, createdAt: { $gte: start } }).sort({ createdAt: -1 }).toArray(),
+    db.collection("products").find({ shopId: shop.id }).toArray(),
+  ]);
+
+  const paymentStatuses = new Map();
+  const orderStatuses = new Map();
+  const productSales = new Map();
+  let collectedRevenue = 0;
+  let projectedRevenue = 0;
+  let refundValue = 0;
+  let completedOrders = 0;
+
+  orders.forEach((order) => {
+    const total = Number(order.total || 0);
+    incrementMap(paymentStatuses, order.paymentStatus || "unknown");
+    incrementMap(orderStatuses, order.orderStatus || "unknown");
+    if (order.paymentStatus === "paid") collectedRevenue += total;
+    if (["cod_pending", "awaiting_transfer", "pending_verification"].includes(order.paymentStatus)) {
+      projectedRevenue += total;
+    }
+    if (["refund_pending", "refunded"].includes(order.paymentStatus)) refundValue += total;
+    if (order.orderStatus === "delivered") completedOrders += 1;
+
+    (order.items || []).forEach((item) => {
+      const key = item.productId || item.name || "unknown";
+      const existing = productSales.get(key) || {
+        productId: item.productId || "",
+        name: item.name || "Product",
+        quantity: 0,
+        orderCount: 0,
+        collectedRevenue: 0,
+      };
+      existing.quantity += Number(item.quantity || 0);
+      existing.orderCount += 1;
+      if (order.paymentStatus === "paid") {
+        existing.collectedRevenue += Number(item.lineTotal || Number(item.unitPrice || 0) * Number(item.quantity || 0));
+      }
+      productSales.set(key, existing);
+    });
+  });
+
+  const inventoryHealth = {
+    total: products.length,
+    published: products.filter((product) => product.status === "published").length,
+    draft: products.filter((product) => product.status === "draft").length,
+    outOfStock: products.filter((product) => product.availability === "out_of_stock").length,
+    needsEmbedding: products.filter((product) => product.embeddingStale || !Array.isArray(product.embedding) || !product.embedding.length).length,
+  };
+
+  return {
+    range: normalizedRange,
+    shop: { id: shop.id, name: shop.name },
+    summary: {
+      totalOrders: orders.length,
+      completedOrders,
+      collectedRevenue,
+      projectedRevenue,
+      refundValue,
+      averageOrderValue: orders.length ? Math.round(collectedRevenue / orders.length) : 0,
+      pendingOrders: orders.filter((order) => ["pending_confirmation", "preparing"].includes(order.orderStatus)).length,
+    },
+    salesSeries: buildSalesSeries(orders, normalizedRange),
+    orderStatusBreakdown: topEntries(orderStatuses, 10),
+    paymentStatusBreakdown: topEntries(paymentStatuses, 10),
+    funnel: {
+      views: analytics.summary.productViews,
+      tryOns: analytics.summary.tryOnClicks,
+      stylistMatches: analytics.summary.stylistMatches,
+      feedback: analytics.summary.feedbackCount,
+      orders: orders.length,
+      paidOrders: orders.filter((order) => order.paymentStatus === "paid").length,
+    },
+    topProducts: [...productSales.values()]
+      .sort((left, right) => right.collectedRevenue - left.collectedRevenue || right.quantity - left.quantity)
+      .slice(0, 10),
+    inventoryHealth,
+  };
+};
 export const getShopInsights = async ({ ownerId, range = "30d" }) => {
   const db = await getMongoDb();
   const shop = await getOwnerShopOrThrow(ownerId);

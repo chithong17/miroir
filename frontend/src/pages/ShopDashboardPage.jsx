@@ -9,6 +9,7 @@ import {
   deleteShop,
   downloadProductImportTemplate,
   getShopAnalytics,
+  getShopDashboard,
   getShopInsights,
   getShopPaymentMe,
   hardDeleteProduct,
@@ -145,6 +146,7 @@ function ShopDashboardPage() {
   const [paymentPlans, setPaymentPlans] = useState([]);
   const [analyticsRange, setAnalyticsRange] = useState("30d");
   const [analytics, setAnalytics] = useState(null);
+  const [commerceDashboard, setCommerceDashboard] = useState(null);
   const [insights, setInsights] = useState(null);
   const [premiumDataStatus, setPremiumDataStatus] = useState("idle");
   const [orders, setOrders] = useState([]);
@@ -252,8 +254,12 @@ function ShopDashboardPage() {
     if (!hasActiveShopPlan) return;
     try {
       setPremiumDataStatus("loading");
-      const response = await getShopAnalytics({ range });
-      setAnalytics(response.analytics);
+      const [analyticsResponse, dashboardResponse] = await Promise.all([
+        getShopAnalytics({ range }),
+        getShopDashboard({ range }),
+      ]);
+      setAnalytics(analyticsResponse.analytics);
+      setCommerceDashboard(dashboardResponse.dashboard);
       setPremiumDataStatus("idle");
     } catch (error) {
       setPremiumDataStatus("error");
@@ -748,6 +754,7 @@ function ShopDashboardPage() {
               hasActiveShopPlan ? (
                 <AnalyticsView
                   analytics={analytics}
+                  commerceDashboard={commerceDashboard}
                   range={analyticsRange}
                   setRange={setAnalyticsRange}
                   status={premiumDataStatus}
@@ -1676,7 +1683,7 @@ function PremiumPaywall({ onCheckout, titleKey }) {
   );
 }
 
-function AnalyticsView({ analytics, range, setRange, status }) {
+function AnalyticsView({ analytics, commerceDashboard, range, setRange, status }) {
   const summary = analytics?.summary || {};
   const timeSeries = analytics?.timeSeries || [];
   const topProducts = analytics?.topProducts || [];
@@ -1693,6 +1700,8 @@ function AnalyticsView({ analytics, range, setRange, status }) {
         </div>
         <RangeControl range={range} setRange={setRange} />
       </div>
+
+      <SalesDashboardSummary dashboard={commerceDashboard} />
 
       <div className="grid gap-3 md:grid-cols-4">
         <Metric label={t("shopAdmin.products")} value={summary.totalProducts ?? 0} />
@@ -1753,6 +1762,47 @@ function AnalyticsView({ analytics, range, setRange, status }) {
             </tbody>
           </table>
         </div>
+      </section>
+    </section>
+  );
+}
+
+function SalesDashboardSummary({ dashboard }) {
+  const summary = dashboard?.summary || {};
+  const funnel = dashboard?.funnel || {};
+  const inventory = dashboard?.inventoryHealth || {};
+  const bestSellers = dashboard?.topProducts || [];
+
+  return (
+    <section className="grid gap-5">
+      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <Metric label="Collected revenue" value={formatMoney(summary.collectedRevenue)} />
+        <Metric label="Projected revenue" value={formatMoney(summary.projectedRevenue)} />
+        <Metric label="Orders" value={summary.totalOrders || 0} />
+        <Metric label="Average order" value={formatMoney(summary.averageOrderValue)} />
+        <Metric label="Pending orders" value={summary.pendingOrders || 0} />
+        <Metric label="Refund value" value={formatMoney(summary.refundValue)} />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="font-bold text-slate-900">Customer journey</h3>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {[["Views", funnel.views], ["Try-ons", funnel.tryOns], ["Stylist", funnel.stylistMatches], ["Feedback", funnel.feedback], ["Orders", funnel.orders], ["Paid", funnel.paidOrders]].map(([label, value]) => <Metric key={label} label={label} value={value || 0} />)}
+          </div>
+        </section>
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h3 className="font-bold text-slate-900">Catalog health</h3>
+          <div className="mt-4 flex flex-wrap gap-2 text-sm font-semibold text-slate-700">
+            <span className="rounded-full bg-mintSoft px-3 py-2">Published: {inventory.published || 0}</span>
+            <span className="rounded-full bg-slate-100 px-3 py-2">Draft: {inventory.draft || 0}</span>
+            <span className="rounded-full bg-amber-50 px-3 py-2">Out of stock: {inventory.outOfStock || 0}</span>
+            <span className="rounded-full bg-red-50 px-3 py-2">Needs embedding: {inventory.needsEmbedding || 0}</span>
+          </div>
+        </section>
+      </div>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 className="font-bold text-slate-900">Best sellers by collected revenue</h3>
+        {!bestSellers.length ? <p className="mt-3 text-sm text-slate-500">No paid orders in this period.</p> : <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead className="text-xs uppercase tracking-[0.1em] text-slate-500"><tr><th className="pb-2">Product</th><th className="pb-2">Sold</th><th className="pb-2">Orders</th><th className="pb-2">Collected revenue</th></tr></thead><tbody>{bestSellers.map((product) => <tr key={product.productId || product.name} className="border-t border-slate-100"><td className="py-3 font-semibold text-slate-900">{product.name}</td><td>{product.quantity}</td><td>{product.orderCount}</td><td className="font-semibold">{formatMoney(product.collectedRevenue)}</td></tr>)}</tbody></table></div>}
       </section>
     </section>
   );
