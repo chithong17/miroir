@@ -124,8 +124,8 @@ class _TryOnPageState extends State<TryOnPage> {
                               ? Stack(
                                   fit: StackFit.expand,
                                   children: [
-                                    Image.network(
-                                      _previewImageUrl,
+                                    Image.asset(
+                                      'assets/images/try-on-bg.png',
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(color: AppColors.elevated),
                                     ),
@@ -558,7 +558,7 @@ class _PreviewPanel extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
-                'Task ${controller.taskId} • ${controller.taskStatus}',
+                'Task ${controller.taskId}  ${controller.taskStatus}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

@@ -13,6 +13,7 @@ class CatalogService {
     String gender = '',
     String minPrice = '',
     String maxPrice = '',
+    String shopId = '',
     int page = 1,
     String? token,
   }) async {
@@ -25,6 +26,7 @@ class CatalogService {
           if (gender.trim().isNotEmpty) 'gender': gender.trim(),
           if (minPrice.trim().isNotEmpty) 'minPrice': minPrice.trim(),
           if (maxPrice.trim().isNotEmpty) 'maxPrice': maxPrice.trim(),
+          if (shopId.trim().isNotEmpty) 'shopId': shopId.trim(),
           'page': page,
         },
         options: token == null || token.isEmpty

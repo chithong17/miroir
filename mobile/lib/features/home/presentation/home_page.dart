@@ -24,23 +24,15 @@ const _featuredTools = [
     subtitle:
         'Describe a vibe and get 5 curated outfits grounded in your current catalog.',
     metric: '5 looks',
-    imageUrl: 'https://picsum.photos/360/260?fashion-tool-1',
+    imageUrl: 'assets/images/ai-stylist.png',
     destination: _MiniFeatureDestination.stylist,
   ),
   _FeatureTool(
     title: 'Virtual Try-On',
     subtitle: 'Upload your photo and preview the outfit composition instantly.',
     metric: 'Live preview',
-    imageUrl: 'https://picsum.photos/360/260?fashion-tool-2',
+    imageUrl: 'assets/images/f-try-on.png',
     destination: _MiniFeatureDestination.tryOn,
-  ),
-  _FeatureTool(
-    title: 'Trending Edit',
-    subtitle:
-        'Fresh combinations built from what your stores already have in stock.',
-    metric: 'Daily refresh',
-    imageUrl: 'https://picsum.photos/360/260?fashion-tool-3',
-    destination: _MiniFeatureDestination.stylist,
   ),
 ];
 
@@ -559,14 +551,23 @@ class _MiniFeatureCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(22),
-                child: Image.network(
-                  tool.imageUrl,
-                  height: 118,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(height: 118, color: AppColors.elevated),
-                ),
+                child: tool.imageUrl.startsWith('http')
+                    ? Image.network(
+                        tool.imageUrl,
+                        height: 118,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            Container(height: 118, color: AppColors.elevated),
+                      )
+                    : Image.asset(
+                        tool.imageUrl,
+                        height: 118,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            Container(height: 118, color: AppColors.elevated),
+                      ),
               ),
               const SizedBox(height: 14),
               Text(
@@ -647,8 +648,8 @@ class _ShoppingPromoCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.network(
-                'https://picsum.photos/800/400?fashion-shopping',
+              Image.asset(
+                'assets/images/shop-bg.png',
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(color: AppColors.elevated),
               ),

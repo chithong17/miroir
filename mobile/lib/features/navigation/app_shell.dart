@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/i18n/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/glass_surface.dart';
 import '../account/presentation/account_page.dart';
@@ -29,12 +30,14 @@ class _AppShellState extends State<AppShell> {
     const AccountPage(),
   ];
 
-  final _items = const [
-    (Icons.home_outlined, Icons.home_rounded, 'Home'),
-    (Icons.checkroom_outlined, Icons.checkroom, 'Try On'),
-    (Icons.auto_awesome_outlined, Icons.auto_awesome, 'Stylist'),
-    (Icons.person_outline, Icons.person, 'Account'),
-  ];
+  List<(IconData, IconData, String)> _getItems(BuildContext context) {
+    return [
+      (Icons.home_outlined, Icons.home_rounded, AppLocalizations.t(context, 'nav.marketplace')),
+      (Icons.checkroom_outlined, Icons.checkroom, AppLocalizations.t(context, 'nav.tryOn')),
+      (Icons.auto_awesome_outlined, Icons.auto_awesome, AppLocalizations.t(context, 'nav.stylist')),
+      (Icons.person_outline, Icons.person, AppLocalizations.t(context, 'nav.account')),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,8 +71,8 @@ class _AppShellState extends State<AppShell> {
           shadowOpacity: 0.34,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
-            children: List.generate(_items.length, (index) {
-              final item = _items[index];
+            children: List.generate(_getItems(context).length, (index) {
+              final item = _getItems(context)[index];
               final isSelected = index == _currentIndex;
               final icon = isSelected ? item.$2 : item.$1;
               final color = isSelected ? Colors.white : AppColors.muted;

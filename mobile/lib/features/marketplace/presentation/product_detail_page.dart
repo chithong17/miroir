@@ -11,6 +11,8 @@ import '../../try_on/presentation/try_on_page.dart';
 import '../data/catalog_models.dart';
 import '../data/catalog_service.dart';
 import 'widgets/product_feedback_card.dart';
+import 'shop_detail_page.dart';
+
 
 class ProductDetailPage extends StatelessWidget {
   const ProductDetailPage({
@@ -541,77 +543,92 @@ class _ShopSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Shop',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ShopDetailPage(shop: shop),
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Seller details attached to this catalog item.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.muted,
+        );
+      },
+      child: SectionCard(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Shop',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
-                  width: 54,
-                  height: 54,
-                  child: shop.logoUrl.isNotEmpty
-                      ? Image.network(
-                          shop.logoUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _shopLogoFallback(),
-                        )
-                      : _shopLogoFallback(),
+                const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.muted),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Seller details attached to this catalog item.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.muted,
+                  ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: SizedBox(
+                    width: 54,
+                    height: 54,
+                    child: shop.logoUrl.isNotEmpty
+                        ? Image.network(
+                            shop.logoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _shopLogoFallback(),
+                          )
+                        : _shopLogoFallback(),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      shop.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    if (shop.slug.isNotEmpty) ...[
-                      const SizedBox(height: 2),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        '@${shop.slug}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.muted,
+                        shop.name,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
                       ),
+                      if (shop.slug.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '@${shop.slug}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.muted,
+                              ),
+                        ),
+                      ],
+                      if (shop.description.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          shop.description,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
-                    if (shop.description.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        shop.description,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
