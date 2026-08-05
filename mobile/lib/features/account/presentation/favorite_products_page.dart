@@ -151,7 +151,7 @@ class _FavoriteProductsPageState extends State<FavoriteProductsPage> {
         crossAxisCount: 2,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        mainAxisExtent: 330,
+        mainAxisExtent: 246,
       ),
       itemCount: _products.length,
       itemBuilder: (context, index) {

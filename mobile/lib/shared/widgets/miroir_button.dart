@@ -18,8 +18,9 @@ class MiroirButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = isSecondary ? AppColors.glassStrong : AppColors.ink;
-    final foreground = isSecondary ? AppColors.ink : Colors.white;
+    final background =
+        isSecondary ? AppColors.accentSoft : AppColors.accentStrong;
+    final foreground = AppColors.ink;
 
     return SizedBox(
       width: double.infinity,
@@ -29,10 +30,10 @@ class MiroirButton extends StatelessWidget {
           elevation: 0,
           backgroundColor: background,
           foregroundColor: foreground,
-          side: isSecondary ? const BorderSide(color: AppColors.glassLine) : null,
-          padding: const EdgeInsets.symmetric(vertical: 15),
+          side: isSecondary ? const BorderSide(color: AppColors.line) : null,
+          padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
           ),
         ),
         child: Row(

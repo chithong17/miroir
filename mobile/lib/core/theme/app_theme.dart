@@ -7,8 +7,8 @@ class AppTheme {
 
   static ThemeData light() {
     const colorScheme = ColorScheme.light(
-      primary: AppColors.ink,
-      secondary: AppColors.accentStrong,
+      primary: AppColors.mossDark,
+      secondary: AppColors.moss,
       surface: AppColors.surface,
       error: Color(0xFFD95D5D),
     );
@@ -95,7 +95,7 @@ class AppTheme {
         ),
         secondaryLabelStyle: const TextStyle(
           color: Colors.white,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           fontSize: 13,
         ),
         side: const BorderSide(color: AppColors.glassLineSoft),
@@ -109,28 +109,28 @@ class AppTheme {
         fillColor: AppColors.glassStrong,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
-          borderSide: const BorderSide(color: AppColors.glassLineSoft),
+          borderSide: const BorderSide(color: AppColors.line),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
-          borderSide: const BorderSide(color: AppColors.glassLineSoft),
+          borderSide: const BorderSide(color: AppColors.line),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
-          borderSide: const BorderSide(color: AppColors.ink, width: 1.2),
+          borderSide: const BorderSide(color: AppColors.mossDark, width: 1.4),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
           borderSide: const BorderSide(color: Color(0xFFD95D5D)),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.ink,
-          backgroundColor: AppColors.glassStrong,
-          side: const BorderSide(color: AppColors.glassLineSoft),
+          backgroundColor: AppColors.surface,
+          side: const BorderSide(color: AppColors.line),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(999),
           ),
@@ -173,3 +173,6 @@ class AppTheme {
     );
   }
 }
+
+
+

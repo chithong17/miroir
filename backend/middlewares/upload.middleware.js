@@ -26,6 +26,11 @@ export const uploadTryOnImages = upload.fields([
   { name: "lowerImage", maxCount: 1 },
 ]);
 
+export const uploadCatalogTryOnImage = upload.fields([
+  { name: "modelImage", maxCount: 1 },
+  { name: "image", maxCount: 1 },
+]);
+
 export const uploadProductImage = upload.single("image");
 
 const excelUpload = multer({
@@ -49,3 +54,4 @@ const excelUpload = multer({
 });
 
 export const uploadProductImportFile = excelUpload.single("file");
+

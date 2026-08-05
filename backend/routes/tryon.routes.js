@@ -8,7 +8,7 @@ import {
 import { requireUser } from "../middlewares/userAuth.middleware.js";
 import { requireUserTryOnAccess } from "../middlewares/subscription.middleware.js";
 import {
-  uploadProductImage,
+  uploadCatalogTryOnImage,
   uploadTryOnImages,
 } from "../middlewares/upload.middleware.js";
 
@@ -19,7 +19,7 @@ router.post(
   "/catalog",
   requireUser,
   requireUserTryOnAccess,
-  uploadProductImage,
+  uploadCatalogTryOnImage,
   createCatalogTryOnTask
 );
 router.post(
@@ -32,3 +32,4 @@ router.post(
 router.get("/:taskId", getTryOnTaskStatus);
 
 export default router;
+

@@ -764,7 +764,7 @@ class _ProductGrid extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        mainAxisExtent: 330,
+        mainAxisExtent: 304,
       ),
       itemBuilder: (context, index) {
         final product = products[index];
@@ -796,7 +796,7 @@ class _ProductGrid extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(18),
                       child: AspectRatio(
-                        aspectRatio: 1.06,
+                        aspectRatio: 1.18,
                         child: product.imageUrl.isNotEmpty
                             ? Image.network(
                                 product.imageUrl,
@@ -837,20 +837,24 @@ class _ProductGrid extends StatelessWidget {
                         letterSpacing: -0.2,
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () => onTryOn(product),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.ink,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(36),
+                          backgroundColor: AppColors.accentStrong,
+                          foregroundColor: AppColors.ink,
+                          minimumSize: const Size.fromHeight(40),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 8,
                           ),
-                          side: BorderSide.none,
+                          elevation: 0,
+                          shadowColor: AppColors.accentStrong.withValues(
+                            alpha: 0.24,
+                          ),
+                          side: const BorderSide(color: AppColors.accentStrong),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(999),
                           ),

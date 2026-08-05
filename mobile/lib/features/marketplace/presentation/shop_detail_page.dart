@@ -248,7 +248,7 @@ class _ShopDetailPageState extends State<ShopDetailPage> {
                   crossAxisCount: 2,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  mainAxisExtent: 330,
+                  mainAxisExtent: 246,
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {

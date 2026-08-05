@@ -23,7 +23,7 @@ class SurfaceIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final background = isDark
-        ? AppColors.ink
+        ? AppColors.glassSelected
         : isGlass
             ? AppColors.glass
             : Colors.white;
@@ -48,9 +48,9 @@ class SurfaceIconButton extends StatelessWidget {
               border: Border.all(color: borderColor),
               boxShadow: [
                 BoxShadow(
-                  color: isDark ? const Color(0x16000000) : AppColors.glassShadow,
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+                  color: isDark ? const Color(0x224B5D35) : AppColors.glassShadow,
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),

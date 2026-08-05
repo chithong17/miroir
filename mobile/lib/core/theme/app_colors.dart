@@ -1,29 +1,34 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color canvas = Color(0xFFF3F6FB);
-  static const Color canvasStrong = Color(0xFFE9EEF6);
+  static const Color mossDark = Color(0xFF94B16F);
+  static const Color moss = Color(0xFFB3D07E);
+  static const Color mossSoft = Color(0xFFBEDA9D);
+  static const Color mossMist = Color(0xFFE4F1D7);
+
+  static const Color canvas = Color(0xFFFFFEFA);
+  static const Color canvasStrong = Color(0xFFF8FAF3);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color panel = Color(0xFFF2F5F9);
-  static const Color elevated = Color(0xFFE4EBF4);
-  static const Color ink = Color(0xFF10131A);
-  static const Color muted = Color(0xFF68707D);
-  static const Color mutedSoft = Color(0xFF8A93A1);
-  static const Color line = Color(0xFFD7DFE9);
-  static const Color accent = Color(0xFFAEDFF2);
-  static const Color accentStrong = Color(0xFF74B9D8);
-  static const Color accentSoft = Color(0xFFE7F5FA);
-  static const Color success = Color(0xFF2D9D78);
+  static const Color panel = Color(0xFFFAFCF5);
+  static const Color elevated = Color(0xFFF2F7EA);
+  static const Color ink = Color(0xFF17210F);
+  static const Color muted = Color(0xFF66705F);
+  static const Color mutedSoft = Color(0xFF9BA891);
+  static const Color line = Color(0xFFE7EEDC);
+  static const Color accent = mossSoft;
+  static const Color accentStrong = mossDark;
+  static const Color accentSoft = mossMist;
+  static const Color success = Color(0xFF5E9C5D);
   static const Color dangerSoft = Color(0xFFFFE7E7);
 
-  static const Color glass = Color(0xCCFFFFFF);
-  static const Color glassStrong = Color(0xE8FFFFFF);
-  static const Color glassSoft = Color(0xB3FFFFFF);
-  static const Color glassLine = Color(0x96FFFFFF);
-  static const Color glassLineSoft = Color(0x54FFFFFF);
-  static const Color glassShadow = Color(0x18101820);
-  static const Color glassHighlight = Color(0xD9FFFFFF);
-  static const Color glassSelected = Color(0xF3111318);
+  static const Color glass = Color(0xE6FFFFFF);
+  static const Color glassStrong = Color(0xFAFFFFFF);
+  static const Color glassSoft = Color(0xDDFDFFF8);
+  static const Color glassLine = Color(0xF2FFFFFF);
+  static const Color glassLineSoft = Color(0xCCFFFFFF);
+  static const Color glassShadow = Color(0x14536B39);
+  static const Color glassHighlight = Color(0xF2FFFFFF);
+  static const Color glassSelected = Color(0xF25D7E3F);
 
   const AppColors._();
 }

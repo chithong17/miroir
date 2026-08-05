@@ -189,8 +189,9 @@ export const createCatalogTryOnTask = async (req, res, next) => {
     const { product } = await getCatalogProduct(productId);
     let modelInput = user?.profile?.modelImageUrl || "";
 
-    if (req.file) {
-      const uploaded = await uploadImageBuffer(req.file.buffer, req.file.originalname);
+    const uploadedModelFile = req.files?.modelImage?.[0] || req.files?.image?.[0];
+    if (uploadedModelFile) {
+      const uploaded = await uploadImageBuffer(uploadedModelFile.buffer, uploadedModelFile.originalname);
       modelInput = uploaded.secure_url;
     }
 
@@ -377,3 +378,5 @@ export const getTryOnTaskStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+

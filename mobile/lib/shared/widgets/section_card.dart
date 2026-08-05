@@ -36,9 +36,9 @@ class SectionCard extends StatelessWidget {
         borderRadius: resolvedRadius,
         boxShadow: [
           BoxShadow(
-            color: isGlass ? AppColors.glassShadow : const Color(0x0F111318),
-            blurRadius: isGlass ? 28 : 18,
-            offset: Offset(0, isGlass ? 14 : 8),
+            color: isGlass ? AppColors.glassShadow : const Color(0x0D536B39),
+            blurRadius: isGlass ? 18 : 12,
+            offset: Offset(0, isGlass ? 7 : 5),
           ),
         ],
       ),
@@ -58,6 +58,7 @@ class SectionCard extends StatelessWidget {
                       end: Alignment.bottomRight,
                       colors: [
                         AppColors.glassStrong,
+                        AppColors.glassSoft,
                         AppColors.glass,
                       ],
                     )

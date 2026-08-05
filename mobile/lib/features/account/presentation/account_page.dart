@@ -25,12 +25,12 @@ class AccountPage extends StatelessWidget {
         final user = session.currentUser;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFFAFBFC),
+          backgroundColor: AppColors.canvas,
           body: CustomScrollView(
             slivers: [
               SliverAppBar(
                 expandedHeight: 120,
-                backgroundColor: const Color(0xFFFAFBFC),
+                backgroundColor: AppColors.canvas,
                 elevation: 0,
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
@@ -300,7 +300,7 @@ class _SubscriptionSummary extends StatelessWidget {
 
     return SectionCard(
       padding: const EdgeInsets.all(24),
-      color: isPremium ? AppColors.ink : Colors.white,
+      color: isPremium ? AppColors.glassSelected : Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -318,7 +318,7 @@ class _SubscriptionSummary extends StatelessWidget {
                   isPremium
                       ? Icons.workspace_premium_rounded
                       : Icons.star_border_rounded,
-                  color: isPremium ? Colors.amber : AppColors.ink,
+                  color: isPremium ? AppColors.mossSoft : AppColors.ink,
                   size: 28,
                 ),
               ),
@@ -440,3 +440,4 @@ class _MenuItem {
   final VoidCallback onTap;
   final bool isDestructive;
 }
+
