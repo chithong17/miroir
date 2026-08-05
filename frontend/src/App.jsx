@@ -7,6 +7,7 @@ import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 import ProfileOnboardingPage from "./pages/ProfileOnboardingPage.jsx";
 import { getShopToken } from "./api/shopApi.js";
 import ShopDashboardPage from "./pages/ShopDashboardPage.jsx";
+import ShopProductWorkspacePage from "./pages/ShopProductWorkspacePage.jsx";
 import ShopPublicPage from "./pages/ShopPublicPage.jsx";
 import TryOnStudioPage from "./pages/TryOnStudioPage.jsx";
 import UserAppPage from "./pages/UserAppPage.jsx";
@@ -97,6 +98,10 @@ function App() {
 
   if (pathname === "/shop/dashboard") {
     return <ShopDashboardPage />;
+  }
+
+  if (pathname.startsWith("/shop/products/")) {
+    return <ShopProductWorkspacePage productId={decodeURIComponent(pathname.split("/").pop())} />;
   }
 
   if (pathname === "/admin/login") {
