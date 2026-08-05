@@ -5,8 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_pill.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
+import '../../../shared/widgets/section_card.dart';
 import '../../../shared/widgets/surface_icon_button.dart';
-import '../../payments/presentation/premium_paywall_sheet.dart';
 import '../data/stylist_models.dart';
 import 'controllers/stylist_controller.dart';
 
@@ -18,8 +18,6 @@ class StylistPage extends StatefulWidget {
 }
 
 class _StylistPageState extends State<StylistPage> {
-  static const _heroImageUrl = 'https://picsum.photos/700/520?stylist-fashion';
-
   final _controller = StylistController();
   final _formKey = GlobalKey<FormState>();
   final _promptController = TextEditingController();
@@ -46,31 +44,28 @@ class _StylistPageState extends State<StylistPage> {
     super.dispose();
   }
 
+  void _usePromptSuggestion(String value) {
+    setState(() {
+      _promptController.text = value;
+      _promptController.selection = TextSelection.collapsed(offset: value.length);
+    });
+  }
+
   Future<void> _submit() async {
     final session = AppSessionScope.of(context);
     if (!session.isSignedIn) {
       session.openLogin();
       return;
     }
-    if (!session.isPremium) {
-      await showPremiumPaywall(
-        context,
-        session: session,
-        reason: 'AI Stylist is a Premium feature. Upgrade to generate grounded outfit boards.',
-      );
-      return;
-    }
 
     final form = _formKey.currentState;
-    if (form == null || !form.validate()) {
-      return;
-    }
+    if (form == null || !form.validate()) return;
 
     await _controller.submit(
       StylistRequest(
         prompt: _promptController.text,
         userId: _userIdController.text.trim().isEmpty
-            ? AppSessionScope.of(context).currentUser?.id ?? ''
+            ? session.currentUser?.id ?? ''
             : _userIdController.text,
         gender: _gender,
         skinTone: _skinToneController.text,
@@ -102,196 +97,250 @@ class _StylistPageState extends State<StylistPage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFF9FBFE),
-                  AppColors.canvas,
-                  AppColors.canvasStrong,
-                ],
+                colors: [Color(0xFFF9FBF3), AppColors.canvas, AppColors.canvasStrong],
               ),
             ),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 132),
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 132),
               children: [
-            Row(
-              children: [
-                SurfaceIconButton(
-                  icon: Icons.arrow_back_ios_new_rounded,
-                  onPressed: Navigator.of(context).canPop() ? () => Navigator.of(context).maybePop() : null,
-                ),
-                const Spacer(),
-                Text('AI Stylist', style: textTheme.titleLarge),
-                const Spacer(),
-                const GlassPill(label: 'Live', icon: Icons.auto_awesome_rounded),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _StylistHeroCard(textTheme: textTheme),
-            const SizedBox(height: 14),
-            GlassSurface(
-              radius: 32,
-              blurSigma: 20,
-              padding: const EdgeInsets.all(18),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Describe the look', style: textTheme.headlineSmall),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Turn a mood, silhouette, or occasion into five grounded outfit suggestions.',
-                                style: textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const GlassPill(label: '5 looks', icon: Icons.bolt_rounded),
-                      ],
+                    SurfaceIconButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _promptController,
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: 'Prompt',
-                        hintText: 'Elegant dinner look with soft neutrals, modern lines, and a refined finish.',
+                    Expanded(
+                      child: Center(
+                        child: Text('AI Stylist', style: textTheme.titleLarge),
                       ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Prompt is required.';
-                        }
-                        return null;
-                      },
                     ),
-                    const SizedBox(height: 12),
-                    GlassSurface(
-                      radius: 24,
-                      blurSigma: 14,
-                      color: AppColors.glassSoft,
-                      borderColor: AppColors.glassLineSoft,
-                      padding: EdgeInsets.zero,
-                      shadowOpacity: 0.4,
-                      child: Theme(
-                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                        child: ExpansionTile(
-                          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          title: const Text('Optional profile'),
-                          subtitle: const Text('Budget, shape, tone, and style preferences'),
+                    const GlassPill(label: 'Live', icon: Icons.auto_awesome_rounded),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const _StylistHero(),
+                const SizedBox(height: 24),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      SectionCard(
+                        radius: 30,
+                        color: AppColors.surface,
+                        borderColor: AppColors.line,
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TextFormField(
-                              controller: _userIdController,
-                              decoration: const InputDecoration(labelText: 'User ID'),
-                            ),
-                            const SizedBox(height: 12),
-                            DropdownButtonFormField<String>(
-                              initialValue: _gender,
-                              decoration: const InputDecoration(labelText: 'Gender'),
-                              items: const [
-                                DropdownMenuItem(value: '', child: Text('Any')),
-                                DropdownMenuItem(value: 'female', child: Text('Female')),
-                                DropdownMenuItem(value: 'male', child: Text('Male')),
-                                DropdownMenuItem(value: 'unisex', child: Text('Unisex')),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accentSoft,
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: const Icon(Icons.edit_outlined),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Describe the look', style: textTheme.titleLarge),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Share your vibe, silhouette, or occasion.',
+                                        style: textTheme.bodyMedium?.copyWith(color: AppColors.muted),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _gender = value ?? '';
-                                });
+                            ),
+                            const SizedBox(height: 20),
+                            TextFormField(
+                              controller: _promptController,
+                              minLines: 4,
+                              maxLines: 5,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: const InputDecoration(
+                                hintText: 'Describe your look...',
+                                alignLabelWithHint: true,
+                                suffixIcon: Padding(
+                                  padding: EdgeInsets.only(bottom: 12),
+                                  child: Icon(Icons.auto_awesome_rounded),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Tell the stylist what you are looking for.';
+                                }
+                                return null;
                               },
                             ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _skinToneController,
-                              decoration: const InputDecoration(labelText: 'Skin Tone'),
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _bodyShapeController,
-                              decoration: const InputDecoration(labelText: 'Body Shape'),
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _stylePreferencesController,
-                              decoration: const InputDecoration(
-                                labelText: 'Style Preferences',
-                                hintText: 'Minimalist, elegant, monochrome',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
+                            const SizedBox(height: 16),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _budgetMinController,
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    decoration: const InputDecoration(labelText: 'Budget Min'),
+                                _PromptSuggestion(
+                                  label: 'Date night',
+                                  icon: Icons.calendar_month_outlined,
+                                  onTap: () => _usePromptSuggestion(
+                                    'A refined date night look with elegant layers and warm neutral colors.',
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _budgetMaxController,
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    decoration: const InputDecoration(labelText: 'Budget Max'),
+                                _PromptSuggestion(
+                                  label: 'Weekend',
+                                  icon: Icons.coffee_outlined,
+                                  onTap: () => _usePromptSuggestion(
+                                    'A relaxed weekend brunch look that feels polished and comfortable.',
+                                  ),
+                                ),
+                                _PromptSuggestion(
+                                  label: 'Office',
+                                  icon: Icons.business_center_outlined,
+                                  onTap: () => _usePromptSuggestion(
+                                    'A modern office outfit with clean tailoring and versatile pieces.',
+                                  ),
+                                ),
+                                _PromptSuggestion(
+                                  label: 'Vacation',
+                                  icon: Icons.flight_takeoff_outlined,
+                                  onTap: () => _usePromptSuggestion(
+                                    'A light vacation look for warm weather and a full day of walking.',
                                   ),
                                 ),
                               ],
-                            ),
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _feedbackController,
-                              maxLines: 3,
-                              decoration: const InputDecoration(labelText: 'Feedback / Notes'),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    MiroirButton(
-                      label: _controller.state == StylistViewState.loading ? 'Generating...' : 'Generate 5 Outfits',
-                      onPressed: _controller.state == StylistViewState.loading ? null : () => _submit(),
-                      icon: Icons.auto_awesome,
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      SectionCard(
+                        radius: 26,
+                        color: AppColors.surface,
+                        borderColor: AppColors.line,
+                        padding: EdgeInsets.zero,
+                        child: Theme(
+                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          child: ExpansionTile(
+                            tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                            childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                            leading: Container(
+                              width: 46,
+                              height: 46,
+                              decoration: BoxDecoration(
+                                color: AppColors.accentSoft,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(Icons.person_outline_rounded),
+                            ),
+                            title: const Text('Optional profile'),
+                            subtitle: const Text('Budget, shape, tone and style preferences'),
+                            children: [
+                              TextFormField(
+                                controller: _userIdController,
+                                decoration: const InputDecoration(labelText: 'User ID'),
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                initialValue: _gender,
+                                decoration: const InputDecoration(labelText: 'Gender'),
+                                items: const [
+                                  DropdownMenuItem(value: '', child: Text('Any')),
+                                  DropdownMenuItem(value: 'female', child: Text('Female')),
+                                  DropdownMenuItem(value: 'male', child: Text('Male')),
+                                  DropdownMenuItem(value: 'unisex', child: Text('Unisex')),
+                                ],
+                                onChanged: (value) => setState(() => _gender = value ?? ''),
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _skinToneController,
+                                decoration: const InputDecoration(labelText: 'Skin tone'),
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _bodyShapeController,
+                                decoration: const InputDecoration(labelText: 'Body shape'),
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _stylePreferencesController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Style preferences',
+                                  hintText: 'Minimalist, elegant, monochrome',
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _budgetMinController,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      decoration: const InputDecoration(labelText: 'Budget min'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: _budgetMaxController,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      decoration: const InputDecoration(labelText: 'Budget max'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _feedbackController,
+                                maxLines: 3,
+                                decoration: const InputDecoration(labelText: 'Feedback or notes'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      MiroirButton(
+                        label: _controller.state == StylistViewState.loading
+                            ? 'Generating...'
+                            : 'Generate outfits',
+                        onPressed: _controller.state == StylistViewState.loading ? null : _submit,
+                        icon: Icons.auto_awesome_rounded,
+                      ),
+                      const SizedBox(height: 14),
+                      const _PrivacyNotice(),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-            if (_controller.feedbackMessage.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              GlassSurface(
-                radius: 24,
-                blurSigma: 14,
-                child: Text(_controller.feedbackMessage),
-              ),
-            ],
-            if (_controller.errorMessage.isNotEmpty && _controller.state == StylistViewState.error) ...[
-              const SizedBox(height: 14),
-              GlassSurface(
-                radius: 24,
-                blurSigma: 14,
-                color: AppColors.dangerSoft.withValues(alpha: 0.92),
-                borderColor: const Color(0xFFFFD1D1),
-                child: Text(
-                  _controller.errorMessage,
-                  style: const TextStyle(color: Colors.redAccent),
+                if (_controller.feedbackMessage.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  GlassSurface(radius: 24, child: Text(_controller.feedbackMessage)),
+                ],
+                if (_controller.errorMessage.isNotEmpty && _controller.state == StylistViewState.error) ...[
+                  const SizedBox(height: 16),
+                  GlassSurface(
+                    radius: 24,
+                    color: AppColors.dangerSoft,
+                    borderColor: const Color(0xFFFFD1D1),
+                    child: Text(
+                      _controller.errorMessage,
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                _ResultSection(
+                  controller: _controller,
+                  userId: AppSessionScope.of(context).currentUser?.id ?? _userIdController.text,
+                  token: AppSessionScope.of(context).authToken,
                 ),
-              ),
-            ],
-            const SizedBox(height: 14),
-            _ResultSection(
-              controller: _controller,
-              userId: AppSessionScope.of(context).currentUser?.id ?? _userIdController.text,
-              token: AppSessionScope.of(context).authToken,
-            ),
               ],
             ),
           ),
@@ -301,17 +350,15 @@ class _StylistPageState extends State<StylistPage> {
   }
 }
 
-class _StylistHeroCard extends StatelessWidget {
-  const _StylistHeroCard({required this.textTheme});
-
-  final TextTheme textTheme;
+class _StylistHero extends StatelessWidget {
+  const _StylistHero();
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(34),
+      borderRadius: BorderRadius.circular(32),
       child: SizedBox(
-        height: 256,
+        height: 390,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -323,44 +370,42 @@ class _StylistHeroCard extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                   colors: [
-                    Colors.white.withValues(alpha: 0.08),
+                    AppColors.ink.withValues(alpha: 0.78),
+                    AppColors.ink.withValues(alpha: 0.34),
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.55),
                   ],
                 ),
               ),
             ),
-            const Positioned(
-              top: 16,
-              left: 16,
-              child: GlassPill(label: 'Curated by AI', icon: Icons.auto_awesome_rounded),
-            ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: GlassSurface(
-                radius: 28,
-                blurSigma: 18,
-                color: AppColors.glassSoft,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Build your next iconic look',
-                      style: textTheme.headlineSmall?.copyWith(color: AppColors.ink),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Your style,\nreimagined',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 38,
+                      fontWeight: FontWeight.w800,
+                      height: 1.04,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Describe a vibe, silhouette, or occasion and let the backend return grounded outfit recommendations.',
-                      style: textTheme.bodyMedium?.copyWith(color: AppColors.ink.withValues(alpha: 0.82)),
+                  ),
+                  const SizedBox(height: 14),
+                  const SizedBox(
+                    width: 244,
+                    child: Text(
+                      'Describe your vibe and receive grounded outfit ideas tailored for you.',
+                      style: TextStyle(color: Colors.white, fontSize: 16, height: 1.45),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 18),
+                  const GlassPill(label: 'Curated by AI', icon: Icons.auto_awesome_rounded),
+                ],
               ),
             ),
           ],
@@ -370,6 +415,42 @@ class _StylistHeroCard extends StatelessWidget {
   }
 }
 
+class _PromptSuggestion extends StatelessWidget {
+  const _PromptSuggestion({required this.label, required this.icon, required this.onTap});
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      onPressed: onTap,
+      avatar: Icon(icon, size: 18, color: AppColors.ink),
+      label: Text(label),
+      side: const BorderSide(color: AppColors.line),
+      backgroundColor: AppColors.accentSoft,
+      labelStyle: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w600),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+    );
+  }
+}
+
+class _PrivacyNotice extends StatelessWidget {
+  const _PrivacyNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.verified_user_outlined, size: 18, color: AppColors.accentStrong),
+        SizedBox(width: 8),
+        Text('Your inputs are private and secure'),
+      ],
+    );
+  }
+}
 class _ResultSection extends StatelessWidget {
   const _ResultSection({required this.controller, required this.userId, required this.token});
 

@@ -36,7 +36,9 @@ function AuthPage({ mode = "login" }) {
       const response = await registerUser(form);
       setUserToken(response.token);
       const user = response.user;
-      window.location.href = user.profileCompleted || user.profileSkipped ? "/app" : "/onboarding/profile";
+      const returnTo = sessionStorage.getItem("miroir_after_login");
+      sessionStorage.removeItem("miroir_after_login");
+      window.location.href = user.profileCompleted || user.profileSkipped ? (returnTo || "/app") : "/onboarding/profile";
     } catch (error) {
       setStatus("error");
       setMessage(error.response?.data?.message || t("auth.error"));
@@ -137,7 +139,9 @@ const loginAnyRole = async ({ email, password }) => {
     resetAllTokens();
     setUserToken(response.token);
     const user = response.user;
-    window.location.href = user.profileCompleted || user.profileSkipped ? "/app" : "/onboarding/profile";
+    const returnTo = sessionStorage.getItem("miroir_after_login");
+    sessionStorage.removeItem("miroir_after_login");
+    window.location.href = user.profileCompleted || user.profileSkipped ? (returnTo || "/app") : "/onboarding/profile";
     return;
   } catch (_error) {
     // Try shop owner next.

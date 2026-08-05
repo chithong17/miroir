@@ -8,6 +8,8 @@ import {
   getShopAnalytics,
   getShopInsights,
 } from "../services/shopAnalytics.service.js";
+import { uploadImageBuffer } from "../services/cloudinary.service.js";
+import { getSingleOwnerShop } from "../services/shop.service.js";
 
 export const listMyShops = async (req, res, next) => {
   try {
@@ -92,4 +94,19 @@ export const myShopInsights = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+export const uploadMyShopQr = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: "QR image is required." });
+    const shop = await getSingleOwnerShop(req.owner.id);
+    if (!shop) return res.status(404).json({ success: false, message: "Shop was not found." });
+    const uploaded = await uploadImageBuffer(req.file.buffer, req.file.originalname);
+    const updated = await updateShop({
+      ownerId: req.owner.id,
+      shopId: shop.id,
+      body: { paymentSettings: { ...(shop.paymentSettings || {}), qrImageUrl: uploaded.secure_url, qrImagePublicId: uploaded.public_id } },
+    });
+    return res.json({ success: true, shop: updated, qrImageUrl: uploaded.secure_url, qrImagePublicId: uploaded.public_id });
+  } catch (error) { next(error); }
 };

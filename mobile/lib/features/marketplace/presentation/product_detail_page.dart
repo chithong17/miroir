@@ -6,7 +6,7 @@ import '../../../shared/widgets/glass_pill.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/section_card.dart';
-import '../../payments/presentation/premium_paywall_sheet.dart';
+import '../../commerce/presentation/commerce_pages.dart';
 import '../../try_on/presentation/try_on_page.dart';
 import '../data/catalog_models.dart';
 import '../data/catalog_service.dart';
@@ -200,9 +200,6 @@ class ProductDetailPage extends StatelessWidget {
                         if (shop != null) ...[
                           const SizedBox(height: 28),
                           _ShopSection(shop: shop),
-                        ] else if (product.premiumShopDetailsRequired) ...[
-                          const SizedBox(height: 28),
-                          _PremiumShopHint(product: product),
                         ],
                         const SizedBox(height: 28),
                         ProductFeedbackCard(product: product),
@@ -292,9 +289,9 @@ class ProductDetailPage extends StatelessWidget {
               Expanded(
                 flex: 1,
                 child: MiroirButton(
-                  label: 'Try On',
-                  onPressed: () => _openTryOn(context),
-                  icon: Icons.checkroom_rounded,
+                  label: 'Add to cart',
+                  onPressed: () => showAddToCartSheet(context, product),
+                  icon: Icons.shopping_bag_outlined,
                 ),
               ),
             ],
@@ -339,16 +336,6 @@ class ProductDetailPage extends StatelessWidget {
             ],
           );
         },
-      );
-      return;
-    }
-
-    if (session.isTryOnQuotaExhausted) {
-      showPremiumPaywall(
-        context,
-        session: session,
-        reason:
-            'You have used all free try-on credits this month. Upgrade to open Studio without limits.',
       );
       return;
     }
@@ -706,60 +693,6 @@ class _ProductImageFallback extends StatelessWidget {
     );
   }
 }
-
-class _PremiumShopHint extends StatelessWidget {
-  const _PremiumShopHint({required this.product});
-
-  final CatalogProduct product;
-
-  @override
-  Widget build(BuildContext context) {
-    final session = AppSessionScope.of(context);
-    return SectionCard(
-      padding: const EdgeInsets.all(18),
-      color: const Color(0xFFF7F9FC),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Shop details are Premium',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Upgrade to view shop name, contact details, and more trusted buying context.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.muted,
-                ),
-          ),
-          const SizedBox(height: 14),
-          MiroirButton(
-            label:
-                session.isSignedIn ? 'Upgrade to Premium' : 'Login to unlock',
-            onPressed: () {
-              if (!session.isSignedIn) {
-                Navigator.of(context).maybePop();
-                session.openLogin();
-                return;
-              }
-              showPremiumPaywall(
-                context,
-                session: session,
-                reason: 'Premium unlocks shop details and unlimited try-on.',
-              );
-            },
-            icon: Icons.workspace_premium_rounded,
-            isSecondary: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 
 String _formatMoney(double value) {
   final rounded = value.round().toString();

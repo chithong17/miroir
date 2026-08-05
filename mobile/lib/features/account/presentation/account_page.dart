@@ -7,7 +7,7 @@ import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../../core/i18n/app_localizations.dart';
-import '../../payments/presentation/premium_paywall_sheet.dart';
+import '../../commerce/presentation/commerce_pages.dart';
 import 'favorite_products_page.dart';
 import 'owner_center_page.dart';
 
@@ -76,11 +76,10 @@ class AccountPage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          _MenuItem(
-                            icon: Icons.history_rounded,
-                            label: 'Try-On History',
-                            onTap: () {},
-                          ),
+                          _MenuItem(icon: Icons.shopping_bag_outlined, label: 'My bag', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartPage()))),
+                          _MenuItem(icon: Icons.receipt_long_outlined, label: 'My orders', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OrdersPage()))),
+                          _MenuItem(icon: Icons.location_on_outlined, label: 'Addresses', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddressesPage()))),
+                          _MenuItem(icon: Icons.notifications_none_rounded, label: 'Notifications', onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationsPage()))),
                           _MenuItem(
                             icon: Icons.storefront_rounded,
                             label: 'Owner Center',
@@ -287,84 +286,27 @@ class _SubscriptionSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = session.currentUser;
-    final subscription = user?.subscription;
-    final usage = subscription?.usage;
-    final isPremium = subscription?.isPremium ?? false;
-
-    final quotaText = isPremium
-        ? 'Unlimited try-on previews'
-        : usage == null
-            ? 'Free plan: 5 try-on previews'
-            : '${usage.remaining ?? 0}/${usage.limit ?? 5} free try-on previews left';
-
     return SectionCard(
       padding: const EdgeInsets.all(24),
-      color: isPremium ? AppColors.glassSelected : Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      color: AppColors.accentSoft.withValues(alpha: 0.5),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isPremium
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : AppColors.canvas,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  isPremium
-                      ? Icons.workspace_premium_rounded
-                      : Icons.star_border_rounded,
-                  color: isPremium ? AppColors.mossSoft : AppColors.ink,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isPremium ? 'Premium Active' : 'Free Account',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: isPremium ? Colors.white : AppColors.ink,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      quotaText,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isPremium ? Colors.white70 : AppColors.muted,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.auto_awesome_rounded, color: AppColors.accentStrong),
           ),
-          if (!isPremium) ...[
-            const SizedBox(height: 24),
-            MiroirButton(
-              label: 'Upgrade to Premium',
-              onPressed: () => showPremiumPaywall(
-                context,
-                session: session,
-                reason:
-                    'Premium unlocks unlimited try-on, AI Stylist, and shop details.',
-              ),
-              icon: Icons.workspace_premium_rounded,
-            ),
-          ],
+          const SizedBox(width: 16),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('MIROIR access', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text('Try-On, AI Stylist, and shop details are available with your account.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.muted, height: 1.4)),
+          ])),
         ],
       ),
     );
   }
 }
-
 class _MenuSection extends StatelessWidget {
   const _MenuSection({required this.title, required this.items});
   final String title;

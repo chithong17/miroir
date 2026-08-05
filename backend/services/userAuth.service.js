@@ -2,10 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { getMongoDb } from "./mongo.service.js";
-import {
-  buildSubscriptionSummary,
-  getMonthlyTryOnUsage,
-} from "./subscription.service.js";
+import { buildSubscriptionSummary, getPremiumShopIds } from "./subscription.service.js";
 
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const cleanString = (value) => String(value || "").trim();
@@ -19,7 +16,7 @@ const getJwtSecret = () => {
   return process.env.JWT_SECRET;
 };
 
-export const toPublicUser = (user, usage = null) => ({
+export const toPublicUser = (user) => ({
   id: user.id,
   email: user.email,
   name: user.name,
@@ -31,7 +28,6 @@ export const toPublicUser = (user, usage = null) => ({
   subscription: buildSubscriptionSummary({
     accountType: "user",
     subscription: user.subscription,
-    usage,
   }),
   createdAt: user.createdAt,
   updatedAt: user.updatedAt,
@@ -89,7 +85,7 @@ export const registerUser = async ({ email, password, name }) => {
   };
 
   await db.collection("users").insertOne(user);
-  return { user: toPublicUser(user, await getMonthlyTryOnUsage(user.id)), token: signUserToken(user) };
+  return { user: toPublicUser(user), token: signUserToken(user) };
 };
 
 export const loginUser = async ({ email, password }) => {
@@ -116,7 +112,7 @@ export const loginUser = async ({ email, password }) => {
     throw error;
   }
 
-  return { user: toPublicUser(user, await getMonthlyTryOnUsage(user.id)), token: signUserToken(user) };
+  return { user: toPublicUser(user), token: signUserToken(user) };
 };
 
 export const getRawUserById = async (userId) => {
@@ -126,7 +122,7 @@ export const getRawUserById = async (userId) => {
 
 export const getUserById = async (userId) => {
   const user = await getRawUserById(userId);
-  return user ? toPublicUser(user, await getMonthlyTryOnUsage(user.id)) : null;
+  return user ? toPublicUser(user) : null;
 };
 
 const toPositiveNumber = (value) => {
@@ -218,6 +214,14 @@ export const toggleUserFavoriteProduct = async (userId, productId) => {
   const favoriteProductIds = user.favoriteProductIds || [];
   const isFavorited = favoriteProductIds.includes(productId);
 
+  if (!isFavorited) {
+    const product = await db.collection("products").findOne({ id: productId, status: "published", variants: { $elemMatch: { active: true, stockQuantity: { $gt: 0 } } } });
+    const activeShopIds = product ? await getPremiumShopIds([product.shopId]) : new Set();
+    if (!product || !activeShopIds.has(product.shopId)) {
+      const error = new Error("Product is not available."); error.statusCode = 404; throw error;
+    }
+  }
+
   const updateOp = isFavorited
     ? { $pull: { favoriteProductIds: productId } }
     : { $addToSet: { favoriteProductIds: productId } };
@@ -235,14 +239,16 @@ export const getUserFavoriteProducts = async (userId) => {
   const favoriteProductIds = user.favoriteProductIds || [];
   if (favoriteProductIds.length === 0) return { products: [], shops: [] };
 
-  const products = await db.collection("products").find({ id: { $in: favoriteProductIds }, status: "published" }).toArray();
+  const products = await db.collection("products").find({ id: { $in: favoriteProductIds }, status: "published", variants: { $elemMatch: { active: true, stockQuantity: { $gt: 0 } } } }).toArray();
   const shopIds = [...new Set(products.map(p => p.shopId))];
-  const shops = await db.collection("shops").find({ id: { $in: shopIds } }).toArray();
+  const activePaidShopIds = await getPremiumShopIds(shopIds);
+  const shops = await db.collection("shops").find({ id: { $in: [...activePaidShopIds] }, status: "active" }).toArray();
+  const visibleShopIds = new Set(shops.map((shop) => shop.id));
   
   // Note: we can import toPublicProduct and withShopInfo from catalog.service.js but since we only have toPublicProduct in product.service.js, we should probably do a quick mapping or let the controller handle it.
   // We need to return them in a format similar to listCatalogProducts.
   // I'll return the raw products and shops, and the controller will format them.
-  return { products, shops };
+  return { products: products.filter((product) => visibleShopIds.has(product.shopId)), shops };
 };
 
 

@@ -6,15 +6,14 @@ import {
 } from "../api/catalogApi.js";
 import { getStylistRecommendation } from "../api/stylistApi.js";
 import {
-  createUserPayment,
   getUserMe,
-  listPaymentPlans,
   listUserFavoriteProducts,
   saveUserProfile,
   setUserToken,
   toggleUserFavoriteProduct,
   uploadUserProfilePhoto,
 } from "../api/userApi.js";
+import { addCartItem } from "../api/commerceApi.js";
 import {
   AppShell,
   Button,
@@ -24,7 +23,6 @@ import {
   ProductCard,
   SegmentedTabs,
   SelectField,
-  StatusBadge,
   TextField,
   TopNav,
   formatMoney,
@@ -47,16 +45,8 @@ function UserAppPage({ initialView = "products" }) {
   const [stylistResult, setStylistResult] = useState(null);
   const [stylistStatus, setStylistStatus] = useState("idle");
   const [profileForm, setProfileForm] = useState({});
-  const [paymentStatus, setPaymentStatus] = useState("");
-  const [paymentPlans, setPaymentPlans] = useState([]);
   const [feedbackNotice, setFeedbackNotice] = useState("");
   const [profilePhotoNotice, setProfilePhotoNotice] = useState("");
-
-  const subscription = user?.subscription || {};
-  const isPremium = Boolean(subscription.isPremium);
-  const tryOnUsage = subscription.usage;
-  const freeTryOnRemaining = tryOnUsage?.remaining ?? 5;
-  const userPremiumPlan = paymentPlans.find((plan) => plan.code === "USER_PREMIUM_MONTHLY");
 
   useEffect(() => {
     getUserMe()
@@ -69,9 +59,6 @@ function UserAppPage({ initialView = "products" }) {
         setUserToken("");
         window.location.href = "/login";
       });
-    listPaymentPlans()
-      .then((response) => setPaymentPlans(response.plans || []))
-      .catch(() => setPaymentPlans([]));
   }, []);
 
   useEffect(() => {
@@ -105,21 +92,12 @@ function UserAppPage({ initialView = "products" }) {
 
   const goToTryOn = (product) => {
     if (!product?.id) return;
-    if (!isPremium && freeTryOnRemaining <= 0) {
-      setPaymentStatus(t("tryon.limitReached"));
-      return;
-    }
     window.location.href = `/app/try-on?productId=${encodeURIComponent(product.id)}`;
   };
 
-  const startPremiumCheckout = async () => {
-    try {
-      setPaymentStatus(t("payment.creating"));
-      const response = await createUserPayment();
-      window.location.href = response.checkoutUrl;
-    } catch (error) {
-      setPaymentStatus(error.response?.data?.message || t("payment.createError"));
-    }
+  const openProduct = (product) => {
+    if (!product?.id) return;
+    window.location.href = `/app/products/${encodeURIComponent(product.id)}`;
   };
 
   const sendProductFeedback = async (product, payload) => {
@@ -175,7 +153,7 @@ function UserAppPage({ initialView = "products" }) {
         setSelectedProduct((previous) => previous ? { ...previous } : previous);
       }
     } catch (error) {
-      setPaymentStatus(error.response?.data?.message || t("app.favoriteError"));
+      setFeedbackNotice(error.response?.data?.message || t("app.favoriteError"));
     }
   };
 
@@ -240,7 +218,7 @@ function UserAppPage({ initialView = "products" }) {
           <ProductGrid
             favoriteProductIds={favoriteIdSet}
             products={shownProducts}
-            onDetail={setSelectedProduct}
+            onDetail={openProduct}
             onFavoriteToggle={toggleFavorite}
             onTryOn={goToTryOn}
           />
@@ -251,7 +229,7 @@ function UserAppPage({ initialView = "products" }) {
             emptyText={t("app.noFavorites")}
             favoriteProductIds={favoriteIdSet}
             products={favoriteProducts}
-            onDetail={setSelectedProduct}
+            onDetail={openProduct}
             onFavoriteToggle={toggleFavorite}
             onTryOn={goToTryOn}
           />
@@ -268,8 +246,6 @@ function UserAppPage({ initialView = "products" }) {
         {view === "stylist" ? (
           <StylistPanel
             budget={stylistBudget}
-            isPremium={isPremium}
-            plan={userPremiumPlan}
             prompt={stylistPrompt}
             result={stylistResult}
             status={stylistStatus}
@@ -277,8 +253,7 @@ function UserAppPage({ initialView = "products" }) {
             setPrompt={setStylistPrompt}
             onSubmit={runStylist}
             onTryOn={goToTryOn}
-            onUpgrade={startPremiumCheckout}
-            onDetail={setSelectedProduct}
+            onDetail={openProduct}
           />
         ) : null}
 
@@ -294,20 +269,6 @@ function UserAppPage({ initialView = "products" }) {
         ) : null}
       </main>
 
-      {selectedProduct ? (
-        <ProductModal
-          feedbackNotice={feedbackNotice}
-          product={selectedProduct}
-          onClose={() => {
-            setSelectedProduct(null);
-            setFeedbackNotice("");
-          }}
-          onFeedback={sendProductFeedback}
-          isFavorite={favoriteIdSet.has(selectedProduct.id)}
-          onFavoriteToggle={toggleFavorite}
-          onTryOn={goToTryOn}
-        />
-      ) : null}
     </AppShell>
   );
 }
@@ -350,33 +311,6 @@ function CatalogFilters({ applyFilters, filters, setFilters }) {
   );
 }
 
-function SubscriptionBanner({ isPremium, onUpgrade, paymentStatus, plan, subscription, tryOnUsage }) {
-  const { t } = useLanguage();
-
-  return (
-    <section className="miroir-card mt-6 flex flex-wrap items-center justify-between gap-4 p-4">
-      <div>
-        <div className="flex flex-wrap items-center gap-3">
-          <StatusBadge status={isPremium ? t("app.premium") : t("app.free")} tone={isPremium ? "success" : "neutral"} />
-          <p className="text-sm font-bold text-ink">
-            {isPremium ? t("app.premiumMessage") : t("app.freeMessage", { remaining: tryOnUsage?.remaining ?? 5 })}
-          </p>
-        </div>
-        {!isPremium && plan ? (
-          <p className="mt-1 text-xs text-muted">{t("app.premiumPrice", { amount: formatMoney(plan.amount), days: plan.durationDays })}</p>
-        ) : null}
-        {isPremium && subscription.expiresAt ? (
-          <p className="mt-1 text-xs text-muted">{t("app.expiresAt", { date: new Date(subscription.expiresAt).toLocaleDateString("vi-VN") })}</p>
-        ) : null}
-        {paymentStatus ? <p className="mt-1 text-xs text-rose">{paymentStatus}</p> : null}
-      </div>
-      {!isPremium ? (
-        <Button onClick={onUpgrade}>{t("app.upgrade", { amount: formatMoney(plan?.amount || 49000) })}</Button>
-      ) : null}
-    </section>
-  );
-}
-
 function ProductGrid({ emptyText, favoriteProductIds = new Set(), onDetail, onFavoriteToggle, onTryOn, products }) {
   const { t } = useLanguage();
   if (!products.length) return <div className="mt-6"><EmptyState text={emptyText || t("app.noProducts")} /></div>;
@@ -390,6 +324,7 @@ function ProductGrid({ emptyText, favoriteProductIds = new Set(), onDetail, onFa
           onDetail={onDetail}
           onFavoriteToggle={onFavoriteToggle}
           onTryOn={onTryOn}
+          showPurchaseActions
         />
       ))}
     </div>
@@ -418,22 +353,9 @@ function OutfitGrid({ onTryOn, outfits }) {
   );
 }
 
-function StylistPanel({ budget, isPremium, onSubmit, onDetail, onTryOn, onUpgrade, plan, prompt, result, setBudget, setPrompt, status }) {
+function StylistPanel({ budget, onSubmit, onDetail, onTryOn, prompt, result, setBudget, setPrompt, status }) {
   const { t } = useLanguage();
   const outfits = result?.outfits || [];
-
-  if (!isPremium) {
-    return (
-      <section className="glass-panel mt-6 max-w-3xl p-6">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose">{t("app.premiumStylist")}</p>
-        <h2 className="mt-2 text-3xl font-extrabold">{t("app.unlockStylist")}</h2>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {t("app.premiumStylistDescription", { amount: formatMoney(plan?.amount || 49000) })}
-        </p>
-        <Button className="mt-5" onClick={onUpgrade}>{t("app.upgradePremium")}</Button>
-      </section>
-    );
-  }
 
   return (
     <section className="mt-6 grid gap-5 lg:grid-cols-[420px_1fr]">
@@ -459,7 +381,7 @@ function StylistPanel({ budget, isPremium, onSubmit, onDetail, onTryOn, onUpgrad
             <p className="mt-1 text-sm text-muted">{outfit.whyItMatches}</p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               {(outfit.items || []).map((item) => item.product ? (
-                <ProductCard key={item.product.id} product={item.product} onDetail={onDetail} onTryOn={onTryOn} />
+                <ProductCard key={item.product.id} product={item.product} onDetail={onDetail} onTryOn={onTryOn} showPurchaseActions />
               ) : null)}
             </div>
           </div>
@@ -503,6 +425,21 @@ function ProfilePanel({ form, onPhotoUpload, onSubmit, photoNotice, setForm, use
           <h2 className="editorial-title text-2xl font-extrabold text-ink sm:text-3xl">{t("app.profileDetails")}</h2>
           <p className="mt-2 text-sm text-muted sm:text-base">{t("app.profileDescription")}</p>
         </header>
+
+        <div className="mb-6 grid gap-3 sm:mb-8 sm:grid-cols-2">
+          <a href="/app/orders" className="group rounded-2xl border border-line bg-white p-4 transition hover:border-mintDeep hover:bg-accentSoft">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="font-black text-ink">Đơn hàng</p><p className="mt-1 text-sm text-muted">Theo dõi đơn, thanh toán và hoàn tiền</p></div>
+              <span className="text-xl text-mintDeep transition group-hover:translate-x-1">→</span>
+            </div>
+          </a>
+          <a href="/app/addresses" className="group rounded-2xl border border-line bg-white p-4 transition hover:border-mintDeep hover:bg-accentSoft">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="font-black text-ink">Sổ địa chỉ</p><p className="mt-1 text-sm text-muted">Quản lý người nhận và địa chỉ mặc định</p></div>
+              <span className="text-xl text-mintDeep transition group-hover:translate-x-1">→</span>
+            </div>
+          </a>
+        </div>
 
         {/* BASIC INFO */}
         <div className="mb-6 grid gap-4 sm:mb-10 sm:grid-cols-2 sm:gap-5">
@@ -616,6 +553,10 @@ function ProfilePanel({ form, onPhotoUpload, onSubmit, photoNotice, setForm, use
 function ProductModal({ feedbackNotice, isFavorite, onClose, onFavoriteToggle, onFeedback, onTryOn, product }) {
   const { t } = useLanguage();
   const [feedbackForm, setFeedbackForm] = useState({ rating: "5", fitFeedback: "true_to_size", comment: "" });
+  const availableVariants = (product.variants || []).filter((item) => item.active && item.stockQuantity > 0);
+  const [variantId, setVariantId] = useState(availableVariants[0]?.id || "");
+  const [quantity, setQuantity] = useState(1);
+  const [cartNotice, setCartNotice] = useState("");
   const updateFeedback = (field) => (event) => setFeedbackForm((previous) => ({ ...previous, [field]: event.target.value }));
   const submitFeedback = (event) => {
     event.preventDefault();
@@ -638,16 +579,18 @@ function ProductModal({ feedbackNotice, isFavorite, onClose, onFavoriteToggle, o
             <button type="button" className="soft-button px-4 py-2" onClick={onClose}>{t("common.close")}</button>
           </div>
           <p className="mt-5 text-sm leading-7 text-muted">{product.description}</p>
+          {availableVariants.length ? <div className="mt-5 grid gap-3 sm:grid-cols-2"><SelectField label="Biến thể" value={variantId} onChange={(event) => setVariantId(event.target.value)}>{availableVariants.map((item) => <option key={item.id} value={item.id}>{item.color || "Mặc định"} · {item.size || "Một cỡ"} · còn {item.stockQuantity}</option>)}</SelectField><TextField label="Số lượng" type="number" min="1" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} /></div> : <p className="mt-4 font-bold text-red-600">Sản phẩm chưa có tồn kho khả dụng.</p>}
           {product.shop ? (
             <div className="mt-5 rounded-lg border border-line bg-white/80 p-4 text-sm text-muted">
               <p><strong className="text-ink">{t("product.shop")}</strong> {product.shop.name}</p>
               <p><strong className="text-ink">{t("product.contact")}</strong> {product.shop.contact?.address || product.shop.contact?.email || t("product.notProvided")}</p>
             </div>
           ) : (
-            <p className="mt-5 rounded-lg border border-line bg-white/80 p-4 text-sm text-muted">{t("product.shopPremium")}</p>
+            <p className="mt-5 rounded-lg border border-line bg-white/80 p-4 text-sm text-muted">Thông tin shop hiện không khả dụng.</p>
           )}
           <div className="mt-5 flex flex-wrap gap-3">
             <Button onClick={() => onTryOn(product)}>{t("common.tryOn")}</Button>
+            <Button disabled={!variantId} onClick={async () => { try { await addCartItem({ productId: product.id, variantId, quantity }); window.dispatchEvent(new Event("miroir:cart-updated")); setCartNotice("Đã thêm vào giỏ hàng."); } catch (error) { setCartNotice(error.response?.data?.message || "Không thể thêm vào giỏ."); } }}>Thêm vào giỏ</Button>
             {onFavoriteToggle ? (
               <Button variant="secondary" onClick={() => onFavoriteToggle(product)}>
                 {isFavorite ? t("product.removeFavorite") : t("product.addFavorite")}
@@ -659,6 +602,7 @@ function ProductModal({ feedbackNotice, isFavorite, onClose, onFavoriteToggle, o
               </a>
             ) : null}
           </div>
+          {cartNotice ? <p className="mt-3 text-sm font-bold text-accentStrong">{cartNotice} <a className="underline" href="/app/cart">Xem giỏ</a></p> : null}
           <form onSubmit={submitFeedback} className="mt-5 grid gap-3 rounded-lg border border-line bg-white/80 p-4">
             <p className="text-sm font-bold text-ink">{t("product.feedback")}</p>
             <SelectField value={feedbackForm.rating} onChange={updateFeedback("rating")}>

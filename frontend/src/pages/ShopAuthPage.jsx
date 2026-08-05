@@ -110,7 +110,7 @@ function ShopAuthPage({ mode = "login" }) {
             <button
               type="submit"
               disabled={status === "loading"}
-              className="rounded-lg bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:opacity-60"
+              className="rounded-lg bg-mintDeep px-5 py-3 text-sm font-semibold text-white transition hover:bg-mint hover:scale-[1.01] disabled:opacity-60"
             >
               {status === "loading" ? "Working..." : isRegister ? "Register" : "Login"}
             </button>

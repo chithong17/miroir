@@ -8,7 +8,6 @@ import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../marketplace/data/catalog_models.dart';
 import '../../marketplace/presentation/widgets/product_feedback_card.dart';
-import '../../payments/presentation/premium_paywall_sheet.dart';
 import 'controllers/try_on_controller.dart';
 
 class TryOnPage extends StatefulWidget {
@@ -62,15 +61,6 @@ class _TryOnPageState extends State<TryOnPage> {
     final session = AppSessionScope.of(context);
     if (!session.isSignedIn) {
       session.openLogin();
-      return;
-    }
-    if (session.isTryOnQuotaExhausted) {
-      await showPremiumPaywall(
-        context,
-        session: session,
-        reason:
-            'You have used all free try-on credits this month. Upgrade for unlimited Studio previews.',
-      );
       return;
     }
     await _controller.submit(session.authToken);

@@ -24,12 +24,10 @@ function ShopPublicPage() {
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
 
   const shopId = useMemo(getShopIdFromPath, []);
-  const profileHidden = Boolean(shop?.profileHidden || shop?.premiumShopDetailsRequired);
   const displayName = shop?.displayName || shop?.name || t("shopPage.anonymousName");
 
   useEffect(() => {
@@ -82,13 +80,17 @@ function ShopPublicPage() {
     window.location.href = `/app/try-on?productId=${encodeURIComponent(product.id)}`;
   };
 
+  const openProduct = (product) => {
+    window.location.href = `/app/products/${encodeURIComponent(product.id)}`;
+  };
+
   return (
     <AppShell nav={<TopNav user={user} onLogout={onLogout} />}>
       <main className="section-shell py-8">
         <PageHeader
           eyebrow={t("shopPage.eyebrow")}
           title={displayName}
-          description={profileHidden ? t("shopPage.hiddenDescription") : shop?.description}
+          description={shop?.description}
           action={<a className="soft-button px-5 py-2" href="/app">{t("nav.marketplace")}</a>}
         />
 
@@ -99,7 +101,7 @@ function ShopPublicPage() {
         ) : null}
 
         {shop ? (
-          <ShopHero shop={shop} profileHidden={profileHidden} />
+          <ShopHero shop={shop} />
         ) : status === "loading" ? (
           <div className="glass-panel mt-6 p-8 text-muted">{t("common.loading")}</div>
         ) : null}
@@ -123,8 +125,9 @@ function ShopPublicPage() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onDetail={setSelectedProduct}
+                  onDetail={openProduct}
                   onTryOn={goToTryOn}
+                  showPurchaseActions
                 />
               ))}
             </div>
@@ -160,31 +163,24 @@ function ShopPublicPage() {
         </section>
       </main>
 
-      {selectedProduct ? (
-        <ShopProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onTryOn={goToTryOn}
-        />
-      ) : null}
     </AppShell>
   );
 }
 
-function ShopHero({ profileHidden, shop }) {
+function ShopHero({ shop }) {
   const { t } = useLanguage();
   const contact = shop.contact || {};
 
   return (
     <section className="glass-panel mt-6 overflow-hidden">
       <div className="relative min-h-52 bg-white/85">
-        {!profileHidden && shop.coverUrl ? (
+        {shop.coverUrl ? (
           <img src={shop.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-ink/20 to-transparent" />
         <div className="relative flex min-h-52 flex-wrap items-end gap-5 p-6">
           <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl border border-white/80 bg-white/10 text-3xl font-black text-rose shadow-glass">
-            {!profileHidden && shop.logoUrl ? (
+            {shop.logoUrl ? (
               <img src={shop.logoUrl} alt="" className="h-full w-full object-cover" />
             ) : (
               "M"
@@ -192,29 +188,23 @@ function ShopHero({ profileHidden, shop }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-rose">
-              {profileHidden ? t("shopPage.hiddenTitle") : shop.slug}
+              {shop.slug}
             </p>
             <h2 className="mt-2 text-3xl font-extrabold text-ink">
-              {profileHidden ? t("shopPage.anonymousName") : shop.name}
+              {shop.name}
             </h2>
-            {!profileHidden && shop.description ? (
+            {shop.description ? (
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">{shop.description}</p>
             ) : null}
           </div>
         </div>
       </div>
 
-      {profileHidden ? (
-        <div className="border-t border-line p-5 text-sm text-muted">
-          {t("shopPage.hiddenDescription")}
-        </div>
-      ) : (
-        <div className="grid gap-3 border-t border-line p-5 text-sm text-muted md:grid-cols-3">
+      <div className="grid gap-3 border-t border-line p-5 text-sm text-muted md:grid-cols-3">
           <InfoLine label={t("shopPage.address")} value={contact.address} />
           <InfoLine label={t("shopPage.email")} value={contact.email} />
           <InfoLine label={t("shopPage.phone")} value={contact.phone} />
-        </div>
-      )}
+      </div>
     </section>
   );
 }

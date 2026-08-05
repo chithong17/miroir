@@ -62,13 +62,6 @@ export const toggleUserFavoriteProduct = async (productId) => {
   return response.data;
 };
 
-export const createUserPayment = async () => {
-  const response = await userClient.post("/payments/create", {
-    planCode: "USER_PREMIUM_MONTHLY",
-  });
-  return response.data;
-};
-
 export const getUserPaymentMe = async () => {
   const response = await userClient.get("/payments/me");
   return response.data;

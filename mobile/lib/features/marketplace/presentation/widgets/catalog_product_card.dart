@@ -70,7 +70,8 @@ class CatalogProductCard extends StatelessWidget {
                         ? Image.network(
                             product.imageUrl,
                             width: double.infinity,
-                            fit: BoxFit.cover,
+                            fit: BoxFit.contain,
+                                filterQuality: FilterQuality.medium,
                             errorBuilder: (_, __, ___) =>
                                 Container(color: AppColors.elevated),
                           )

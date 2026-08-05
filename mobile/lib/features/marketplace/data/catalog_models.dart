@@ -1,3 +1,16 @@
+class CatalogVariant {
+  const CatalogVariant({required this.id, required this.sku, required this.color, required this.size, required this.stockQuantity, required this.active});
+  final String id;
+  final String sku;
+  final String color;
+  final String size;
+  final int stockQuantity;
+  final bool active;
+  factory CatalogVariant.fromJson(Map<String, dynamic> json) => CatalogVariant(
+    id: '${json['id'] ?? ''}', sku: '${json['sku'] ?? ''}', color: '${json['color'] ?? ''}', size: '${json['size'] ?? ''}',
+    stockQuantity: (json['stockQuantity'] as num?)?.toInt() ?? 0, active: json['active'] != false,
+  );
+}
 class CatalogShopContact {
   const CatalogShopContact({
     required this.address,
@@ -68,6 +81,7 @@ class CatalogProduct {
     required this.sizes,
     required this.styleTags,
     required this.occasionTags,
+    required this.variants,
     required this.shop,
     required this.premiumShopDetailsRequired,
   });
@@ -86,6 +100,7 @@ class CatalogProduct {
   final List<String> sizes;
   final List<String> styleTags;
   final List<String> occasionTags;
+  final List<CatalogVariant> variants;
   final CatalogShop? shop;
   final bool premiumShopDetailsRequired;
 
@@ -115,6 +130,7 @@ class CatalogProduct {
       sizes: parseList('sizes'),
       styleTags: parseList('styleTags'),
       occasionTags: parseList('occasionTags'),
+      variants: (json['variants'] as List? ?? const []).whereType<Map>().map((item) => CatalogVariant.fromJson(item.cast<String, dynamic>())).toList(),
       shop: json['shop'] is Map<String, dynamic>
           ? CatalogShop.fromJson(json['shop'] as Map<String, dynamic>)
           : null,

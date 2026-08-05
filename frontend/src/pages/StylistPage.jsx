@@ -258,7 +258,7 @@ function StylistPage() {
             <button
               type="submit"
               disabled={status === "loading"}
-              className="rounded-lg bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg bg-mintDeep px-5 py-3 text-sm font-semibold text-white transition hover:bg-mint hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {status === "loading" ? "Generating..." : "Generate 5 Outfits"}
             </button>
@@ -389,7 +389,7 @@ function StylistPage() {
                                 {eventType.replace("_", " ")}
                               </button>
                             ))}
-                            <a href="/try-on" className="rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white">
+                            <a href="/try-on" className="rounded-lg bg-mintDeep px-4 py-2 text-sm font-semibold text-white transition hover:bg-mint">
                               Try On
                             </a>
                           </div>

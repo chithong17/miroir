@@ -9,6 +9,13 @@
     "embed:fashion-rules": "node scripts/embedCollection.js fashion_rules",
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:shop-insights": "node scripts/seedShopInsightsMock.js",
+    "sync:locations": "node scripts/syncVietnamLocations.js",
+    "migrate:variants:dry": "node scripts/migrateProductVariants.js",
+    "migrate:variants": "node scripts/migrateProductVariants.js --apply",
+    "stock:products:dry": "node scripts/setProductStock.js --stock=100",
+    "stock:products": "node scripts/setProductStock.js --stock=100 --apply",
+    "diagnose:commerce": "node scripts/diagnoseCommerceData.js",
+    "test": "node --test tests/*.test.js",
     "dev": "nodemon server.js",
     "start": "node server.js"
   },

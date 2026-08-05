@@ -134,3 +134,9 @@ export const updatePaymentPlan = async (planCode, payload) => {
   const response = await adminClient.put(`/admin/payment-plans/${planCode}`, payload);
   return response.data;
 };
+
+export const listAdminDisputes = async (params = {}) => (await adminClient.get("/admin/disputes", { params })).data;
+export const getAdminDispute = async (id) => (await adminClient.get(`/admin/disputes/${encodeURIComponent(id)}`)).data;
+export const updateAdminDispute = async (id, payload) => (await adminClient.patch(`/admin/disputes/${encodeURIComponent(id)}`, payload)).data;
+export const listAdminNotifications = async () => (await adminClient.get("/admin/notifications")).data;
+export const readAdminNotification = async (id) => (await adminClient.patch(`/admin/notifications/${encodeURIComponent(id)}/read`)).data;

@@ -63,6 +63,13 @@ export const updateShop = async (id, payload) => {
   return response.data;
 };
 
+export const uploadShopPaymentQr = async (file) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await shopClient.post("/shops/me/payment-qr", formData, { headers: { "Content-Type": "multipart/form-data" } });
+  return response.data;
+};
+
 export const deleteShop = async (id) => {
   const response = await shopClient.delete(`/shops/${id}`);
   return response.data;

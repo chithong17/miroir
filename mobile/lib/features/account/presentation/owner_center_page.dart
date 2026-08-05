@@ -11,6 +11,7 @@ import '../../../shared/widgets/glass_pill.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/section_card.dart';
+import '../../commerce/presentation/shop_commerce_page.dart';
 import '../../payments/data/payment_models.dart';
 import '../../payments/data/payment_service.dart';
 import '../data/account_models.dart';
@@ -806,6 +807,13 @@ class _ProfilePanel extends StatelessWidget {
               onPressed: onUpgrade,
             ),
           ],
+          const SizedBox(height: 10),
+          MiroirButton(
+            label: 'Orders and alerts',
+            icon: Icons.receipt_long_outlined,
+            isSecondary: true,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ShopCommercePage())),
+          ),
           const SizedBox(height: 10),
           MiroirButton(
             label: 'Logout Owner',

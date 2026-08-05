@@ -6,35 +6,17 @@ import '../../../shared/widgets/glass_pill.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../marketplace/data/catalog_models.dart';
+import '../../commerce/presentation/commerce_pages.dart';
+import '../../commerce/data/commerce_service.dart';
 import '../../marketplace/presentation/controllers/marketplace_controller.dart';
 import '../../marketplace/presentation/product_detail_page.dart';
 import '../../marketplace/presentation/widgets/catalog_product_card.dart';
 
-import '../../payments/presentation/premium_paywall_sheet.dart';
-import '../../stylist/presentation/stylist_page.dart';
 import '../../try_on/presentation/try_on_page.dart';
 
 const _homeGreetingTitle = 'Hello';
 const _homeWelcomeLabel = 'Welcome back to MIROIR';
 const _homeAvatarLabel = 'G';
-
-const _featuredTools = [
-  _FeatureTool(
-    title: 'AI Stylist',
-    subtitle:
-        'Describe a vibe and get 5 curated outfits grounded in your current catalog.',
-    metric: '5 looks',
-    imageUrl: 'assets/images/ai-stylist.png',
-    destination: _MiniFeatureDestination.stylist,
-  ),
-  _FeatureTool(
-    title: 'Virtual Try-On',
-    subtitle: 'Upload your photo and preview the outfit composition instantly.',
-    metric: 'Live preview',
-    imageUrl: 'assets/images/f-try-on.png',
-    destination: _MiniFeatureDestination.tryOn,
-  ),
-];
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -44,7 +26,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _categories = const ['All', 'Casual', 'Party', 'Minimal', 'Street', 'Formal'];
+  final _categories = const [
+    'All',
+    'Casual',
+    'Party',
+    'Minimal',
+    'Street',
+    'Formal'
+  ];
   int _selectedCategory = 0;
 
   final _controller = MarketplaceController();
@@ -55,6 +44,10 @@ class _HomePageState extends State<HomePage> {
   String _gender = '';
   bool _didLoad = false;
   bool _showAdvancedFilters = false;
+  final _commerceService = CommerceService();
+  int _cartCount = 0;
+  int _notificationCount = 0;
+  bool _loadingQuickCounts = false;
 
   @override
   void didChangeDependencies() {
@@ -62,6 +55,8 @@ class _HomePageState extends State<HomePage> {
     if (!_didLoad) {
       _didLoad = true;
       _controller.loadInitial(token: AppSessionScope.of(context).authToken);
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _refreshQuickCounts());
     }
   }
 
@@ -76,10 +71,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _applyFilters() async {
-    final cat = _selectedCategory == 0 
-        ? _categoryController.text 
+    final cat = _selectedCategory == 0
+        ? _categoryController.text
         : _categories[_selectedCategory];
-        
+
     await _controller.applyFilters(
       search: _searchController.text,
       category: cat,
@@ -117,19 +112,38 @@ class _HomePageState extends State<HomePage> {
       _showAuthPrompt();
       return;
     }
-    if (session.isTryOnQuotaExhausted) {
-      showPremiumPaywall(
-        context,
-        session: session,
-        reason:
-            'You have used all free try-on credits this month. Upgrade to keep using Studio.',
-      );
-      return;
-    }
-
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => TryOnPage(prefilledProduct: product)),
     );
+  }
+
+  Future<void> _refreshQuickCounts() async {
+    final token = AppSessionScope.of(context).authToken;
+    if (token.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _cartCount = 0;
+          _notificationCount = 0;
+        });
+      }
+      return;
+    }
+    if (_loadingQuickCounts) return;
+    _loadingQuickCounts = true;
+    try {
+      final cart = await _commerceService.getCart(token);
+      final notifications = await _commerceService.notifications(token);
+      if (mounted) {
+        setState(() {
+          _cartCount = cart.itemCount;
+          _notificationCount = notifications.$2;
+        });
+      }
+    } catch (_) {
+      // Keep the last known badges when a background refresh fails.
+    } finally {
+      _loadingQuickCounts = false;
+    }
   }
 
   void _showAuthPrompt() {
@@ -167,27 +181,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _openDestination(_MiniFeatureDestination destination) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => destination == _MiniFeatureDestination.tryOn
-            ? const TryOnPage()
-            : const StylistPage(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final session = AppSessionScope.of(context);
     final user = session.currentUser;
-    
-    final greetingTitle = user != null && user.name.isNotEmpty 
-        ? 'Hello, ${user.name.split(' ').first}' 
+
+    final greetingTitle = user != null && user.name.isNotEmpty
+        ? 'Hello, ${user.name.split(' ').first}'
         : _homeGreetingTitle;
-    final avatarLabel = user != null && user.name.isNotEmpty 
-        ? user.name[0].toUpperCase() 
+    final avatarLabel = user != null && user.name.isNotEmpty
+        ? user.name[0].toUpperCase()
         : _homeAvatarLabel;
     final avatarUrl = user?.profile.modelImageUrl;
 
@@ -210,6 +214,31 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
+                _HomeUtilityButton(
+                  icon: Icons.notifications_none_rounded,
+                  tooltip: 'Notifications',
+                  count: _notificationCount,
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => const NotificationsPage()),
+                    );
+                    await _refreshQuickCounts();
+                  },
+                ),
+                const SizedBox(width: 8),
+                _HomeUtilityButton(
+                  icon: Icons.shopping_bag_outlined,
+                  tooltip: 'Your bag',
+                  count: _cartCount,
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CartPage()),
+                    );
+                    await _refreshQuickCounts();
+                  },
+                ),
+                const SizedBox(width: 8),
                 _AvatarBubble(label: avatarLabel, imageUrl: avatarUrl),
               ],
             ),
@@ -256,7 +285,8 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.only(top: 12),
                       child: Column(
                         children: [
-                          if (_controller.view == MarketplaceView.products && _selectedCategory == 0) ...[
+                          if (_controller.view == MarketplaceView.products &&
+                              _selectedCategory == 0) ...[
                             TextField(
                               controller: _categoryController,
                               decoration: const InputDecoration(
@@ -328,35 +358,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // AI Tools Swipe
-            Row(
-              children: [
-                Expanded(
-                  child: Text('Featured AI tools', style: textTheme.titleLarge),
-                ),
-                Text('Swipe', style: textTheme.bodySmall),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 292,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                clipBehavior: Clip.none,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: _featuredTools.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 14),
-                itemBuilder: (context, index) {
-                  final tool = _featuredTools[index];
-                  return _MiniFeatureCard(
-                    tool: tool,
-                    onTap: () => _openDestination(tool.destination),
-                  );
-                },
               ),
             ),
             const SizedBox(height: 24),
@@ -438,7 +439,7 @@ class _HomePageState extends State<HomePage> {
                 outfits: _controller.outfits,
                 onOpenProduct: _openProductDetail,
               ),
-            
+
             const SizedBox(height: 14),
             if (_controller.pagination.totalPages > 1)
               Row(
@@ -523,114 +524,6 @@ class _AvatarBubble extends StatelessWidget {
   }
 }
 
-enum _MiniFeatureDestination { stylist, tryOn }
-
-class _MiniFeatureCard extends StatelessWidget {
-  const _MiniFeatureCard({
-    required this.tool,
-    required this.onTap,
-  });
-
-  final _FeatureTool tool;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(30),
-      onTap: onTap,
-      child: SizedBox(
-        width: 244,
-        child: GlassSurface(
-          radius: 30,
-          blurSigma: 14,
-          shadowOpacity: 0.24,
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: tool.imageUrl.startsWith('http')
-                    ? Image.network(
-                        tool.imageUrl,
-                        height: 118,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            Container(height: 118, color: AppColors.elevated),
-                      )
-                    : Image.asset(
-                        tool.imageUrl,
-                        height: 118,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            Container(height: 118, color: AppColors.elevated),
-                      ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                tool.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 6),
-              Expanded(
-                child: Text(
-                  tool.subtitle,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  GlassPill(label: tool.metric),
-                  const Spacer(),
-                  GlassSurface(
-                    radius: 999,
-                    blurSigma: 14,
-                    padding: EdgeInsets.zero,
-                    shadowOpacity: 0.18,
-                    child: const SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Icon(
-                        Icons.arrow_forward_rounded,
-                        color: AppColors.ink,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FeatureTool {
-  const _FeatureTool({
-    required this.title,
-    required this.subtitle,
-    required this.metric,
-    required this.imageUrl,
-    required this.destination,
-  });
-
-  final String title;
-  final String subtitle;
-  final String metric;
-  final String imageUrl;
-  final _MiniFeatureDestination destination;
-}
-
 class _ShoppingPromoCard extends StatelessWidget {
   const _ShoppingPromoCard({required this.onTap});
 
@@ -645,56 +538,11 @@ class _ShoppingPromoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(34),
         child: SizedBox(
           height: 180,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                'assets/images/shop-bg.png',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: AppColors.elevated),
-              ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.8),
-                      Colors.black.withValues(alpha: 0.2),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Shop the Latest',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Explore new arrivals and trending pieces.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: Colors.white70),
-                    ),
-                    const SizedBox(height: 16),
-                    const GlassPill(
-                      label: 'Explore Marketplace',
-                      icon: Icons.arrow_forward_rounded,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          width: double.infinity,
+          child: Image.asset(
+            'assets/images/shop-2.png',
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(color: AppColors.elevated),
           ),
         ),
       ),
@@ -801,7 +649,8 @@ class _ProductGrid extends StatelessWidget {
                             ? Image.network(
                                 product.imageUrl,
                                 width: double.infinity,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.medium,
                                 errorBuilder: (_, __, ___) =>
                                     Container(color: AppColors.elevated),
                               )
@@ -961,4 +810,79 @@ String _formatMoney(double value) {
     }
   }
   return '${buffer.toString()} VND';
+}
+
+class _HomeUtilityButton extends StatelessWidget {
+  const _HomeUtilityButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.count = 0,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Ink(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.line),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.glassShadow,
+                  blurRadius: 12,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Icon(icon, color: AppColors.ink, size: 21),
+                if (count > 0)
+                  Positioned(
+                    right: -6,
+                    top: -6,
+                    child: Container(
+                      constraints:
+                          const BoxConstraints(minWidth: 18, minHeight: 18),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.accentStrong,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.surface, width: 2),
+                      ),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

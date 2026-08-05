@@ -11,23 +11,21 @@
 
   body {
     min-height: 100vh;
-    background-color: #E9EEF4;
-    background-image:
-      linear-gradient(180deg, #EEF2F6 0%, #E9EEF4 48%, #DDE5EE 100%);
-    background-attachment: fixed;
-    color: #10131A;
+    background-color: #FFFFFF;
+    background-image: none;
+    color: #111111;
     font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   * {
-    border-color: #D7DFE9;
+    border-color: #BEDA9D;
   }
 
   ::selection {
-    background-color: #AEDFF2;
-    color: #10131A;
+    background-color: #BEDA9D;
+    color: #111111;
   }
 
   input,
@@ -41,7 +39,7 @@
   /* Glass Panels */
   .glass-panel {
     @apply rounded-[28px] border border-white/70 shadow-glass backdrop-blur-xl bg-white/70;
-    box-shadow: 0 18px 42px -24px rgba(16, 19, 26, 0.28);
+    box-shadow: 0 18px 42px -24px rgba(47, 56, 40, 0.24);
   }
   
   .glass-panel-pink {
@@ -63,12 +61,12 @@
   /* Typography */
   .editorial-title {
     @apply tracking-tight font-display font-bold;
-    color: #10131A;
+    color: #111111;
   }
 
   .hero-text-bg {
     @apply font-display font-bold uppercase tracking-tighter opacity-10 select-none;
-    color: #74B9D8;
+    color: #94B16F;
   }
 
   /* Buttons */
@@ -77,7 +75,7 @@
   }
 
   .dark-button {
-    @apply inline-flex items-center justify-center rounded-[18px] bg-ink px-5 py-3 text-sm font-bold text-white shadow-glow transition-all duration-300 hover:bg-[#252A33] hover:shadow-glowDeep disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-[20px] sm:px-7 sm:py-3.5;
+    @apply inline-flex items-center justify-center rounded-[18px] bg-mintDeep px-5 py-3 text-sm font-bold text-white shadow-glow transition-all duration-300 hover:bg-mint hover:shadow-glowDeep disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-[20px] sm:px-7 sm:py-3.5;
   }
 
   /* Inputs */
@@ -86,12 +84,12 @@
   }
 
   .miroir-field::placeholder {
-    color: #8A93A1;
+    color: #6B6B6B;
   }
 
   .miroir-field:focus {
-    @apply border-ink bg-white;
-    box-shadow: 0 0 0 4px rgba(116, 185, 216, 0.16);
+    @apply border-mintDeep bg-white;
+    box-shadow: 0 0 0 4px rgba(148, 177, 111, 0.2);
   }
 
   /* Tables */
@@ -109,10 +107,10 @@
 
   .tryon-result-active {
     position: relative;
-    border-color: rgba(116, 185, 216, 0.62);
+    border-color: rgba(148, 177, 111, 0.62);
     box-shadow:
-      0 0 0 1px rgba(116, 185, 216, 0.22),
-      0 18px 42px -24px rgba(16, 19, 26, 0.28);
+      0 0 0 1px rgba(148, 177, 111, 0.22),
+      0 18px 42px -24px rgba(47, 56, 40, 0.24);
   }
 
   .tryon-result-active::before {
@@ -121,7 +119,7 @@
     inset: 0;
     background:
       linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.68) 42%, transparent 72%),
-      radial-gradient(circle at 50% 45%, rgba(174, 223, 242, 0.42), transparent 36%);
+      radial-gradient(circle at 50% 45%, rgba(190, 218, 157, 0.42), transparent 36%);
     transform: translateX(-100%);
     animation: tryon-shimmer 1.55s ease-in-out infinite;
     pointer-events: none;

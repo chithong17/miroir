@@ -20,6 +20,10 @@ import {
   updateAdminProduct,
   updatePaymentPlan,
   updateAdminShop,
+  listAdminDisputes,
+  updateAdminDispute,
+  listAdminNotifications,
+  readAdminNotification,
 } from "../api/adminApi.js";
 
 const shopDefaults = {
@@ -111,6 +115,9 @@ function AdminDashboardPage() {
   const [importResult, setImportResult] = useState(null);
   const [notice, setNotice] = useState({ type: "info", text: "" });
   const [loading, setLoading] = useState(true);
+  const [disputes, setDisputes] = useState([]);
+  const [adminNotifications, setAdminNotifications] = useState([]);
+  const [adminUnread, setAdminUnread] = useState(0);
 
   const activeOwners = useMemo(
     () => owners.filter((owner) => owner.status === "active"),
@@ -169,13 +176,14 @@ function AdminDashboardPage() {
     const response = await listAdminPaymentPlans();
     setPaymentPlans(response.plans || []);
   };
+  const loadDisputes = async () => setDisputes((await listAdminDisputes()).disputes || []);
 
   useEffect(() => {
     const boot = async () => {
       try {
         const response = await getAdminMe();
         setAdmin(response.admin);
-        await Promise.all([loadOwners("all"), loadShops(), loadPaymentPlans()]);
+        await Promise.all([loadOwners("all"), loadShops(), loadPaymentPlans(), loadDisputes()]);
       } catch (_error) {
         setAdminToken("");
         window.location.href = "/login";
@@ -186,6 +194,11 @@ function AdminDashboardPage() {
 
     boot();
   }, []);
+  useEffect(() => {
+    const refresh = () => listAdminNotifications().then((result) => { setAdminNotifications(result.notifications || []); setAdminUnread(result.unreadCount || 0); }).catch(() => {});
+    refresh(); const interval = setInterval(refresh, 30000); window.addEventListener("focus", refresh);
+    return () => { clearInterval(interval); window.removeEventListener("focus", refresh); };
+  }, []);
 
   useEffect(() => {
     if (selectedShopId) {
@@ -194,7 +207,7 @@ function AdminDashboardPage() {
   }, [selectedShopId]);
 
   const refreshAll = async () => {
-    await Promise.all([loadOwners(ownerStatus), loadShops(), loadPaymentPlans()]);
+    await Promise.all([loadOwners(ownerStatus), loadShops(), loadPaymentPlans(), loadDisputes()]);
     if (selectedShopId) await loadProducts(selectedShopId);
   };
 
@@ -427,7 +440,7 @@ function AdminDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-canvasDeep text-ink">
+    <main className="min-h-screen bg-white text-ink">
       <div className="grid min-h-screen lg:grid-cols-[248px_1fr]">
         <aside className="border-r border-line bg-white/80 px-4 py-5">
           <div className="flex items-center gap-3">
@@ -449,6 +462,9 @@ function AdminDashboardPage() {
             </NavButton>
             <NavButton active={view === "plans"} icon="payment" onClick={() => setView("plans")}>
               Payment Plans
+            </NavButton>
+            <NavButton active={view === "disputes"} icon="users" onClick={() => setView("disputes")}>
+              Khiếu nại{adminUnread ? ` (${adminUnread})` : ""}
             </NavButton>
 
             {selectedShop ? (
@@ -536,6 +552,7 @@ function AdminDashboardPage() {
               updatePlanField={updatePlanField}
             />
           ) : null}
+          {view === "disputes" ? <AdminDisputesView disputes={disputes} notifications={adminNotifications} onRead={async (item) => { if (!item.readAt) { await readAdminNotification(item.id); setAdminUnread((count) => Math.max(count - 1, 0)); setAdminNotifications((all) => all.map((entry) => entry.id === item.id ? { ...entry, readAt: new Date() } : entry)); } }} onUpdate={async (id, status, resolution) => { try { await updateAdminDispute(id, { status, resolution }); await loadDisputes(); showNotice("Dispute updated."); } catch (error) { showNotice(error.response?.data?.message || "Could not update dispute.", "error"); } }} /> : null}
 
           {selectedShop && view === "profile" ? (
             <section className="mt-6 max-w-3xl">
@@ -545,7 +562,7 @@ function AdminDashboardPage() {
                     <h2 className="font-bold">{selectedShop.name}</h2>
                     <p className="text-sm text-muted">{selectedShop.slug}</p>
                   </div>
-                  <button type="button" onClick={() => openEditShop(selectedShop)} className={`${buttonClass} bg-ink text-white`}>
+                  <button type="button" onClick={() => openEditShop(selectedShop)} className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}>
                     <Icon name="edit" />
                     Edit shop
                   </button>
@@ -619,6 +636,8 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
       ? "Shop Owners"
       : view === "plans"
         ? "Payment Plans"
+      : view === "disputes"
+        ? "Khiếu nại hoàn tiền"
       : "Shops";
 
   return (
@@ -655,6 +674,10 @@ function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
       </button>
     </header>
   );
+}
+
+function AdminDisputesView({ disputes, notifications, onRead, onUpdate }) {
+  return <div className="mt-6 grid gap-4"><details className="rounded-md border border-line bg-white/80 p-4"><summary className="cursor-pointer font-bold">Trung tâm thông báo ({notifications.filter((item) => !item.readAt).length} chưa đọc)</summary><div className="mt-3 grid gap-2">{notifications.slice(0, 15).map((item) => <button key={item.id} onClick={() => onRead(item)} className={`rounded-md p-3 text-left ${item.readAt ? "text-muted" : "bg-accentSoft font-bold"}`}>{item.title}<span className="block text-xs font-normal">{item.message}</span></button>)}</div></details><section className="overflow-x-auto rounded-md border border-line bg-white/80"><table className="min-w-full text-sm"><thead className="bg-accentSoft text-left"><tr><th className="px-4 py-3">Mã đơn</th><th className="px-4 py-3">Trạng thái</th><th className="px-4 py-3">Trao đổi / lịch sử</th><th className="px-4 py-3">Xử lý</th></tr></thead><tbody className="divide-y divide-line">{disputes.map((item) => <tr key={item.id}><td className="px-4 py-3 font-mono font-black">{item.orderCode}</td><td className="px-4 py-3">{item.status}</td><td className="px-4 py-3"><details><summary className="cursor-pointer font-semibold">{item.messages?.length || 0} phản hồi · xem snapshot</summary><div className="mt-2 max-w-lg rounded-md bg-panel p-3 text-xs"><p><strong>Người nhận:</strong> {item.orderSnapshot?.recipient?.name} · {item.orderSnapshot?.recipient?.phone}</p><p><strong>Đơn:</strong> {item.orderSnapshot?.orderStatus} · <strong>Tiền:</strong> {item.orderSnapshot?.paymentStatus} · {Number(item.orderSnapshot?.total || 0).toLocaleString("vi-VN")}đ</p>{item.orderSnapshot?.statusHistory?.map((history, index) => <p key={index}>{new Date(history.createdAt).toLocaleString("vi-VN")} · {history.status} · {history.note}</p>)}{item.messages?.map((message) => <p className="mt-2" key={message.id}><strong>{message.actorType}:</strong> {message.message}</p>)}</div></details></td><td className="px-4 py-3"><div className="flex flex-wrap gap-2"><button className={`${buttonClass} border border-line`} onClick={() => onUpdate(item.id, "under_review", "Admin đang điều tra")}>Điều tra</button><button className={`${buttonClass} bg-mintDeep text-white`} onClick={() => { const resolution = window.prompt("Kết luận xử lý:"); if (resolution) onUpdate(item.id, "resolved", resolution); }}>Kết luận</button><button className={`${buttonClass} border border-line`} onClick={() => onUpdate(item.id, "closed", item.resolution?.text || "Đóng khiếu nại")}>Đóng</button></div></td></tr>)}</tbody></table>{!disputes.length ? <p className="p-8 text-center text-muted">Chưa có khiếu nại.</p> : null}</section></div>;
 }
 
 function OwnersView({ owners, ownerAction, ownerStatus, setOwnerStatus }) {
@@ -719,7 +742,7 @@ function PaymentPlansView({
               type="button"
               disabled={savingPlanCode === plan.code}
               onClick={() => savePaymentPlan(plan)}
-              className={`${buttonClass} bg-ink text-white`}
+              className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}
             >
               <Icon name="check" />
               {savingPlanCode === plan.code ? "Saving..." : "Save plan"}
@@ -802,7 +825,7 @@ function ShopsView({
             <h2 className="font-bold">Shops</h2>
             <p className="text-sm text-muted">{shops.length} shops loaded</p>
           </div>
-          <button type="button" onClick={openNewShop} className={`${buttonClass} bg-ink text-white`}>
+          <button type="button" onClick={openNewShop} className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}>
             <Icon name="plus" />
             New shop
           </button>
@@ -819,7 +842,7 @@ function ShopsView({
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          <button type="button" onClick={reloadShops} className={`${buttonClass} bg-ink text-white`}>
+          <button type="button" onClick={reloadShops} className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}>
             <Icon name="search" />
             Search
           </button>
@@ -924,7 +947,7 @@ function ShopForm({ activeOwners, onClose, saveShop, setShopForm, shopForm, upda
         <Field label="Contact address">
           <input className={fieldClass} value={shopForm.contactAddress} onChange={updateShopField("contactAddress")} />
         </Field>
-        <button className={`${buttonClass} bg-ink text-white`} type="submit">
+        <button className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`} type="submit">
           Save shop
         </button>
       </div>
@@ -963,7 +986,7 @@ function ProductsView({
             </p>
           </div>
           {!isTrash ? (
-            <button type="button" onClick={openNewProduct} className={`${buttonClass} bg-ink text-white`}>
+            <button type="button" onClick={openNewProduct} className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}>
               <Icon name="plus" />
               New product
             </button>
@@ -995,7 +1018,7 @@ function ProductsView({
             />
             Missing only
           </label>
-          <button type="button" onClick={() => loadProducts()} className={`${buttonClass} bg-ink text-white`}>
+          <button type="button" onClick={() => loadProducts()} className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}>
             <Icon name="search" />
             Filter
           </button>
@@ -1151,7 +1174,7 @@ function ProductForm({ onClose, productForm, saveProduct, selectedShop, setProdu
           <span className="text-xs font-semibold uppercase text-muted">Description</span>
           <textarea className={fieldClass} rows="4" value={productForm.description} onChange={updateProductField("description")} />
         </label>
-        <button className={`${buttonClass} bg-ink text-white md:col-span-2`} type="submit">
+        <button className={`${buttonClass} bg-mintDeep text-white hover:bg-mint md:col-span-2`} type="submit">
           Save product
         </button>
       </div>
@@ -1166,7 +1189,7 @@ function ExcelView({ downloadProducts, importResult, products, selectedShop, upl
         <h2 className="font-bold">Product Excel</h2>
         <p className="mt-1 text-sm text-muted">{selectedShop.name}</p>
         <div className="mt-4 grid gap-3">
-          <button type="button" onClick={() => downloadProducts("all")} className={`${buttonClass} bg-ink text-white`}>
+          <button type="button" onClick={() => downloadProducts("all")} className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}>
             <Icon name="download" />
             Download all products
           </button>
@@ -1212,7 +1235,7 @@ function NavButton({ active, children, icon, onClick }) {
       type="button"
       onClick={onClick}
       className={`inline-flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold ${
-        active ? "bg-ink text-white" : "text-muted hover:bg-canvasDeep"
+        active ? "bg-mintDeep text-white" : "text-muted hover:bg-canvasDeep"
       }`}
     >
       <Icon name={icon} />

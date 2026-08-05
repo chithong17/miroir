@@ -12,7 +12,14 @@ import stylistRoutes from "./routes/stylist.routes.js";
 import tryOnRoutes from "./routes/tryon.routes.js";
 import userAuthRoutes from "./routes/userAuth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import locationRoutes from "./routes/location.routes.js";
+import orderRoutes from "./routes/order.routes.js";
+import shopOrderRoutes from "./routes/shopOrder.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
+import shopNotificationRoutes from "./routes/shopNotification.routes.js";
 import { configureCloudinary } from "./services/cloudinary.service.js";
+import { ensureCommerceIndexes } from "./services/commerceIndexes.service.js";
+import { expireCommerceOrders } from "./services/commerce.service.js";
 
 dotenv.config();
 
@@ -138,6 +145,11 @@ app.use("/api/stylist", stylistRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/user-auth", userAuthRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/locations", locationRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/shop-orders", shopOrderRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/shop-notifications", shopNotificationRoutes);
 app.use("/api/admin-auth", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/payments", paymentRoutes);
@@ -179,3 +191,9 @@ app.listen(port, () => {
   console.log(`MIROIR backend listening on port ${port}`);
   console.log("Loaded PIAPI_KEY env info:", describeEnvValue(process.env.PIAPI_KEY));
 });
+
+ensureCommerceIndexes().catch((error) => console.error("Commerce index initialization failed:", error));
+const commerceDeadlineWorker = setInterval(() => {
+  expireCommerceOrders().catch((error) => console.error("Commerce deadline worker failed:", error));
+}, Number(process.env.COMMERCE_WORKER_INTERVAL_MS || 300000));
+commerceDeadlineWorker.unref();

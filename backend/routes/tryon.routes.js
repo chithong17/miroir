@@ -6,7 +6,6 @@ import {
   getTryOnTaskStatus,
 } from "../controllers/tryon.controller.js";
 import { requireUser } from "../middlewares/userAuth.middleware.js";
-import { requireUserTryOnAccess } from "../middlewares/subscription.middleware.js";
 import {
   uploadCatalogTryOnImage,
   uploadTryOnImages,
@@ -15,21 +14,21 @@ import {
 const router = Router();
 
 router.post("/", uploadTryOnImages, createTryOnTask);
+
 router.post(
   "/catalog",
   requireUser,
-  requireUserTryOnAccess,
   uploadCatalogTryOnImage,
-  createCatalogTryOnTask
+  createCatalogTryOnTask,
 );
+
 router.post(
   "/custom",
   requireUser,
-  requireUserTryOnAccess,
   uploadTryOnImages,
-  createCustomTryOnTask
+  createCustomTryOnTask,
 );
+
 router.get("/:taskId", getTryOnTaskStatus);
 
 export default router;
-

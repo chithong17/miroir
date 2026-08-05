@@ -1,11 +1,14 @@
+import { useEffect, useMemo, useState } from "react";
 import { LanguageToggle, useLanguage } from "../../i18n.jsx";
+import { addCartItem, getCart, listNotifications, readNotification, removeCartItem, updateCartItem } from "../../api/commerceApi.js";
+import { getUserToken } from "../../api/userApi.js";
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
 
 export function AppShell({ children, nav, sidebar }) {
   if (sidebar) {
     return (
-      <div className="min-h-screen bg-canvasDeep text-ink">
+      <div className="min-h-screen bg-white text-ink">
         <div className="min-h-screen lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
           {sidebar}
           <main className="min-w-0 px-4 py-5 md:px-8 lg:px-10">{children}</main>
@@ -15,7 +18,7 @@ export function AppShell({ children, nav, sidebar }) {
   }
 
   return (
-    <div className="min-h-screen bg-canvasDeep text-ink">
+    <div className="min-h-screen bg-white text-ink">
       {nav}
       {children}
     </div>
@@ -25,6 +28,46 @@ export function AppShell({ children, nav, sidebar }) {
 export function TopNav({ user, onLogout, compact = false }) {
   const { t } = useLanguage();
   const pathname = typeof window === "undefined" ? "" : window.location.pathname;
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [cart, setCart] = useState(null);
+  const [cartNotice, setCartNotice] = useState("");
+  useEffect(() => {
+    if (!user) return undefined;
+    const refresh = () => Promise.all([listNotifications(), getCart()]).then(([result, cartResult]) => { setNotifications(result.notifications || []); setUnreadCount(result.unreadCount || 0); setCart(cartResult.cart || null); }).catch(() => {});
+    refresh();
+    const interval = setInterval(refresh, 30000);
+    const focus = () => refresh();
+    window.addEventListener("focus", focus);
+    window.addEventListener("miroir:cart-updated", refresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", focus);
+      window.removeEventListener("miroir:cart-updated", refresh);
+    };
+  }, [user?.id]);
+  const cartCount = cart?.itemCount || 0;
+  const cartItems = (cart?.groups || []).flatMap((group) => group.items || []);
+  const changeCartQuantity = async (item, quantity) => {
+    try {
+      const result = await updateCartItem(item.productId, item.variantId, quantity);
+      setCart(result.cart);
+      setCartNotice("");
+      window.dispatchEvent(new Event("miroir:cart-updated"));
+    } catch (error) {
+      setCartNotice(error.response?.data?.message || "Không thể cập nhật số lượng.");
+    }
+  };
+  const removeQuickCartItem = async (item) => {
+    try {
+      const result = await removeCartItem(item.productId, item.variantId);
+      setCart(result.cart);
+      setCartNotice("");
+      window.dispatchEvent(new Event("miroir:cart-updated"));
+    } catch (error) {
+      setCartNotice(error.response?.data?.message || "Không thể xóa sản phẩm.");
+    }
+  };
   const navItems = [
     { href: "/app", label: t("nav.marketplace"), active: pathname === "/app" || pathname === "/app/products" },
     { href: "/app/stylist", label: t("nav.stylist"), active: pathname === "/app/stylist" },
@@ -42,7 +85,7 @@ export function TopNav({ user, onLogout, compact = false }) {
             <a
               key={item.href}
               className={`rounded-full px-5 py-2 transition ${
-                item.active ? "bg-ink text-white shadow-glow" : "text-muted hover:bg-white hover:text-ink"
+                item.active ? "bg-mintDeep text-white shadow-glow" : "text-muted hover:bg-white hover:text-ink"
               }`}
               href={item.href}
             >
@@ -55,18 +98,68 @@ export function TopNav({ user, onLogout, compact = false }) {
             <LanguageToggle />
           </div>
           {user ? (
-            <details className="relative group">
+            <>
+            <details className="relative">
+              <summary
+                aria-label="Giỏ hàng"
+                className={`relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border bg-white transition hover:bg-panel [&::-webkit-details-marker]:hidden ${pathname === "/app/cart" ? "border-mintDeep text-mintDeep" : "border-line text-ink"}`}
+                title="Giỏ hàng"
+              >
+                <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l2.2 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 7H6" />
+                  <circle cx="10" cy="20" r="1" fill="currentColor" stroke="none" />
+                  <circle cx="18" cy="20" r="1" fill="currentColor" stroke="none" />
+                </svg>
+                {cartCount ? <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-mintDeep px-1 text-center text-[10px] font-black text-white">{cartCount > 99 ? "99+" : cartCount}</span> : null}
+              </summary>
+              <div className="absolute right-0 top-full mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-line px-4 py-3">
+                  <p className="font-black text-ink">Giỏ hàng</p>
+                  <span className="text-xs font-bold text-muted">{cartCount} sản phẩm</span>
+                </div>
+                <div className="max-h-80 overflow-y-auto p-2">
+                  {cartItems.slice(0, 5).map((item) => (
+                    <div className="flex gap-3 rounded-xl p-2 hover:bg-panel" key={`${item.productId}-${item.variantId}`}>
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-panel">
+                        {item.product?.imageUrl ? <img alt="" className="h-full w-full object-cover" src={item.product.imageUrl} /> : null}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-ink">{item.product?.name || "Sản phẩm"}</p>
+                        <p className="truncate text-xs text-muted">{item.variant?.color || "Mặc định"} · {item.variant?.size || "Một cỡ"} · x{item.quantity}</p>
+                        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-black text-mintDeep">{Number(item.product?.price || 0).toLocaleString("vi-VN")} VND</p>
+                          <div className="flex items-center gap-1">
+                            <button type="button" aria-label="Giảm số lượng" disabled={item.quantity <= 1} className="flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white font-black disabled:opacity-40" onClick={() => changeCartQuantity(item, item.quantity - 1)}>−</button>
+                            <span className="min-w-7 text-center text-xs font-black">{item.quantity}</span>
+                            <button type="button" aria-label="Tăng số lượng" disabled={item.quantity >= (item.variant?.stockQuantity || 0)} className="flex h-7 w-7 items-center justify-center rounded-full border border-line bg-white font-black disabled:opacity-40" onClick={() => changeCartQuantity(item, item.quantity + 1)}>+</button>
+                            <button type="button" className="ml-1 text-xs font-bold text-red-600 hover:underline" onClick={() => removeQuickCartItem(item)}>Xóa</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {!cartItems.length ? <p className="px-4 py-8 text-center text-sm text-muted">Giỏ hàng đang trống.</p> : null}
+                  {cartItems.length > 5 ? <p className="px-3 py-2 text-center text-xs font-bold text-muted">Và {cartItems.length - 5} sản phẩm khác</p> : null}
+                  {cartNotice ? <p className="px-3 py-2 text-xs font-bold text-red-600">{cartNotice}</p> : null}
+                </div>
+                <div className="border-t border-line p-3">
+                  <a className="block rounded-full bg-mintDeep px-4 py-2.5 text-center text-sm font-black text-white transition hover:opacity-90" href="/app/cart">Mở trang giỏ hàng</a>
+                </div>
+              </div>
+            </details>
+            <details className="relative">
+              <summary aria-label="Thông báo" className="relative flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-line bg-white text-ink [&::-webkit-details-marker]:hidden">
+                <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0a3 3 0 0 1-6 0" /></svg>
+                {unreadCount ? <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-mintDeep px-1 text-center text-[10px] font-black text-white">{unreadCount}</span> : null}
+              </summary>
+              <div className="absolute right-0 top-full mt-2 max-h-96 w-80 overflow-y-auto rounded-2xl border border-line bg-white p-2 shadow-2xl">{notifications.slice(0, 12).map((item) => <button key={item.id} className={`block w-full rounded-xl p-3 text-left text-sm ${item.readAt ? "text-muted" : "bg-accentSoft font-bold"}`} onClick={async () => { await readNotification(item.id); setUnreadCount((value) => Math.max(value - (item.readAt ? 0 : 1), 0)); setNotifications((all) => all.map((entry) => entry.id === item.id ? { ...entry, readAt: new Date() } : entry)); if (item.orderId) window.location.href = `/app/orders/${item.orderId}`; }}><span className="block">{item.title}</span><span className="mt-1 block text-xs font-normal">{item.message}</span></button>)}{!notifications.length ? <p className="p-4 text-center text-sm text-muted">Chưa có thông báo.</p> : null}</div>
+            </details><details className="relative group">
               <summary className="flex cursor-pointer list-none items-center gap-2 rounded-full py-2 pl-3 pr-2 transition hover:bg-panel [&::-webkit-details-marker]:hidden">
                 <div className="flex flex-col items-end">
                   <div className="flex items-center gap-2">
                     {!compact ? (
                       <span className="hidden text-sm text-muted group-hover:text-ink sm:inline font-bold transition-colors">
                         {user.name}
-                      </span>
-                    ) : null}
-                    {user?.subscription?.isPremium ? (
-                      <span className="flex items-center justify-center rounded-full bg-accentSoft border border-accentStrong/30 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-ink">
-                        Premium
                       </span>
                     ) : null}
                   </div>
@@ -82,12 +175,15 @@ export function TopNav({ user, onLogout, compact = false }) {
                   <a className="block px-4 py-2.5 text-sm font-semibold text-muted hover:text-ink hover:bg-panel rounded-[18px] transition-colors" href="/app/favorites">
                     {t("app.favorites")}
                   </a>
+                  <a className="block px-4 py-2.5 text-sm font-semibold text-muted hover:text-ink hover:bg-panel rounded-[18px] transition-colors" href="/app/orders">
+                    Đơn hàng
+                  </a>
                   <button type="button" onClick={onLogout} className="block w-full text-left px-4 py-2.5 text-sm font-semibold text-ink hover:bg-panel rounded-[18px] transition-colors mt-1">
                     {t("nav.logout")}
                   </button>
                 </div>
               </div>
-            </details>
+            </details></>
           ) : (
             <>
               <a href="/login" className="soft-button !px-4 !py-2.5 sm:!px-6">{t("nav.login")}</a>
@@ -101,7 +197,7 @@ export function TopNav({ user, onLogout, compact = false }) {
           <a
             key={item.href}
             className={`min-w-max flex-1 rounded-full px-4 py-2.5 text-center text-sm font-bold transition ${
-              item.active ? "bg-ink text-white" : "text-muted hover:bg-white hover:text-ink"
+              item.active ? "bg-mintDeep text-white" : "text-muted hover:bg-white hover:text-ink"
             }`}
             href={item.href}
           >
@@ -195,7 +291,7 @@ export function SegmentedTabs({ items, value, onChange, className }) {
           onClick={() => onChange(item.value)}
           className={cx(
             "flex-1 rounded-full px-4 py-2.5 text-center text-sm font-bold capitalize transition sm:flex-none sm:px-6",
-            value === item.value ? "bg-ink text-white shadow-glow" : "text-muted hover:bg-white hover:text-ink"
+            value === item.value ? "bg-mintDeep text-white shadow-glow" : "text-muted hover:bg-white hover:text-ink"
           )}
         >
           {item.label || item.value}
@@ -266,8 +362,104 @@ export function MetricTile({ label, value }) {
   );
 }
 
-export function ProductCard({ isFavorite = false, onDetail, onFavoriteToggle, onTryOn, product }) {
+const uniqueVariantValues = (variants, field) => [...new Set(variants.map((item) => String(item[field] || "")))];
+const variantOptionKey = (value) => value || "__default__";
+const variantOptionValue = (key) => key === "__default__" ? "" : key;
+
+export function ProductPurchaseActions({ compact = false, product }) {
+  const variants = useMemo(
+    () => (product?.variants || []).filter((item) => item.active !== false && Number(item.stockQuantity) > 0),
+    [product],
+  );
+  const colorValues = useMemo(() => uniqueVariantValues(variants, "color"), [variants]);
+  const hasColor = colorValues.some(Boolean);
+  const [colorKey, setColorKey] = useState("");
+  const [sizeKey, setSizeKey] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    setColorKey("");
+    setSizeKey("");
+    setQuantity(1);
+    setNotice("");
+  }, [product?.id]);
+
+  const colorFilteredVariants = hasColor && colorKey
+    ? variants.filter((item) => String(item.color || "") === variantOptionValue(colorKey))
+    : variants;
+  const sizeValues = uniqueVariantValues(colorFilteredVariants, "size");
+  const hasSize = variants.some((item) => String(item.size || ""));
+  const selectedVariant = variants.find((item) => (
+    (!hasColor || (colorKey && String(item.color || "") === variantOptionValue(colorKey))) &&
+    (!hasSize || (sizeKey && String(item.size || "") === variantOptionValue(sizeKey)))
+  ));
+  const selectionComplete = Boolean(selectedVariant) && (!hasColor || colorKey) && (!hasSize || sizeKey);
+
+  const requireLogin = () => {
+    if (getUserToken()) return true;
+    const returnTo = `${window.location.pathname}${window.location.search}`;
+    sessionStorage.setItem("miroir_after_login", returnTo);
+    window.location.href = "/login";
+    return false;
+  };
+  const add = async () => {
+    if (!requireLogin() || !selectionComplete) return;
+    try {
+      await addCartItem({ productId: product.id, variantId: selectedVariant.id, quantity });
+      window.dispatchEvent(new Event("miroir:cart-updated"));
+      setNotice("Đã thêm vào giỏ hàng.");
+    } catch (error) {
+      setNotice(error.response?.data?.message || "Không thể thêm vào giỏ hàng.");
+    }
+  };
+  const buyNow = () => {
+    if (!requireLogin() || !selectionComplete) return;
+    sessionStorage.setItem("miroir_buy_now", JSON.stringify([{
+      productId: product.id,
+      variantId: selectedVariant.id,
+      quantity,
+    }]));
+    window.location.href = "/app/checkout?mode=buy-now";
+  };
+
+  if (!variants.length) return <p className="mt-3 text-sm font-bold text-red-600">Sản phẩm hiện đã hết hàng.</p>;
+
+  return (
+    <div className={compact ? "mt-3 border-t border-line pt-3" : "mt-6 rounded-2xl border border-line bg-panel/50 p-4"} onClick={(event) => event.stopPropagation()}>
+      <div className={`grid gap-2 ${compact ? "grid-cols-2" : "sm:grid-cols-3"}`}>
+        {hasColor ? (
+          <SelectField label={compact ? "Màu" : "Màu sắc"} value={colorKey} onChange={(event) => { setColorKey(event.target.value); setSizeKey(""); setNotice(""); }}>
+            <option value="">Chọn màu</option>
+            {colorValues.map((value) => <option key={variantOptionKey(value)} value={variantOptionKey(value)}>{value || "Mặc định"}</option>)}
+          </SelectField>
+        ) : null}
+        {hasSize ? (
+          <SelectField label="Kích thước" disabled={hasColor && !colorKey} value={sizeKey} onChange={(event) => { setSizeKey(event.target.value); setNotice(""); }}>
+            <option value="">Chọn size</option>
+            {sizeValues.map((value) => <option key={variantOptionKey(value)} value={variantOptionKey(value)}>{value || "Mặc định"}</option>)}
+          </SelectField>
+        ) : null}
+        {!compact ? <TextField label="Số lượng" type="number" min="1" max={selectedVariant?.stockQuantity || 1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(Number(event.target.value) || 1, selectedVariant?.stockQuantity || 1)))} /> : null}
+      </div>
+      {compact && selectionComplete ? <p className="mt-2 text-xs font-semibold text-muted">Còn {selectedVariant.stockQuantity} sản phẩm</p> : null}
+      {!selectionComplete ? <p className="mt-2 text-xs font-semibold text-muted">Vui lòng chọn {hasColor && hasSize ? "màu sắc và kích thước" : hasColor ? "màu sắc" : hasSize ? "kích thước" : "biến thể"}.</p> : null}
+      <div className={`mt-3 grid gap-2 ${compact ? "grid-cols-2" : "sm:grid-cols-2"}`}>
+        <Button className="w-full !px-3 !py-2.5" disabled={!selectionComplete} onClick={add}>Thêm vào giỏ</Button>
+        <Button className="w-full !px-3 !py-2.5" variant="secondary" disabled={!selectionComplete} onClick={buyNow}>Mua ngay</Button>
+      </div>
+      {notice ? <p className="mt-2 text-xs font-bold text-mintDeep">{notice}</p> : null}
+    </div>
+  );
+}
+
+export function ProductCard({ isFavorite = false, onDetail, onFavoriteToggle, onTryOn, product, showPurchaseActions = false }) {
   const { t } = useLanguage();
+  const productHref = `/app/products/${encodeURIComponent(product?.id || "")}`;
+  const openDetail = () => {
+    if (onDetail) onDetail(product);
+    else window.location.href = productHref;
+  };
 
   return (
     <article className="group relative overflow-hidden rounded-[22px] border border-line bg-white p-2 shadow-glow transition-all duration-500 hover:-translate-y-0.5 hover:border-accentStrong/35 sm:rounded-[24px]">
@@ -288,7 +480,7 @@ export function ProductCard({ isFavorite = false, onDetail, onFavoriteToggle, on
           {isFavorite ? "♥" : "♡"}
         </button>
       ) : null}
-      <button type="button" className="block aspect-[4/5] w-full overflow-hidden rounded-[18px] bg-panel" onClick={() => onDetail?.(product)}>
+      <button type="button" className="block aspect-[4/5] w-full overflow-hidden rounded-[18px] bg-panel" onClick={openDetail}>
         {product?.imageUrl ? (
           <img src={product.imageUrl} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
         ) : (
@@ -308,8 +500,12 @@ export function ProductCard({ isFavorite = false, onDetail, onFavoriteToggle, on
         ) : null}
         <div className="mt-4 grid gap-3 sm:mt-5 sm:flex sm:items-center sm:justify-between">
           <p className="text-lg font-extrabold text-ink sm:text-xl">{formatMoney(product?.price)}</p>
-          {onTryOn ? <Button className="w-full !px-5 !py-2 sm:w-auto" onClick={() => onTryOn(product)}>{t("common.tryOn")}</Button> : null}
+          <div className="flex gap-2">
+            <Button className="!px-4 !py-2" variant="secondary" onClick={openDetail}>Chi tiết</Button>
+            {onTryOn ? <Button className="!px-4 !py-2" onClick={() => onTryOn(product)}>{t("common.tryOn")}</Button> : null}
+          </div>
         </div>
+        {showPurchaseActions ? <ProductPurchaseActions compact product={product} /> : null}
       </div>
     </article>
   );
