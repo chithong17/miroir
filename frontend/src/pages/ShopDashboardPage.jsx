@@ -1859,9 +1859,24 @@ function BreakdownDashboardChart({ title, items = [] }) {
     cursor += Number(item.count || 0);
     return `${colors[index % colors.length]} ${start}% ${(cursor / total) * 100}%`;
   });
-  return <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><h3 className="font-bold text-slate-900">{title}</h3>{!validItems.length ? <EmptyChart /> : <div className="mt-4 flex items-center gap-5"><div className="h-28 w-28 shrink-0 rounded-full" style={{ background: `conic-gradient(${stops.join(",")})`, mask: "radial-gradient(transparent 54%, #000 55%)", WebkitMask: "radial-gradient(transparent 54%, #000 55%)" }} /><div className="min-w-0 flex-1 space-y-2">{validItems.slice(0, 4).map((item, index) => <div key={item.key} className="flex items-center gap-2 text-sm"><i className="h-2.5 w-2.5 rounded-full" style={{ background: colors[index % colors.length] }} /><span className="flex-1 truncate capitalize">{String(item.key || "unknown").replaceAll("_", " ")}</span><strong>{item.count}</strong></div>)}</div></div>}</section>;
+  return <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><h3 className="font-bold text-slate-900">{title}</h3>{!validItems.length ? <EmptyChart /> : <div className="mt-4 flex items-center gap-5"><div className="h-28 w-28 shrink-0 rounded-full" style={{ background: `conic-gradient(${stops.join(",")})`, mask: "radial-gradient(transparent 54%, #000 55%)", WebkitMask: "radial-gradient(transparent 54%, #000 55%)" }} /><div className="min-w-0 flex-1 space-y-2">{validItems.slice(0, 4).map((item, index) => <div key={item.label} className="flex items-center gap-2 text-sm"><i className="h-2.5 w-2.5 rounded-full" style={{ background: colors[index % colors.length] }} /><span className="flex-1 truncate capitalize">{humanizeDashboardStatus(item.label)}</span><strong>{item.count}</strong></div>)}</div></div>}</section>;
 }
 
+function humanizeDashboardStatus(value) {
+  const labels = {
+    pending_confirmation: "Pending confirmation",
+    preparing: "Preparing",
+    delivered: "Delivered",
+    cancelled: "Cancelled",
+    cod_pending: "COD pending",
+    awaiting_transfer: "Awaiting transfer",
+    pending_verification: "Payment verification",
+    paid: "Paid",
+    refund_pending: "Refund pending",
+    refunded: "Refunded",
+  };
+  return labels[value] || String(value || "Unknown").replaceAll("_", " ");
+}
 function EmptyChart() {
   return <div className="flex h-32 items-center justify-center text-sm text-slate-500">No data for this period.</div>;
 }

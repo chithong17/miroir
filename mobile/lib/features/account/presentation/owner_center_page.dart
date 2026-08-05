@@ -1813,7 +1813,7 @@ class _BreakdownChartCard extends StatelessWidget {
                           children: [
                             Container(width: 10, height: 10, decoration: BoxDecoration(color: _chartColor(index), shape: BoxShape.circle)),
                             const SizedBox(width: 8),
-                            Expanded(child: Text(_displayStatus(item['key']), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
+                            Expanded(child: Text(_displayStatus(item['label']), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700))),
                             Text('${_number(item['count'])}', style: const TextStyle(fontWeight: FontWeight.w900)),
                           ],
                         ),
@@ -1965,7 +1965,22 @@ Color _chartColor(int index) {
   return colors[index % colors.length];
 }
 
-String _displayStatus(Object? value) => (value ?? 'Unknown').toString().replaceAll('_', ' ');
+String _displayStatus(Object? value) {
+  const labels = {
+    'pending_confirmation': 'Pending confirmation',
+    'preparing': 'Preparing',
+    'delivered': 'Delivered',
+    'cancelled': 'Cancelled',
+    'cod_pending': 'COD pending',
+    'awaiting_transfer': 'Awaiting transfer',
+    'pending_verification': 'Payment verification',
+    'paid': 'Paid',
+    'refund_pending': 'Refund pending',
+    'refunded': 'Refunded',
+  };
+  final text = (value ?? 'Unknown').toString();
+  return labels[text] ?? text.replaceAll('_', ' ');
+}
 class _MetricGrid extends StatelessWidget {
   const _MetricGrid({required this.metrics});
   final List<_MetricData> metrics;
