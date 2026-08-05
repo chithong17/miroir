@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { LanguageToggle, useLanguage } from "../../i18n.jsx";
 import { addCartItem, getCart, listNotifications, readNotification, removeCartItem, updateCartItem } from "../../api/commerceApi.js";
 import { getUserToken } from "../../api/userApi.js";
@@ -344,12 +345,14 @@ export function EmptyState({ text, title = "Nothing here yet" }) {
 }
 
 export function Modal({ children, maxWidth = "max-w-4xl", onClose }) {
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-white/85 p-2 backdrop-blur-md sm:items-center sm:p-4" onMouseDown={onClose}>
       <div className={cx("max-h-[94vh] w-full overflow-y-auto glass-panel p-4 shadow-2xl sm:max-h-[92vh] sm:p-6", maxWidth)} onMouseDown={(event) => event.stopPropagation()}>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -377,12 +380,16 @@ export function ProductPurchaseActions({ compact = false, product }) {
   const [sizeKey, setSizeKey] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState("");
+  const [noticeTone, setNoticeTone] = useState("neutral");
+  const [quickAction, setQuickAction] = useState("");
 
   useEffect(() => {
     setColorKey("");
     setSizeKey("");
     setQuantity(1);
     setNotice("");
+    setNoticeTone("neutral");
+    setQuickAction("");
   }, [product?.id]);
 
   const colorFilteredVariants = hasColor && colorKey
@@ -395,6 +402,14 @@ export function ProductPurchaseActions({ compact = false, product }) {
     (!hasSize || (sizeKey && String(item.size || "") === variantOptionValue(sizeKey)))
   ));
   const selectionComplete = Boolean(selectedVariant) && (!hasColor || colorKey) && (!hasSize || sizeKey);
+  const selectionPrompt = hasColor && hasSize
+    ? "Vui lòng chọn màu sắc và kích thước."
+    : hasColor
+      ? "Vui lòng chọn màu sắc."
+      : hasSize
+        ? "Vui lòng chọn kích thước."
+        : "Vui lòng chọn biến thể.";
+  const maximumQuantity = selectedVariant?.stockQuantity || Math.max(...variants.map((item) => Number(item.stockQuantity) || 0), 1);
 
   const requireLogin = () => {
     if (getUserToken()) return true;
@@ -403,18 +418,27 @@ export function ProductPurchaseActions({ compact = false, product }) {
     window.location.href = "/login";
     return false;
   };
+  const validateSelection = () => {
+    if (selectionComplete) return true;
+    setNotice(selectionPrompt);
+    setNoticeTone("error");
+    return false;
+  };
   const add = async () => {
-    if (!requireLogin() || !selectionComplete) return;
+    if (!validateSelection() || !requireLogin()) return;
     try {
       await addCartItem({ productId: product.id, variantId: selectedVariant.id, quantity });
       window.dispatchEvent(new Event("miroir:cart-updated"));
       setNotice("Đã thêm vào giỏ hàng.");
+      setNoticeTone("success");
+      if (compact) setQuickAction("");
     } catch (error) {
       setNotice(error.response?.data?.message || "Không thể thêm vào giỏ hàng.");
+      setNoticeTone("error");
     }
   };
   const buyNow = () => {
-    if (!requireLogin() || !selectionComplete) return;
+    if (!validateSelection() || !requireLogin()) return;
     sessionStorage.setItem("miroir_buy_now", JSON.stringify([{
       productId: product.id,
       variantId: selectedVariant.id,
@@ -425,30 +449,112 @@ export function ProductPurchaseActions({ compact = false, product }) {
 
   if (!variants.length) return <p className="mt-3 text-sm font-bold text-red-600">Sản phẩm hiện đã hết hàng.</p>;
 
+  const chooser = (
+    <div className="grid gap-5">
+      {hasColor ? (
+        <VariantBadgeGroup label="Màu sắc">
+          {colorValues.map((value) => {
+            const key = variantOptionKey(value);
+            const selected = colorKey === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={selected}
+                className={`flex min-h-12 items-center gap-2 rounded-lg border px-2.5 py-2 text-sm font-bold transition ${selected ? "border-mintDeep bg-mintDeep text-white shadow-glow" : "border-line bg-white text-ink hover:border-mintDeep"}`}
+                onClick={() => { setColorKey(key); setSizeKey(""); setNotice(""); }}
+              >
+                {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-8 w-8 rounded-md object-cover" /> : null}
+                <span>{value || "Mặc định"}</span>
+              </button>
+            );
+          })}
+        </VariantBadgeGroup>
+      ) : null}
+
+      {hasSize ? (
+        <VariantBadgeGroup label="Kích thước">
+          {sizeValues.map((value) => {
+            const key = variantOptionKey(value);
+            const selected = sizeKey === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={selected}
+                className={`min-h-12 min-w-20 rounded-lg border px-5 py-2 text-sm font-black transition ${selected ? "border-mintDeep bg-mintDeep text-white shadow-glow" : "border-line bg-white text-ink hover:border-mintDeep"}`}
+                onClick={() => { setSizeKey(key); setNotice(""); }}
+              >
+                {value || "Mặc định"}
+              </button>
+            );
+          })}
+        </VariantBadgeGroup>
+      ) : null}
+
+      <div className="grid gap-2 sm:grid-cols-[120px_1fr] sm:items-center">
+        <p className="text-sm font-bold text-muted">Số lượng</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center overflow-hidden rounded-lg border border-line bg-white">
+            <button type="button" aria-label="Giảm số lượng" disabled={quantity <= 1} className="h-11 w-11 text-lg font-black transition hover:bg-panel disabled:opacity-35" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button>
+            <input aria-label="Số lượng" className="h-11 w-14 border-x border-line bg-white text-center text-sm font-black outline-none" min="1" max={maximumQuantity} type="number" value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(Number(event.target.value) || 1, maximumQuantity)))} />
+            <button type="button" aria-label="Tăng số lượng" disabled={quantity >= maximumQuantity} className="h-11 w-11 text-lg font-black transition hover:bg-panel disabled:opacity-35" onClick={() => setQuantity((value) => Math.min(maximumQuantity, value + 1))}>+</button>
+          </div>
+          <span className="text-xs font-semibold text-muted">{selectedVariant ? `Còn ${selectedVariant.stockQuantity} sản phẩm` : "Chọn biến thể để xem tồn kho"}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const actionButtons = compact ? (
+    <div className="grid grid-cols-2 gap-2">
+      <Button className="w-full !px-3 !py-2.5" onClick={() => { setQuickAction("cart"); setNotice(""); }}>Thêm vào giỏ</Button>
+      <Button className="w-full !px-3 !py-2.5" variant="secondary" onClick={() => { setQuickAction("buy"); setNotice(""); }}>Mua ngay</Button>
+    </div>
+  ) : (
+    <div className="grid gap-2 sm:grid-cols-2">
+      <Button className="w-full !px-3 !py-3" onClick={add}>Thêm vào giỏ</Button>
+      <Button className="w-full !px-3 !py-3" variant="secondary" onClick={buyNow}>Mua ngay</Button>
+    </div>
+  );
+
   return (
     <div className={compact ? "mt-3 border-t border-line pt-3" : "mt-6 rounded-2xl border border-line bg-panel/50 p-4"} onClick={(event) => event.stopPropagation()}>
-      <div className={`grid gap-2 ${compact ? "grid-cols-2" : "sm:grid-cols-3"}`}>
-        {hasColor ? (
-          <SelectField label={compact ? "Màu" : "Màu sắc"} value={colorKey} onChange={(event) => { setColorKey(event.target.value); setSizeKey(""); setNotice(""); }}>
-            <option value="">Chọn màu</option>
-            {colorValues.map((value) => <option key={variantOptionKey(value)} value={variantOptionKey(value)}>{value || "Mặc định"}</option>)}
-          </SelectField>
-        ) : null}
-        {hasSize ? (
-          <SelectField label="Kích thước" disabled={hasColor && !colorKey} value={sizeKey} onChange={(event) => { setSizeKey(event.target.value); setNotice(""); }}>
-            <option value="">Chọn size</option>
-            {sizeValues.map((value) => <option key={variantOptionKey(value)} value={variantOptionKey(value)}>{value || "Mặc định"}</option>)}
-          </SelectField>
-        ) : null}
-        {!compact ? <TextField label="Số lượng" type="number" min="1" max={selectedVariant?.stockQuantity || 1} value={quantity} onChange={(event) => setQuantity(Math.max(1, Math.min(Number(event.target.value) || 1, selectedVariant?.stockQuantity || 1)))} /> : null}
-      </div>
-      {compact && selectionComplete ? <p className="mt-2 text-xs font-semibold text-muted">Còn {selectedVariant.stockQuantity} sản phẩm</p> : null}
-      {!selectionComplete ? <p className="mt-2 text-xs font-semibold text-muted">Vui lòng chọn {hasColor && hasSize ? "màu sắc và kích thước" : hasColor ? "màu sắc" : hasSize ? "kích thước" : "biến thể"}.</p> : null}
-      <div className={`mt-3 grid gap-2 ${compact ? "grid-cols-2" : "sm:grid-cols-2"}`}>
-        <Button className="w-full !px-3 !py-2.5" disabled={!selectionComplete} onClick={add}>Thêm vào giỏ</Button>
-        <Button className="w-full !px-3 !py-2.5" variant="secondary" disabled={!selectionComplete} onClick={buyNow}>Mua ngay</Button>
-      </div>
-      {notice ? <p className="mt-2 text-xs font-bold text-mintDeep">{notice}</p> : null}
+      {!compact ? chooser : null}
+      <div className={compact ? "" : "mt-5"}>{actionButtons}</div>
+      {!compact && notice ? <p className={`mt-3 rounded-lg p-3 text-sm font-bold ${noticeTone === "error" ? "bg-red-50 text-red-700" : "bg-accentSoft text-mintDeep"}`}>{notice}</p> : null}
+
+      {compact && quickAction ? (
+        <Modal maxWidth="max-w-2xl" onClose={() => { setQuickAction(""); setNotice(""); }}>
+          <div className="p-2 sm:p-4">
+            <div className="flex items-start gap-4 border-b border-line pb-4">
+              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-panel">
+                {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-full w-full object-cover" /> : null}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-mintDeep">{quickAction === "buy" ? "Mua ngay" : "Thêm vào giỏ"}</p>
+                <h2 className="mt-1 line-clamp-2 text-xl font-black text-ink">{product.name}</h2>
+                <p className="mt-1 text-lg font-black text-mintDeep">{formatMoney(product.price)}</p>
+              </div>
+              <button type="button" aria-label="Đóng" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-white text-lg font-black" onClick={() => { setQuickAction(""); setNotice(""); }}>×</button>
+            </div>
+            <div className="mt-5">{chooser}</div>
+            {notice ? <p className={`mt-4 rounded-lg p-3 text-sm font-bold ${noticeTone === "error" ? "bg-red-50 text-red-700" : "bg-accentSoft text-mintDeep"}`}>{notice}</p> : null}
+            <div className="mt-5">
+              <Button className="w-full !py-3" onClick={quickAction === "buy" ? buyNow : add}>{quickAction === "buy" ? "Mua ngay" : "Xác nhận thêm vào giỏ"}</Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
+    </div>
+  );
+}
+
+function VariantBadgeGroup({ children, label }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-[120px_1fr] sm:items-start">
+      <p className="pt-3 text-sm font-bold text-muted">{label}</p>
+      <div className="flex flex-wrap gap-2.5">{children}</div>
     </div>
   );
 }

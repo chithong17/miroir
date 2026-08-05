@@ -120,19 +120,68 @@ function CheckoutView() {
     Promise.all([cartRequest, listAddresses()])
       .then(([cartResult, addressResult]) => {
         setCart(cartResult.cart);
-        setAddresses(addressResult.addresses || []);
-        const defaultAddress = (addressResult.addresses || []).find((item) => item.isDefault);
-        setSelected(defaultAddress?.id || addressResult.addresses?.[0]?.id || "");
+        const nextAddresses = addressResult.addresses || [];
+        setAddresses(nextAddresses);
+        if (!nextAddresses.length) setManual(true);
+        const defaultAddress = nextAddresses.find((item) => item.isDefault);
+        setSelected(defaultAddress?.id || nextAddresses[0]?.id || "");
         setMethods(Object.fromEntries((cartResult.cart?.groups || []).filter((group) => group.shop).map((group) => [group.shop.id, "cash"])));
       })
       .catch((error) => setNotice(error.response?.data?.message || "Không tải được thông tin thanh toán."));
   }, []);
   useEffect(() => { if (selected) selectCartAddress(selected).catch(() => {}); }, [selected]);
+  const recipientReady = manual
+    ? Boolean(form.recipientName && form.phone && form.provinceCode && form.wardCode && form.addressLine)
+    : Boolean(selected);
   const submit = async () => { setBusy(true); setNotice(""); try { const payload = { idempotencyKey: crypto.randomUUID(), paymentMethods: methods, ...(buyNowItems ? { buyNowItems } : {}), ...(manual ? { recipient: form, saveAddress, setAsDefault } : { addressId: selected, note: savedAddressNote }) }; const result = await checkoutCart(payload); if (buyNowItems) sessionStorage.removeItem("miroir_buy_now"); sessionStorage.setItem("miroir_checkout_orders", JSON.stringify(result.orders)); window.dispatchEvent(new Event("miroir:cart-updated")); window.location.href = `/app/orders/${result.orders[0].id}?checkout=success`; } catch (e) { setNotice(e.response?.data?.message || "Không thể tạo đơn."); setBusy(false); } };
   return <><PageHeader eyebrow={isBuyNow ? "Mua ngay" : "Checkout"} title="Thông tin đặt hàng" description={isBuyNow ? "Đơn hàng chỉ gồm sản phẩm vừa chọn; các sản phẩm khác trong giỏ được giữ nguyên." : "Địa chỉ được snapshot vào từng đơn; phương thức thanh toán chọn riêng theo shop."} />{notice ? <Notice text={notice} /> : null}
-    <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_380px]"><div className="grid gap-5"><section className="miroir-card"><div className="flex items-center justify-between"><h2 className="text-xl font-black">Người nhận</h2><Button variant="secondary" onClick={() => setManual(!manual)}>{manual ? "Chọn địa chỉ đã lưu" : "Nhập địa chỉ mới"}</Button></div>{manual ? <div className="mt-4"><AddressFields {...{ form, setForm, provinces, wards }} /><TextField className="mt-3" label="Ghi chú" value={form.note} onChange={(e) => setForm((v) => ({ ...v, note: e.target.value }))} /><label className="mt-4 flex gap-2"><input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} /> Lưu vào sổ địa chỉ</label>{saveAddress ? <label className="mt-2 flex gap-2"><input type="checkbox" checked={setAsDefault} onChange={(e) => setSetAsDefault(e.target.checked)} /> Đặt làm mặc định</label> : null}<p className="mt-2 text-xs text-muted">Dataset {version}</p></div> : <div className="mt-4 grid gap-3">{addresses.map((item) => <label key={item.id} className={`rounded-xl border p-4 ${selected === item.id ? "border-accentStrong bg-accentSoft" : "border-line bg-white"}`}><input className="mr-2" type="radio" checked={selected === item.id} onChange={() => setSelected(item.id)} /> <strong>{item.recipientName}</strong> · {item.phone}<p className="ml-6 text-sm text-muted">{item.fullAddress}</p></label>)}<TextField label="Ghi chú cho đơn hàng" value={savedAddressNote} onChange={(event) => setSavedAddressNote(event.target.value)} /></div>}</section>
-      {cart?.groups.map((group) => <section className="miroir-card" key={group.shop?.id}><h2 className="font-black">{group.shop?.name}</h2><p className="mt-1 text-sm text-muted">{group.items.length} sản phẩm · {formatMoney(group.subtotal)}</p><div className="mt-4 flex gap-3"><label className="flex-1 rounded-xl border border-line p-3"><input type="radio" className="mr-2" checked={methods[group.shop?.id] === "cash"} onChange={() => setMethods((m) => ({ ...m, [group.shop.id]: "cash" }))} /> Tiền mặt</label><label className={`flex-1 rounded-xl border border-line p-3 ${group.shop?.bankTransferAvailable ? "" : "cursor-not-allowed opacity-50"}`}><input type="radio" disabled={!group.shop?.bankTransferAvailable} className="mr-2" checked={methods[group.shop?.id] === "bank_transfer"} onChange={() => setMethods((m) => ({ ...m, [group.shop.id]: "bank_transfer" }))} /> Chuyển khoản{!group.shop?.bankTransferAvailable ? <span className="block text-xs">Shop chưa cấu hình</span> : null}</label></div></section>)}</div>
-      <aside className="miroir-card h-fit"><p className="text-sm text-muted">Tổng thanh toán</p><p className="mt-2 text-3xl font-black">{formatMoney(cart?.subtotal || 0)}</p><p className="mt-2 text-sm text-muted">Phí giao hàng: trao đổi trực tiếp với shop.</p><Button className="mt-5 w-full" disabled={busy || (!manual && !selected)} onClick={submit}>{busy ? "Đang tạo đơn..." : "Đặt hàng"}</Button></aside></div></>;
+    <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_380px]"><div className="grid gap-5"><section className="miroir-card"><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-black">Người nhận</h2>{addresses.length ? <Button variant="secondary" onClick={() => setManual(!manual)}>{manual ? "Chọn địa chỉ đã lưu" : "Nhập địa chỉ mới"}</Button> : <span className="rounded-full bg-accentSoft px-3 py-1.5 text-xs font-bold text-mintDeep">Chưa có địa chỉ đã lưu</span>}</div>{manual ? <div className="mt-4"><AddressFields {...{ form, setForm, provinces, wards }} /><TextField className="mt-3" label="Ghi chú" value={form.note} onChange={(e) => setForm((v) => ({ ...v, note: e.target.value }))} /><label className="mt-4 flex gap-2"><input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} /> Lưu vào sổ địa chỉ</label>{saveAddress ? <label className="mt-2 flex gap-2"><input type="checkbox" checked={setAsDefault} onChange={(e) => setSetAsDefault(e.target.checked)} /> Đặt làm mặc định</label> : null}<p className="mt-2 text-xs text-muted">Dataset {version}</p></div> : <div className="mt-4 grid gap-3">{addresses.map((item) => <label key={item.id} className={`rounded-xl border p-4 ${selected === item.id ? "border-accentStrong bg-accentSoft" : "border-line bg-white"}`}><input className="mr-2" type="radio" checked={selected === item.id} onChange={() => setSelected(item.id)} /> <strong>{item.recipientName}</strong> · {item.phone}<p className="ml-6 text-sm text-muted">{item.fullAddress}</p></label>)}<TextField label="Ghi chú cho đơn hàng" value={savedAddressNote} onChange={(event) => setSavedAddressNote(event.target.value)} /></div>}</section>
+      {cart?.groups.map((group) => <CheckoutShopGroup group={group} key={group.shop?.id || "unavailable"} method={methods[group.shop?.id]} onMethodChange={(method) => { if (group.shop?.id) setMethods((current) => ({ ...current, [group.shop.id]: method })); }} />)}</div>
+      <aside className="miroir-card h-fit lg:sticky lg:top-28"><div className="flex items-center justify-between text-sm text-muted"><span>Tổng sản phẩm</span><span>{cart?.itemCount || 0}</span></div><div className="mt-3 flex items-center justify-between text-sm text-muted"><span>Phí giao hàng</span><span>Trao đổi với shop</span></div><div className="my-4 border-t border-line" /><p className="text-sm text-muted">Tổng thanh toán</p><p className="mt-2 text-3xl font-black">{formatMoney(cart?.subtotal || 0)}</p><Button className="mt-5 w-full" disabled={busy || !cart?.itemCount || !recipientReady} onClick={submit}>{busy ? "Đang tạo đơn..." : "Đặt hàng"}</Button>{!recipientReady ? <p className="mt-3 text-center text-xs font-semibold text-red-600">Vui lòng hoàn tất thông tin người nhận.</p> : null}</aside></div></>;
+}
+
+function CheckoutShopGroup({ group, method, onMethodChange }) {
+  const itemCount = (group.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  return (
+    <section className="miroir-card">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div><p className="text-xs font-bold uppercase tracking-[0.14em] text-mintDeep">Đơn từ shop</p><h2 className="mt-1 text-xl font-black">{group.shop?.name || "Shop không khả dụng"}</h2></div>
+        <p className="text-sm font-bold text-muted">{itemCount} sản phẩm · {formatMoney(group.subtotal)}</p>
+      </div>
+
+      <div className="mt-4 divide-y divide-line border-y border-line">
+        {(group.items || []).map((item) => (
+          <div className="grid gap-3 py-4 sm:grid-cols-[88px_minmax(0,1fr)_auto] sm:items-center" key={`${item.productId}-${item.variantId}`}>
+            <a className="h-24 w-24 overflow-hidden rounded-xl bg-panel sm:h-20 sm:w-20" href={`/app/products/${encodeURIComponent(item.productId)}`}>
+              {item.product?.imageUrl ? <img alt={item.product.name} className="h-full w-full object-cover" src={item.product.imageUrl} /> : null}
+            </a>
+            <div className="min-w-0">
+              <a className="line-clamp-2 font-black text-ink hover:text-mintDeep" href={`/app/products/${encodeURIComponent(item.productId)}`}>{item.product?.name || "Sản phẩm không khả dụng"}</a>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold">
+                {item.variant?.color ? <span className="rounded-full border border-line bg-white px-3 py-1.5">Màu: {item.variant.color}</span> : null}
+                {item.variant?.size ? <span className="rounded-full border border-line bg-white px-3 py-1.5">Size: {item.variant.size}</span> : null}
+                <span className="rounded-full bg-accentSoft px-3 py-1.5 text-mintDeep">Số lượng: {item.quantity}</span>
+              </div>
+              {item.variant?.sku ? <p className="mt-2 text-xs text-muted">SKU: {item.variant.sku}</p> : null}
+              {!item.available ? <p className="mt-2 text-sm font-bold text-red-600">Sản phẩm hiện không đủ điều kiện đặt hàng.</p> : null}
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="text-sm text-muted">{formatMoney(item.product?.price)} × {item.quantity}</p>
+              <p className="mt-1 text-lg font-black text-mintDeep">{formatMoney(item.lineTotal)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        <p className="mb-3 text-sm font-black">Phương thức thanh toán</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className={`rounded-xl border p-4 transition ${method === "cash" ? "border-mintDeep bg-accentSoft" : "border-line bg-white"}`}><input type="radio" className="mr-2" checked={method === "cash"} onChange={() => onMethodChange("cash")} /> <strong>Tiền mặt</strong><span className="mt-1 block pl-6 text-xs text-muted">Thanh toán khi nhận hàng</span></label>
+          <label className={`rounded-xl border p-4 transition ${group.shop?.bankTransferAvailable ? (method === "bank_transfer" ? "border-mintDeep bg-accentSoft" : "border-line bg-white") : "cursor-not-allowed border-line bg-panel opacity-55"}`}><input type="radio" disabled={!group.shop?.bankTransferAvailable} className="mr-2" checked={method === "bank_transfer"} onChange={() => onMethodChange("bank_transfer")} /> <strong>Chuyển khoản</strong>{!group.shop?.bankTransferAvailable ? <span className="mt-1 block pl-6 text-xs text-muted">Shop chưa cấu hình tài khoản</span> : <span className="mt-1 block pl-6 text-xs text-muted">Shop xác nhận thanh toán thủ công</span>}</label>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function OrdersView() {
