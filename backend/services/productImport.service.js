@@ -4,6 +4,7 @@ import { getMongoDb } from "./mongo.service.js";
 import { toPublicProduct } from "./product.service.js";
 import { uploadImageBuffer } from "./cloudinary.service.js";
 import { extractImagesByRowFromWorkbook } from "./xlsxImage.service.js";
+import { buildProductEmbeddingText, hashEmbeddingText } from "./embeddingText.service.js";
 
 const COLUMNS = [
   "id",
@@ -303,6 +304,25 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
       };
 
       if (existing) {
+        const mergedProduct = { ...existing, ...basePatch };
+        const text = buildProductEmbeddingText(mergedProduct);
+        const hash = hashEmbeddingText(text);
+
+        const isAiReady =
+          existing.embeddingTextHash === hash &&
+          !existing.embeddingStale &&
+          Array.isArray(existing.embedding) &&
+          existing.embedding.length > 0;
+
+        if (isAiReady) {
+          basePatch.embeddingStale = false;
+          basePatch.embeddingTextHash = hash;
+        } else {
+          basePatch.embeddingStale = true;
+          basePatch.embeddingTextHash = null;
+          basePatch.embeddingUpdatedAt = null;
+        }
+
         await db
           .collection("products")
           .updateOne({ id: productId }, { $set: basePatch });
@@ -319,6 +339,8 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
           occasionTags: [],
           fitType: "",
           embeddingStale: true,
+          embeddingTextHash: null,
+          embeddingUpdatedAt: null,
           ...basePatch,
           createdAt: new Date(),
         };
@@ -328,6 +350,9 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
     }
 
     const uniqueShopIds = [...new Set(normalizedRows.map((row) => row.shopId))];
+    const aiReadyCount = importedProducts.filter((p) => !p.embeddingStale).length;
+    const aiUpdateRequiredCount = importedProducts.filter((p) => p.embeddingStale).length;
+
     job.shopId = uniqueShopIds.length === 1 ? uniqueShopIds[0] : null;
     job.status = "completed";
     job.successCount = importedProducts.length;
@@ -335,6 +360,8 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
     job.errors = [];
     job.completedAt = new Date();
     job.products = importedProducts;
+    job.aiReadyCount = aiReadyCount;
+    job.aiUpdateRequiredCount = aiUpdateRequiredCount;
 
     await persistJob({
       db,

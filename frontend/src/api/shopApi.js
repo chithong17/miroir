@@ -161,3 +161,13 @@ export const listPaymentPlans = async () => {
   const response = await shopClient.get("/payments/plans");
   return response.data;
 };
+
+export const triggerShopAiUpdate = async () => {
+  const response = await shopClient.post("/shop-products/update-ai");
+  return response.data;
+};
+
+export const getShopAiJobStatus = async (id) => {
+  const response = await shopClient.get(`/shop-products/ai-jobs/${id}`);
+  return response.data;
+};

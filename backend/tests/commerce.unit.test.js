@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { formatOrderCode, generateOrderCode, normalizeBuyNowItems, normalizeOrderCode } from "../services/commerce.service.js";
 import { normalizeProductPayload } from "../services/product.service.js";
+import { buildProductEmbeddingText, hashEmbeddingText } from "../services/embeddingText.service.js";
 
 test("order code uses Vietnam timestamp and copy-safe compact form", () => {
   const code = generateOrderCode(new Date("2026-08-05T07:27:09.381Z"));
@@ -39,4 +40,41 @@ test("bundled NSO location snapshot contains the full two-level catalog", () => 
   assert.equal(dataset.datasetVersion, "NSO-2026-08-05");
   assert.equal(dataset.provinces.length, 34);
   assert.equal(dataset.provinces.reduce((sum, item) => sum + item.wards.length, 0), 3321);
+});
+
+test("product embedding text builder and hashing logic", () => {
+  const p1 = {
+    name: "Classic T-Shirt",
+    category: "Tops",
+    description: "100% cotton tee.",
+    colors: ["red", "blue"],
+    gender: "unisex",
+  };
+
+  const text1 = buildProductEmbeddingText(p1);
+  const hash1 = hashEmbeddingText(text1);
+
+  // If we change price (which is NOT an embedding field), the embedding text and hash should remain identical
+  const p2 = {
+    ...p1,
+    price: 250000,
+  };
+
+  const text2 = buildProductEmbeddingText(p2);
+  const hash2 = hashEmbeddingText(text2);
+
+  assert.equal(text1, text2);
+  assert.equal(hash1, hash2);
+
+  // If we change description (which IS an embedding field), the embedding text and hash should change
+  const p3 = {
+    ...p1,
+    description: "Updated description.",
+  };
+
+  const text3 = buildProductEmbeddingText(p3);
+  const hash3 = hashEmbeddingText(text3);
+
+  assert.notEqual(text1, text3);
+  assert.notEqual(hash1, hash3);
 });

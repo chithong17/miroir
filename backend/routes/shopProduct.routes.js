@@ -12,6 +12,8 @@ import {
   restoreShopProduct,
   updateShopProduct,
   uploadProductImage,
+  updateShopProductsAI,
+  getShopProductsAIJob,
 } from "../controllers/shopProduct.controller.js";
 import { requireShopOwner } from "../middlewares/shopAuth.middleware.js";
 import { requireActiveShopSubscription } from "../middlewares/subscription.middleware.js";
@@ -39,6 +41,8 @@ router.post(
   importProducts
 );
 router.get("/import-jobs/:id", getProductImportJob);
+router.post("/update-ai", requireActiveShopSubscription, updateShopProductsAI);
+router.get("/ai-jobs/:id", getShopProductsAIJob);
 router.get("/:id", getProduct);
 router.put("/:id", requireActiveShopSubscription, updateShopProduct);
 router.patch("/:id/archive", archiveShopProduct);

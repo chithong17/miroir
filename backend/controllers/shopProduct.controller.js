@@ -15,6 +15,10 @@ import {
   getImportJob,
   importProductsFromWorkbook,
 } from "../services/productImport.service.js";
+import {
+  createAiUpdateJob,
+  getAiUpdateJob,
+} from "../services/aiUpdate.service.js";
 
 export const listProducts = async (req, res, next) => {
   try {
@@ -216,6 +220,37 @@ export const getProductImportJob = async (req, res, next) => {
     return res.json({
       success: true,
       importJob,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateShopProductsAI = async (req, res, next) => {
+  try {
+    const aiJob = await createAiUpdateJob({
+      ownerId: req.owner.id,
+    });
+
+    return res.json({
+      success: true,
+      aiJob,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getShopProductsAIJob = async (req, res, next) => {
+  try {
+    const aiJob = await getAiUpdateJob({
+      ownerId: req.owner.id,
+      jobId: req.params.id,
+    });
+
+    return res.json({
+      success: true,
+      aiJob,
     });
   } catch (error) {
     next(error);

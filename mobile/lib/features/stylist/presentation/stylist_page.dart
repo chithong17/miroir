@@ -583,7 +583,7 @@ class _ResultSection extends StatelessWidget {
             Text(result.message ?? 'No eligible products were found.'),
             const SizedBox(height: 10),
             const GlassPill(
-                label: 'Publish products + embed first',
+                label: 'Publish products + update AI first',
                 icon: Icons.info_outline_rounded),
           ],
         ),

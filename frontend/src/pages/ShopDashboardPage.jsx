@@ -23,6 +23,8 @@ import {
   updateShop,
   uploadProductImage,
   uploadShopPaymentQr,
+  triggerShopAiUpdate,
+  getShopAiJobStatus,
 } from "../api/shopApi.js";
 import { decideShopCancellation, getShopOrder, listOwnerDisputes, listShopNotifications, listShopOrders, readShopNotification, replyOwnerDispute, updateShopOrderPayment, updateShopOrderStatus } from "../api/commerceApi.js";
 
@@ -137,6 +139,7 @@ function ShopDashboardPage() {
   const [noticeType, setNoticeType] = useState("info");
   const [uploadNotice, setUploadNotice] = useState("");
   const [importResult, setImportResult] = useState(null);
+  const [aiJob, setAiJob] = useState(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   const [bulkEditForm, setBulkEditForm] = useState(emptyBulkEdit);
@@ -634,6 +637,46 @@ function ShopDashboardPage() {
     URL.revokeObjectURL(url);
   };
 
+  const triggerAiUpdate = async () => {
+    try {
+      showNotice(t("product.updatingAi"));
+      const response = await triggerShopAiUpdate();
+      setAiJob(response.aiJob);
+      if (response.aiJob.status === "completed") {
+        showNotice(t("shopAdmin.importCompletedSuccessfully"));
+        await loadDashboard();
+      }
+    } catch (error) {
+      showNotice(error.response?.data?.message || t("product.aiUpdateFailed"), "error");
+    }
+  };
+
+  useEffect(() => {
+    if (!aiJob || (aiJob.status !== "pending" && aiJob.status !== "processing")) {
+      return;
+    }
+
+    let active = true;
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await getShopAiJobStatus(aiJob.id);
+        if (!active) return;
+        setAiJob(response.aiJob);
+        if (response.aiJob.status === "completed" || response.aiJob.status === "failed") {
+          clearInterval(intervalId);
+          await loadDashboard();
+        }
+      } catch (err) {
+        console.error("Error polling AI job status:", err);
+      }
+    }, 2000);
+
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [aiJob, loadDashboard]);
+
   const importExcel = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -724,6 +767,9 @@ function ShopDashboardPage() {
                 toggleProductSelection={toggleProductSelection}
                 toggleVisibleProductSelection={toggleVisibleProductSelection}
                 view={view}
+                stats={stats}
+                aiJob={aiJob}
+                triggerAiUpdate={triggerAiUpdate}
               />
             ) : null}
 
@@ -1001,6 +1047,9 @@ function ShopSubscriptionBanner({
   toggleProductSelection,
   toggleVisibleProductSelection,
   view,
+  stats,
+  aiJob,
+  triggerAiUpdate,
 }) {
   const selectedCount = selectedProductSet.size;
   const inTrash = view === "trash";
@@ -1016,6 +1065,40 @@ function ShopSubscriptionBanner({
 
   return (
     <div>
+      {!inTrash && (stats?.needsEmbed > 0 || (aiJob && (aiJob.status === "pending" || aiJob.status === "processing"))) && (
+        <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-xs font-bold font-mono">!</span>
+              <div>
+                <h4 className="font-bold text-amber-900 text-sm">
+                  {t("shopAdmin.aiUpdateRequiredCountMessage", { count: stats.needsEmbed })}
+                </h4>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  {t("shopAdmin.aiUpdateRequiredMessage", { count: stats.needsEmbed })}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 self-end sm:self-center">
+              <button
+                type="button"
+                onClick={triggerAiUpdate}
+                disabled={aiJob && (aiJob.status === "pending" || aiJob.status === "processing")}
+                className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white hover:bg-amber-700 disabled:bg-amber-300 shadow-sm transition"
+              >
+                {aiJob && (aiJob.status === "pending" || aiJob.status === "processing")
+                  ? `${t("shopAdmin.updatingAi")} (${aiJob.processedCount || 0}/${aiJob.totalCount || 0})`
+                  : t("shopAdmin.updateAi")}
+              </button>
+              {aiJob && (aiJob.status === "pending" || aiJob.status === "processing") && (
+                <span className="text-xs text-slate-500 animate-pulse">
+                  {t("shopAdmin.processingBackground")}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {!inTrash && filteredProducts.length > 0 && totalVariantStock === 0 ? (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           <p className="font-bold">Sản phẩm vẫn còn trong database nhưng toàn bộ tồn kho đang bằng 0.</p>
@@ -1064,7 +1147,7 @@ function ShopSubscriptionBanner({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[920px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                 <th className="w-12 px-4 py-3">
@@ -1080,10 +1163,10 @@ function ShopSubscriptionBanner({
                 <th className="px-4 py-3">{t("product.product")}</th>
                 <th className="px-4 py-3">{t("common.category")}</th>
                 <th className="px-4 py-3">{t("product.price")}</th>
-                <th className="px-4 py-3">{t("product.colors")}</th>
+
                 <th className="px-4 py-3">{t("common.status")}</th>
                 <th className="px-4 py-3">{t("common.stock")}</th>
-                <th className="px-4 py-3">{t("product.description")}</th>
+
                 <th className="px-4 py-3">AI</th>
                 <th className="px-4 py-3">{t("common.actions")}</th>
               </tr>
@@ -1121,25 +1204,29 @@ function ShopSubscriptionBanner({
                           />
                         ) : null}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <button type="button" className="block max-w-full truncate text-left font-semibold text-slate-900 hover:text-mintDeep hover:underline" onClick={() => editProduct(product)}>{product.name}</button>
-                        <p className="truncate text-xs text-slate-500">{product.id}</p>
+                        <p className="truncate text-[10px] font-mono text-slate-400">{product.id}</p>
+                        {product.description ? (
+                          <p className="mt-1 truncate text-xs text-slate-500 max-w-[240px]" title={product.description}>
+                            {product.description}
+                          </p>
+                        ) : null}
+                        {product.colors?.length ? (
+                          <div className="mt-1.5 flex flex-wrap gap-1">
+                            {product.colors.map((color) => (
+                              <span key={color} className="inline-flex rounded-full border border-mintSoft bg-mintPale/50 px-2 py-0.5 text-[10px] font-medium text-mintDeep whitespace-nowrap">
+                                {color}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-slate-600">{product.category}</td>
                   <td className="px-4 py-3 text-slate-600">{formatMoney(product.price)}</td>
-                  <td className="px-4 py-3">
-                    {product.colors?.length ? (
-                      <div className="flex flex-wrap gap-1 max-w-[120px]">
-                        {product.colors.map((color) => (
-                          <span key={color} className="inline-flex rounded-full border border-mintSoft bg-mintPale/50 px-2 py-0.5 text-[10px] font-medium text-mintDeep">
-                            {color}
-                          </span>
-                        ))}
-                      </div>
-                    ) : "-"}
-                  </td>
+
                   <td className="px-4 py-3">
                     <StatusBadge status={product.status} />
                   </td>
@@ -1147,10 +1234,28 @@ function ShopSubscriptionBanner({
                     <p>{product.availability}</p>
                     <p className="text-xs font-semibold text-slate-500">{(product.variants || []).reduce((sum, variant) => sum + Number(variant.stockQuantity || 0), 0)} sản phẩm</p>
                   </td>
-                  <td className="px-4 py-3 text-slate-500 max-w-[180px] truncate" title={product.description}>
-                    {product.description || "-"}
+
+                  <td className="px-4 py-3 text-slate-600">
+                    {product.embeddingStale ? (
+                      aiJob && (aiJob.status === "pending" || aiJob.status === "processing") ? (
+                        <span className="inline-flex items-center gap-1.5 text-blue-600 font-medium text-xs">
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+                          </span>
+                          {t("product.updatingAi")}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                          {t("product.needsEmbed")}
+                        </span>
+                      )
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                        {t("product.ready")}
+                      </span>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{product.embeddingStale ? t("product.needsEmbed") : t("product.ready")}</td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       {!inTrash ? (
@@ -1631,6 +1736,39 @@ function ImportView({
               <Metric label={t("common.success")} value={importResult.successCount} />
               <Metric label={t("common.failed")} value={importResult.failedCount} />
             </div>
+
+            {importResult.status === "completed" && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 text-emerald-950 shadow-sm">
+                <div className="flex items-center gap-2 font-bold text-emerald-800 mb-2">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-850 text-xs font-bold">✓</span>
+                  <span>{t("shopAdmin.importCompletedSuccessfully")}</span>
+                </div>
+                <div className="space-y-1 text-sm text-emerald-900 font-medium">
+                  <p>{t("shopAdmin.aiReadyCountMessage", { count: importResult.aiReadyCount || 0 })}</p>
+                  <p>{t("shopAdmin.aiUpdateRequiredCountMessage", { count: importResult.aiUpdateRequiredCount || 0 })}</p>
+                </div>
+                
+                {importResult.aiUpdateRequiredCount > 0 && (
+                  <div className="mt-4 flex items-center gap-3">
+                    <button
+                      onClick={triggerAiUpdate}
+                      disabled={aiJob && (aiJob.status === "pending" || aiJob.status === "processing")}
+                      className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700 disabled:bg-emerald-300 shadow-sm transition"
+                    >
+                      {aiJob && (aiJob.status === "pending" || aiJob.status === "processing")
+                        ? `${t("shopAdmin.updatingAi")} (${aiJob.processedCount || 0}/${aiJob.totalCount || 0})`
+                        : t("shopAdmin.updateAi")}
+                    </button>
+                    {aiJob && (aiJob.status === "pending" || aiJob.status === "processing") && (
+                      <span className="text-xs text-slate-500 animate-pulse">
+                        {t("shopAdmin.processingBackground")}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {importResult.errors?.length ? (
               <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 <p className="font-semibold">{t("common.errors")}</p>
@@ -1874,10 +2012,10 @@ function SalesDashboardSummary({ dashboard }) {
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <h3 className="font-bold text-slate-900">Catalog health</h3>
           <div className="mt-4 flex flex-wrap gap-2 text-sm font-semibold text-slate-700">
-            <span className="rounded-full bg-mintSoft px-3 py-2">Published: {inventory.published || 0}</span>
-            <span className="rounded-full bg-slate-100 px-3 py-2">Draft: {inventory.draft || 0}</span>
-            <span className="rounded-full bg-amber-50 px-3 py-2">Out of stock: {inventory.outOfStock || 0}</span>
-            <span className="rounded-full bg-red-50 px-3 py-2">Needs embedding: {inventory.needsEmbedding || 0}</span>
+            <span className="rounded-full bg-mintSoft px-3 py-2">{t("common.published")}: {inventory.published || 0}</span>
+            <span className="rounded-full bg-slate-100 px-3 py-2">{t("common.draft")}: {inventory.draft || 0}</span>
+            <span className="rounded-full bg-amber-50 px-3 py-2">{t("shopAdmin.outOfStock")}: {inventory.outOfStock || 0}</span>
+            <span className="rounded-full bg-red-50 px-3 py-2">{t("product.needsEmbed")}: {inventory.needsEmbedding || 0}</span>
           </div>
         </section>
       </div>
