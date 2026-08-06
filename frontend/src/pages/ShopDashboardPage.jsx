@@ -1064,7 +1064,7 @@ function ShopSubscriptionBanner({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[1100px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
                 <th className="w-12 px-4 py-3">
@@ -1080,8 +1080,10 @@ function ShopSubscriptionBanner({
                 <th className="px-4 py-3">{t("product.product")}</th>
                 <th className="px-4 py-3">{t("common.category")}</th>
                 <th className="px-4 py-3">{t("product.price")}</th>
+                <th className="px-4 py-3">{t("product.colors")}</th>
                 <th className="px-4 py-3">{t("common.status")}</th>
                 <th className="px-4 py-3">{t("common.stock")}</th>
+                <th className="px-4 py-3">{t("product.description")}</th>
                 <th className="px-4 py-3">AI</th>
                 <th className="px-4 py-3">{t("common.actions")}</th>
               </tr>
@@ -1128,11 +1130,25 @@ function ShopSubscriptionBanner({
                   <td className="px-4 py-3 text-slate-600">{product.category}</td>
                   <td className="px-4 py-3 text-slate-600">{formatMoney(product.price)}</td>
                   <td className="px-4 py-3">
+                    {product.colors?.length ? (
+                      <div className="flex flex-wrap gap-1 max-w-[120px]">
+                        {product.colors.map((color) => (
+                          <span key={color} className="inline-flex rounded-full border border-mintSoft bg-mintPale/50 px-2 py-0.5 text-[10px] font-medium text-mintDeep">
+                            {color}
+                          </span>
+                        ))}
+                      </div>
+                    ) : "-"}
+                  </td>
+                  <td className="px-4 py-3">
                     <StatusBadge status={product.status} />
                   </td>
                   <td className="px-4 py-3 text-slate-600">
                     <p>{product.availability}</p>
                     <p className="text-xs font-semibold text-slate-500">{(product.variants || []).reduce((sum, variant) => sum + Number(variant.stockQuantity || 0), 0)} sản phẩm</p>
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 max-w-[180px] truncate" title={product.description}>
+                    {product.description || "-"}
                   </td>
                   <td className="px-4 py-3 text-slate-600">{product.embeddingStale ? t("product.needsEmbed") : t("product.ready")}</td>
                   <td className="px-4 py-3">
