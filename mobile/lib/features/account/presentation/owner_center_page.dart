@@ -16,6 +16,8 @@ import '../../../shared/widgets/section_card.dart';
 import '../../commerce/presentation/shop_commerce_page.dart';
 import '../../payments/data/payment_models.dart';
 import '../../payments/data/payment_service.dart';
+import '../../password_reset/data/password_reset_service.dart';
+import '../../password_reset/presentation/password_reset_page.dart';
 import '../data/account_models.dart';
 import '../data/owner_shop_models.dart';
 import 'controllers/shop_auth_controller.dart';
@@ -502,6 +504,20 @@ class _OwnerAuthPanel extends StatelessWidget {
                   label: 'Password',
                   obscureText: true,
                 ),
+                if (controller.mode == ShopAuthMode.login)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const PasswordResetPage(
+                            accountType: PasswordResetAccountType.shopOwner,
+                          ),
+                        ),
+                      ),
+                      child: const Text('Forgot password?'),
+                    ),
+                  ),
                 if (controller.errorMessage.isNotEmpty)
                   _InlineError(controller.errorMessage),
                 if (controller.statusMessage.isNotEmpty)
@@ -1641,6 +1657,7 @@ class _PerformanceAnalyticsView extends StatelessWidget {
     final salesSeries = _asList(commerce?['salesSeries']);
     final orderStatuses = _asList(commerce?['orderStatusBreakdown']);
     final paymentStatuses = _asList(commerce?['paymentStatusBreakdown']);
+    final engagementSeries = _asList(data['timeSeries']);
     final engagementProducts = _asList(data['topProducts']);
     final salesProducts = _asList(commerce?['topProducts']);
     final engagementMetrics = [
@@ -1693,6 +1710,10 @@ class _PerformanceAnalyticsView extends StatelessWidget {
         const _AnalyticsSectionTitle('Product & AI engagement'),
         const SizedBox(height: 10),
         _MetricGrid(metrics: engagementMetrics),
+        const SizedBox(height: 16),
+        _EngagementTrendCard(series: engagementSeries),
+        const SizedBox(height: 16),
+        _ProductPerformanceChart(products: engagementProducts),
         const SizedBox(height: 16),
         SectionCard(
           child: Column(
@@ -1767,6 +1788,134 @@ class _RevenueTrendCard extends StatelessWidget {
   }
 }
 
+class _EngagementTrendCard extends StatelessWidget {
+  const _EngagementTrendCard({required this.series});
+  final List<dynamic> series;
+
+  @override
+  Widget build(BuildContext context) {
+    final points = series.map(_asMap).toList();
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Engagement trend', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 4),
+          const Text('Views, try-ons, and Stylist matches over time.', style: TextStyle(color: AppColors.muted)),
+          const SizedBox(height: 16),
+          const Wrap(
+            spacing: 14,
+            runSpacing: 8,
+            children: [
+              _ChartLegend(color: AppColors.accentStrong, label: 'Views'),
+              _ChartLegend(color: AppColors.ink, label: 'Try-ons'),
+              _ChartLegend(color: AppColors.moss, label: 'Stylist'),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (points.isEmpty)
+            const _ChartEmptyState()
+          else
+            SizedBox(height: 180, width: double.infinity, child: CustomPaint(painter: _EngagementTrendPainter(points))),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductPerformanceChart extends StatelessWidget {
+  const _ProductPerformanceChart({required this.products});
+  final List<dynamic> products;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = products.map(_asMap).where((item) => _number(item['views']) + _number(item['tryOns']) + _number(item['stylistMatches']) > 0).take(5).toList();
+    final maxValue = math.max(1, items.fold(0, (largest, item) => math.max(largest, _number(item['views']) + _number(item['tryOns']) + _number(item['stylistMatches']))));
+    return SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Top product performance', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 4),
+          const Text('Ranked by total customer interactions.', style: TextStyle(color: AppColors.muted)),
+          const SizedBox(height: 16),
+          if (items.isEmpty)
+            const _ChartEmptyState()
+          else
+            ...items.map((item) {
+              final score = _number(item['views']) + _number(item['tryOns']) + _number(item['stylistMatches']);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text((item['name'] ?? 'Product').toString(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800))),
+                        Text('$score', style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w800)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(99),
+                      child: LinearProgressIndicator(
+                        value: (score / maxValue).toDouble(),
+                        minHeight: 10,
+                        color: AppColors.accentStrong,
+                        backgroundColor: AppColors.accentSoft,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+}
+
+class _EngagementTrendPainter extends CustomPainter {
+  _EngagementTrendPainter(this.points);
+  final List<Map<String, dynamic>> points;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const inset = 8.0;
+    const keys = ['views', 'tryOns', 'stylistMatches'];
+    const colors = [AppColors.accentStrong, AppColors.ink, AppColors.moss];
+    final values = points.expand((point) => keys.map((key) => _number(point[key])));
+    final maxValue = math.max(1, values.fold(0, math.max));
+    final gridPaint = Paint()..color = AppColors.line..strokeWidth = 1;
+    for (var index = 0; index < 4; index++) {
+      final y = inset + ((size.height - inset * 2) * index / 3);
+      canvas.drawLine(Offset(inset, y), Offset(size.width - inset, y), gridPaint);
+    }
+    for (var index = 0; index < keys.length; index++) {
+      _drawEngagementLine(canvas, size, keys[index], maxValue, colors[index]);
+    }
+  }
+
+  void _drawEngagementLine(Canvas canvas, Size size, String key, num maxValue, Color color) {
+    final path = Path();
+    final width = size.width - 16;
+    final height = size.height - 16;
+    for (var index = 0; index < points.length; index++) {
+      final x = (8 + (points.length == 1 ? width / 2 : width * index / (points.length - 1))).toDouble();
+      final y = (8 + height - (height * _number(points[index][key]) / maxValue)).toDouble();
+      if (index == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    final paint = Paint()..color = color..strokeWidth = 3..style = PaintingStyle.stroke..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _EngagementTrendPainter oldDelegate) => oldDelegate.points != points;
+}
 class _BreakdownCharts extends StatelessWidget {
   const _BreakdownCharts({required this.orderStatuses, required this.paymentStatuses});
   final List<dynamic> orderStatuses;
@@ -2150,7 +2299,7 @@ class _TopProductAnalyticsTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FB),
+        color: AppColors.panel,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.line),
       ),
@@ -2310,9 +2459,9 @@ class _BreakdownCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           minHeight: 7,
                           value: widthFactor.clamp(0.0, 1.0),
-                          backgroundColor: const Color(0xFFEAF0F6),
+                          backgroundColor: AppColors.accentSoft,
                           valueColor:
-                              const AlwaysStoppedAnimation(AppColors.ink),
+                              const AlwaysStoppedAnimation(AppColors.accentStrong),
                         ),
                       ),
                     ],
@@ -2374,3 +2523,4 @@ String _displayValue(Object? value) {
   final text = value.toString();
   return text.isEmpty ? '-' : text;
 }
+

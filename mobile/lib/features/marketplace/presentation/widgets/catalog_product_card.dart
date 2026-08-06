@@ -113,22 +113,22 @@ class CatalogProductCard extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () => _openTryOn(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.ink,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.accentStrong,
+                      foregroundColor: AppColors.ink,
                       minimumSize: const Size.fromHeight(36),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
                       ),
-                      side: BorderSide.none,
+                      side: const BorderSide(color: AppColors.accentStrong),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       elevation: 0,
                     ),
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                    icon: const Icon(Icons.checkroom_rounded, size: 16),
                     label: const Text(
-                      'Try On',
+                      'Studio',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -144,3 +144,5 @@ class CatalogProductCard extends StatelessWidget {
     );
   }
 }
+
+

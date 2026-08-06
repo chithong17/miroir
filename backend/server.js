@@ -5,6 +5,7 @@ import adminAuthRoutes from "./routes/adminAuth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import catalogRoutes from "./routes/catalog.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import passwordResetRoutes from "./routes/passwordReset.routes.js";
 import shopAuthRoutes from "./routes/shopAuth.routes.js";
 import shopProductRoutes from "./routes/shopProduct.routes.js";
 import shopRoutes from "./routes/shop.routes.js";
@@ -153,6 +154,7 @@ app.use("/api/shop-notifications", shopNotificationRoutes);
 app.use("/api/admin-auth", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/auth", passwordResetRoutes);
 app.use("/api/shop-auth", shopAuthRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/shop-products", shopProductRoutes);
@@ -197,3 +199,5 @@ const commerceDeadlineWorker = setInterval(() => {
   expireCommerceOrders().catch((error) => console.error("Commerce deadline worker failed:", error));
 }, Number(process.env.COMMERCE_WORKER_INTERVAL_MS || 300000));
 commerceDeadlineWorker.unref();
+
+

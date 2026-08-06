@@ -5,6 +5,8 @@ import '../../../core/app/app_session_scope.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
+import '../../password_reset/data/password_reset_service.dart';
+import '../../password_reset/presentation/password_reset_page.dart';
 import 'controllers/customer_auth_controller.dart';
 
 class CustomerAuthPage extends StatefulWidget {
@@ -279,7 +281,15 @@ class _CustomerAuthPageState extends State<CustomerAuthPage> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        builder: (_) => const PasswordResetPage(
+                                          accountType: PasswordResetAccountType.user,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                   style: TextButton.styleFrom(
                                     foregroundColor: AppColors.accentStrong,
                                   ),
@@ -334,3 +344,4 @@ class _CustomerAuthPageState extends State<CustomerAuthPage> {
     );
   }
 }
+

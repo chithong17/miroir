@@ -183,36 +183,29 @@ class _StylistPageState extends State<StylistPage> {
                             ),
                             const SizedBox(height: 16),
                             Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                              alignment: WrapAlignment.center,
+                              spacing: 10,
+                              runSpacing: 10,
                               children: [
                                 _PromptSuggestion(
                                   label: 'Date night',
                                   icon: Icons.calendar_month_outlined,
-                                  onTap: () => _usePromptSuggestion(
-                                    'A refined date night look with elegant layers and warm neutral colors.',
-                                  ),
+                                  onTap: () => _usePromptSuggestion('A refined date night look with elegant layers and warm neutral colors.'),
                                 ),
                                 _PromptSuggestion(
-                                  label: 'Weekend',
+                                  label: 'Weekend brunch',
                                   icon: Icons.coffee_outlined,
-                                  onTap: () => _usePromptSuggestion(
-                                    'A relaxed weekend brunch look that feels polished and comfortable.',
-                                  ),
+                                  onTap: () => _usePromptSuggestion('A relaxed weekend brunch look that feels polished and comfortable.'),
                                 ),
                                 _PromptSuggestion(
                                   label: 'Office',
                                   icon: Icons.business_center_outlined,
-                                  onTap: () => _usePromptSuggestion(
-                                    'A modern office outfit with clean tailoring and versatile pieces.',
-                                  ),
+                                  onTap: () => _usePromptSuggestion('A modern office outfit with clean tailoring and versatile pieces.'),
                                 ),
                                 _PromptSuggestion(
                                   label: 'Vacation',
                                   icon: Icons.flight_takeoff_outlined,
-                                  onTap: () => _usePromptSuggestion(
-                                    'A light vacation look for warm weather and a full day of walking.',
-                                  ),
+                                  onTap: () => _usePromptSuggestion('A light vacation look for warm weather and a full day of walking.'),
                                 ),
                               ],
                             ),
@@ -424,14 +417,35 @@ class _PromptSuggestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      onPressed: onTap,
-      avatar: Icon(icon, size: 18, color: AppColors.ink),
-      label: Text(label),
-      side: const BorderSide(color: AppColors.line),
-      backgroundColor: AppColors.accentSoft,
-      labelStyle: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w600),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+    return Material(
+      color: AppColors.accentSoft,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.line),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: AppColors.ink),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -480,14 +494,30 @@ class _ResultSection extends StatelessWidget {
       return GlassSurface(
         radius: 28,
         blurSigma: 16,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text('Your stylist board', style: textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text(
-              'Your summary, outfit ideas, and product reasoning will appear here after a successful request.',
-              style: textTheme.bodyMedium,
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.elevated,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(Icons.auto_awesome_rounded, color: AppColors.accentStrong),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Your stylist board', style: textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your summary, outfit ideas, and product reasoning will appear here after a successful request.',
+                    style: textTheme.bodyMedium,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -791,4 +821,6 @@ class _ProductImageFallback extends StatelessWidget {
     );
   }
 }
+
+
 

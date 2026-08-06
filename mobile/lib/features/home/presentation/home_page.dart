@@ -686,7 +686,7 @@ class _ProductGrid extends StatelessWidget {
                         letterSpacing: -0.2,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const Spacer(),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -838,16 +838,9 @@ class _HomeUtilityButton extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(18),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(color: AppColors.line),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.glassShadow,
-                  blurRadius: 12,
-                  offset: Offset(0, 6),
-                ),
-              ],
             ),
             child: Stack(
               clipBehavior: Clip.none,
@@ -866,7 +859,7 @@ class _HomeUtilityButton extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.accentStrong,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.surface, width: 2),
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
                       child: Text(
                         count > 99 ? '99+' : '$count',
@@ -886,3 +879,5 @@ class _HomeUtilityButton extends StatelessWidget {
     );
   }
 }
+
+

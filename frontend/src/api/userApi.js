@@ -76,3 +76,18 @@ export const listPaymentPlans = async () => {
   const response = await userClient.get("/payments/plans");
   return response.data;
 };
+
+export const requestPasswordReset = async ({ email, accountType }) => {
+  const response = await userClient.post("/auth/password-reset/request", { email, accountType });
+  return response.data;
+};
+
+export const verifyPasswordReset = async ({ email, accountType, otp }) => {
+  const response = await userClient.post("/auth/password-reset/verify", { email, accountType, otp });
+  return response.data;
+};
+
+export const confirmPasswordReset = async ({ email, accountType, otp, newPassword }) => {
+  const response = await userClient.post("/auth/password-reset/confirm", { email, accountType, otp, newPassword });
+  return response.data;
+};
