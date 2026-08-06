@@ -2008,6 +2008,7 @@ function AnalyticsView({ analytics, commerceDashboard, range, setRange, status }
 }
 
 function SalesDashboardSummary({ dashboard }) {
+  const { t } = useLanguage();
   const summary = dashboard?.summary || {};
   const funnel = dashboard?.funnel || {};
   const inventory = dashboard?.inventoryHealth || {};
@@ -2041,7 +2042,7 @@ function SalesDashboardSummary({ dashboard }) {
             <span className="rounded-full bg-mintSoft px-3 py-2">{t("common.published")}: {inventory.published || 0}</span>
             <span className="rounded-full bg-slate-100 px-3 py-2">{t("common.draft")}: {inventory.draft || 0}</span>
             <span className="rounded-full bg-amber-50 px-3 py-2">{t("shopAdmin.outOfStock")}: {inventory.outOfStock || 0}</span>
-            <span className="rounded-full bg-red-50 px-3 py-2">{t("product.needsEmbed")}: {inventory.needsEmbedding || 0}</span>
+            <span className="rounded-full bg-amber-200 px-3 py-2">{t("shopAdmin.aiUpdateRequired")}: {inventory.needsEmbedding || 0}</span>
           </div>
         </section>
       </div>
