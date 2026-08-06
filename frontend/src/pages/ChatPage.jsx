@@ -6,6 +6,7 @@ import {
 } from "../api/chatApi.js";
 import { connectChatSocket } from "../api/chatSocket.js";
 import { AppShell, Button, TopNav, formatMoney } from "../components/ui/index.jsx";
+import { useLanguage } from "../i18n.jsx";
 
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
 const contextKey = (actorType, id) => `${actorType === "shop" ? "miroir_shop" : "miroir"}_chat_context_${id}`;
@@ -239,10 +240,11 @@ export default function ChatPage({ actorType, initialConversationId = "" }) {
   const lightbox = lightboxUrl ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Xem ảnh" onClick={() => setLightboxUrl("")}><button type="button" className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-3xl text-white transition hover:bg-white/25" aria-label="Đóng ảnh" onClick={() => setLightboxUrl("")}>×</button><img className="max-h-[90dvh] max-w-[95vw] rounded-2xl object-contain shadow-2xl" src={lightboxUrl} alt="Ảnh phóng lớn" onClick={(event) => event.stopPropagation()} /></div> : null;
 
   if (actorType === "user") return <div className="h-dvh overflow-hidden"><AppShell nav={<TopNav user={user} onLogout={() => { setUserToken(""); window.location.href = "/"; }} />}>{content}</AppShell>{lightbox}</div>;
-  return <div className="h-dvh overflow-hidden bg-white text-ink"><div className="h-full lg:grid lg:grid-cols-[260px_minmax(0,1fr)]"><ShopChatSidebar shop={shop} onLogout={() => { setShopToken(""); window.location.href = "/"; }} /><main className="min-h-0 min-w-0 overflow-hidden bg-panel/40">{content}</main></div>{lightbox}</div>;
+  return <div className="h-dvh overflow-hidden bg-white text-ink"><div className="h-full lg:grid lg:grid-cols-[236px_minmax(0,1fr)]"><ShopChatSidebar shop={shop} onLogout={() => { setShopToken(""); window.location.href = "/"; }} /><main className="min-h-0 min-w-0 overflow-hidden bg-[#F6F8F3]">{content}</main></div>{lightbox}</div>;
 }
 
 function ShopChatSidebar({ shop, onLogout }) {
+  const { language, toggleLanguage } = useLanguage();
   const links = [
     { href: "/shop/messages", label: "Tin nhắn", active: true },
     { href: "/shop/dashboard?view=products", label: "Sản phẩm" },
@@ -251,14 +253,14 @@ function ShopChatSidebar({ shop, onLogout }) {
     { href: "/shop/dashboard?view=insights", label: "Khách hàng" },
     { href: "/shop/dashboard?view=shop", label: "Hồ sơ shop" },
   ];
-  return <aside className="border-b border-line bg-white/90 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
+  return <aside className="border-b border-[#E1E8D8] bg-[#FBFCF9] lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
     <div className="flex min-h-full flex-col">
-      <div className="border-b border-line p-5"><a href="/shop/dashboard" className="font-display text-2xl font-extrabold text-rose">MIROIR</a><p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted">Shop Owner</p></div>
-      <div className="p-4"><div className="rounded-xl border border-line bg-white p-4"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Shop hiện tại</p><p className="mt-2 truncate font-bold">{shop?.name || "Đang tải shop..."}</p><p className="mt-1 truncate text-sm text-muted">{shop ? `${shop.slug} / ${shop.status}` : ""}</p></div></div>
-      <nav className="flex gap-2 overflow-x-auto px-3 pb-3 lg:grid lg:gap-1 lg:overflow-visible">
-        {links.map((item) => <a key={item.href} href={item.href} className={`shrink-0 rounded-lg px-4 py-3 text-sm font-semibold transition ${item.active ? "bg-mintDeep text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}>{item.label}</a>)}
+      <div className="border-b border-[#E8EDE3] px-5 py-5"><a href="/shop/dashboard" className="font-display text-2xl font-extrabold text-[#89A960]">MIROIR</a><p className="mt-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Kênh người bán</p></div>
+      <div className="hidden px-3 pt-4 lg:block"><div className="rounded-2xl border border-[#DFE8D5] bg-white p-3.5 shadow-sm"><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#E5F0D8] font-black text-[#668443]">{shop?.logoUrl ? <img className="h-full w-full object-cover" src={shop.logoUrl} alt="" /> : (shop?.name || "S").slice(0, 1).toUpperCase()}</div><div className="min-w-0"><p className="truncate text-sm font-black">{shop?.name || "Đang tải shop..."}</p><p className="truncate text-xs text-slate-500">{shop?.slug || ""}</p></div></div></div></div>
+      <nav className="flex gap-1 overflow-x-auto px-3 py-4 lg:grid lg:gap-1 lg:overflow-visible">
+        {links.map((item) => <a key={item.href} href={item.href} className={`shrink-0 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${item.active ? "bg-[#E5F0D8] text-[#49652D]" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}>{item.label}</a>)}
       </nav>
-      <div className="mt-auto border-t border-line p-4"><button type="button" onClick={onLogout} className="w-full rounded-lg bg-tertiarySoft px-4 py-3 text-left text-sm font-semibold text-ink">Đăng xuất</button></div>
+      <div className="mt-auto hidden gap-1 border-t border-[#E8EDE3] p-3 lg:grid"><button type="button" onClick={toggleLanguage} className="rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-900">{language === "vi" ? "English" : "Tiếng Việt"}</button><button type="button" onClick={onLogout} className="rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-700">Đăng xuất</button></div>
     </div>
   </aside>;
 }
