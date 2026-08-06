@@ -67,7 +67,7 @@ const emptyProduct = {
   sizes: "",
   styleTags: "",
   occasionTags: "",
-  material: "",
+
   fitType: "",
   imageUrl: "",
   imagePublicId: "",
@@ -82,7 +82,7 @@ const emptyBulkEdit = {
   status: "",
   colors: "",
   sizes: "",
-  material: "",
+
   fitType: "",
   styleTags: "",
   occasionTags: "",
@@ -193,7 +193,7 @@ function ShopDashboardPage() {
         view === "trash" || filters.status === "all" || product.status === filters.status;
       const queryMatch =
         !query ||
-        [product.name, product.category, product.material, product.fitType]
+        [product.name, product.category, product.fitType]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(query));
       return scopeMatch && statusMatch && queryMatch;
@@ -431,7 +431,7 @@ function ShopDashboardPage() {
       sizes: splitList(productForm.sizes),
       styleTags: splitList(productForm.styleTags),
       occasionTags: splitList(productForm.occasionTags),
-      material: productForm.material,
+
       fitType: productForm.fitType,
       imageUrl: productForm.imageUrl,
       imagePublicId: productForm.imagePublicId,
@@ -543,7 +543,7 @@ function ShopDashboardPage() {
     event.preventDefault();
 
     const payload = {};
-    const textFields = ["category", "material", "fitType", "imageUrl", "description"];
+    const textFields = ["category", "fitType", "imageUrl", "description"];
     const listFields = ["colors", "sizes", "styleTags", "occasionTags"];
 
     textFields.forEach((field) => {
@@ -1302,9 +1302,7 @@ function ProductModal({
           <Field label={t("product.sizes")}>
             <input className={fieldClass} value={productForm.sizes} onChange={updateProductField("sizes")} />
           </Field>
-          <Field label={t("product.material")}>
-            <input className={fieldClass} value={productForm.material} onChange={updateProductField("material")} />
-          </Field>
+
           <Field label={t("product.fitType")}>
             <input className={fieldClass} value={productForm.fitType} onChange={updateProductField("fitType")} />
           </Field>
@@ -1458,14 +1456,7 @@ function BulkEditModal({
                 onChange={updateBulkEditField("sizes")}
               />
             </Field>
-            <Field label={t("product.material")}>
-              <input
-                className={fieldClass}
-                placeholder={t("common.unchanged")}
-                value={bulkEditForm.material}
-                onChange={updateBulkEditField("material")}
-              />
-            </Field>
+
             <Field label={t("product.fitType")}>
               <input
                 className={fieldClass}
@@ -1666,7 +1657,7 @@ function ImportView({
                         <th className="px-3 py-2">{t("common.name")}</th>
                         <th className="px-3 py-2">{t("common.category")}</th>
                         <th className="px-3 py-2">{t("product.price")}</th>
-                        <th className="px-3 py-2">{t("product.material")}</th>
+
                         <th className="px-3 py-2">{t("product.colors")}</th>
                         <th className="px-3 py-2">{t("product.sizes")}</th>
                         <th className="px-3 py-2">{t("product.description")}</th>
@@ -1688,13 +1679,7 @@ function ImportView({
                           </td>
                           <td className="px-3 py-2 text-slate-600">{p.category || "-"}</td>
                           <td className="px-3 py-2 font-bold text-slate-900">{formatMoney(p.price)}</td>
-                          <td className="px-3 py-2">
-                            {p.material ? (
-                              <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600">
-                                {p.material}
-                              </span>
-                            ) : "-"}
-                          </td>
+
                           <td className="px-3 py-2">
                             {p.colors?.length ? (
                               <div className="flex flex-wrap gap-1">

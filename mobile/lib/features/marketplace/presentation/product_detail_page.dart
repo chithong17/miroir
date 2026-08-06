@@ -108,24 +108,19 @@ class ProductDetailPage extends StatelessWidget {
                             Row(
                               children: [
                                 _MetaCard(
-                                  label: 'Material',
-                                  value: _fallbackValue(product.material),
+                                  label: 'Fit',
+                                  value: _fallbackValue(product.fitType),
                                 ),
                                 const SizedBox(width: 12),
                                 _MetaCard(
-                                  label: 'Fit',
-                                  value: _fallbackValue(product.fitType),
+                                  label: 'Gender',
+                                  value: _fallbackValue(product.gender),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 12),
                             Row(
                               children: [
-                                _MetaCard(
-                                  label: 'Gender',
-                                  value: _fallbackValue(product.gender),
-                                ),
-                                const SizedBox(width: 12),
                                 _MetaCard(
                                   label: 'Status',
                                   value: _fallbackValue(

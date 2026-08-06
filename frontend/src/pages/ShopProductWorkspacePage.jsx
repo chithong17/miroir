@@ -20,7 +20,6 @@ const emptyForm = {
   price: "",
   gender: "unisex",
   status: "draft",
-  material: "",
   fitType: "",
   styleTags: "",
   occasionTags: "",
@@ -197,7 +196,6 @@ export default function ShopProductWorkspacePage({ productId }) {
       status: form.status,
       styleTags: splitList(form.styleTags),
       occasionTags: splitList(form.occasionTags),
-      material: form.material.trim(),
       fitType: form.fitType.trim(),
       imageUrl: form.imageUrl.trim(),
       imagePublicId: form.imagePublicId,
@@ -276,7 +274,6 @@ export default function ShopProductWorkspacePage({ productId }) {
                   <FormField label="Danh mục" required><input className={inputClass} required placeholder="Ví dụ: Jeans, Áo, Váy" value={form.category} onChange={updateField("category")} /></FormField>
                   <FormField label="Giá bán (VND)" required><input className={inputClass} min="0" required type="number" value={form.price} onChange={updateField("price")} /></FormField>
                   <FormField label="Đối tượng"><select className={inputClass} value={form.gender} onChange={updateField("gender")}><option value="female">Nữ</option><option value="male">Nam</option><option value="unisex">Unisex</option></select></FormField>
-                  <FormField label="Chất liệu"><input className={inputClass} placeholder="Cotton, denim..." value={form.material} onChange={updateField("material")} /></FormField>
                   <FormField label="Dáng sản phẩm"><input className={inputClass} placeholder="Slim, regular, oversized..." value={form.fitType} onChange={updateField("fitType")} /></FormField>
                   <FormField label="Mô tả" required wide><textarea className={`${inputClass} min-h-32 resize-y`} required value={form.description} onChange={updateField("description")} /></FormField>
                 </div>

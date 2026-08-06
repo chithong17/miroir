@@ -13,7 +13,6 @@ const COLUMNS = [
   "availability",
   "colors",
   "sizes",
-  "material",
   "imageUrl",
 ];
 
@@ -25,7 +24,6 @@ const EXAMPLE_ROW = {
   availability: "in_stock",
   colors: "white, beige",
   sizes: "S, M, L",
-  material: "linen",
   imageUrl: "https://example.com/product.jpg",
 };
 
@@ -86,10 +84,6 @@ const normalizeShopImportPayload = (payload) => {
     normalized.description = cleanString(payload.description);
   }
 
-  if (payload.material !== undefined) {
-    normalized.material = cleanString(payload.material);
-  }
-
   const imageUrl = cleanString(payload.imageUrl);
   if (imageUrl) {
     normalized.imageUrl = imageUrl;
@@ -134,7 +128,7 @@ export const generateProductImportTemplate = () => {
   const notes = [
     ["Column", "Notes"],
     ["availability", "Allowed values: in_stock, out_of_stock."],
-    ["description", "Optional product description shown to customers and used by AI Stylist."],
+    ["description", "Optional product description (including fabric material, length, width, waist, etc.) shown to customers and used by AI Stylist."],
     ["colors", "Use comma-separated values, for example: white, beige."],
     ["sizes", "Use comma-separated values, for example: S, M, L."],
     ["imageUrl", "Use a public http(s) URL, or place an image in this row and it will be uploaded."],

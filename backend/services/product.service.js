@@ -12,7 +12,6 @@ const EMBEDDING_FIELDS = [
   "colors",
   "styleTags",
   "occasionTags",
-  "material",
   "gender",
   "fitType",
 ];
@@ -117,7 +116,7 @@ export const normalizeProductPayload = (body, { partial = false } = {}) => {
     errors.push("price is required.");
   }
 
-  ["name", "category", "description", "material", "fitType", "imageUrl", "imagePublicId"].forEach(
+  ["name", "category", "description", "fitType", "imageUrl", "imagePublicId"].forEach(
     (field) => {
       if (body[field] !== undefined) normalized[field] = cleanString(body[field]);
     }
