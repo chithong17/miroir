@@ -1636,6 +1636,81 @@ function ImportView({
                 </ul>
               </div>
             ) : null}
+
+            {importResult.products?.length ? (
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <h3 className="text-sm font-bold text-slate-900 mb-3">
+                  {t("shopAdmin.importedProductsPreview")} ({importResult.products.length})
+                </h3>
+                <div className="overflow-x-auto rounded-lg border border-slate-200">
+                  <table className="w-full min-w-[700px] border-collapse text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50 font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-3 py-2 w-14"></th>
+                        <th className="px-3 py-2">{t("common.name")}</th>
+                        <th className="px-3 py-2">{t("common.category")}</th>
+                        <th className="px-3 py-2">{t("product.price")}</th>
+                        <th className="px-3 py-2">{t("product.material")}</th>
+                        <th className="px-3 py-2">{t("product.colors")}</th>
+                        <th className="px-3 py-2">{t("product.sizes")}</th>
+                        <th className="px-3 py-2">{t("product.description")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importResult.products.map((p) => (
+                        <tr key={p.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                          <td className="px-3 py-2">
+                            <div className="h-10 w-8 overflow-hidden rounded bg-slate-100">
+                              {p.imageUrl ? (
+                                <img src={p.imageUrl} alt="" className="h-full w-full object-cover" />
+                              ) : null}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="font-semibold text-slate-900">{p.name}</div>
+                            <div className="text-[10px] text-slate-500 font-mono">{p.id}</div>
+                          </td>
+                          <td className="px-3 py-2 text-slate-600">{p.category || "-"}</td>
+                          <td className="px-3 py-2 font-bold text-slate-900">{formatMoney(p.price)}</td>
+                          <td className="px-3 py-2">
+                            {p.material ? (
+                              <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                                {p.material}
+                              </span>
+                            ) : "-"}
+                          </td>
+                          <td className="px-3 py-2">
+                            {p.colors?.length ? (
+                              <div className="flex flex-wrap gap-1">
+                                {p.colors.map((color) => (
+                                  <span key={color} className="inline-flex rounded-full border border-mintSoft bg-mintPale/50 px-2 py-0.5 text-[10px] font-medium text-mintDeep">
+                                    {color}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : "-"}
+                          </td>
+                          <td className="px-3 py-2">
+                            {p.sizes?.length ? (
+                              <div className="flex flex-wrap gap-1">
+                                {p.sizes.map((size) => (
+                                  <span key={size} className="inline-flex rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">
+                                    {size}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : "-"}
+                          </td>
+                          <td className="px-3 py-2 text-slate-500 max-w-xs truncate" title={p.description}>
+                            {p.description || "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : (
           <p className="mt-4 text-sm text-slate-500">{t("shopAdmin.noImportResult")}</p>
