@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../data/catalog_models.dart';
-import '../../../try_on/presentation/try_on_page.dart';
+import '../../../navigation/app_shell.dart';
 
 String _formatMoney(double value) {
   final rounded = value.round().toString();
@@ -28,11 +28,7 @@ class CatalogProductCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   void _openTryOn(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => TryOnPage(prefilledProduct: product),
-      ),
-    );
+    AppShell.openCatalogTryOn(context, product);
   }
 
   @override
@@ -66,16 +62,26 @@ class CatalogProductCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                   child: AspectRatio(
                     aspectRatio: 1.06,
-                    child: product.imageUrl.isNotEmpty
-                        ? Image.network(
-                            product.imageUrl,
-                            width: double.infinity,
-                            fit: BoxFit.contain,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.canvasStrong,
+                        border: Border.all(color: AppColors.line),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: product.imageUrl.isNotEmpty
+                            ? Image.network(
+                                product.imageUrl,
+                                width: double.infinity,
+                                fit: BoxFit.contain,
                                 filterQuality: FilterQuality.medium,
-                            errorBuilder: (_, __, ___) =>
-                                Container(color: AppColors.elevated),
-                          )
-                        : Container(color: AppColors.elevated),
+                                errorBuilder: (_, __, ___) =>
+                                    const ColoredBox(color: AppColors.elevated),
+                              )
+                            : const ColoredBox(color: AppColors.elevated),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 9),
@@ -114,7 +120,7 @@ class CatalogProductCard extends StatelessWidget {
                     onPressed: () => _openTryOn(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accentStrong,
-                      foregroundColor: AppColors.ink,
+                      foregroundColor: Colors.white,
                       minimumSize: const Size.fromHeight(36),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -144,5 +150,6 @@ class CatalogProductCard extends StatelessWidget {
     );
   }
 }
+
 
 

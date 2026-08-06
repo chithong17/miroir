@@ -47,7 +47,8 @@ class _StylistPageState extends State<StylistPage> {
   void _usePromptSuggestion(String value) {
     setState(() {
       _promptController.text = value;
-      _promptController.selection = TextSelection.collapsed(offset: value.length);
+      _promptController.selection =
+          TextSelection.collapsed(offset: value.length);
     });
   }
 
@@ -97,7 +98,11 @@ class _StylistPageState extends State<StylistPage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFFF9FBF3), AppColors.canvas, AppColors.canvasStrong],
+                colors: [
+                  Color(0xFFF9FBF3),
+                  AppColors.canvas,
+                  AppColors.canvasStrong
+                ],
               ),
             ),
             child: ListView(
@@ -114,7 +119,8 @@ class _StylistPageState extends State<StylistPage> {
                         child: Text('AI Stylist', style: textTheme.titleLarge),
                       ),
                     ),
-                    const GlassPill(label: 'Live', icon: Icons.auto_awesome_rounded),
+                    const GlassPill(
+                        label: 'Live', icon: Icons.auto_awesome_rounded),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -147,13 +153,16 @@ class _StylistPageState extends State<StylistPage> {
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text('Describe the look', style: textTheme.titleLarge),
+                                      Text('Describe the look',
+                                          style: textTheme.titleLarge),
                                       const SizedBox(height: 4),
                                       Text(
                                         'Share your vibe, silhouette, or occasion.',
-                                        style: textTheme.bodyMedium?.copyWith(color: AppColors.muted),
+                                        style: textTheme.bodyMedium
+                                            ?.copyWith(color: AppColors.muted),
                                       ),
                                     ],
                                   ),
@@ -190,22 +199,26 @@ class _StylistPageState extends State<StylistPage> {
                                 _PromptSuggestion(
                                   label: 'Date night',
                                   icon: Icons.calendar_month_outlined,
-                                  onTap: () => _usePromptSuggestion('A refined date night look with elegant layers and warm neutral colors.'),
+                                  onTap: () => _usePromptSuggestion(
+                                      'A refined date night look with elegant layers and warm neutral colors.'),
                                 ),
                                 _PromptSuggestion(
                                   label: 'Weekend brunch',
                                   icon: Icons.coffee_outlined,
-                                  onTap: () => _usePromptSuggestion('A relaxed weekend brunch look that feels polished and comfortable.'),
+                                  onTap: () => _usePromptSuggestion(
+                                      'A relaxed weekend brunch look that feels polished and comfortable.'),
                                 ),
                                 _PromptSuggestion(
                                   label: 'Office',
                                   icon: Icons.business_center_outlined,
-                                  onTap: () => _usePromptSuggestion('A modern office outfit with clean tailoring and versatile pieces.'),
+                                  onTap: () => _usePromptSuggestion(
+                                      'A modern office outfit with clean tailoring and versatile pieces.'),
                                 ),
                                 _PromptSuggestion(
                                   label: 'Vacation',
                                   icon: Icons.flight_takeoff_outlined,
-                                  onTap: () => _usePromptSuggestion('A light vacation look for warm weather and a full day of walking.'),
+                                  onTap: () => _usePromptSuggestion(
+                                      'A light vacation look for warm weather and a full day of walking.'),
                                 ),
                               ],
                             ),
@@ -219,10 +232,13 @@ class _StylistPageState extends State<StylistPage> {
                         borderColor: AppColors.line,
                         padding: EdgeInsets.zero,
                         child: Theme(
-                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          data: Theme.of(context)
+                              .copyWith(dividerColor: Colors.transparent),
                           child: ExpansionTile(
-                            tilePadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                            childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                            tilePadding: const EdgeInsets.symmetric(
+                                horizontal: 18, vertical: 8),
+                            childrenPadding:
+                                const EdgeInsets.fromLTRB(18, 0, 18, 18),
                             leading: Container(
                               width: 46,
                               height: 46,
@@ -233,33 +249,43 @@ class _StylistPageState extends State<StylistPage> {
                               child: const Icon(Icons.person_outline_rounded),
                             ),
                             title: const Text('Optional profile'),
-                            subtitle: const Text('Budget, shape, tone and style preferences'),
+                            subtitle: const Text(
+                                'Budget, shape, tone and style preferences'),
                             children: [
                               TextFormField(
                                 controller: _userIdController,
-                                decoration: const InputDecoration(labelText: 'User ID'),
+                                decoration:
+                                    const InputDecoration(labelText: 'User ID'),
                               ),
                               const SizedBox(height: 12),
                               DropdownButtonFormField<String>(
                                 initialValue: _gender,
-                                decoration: const InputDecoration(labelText: 'Gender'),
+                                decoration:
+                                    const InputDecoration(labelText: 'Gender'),
                                 items: const [
-                                  DropdownMenuItem(value: '', child: Text('Any')),
-                                  DropdownMenuItem(value: 'female', child: Text('Female')),
-                                  DropdownMenuItem(value: 'male', child: Text('Male')),
-                                  DropdownMenuItem(value: 'unisex', child: Text('Unisex')),
+                                  DropdownMenuItem(
+                                      value: '', child: Text('Any')),
+                                  DropdownMenuItem(
+                                      value: 'female', child: Text('Female')),
+                                  DropdownMenuItem(
+                                      value: 'male', child: Text('Male')),
+                                  DropdownMenuItem(
+                                      value: 'unisex', child: Text('Unisex')),
                                 ],
-                                onChanged: (value) => setState(() => _gender = value ?? ''),
+                                onChanged: (value) =>
+                                    setState(() => _gender = value ?? ''),
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
                                 controller: _skinToneController,
-                                decoration: const InputDecoration(labelText: 'Skin tone'),
+                                decoration: const InputDecoration(
+                                    labelText: 'Skin tone'),
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
                                 controller: _bodyShapeController,
-                                decoration: const InputDecoration(labelText: 'Body shape'),
+                                decoration: const InputDecoration(
+                                    labelText: 'Body shape'),
                               ),
                               const SizedBox(height: 12),
                               TextFormField(
@@ -275,16 +301,22 @@ class _StylistPageState extends State<StylistPage> {
                                   Expanded(
                                     child: TextFormField(
                                       controller: _budgetMinController,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      decoration: const InputDecoration(labelText: 'Budget min'),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                              decimal: true),
+                                      decoration: const InputDecoration(
+                                          labelText: 'Budget min'),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: TextFormField(
                                       controller: _budgetMaxController,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      decoration: const InputDecoration(labelText: 'Budget max'),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                              decimal: true),
+                                      decoration: const InputDecoration(
+                                          labelText: 'Budget max'),
                                     ),
                                   ),
                                 ],
@@ -293,7 +325,8 @@ class _StylistPageState extends State<StylistPage> {
                               TextFormField(
                                 controller: _feedbackController,
                                 maxLines: 3,
-                                decoration: const InputDecoration(labelText: 'Feedback or notes'),
+                                decoration: const InputDecoration(
+                                    labelText: 'Feedback or notes'),
                               ),
                             ],
                           ),
@@ -304,7 +337,9 @@ class _StylistPageState extends State<StylistPage> {
                         label: _controller.state == StylistViewState.loading
                             ? 'Generating...'
                             : 'Generate outfits',
-                        onPressed: _controller.state == StylistViewState.loading ? null : _submit,
+                        onPressed: _controller.state == StylistViewState.loading
+                            ? null
+                            : _submit,
                         icon: Icons.auto_awesome_rounded,
                       ),
                       const SizedBox(height: 14),
@@ -314,9 +349,11 @@ class _StylistPageState extends State<StylistPage> {
                 ),
                 if (_controller.feedbackMessage.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  GlassSurface(radius: 24, child: Text(_controller.feedbackMessage)),
+                  GlassSurface(
+                      radius: 24, child: Text(_controller.feedbackMessage)),
                 ],
-                if (_controller.errorMessage.isNotEmpty && _controller.state == StylistViewState.error) ...[
+                if (_controller.errorMessage.isNotEmpty &&
+                    _controller.state == StylistViewState.error) ...[
                   const SizedBox(height: 16),
                   GlassSurface(
                     radius: 24,
@@ -331,7 +368,8 @@ class _StylistPageState extends State<StylistPage> {
                 const SizedBox(height: 20),
                 _ResultSection(
                   controller: _controller,
-                  userId: AppSessionScope.of(context).currentUser?.id ?? _userIdController.text,
+                  userId: AppSessionScope.of(context).currentUser?.id ??
+                      _userIdController.text,
                   token: AppSessionScope.of(context).authToken,
                 ),
               ],
@@ -356,9 +394,10 @@ class _StylistHero extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.asset(
-              'assets/images/ai-stylist.png',
+              'assets/images/stylist.png',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: AppColors.elevated),
+              errorBuilder: (_, __, ___) =>
+                  Container(color: AppColors.elevated),
             ),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -393,11 +432,13 @@ class _StylistHero extends StatelessWidget {
                     width: 244,
                     child: Text(
                       'Describe your vibe and receive grounded outfit ideas tailored for you.',
-                      style: TextStyle(color: Colors.white, fontSize: 16, height: 1.45),
+                      style: TextStyle(
+                          color: Colors.white, fontSize: 16, height: 1.45),
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const GlassPill(label: 'Curated by AI', icon: Icons.auto_awesome_rounded),
+                  const GlassPill(
+                      label: 'Curated by AI', icon: Icons.auto_awesome_rounded),
                 ],
               ),
             ),
@@ -409,7 +450,8 @@ class _StylistHero extends StatelessWidget {
 }
 
 class _PromptSuggestion extends StatelessWidget {
-  const _PromptSuggestion({required this.label, required this.icon, required this.onTap});
+  const _PromptSuggestion(
+      {required this.label, required this.icon, required this.onTap});
 
   final String label;
   final IconData icon;
@@ -439,7 +481,8 @@ class _PromptSuggestion extends StatelessWidget {
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                      color: AppColors.ink, fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -458,15 +501,18 @@ class _PrivacyNotice extends StatelessWidget {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.verified_user_outlined, size: 18, color: AppColors.accentStrong),
+        Icon(Icons.verified_user_outlined,
+            size: 18, color: AppColors.accentStrong),
         SizedBox(width: 8),
         Text('Your inputs are private and secure'),
       ],
     );
   }
 }
+
 class _ResultSection extends StatelessWidget {
-  const _ResultSection({required this.controller, required this.userId, required this.token});
+  const _ResultSection(
+      {required this.controller, required this.userId, required this.token});
 
   final StylistController controller;
   final String userId;
@@ -503,7 +549,8 @@ class _ResultSection extends StatelessWidget {
                 color: AppColors.elevated,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.auto_awesome_rounded, color: AppColors.accentStrong),
+              child: const Icon(Icons.auto_awesome_rounded,
+                  color: AppColors.accentStrong),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -535,7 +582,9 @@ class _ResultSection extends StatelessWidget {
             const SizedBox(height: 8),
             Text(result.message ?? 'No eligible products were found.'),
             const SizedBox(height: 10),
-            const GlassPill(label: 'Publish products + embed first', icon: Icons.info_outline_rounded),
+            const GlassPill(
+                label: 'Publish products + embed first',
+                icon: Icons.info_outline_rounded),
           ],
         ),
       );
@@ -551,8 +600,11 @@ class _ResultSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('Style summary', style: textTheme.titleLarge)),
-                  const GlassPill(label: 'Insight', icon: Icons.insights_rounded),
+                  Expanded(
+                      child:
+                          Text('Style summary', style: textTheme.titleLarge)),
+                  const GlassPill(
+                      label: 'Insight', icon: Icons.insights_rounded),
                 ],
               ),
               const SizedBox(height: 10),
@@ -563,10 +615,22 @@ class _ResultSection extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _MetaPill(label: 'Body', value: result.analysis.bodyShape.isEmpty ? 'Not set' : result.analysis.bodyShape),
-                  _MetaPill(label: 'Tone', value: result.analysis.skinTone.isEmpty ? 'Not set' : result.analysis.skinTone),
-                  _MetaPill(label: 'Products', value: '${result.retrieval.productCount}'),
-                  _MetaPill(label: 'Rules', value: '${result.retrieval.fashionRuleCount}'),
+                  _MetaPill(
+                      label: 'Body',
+                      value: result.analysis.bodyShape.isEmpty
+                          ? 'Not set'
+                          : result.analysis.bodyShape),
+                  _MetaPill(
+                      label: 'Tone',
+                      value: result.analysis.skinTone.isEmpty
+                          ? 'Not set'
+                          : result.analysis.skinTone),
+                  _MetaPill(
+                      label: 'Products',
+                      value: '${result.retrieval.productCount}'),
+                  _MetaPill(
+                      label: 'Rules',
+                      value: '${result.retrieval.fashionRuleCount}'),
                 ],
               ),
             ],
@@ -574,7 +638,11 @@ class _ResultSection extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         for (final outfit in result.outfits) ...[
-          _OutfitCard(controller: controller, outfit: outfit, userId: userId, token: token),
+          _OutfitCard(
+              controller: controller,
+              outfit: outfit,
+              userId: userId,
+              token: token),
           const SizedBox(height: 14),
         ],
       ],
@@ -583,7 +651,11 @@ class _ResultSection extends StatelessWidget {
 }
 
 class _OutfitCard extends StatelessWidget {
-  const _OutfitCard({required this.controller, required this.outfit, required this.userId, required this.token});
+  const _OutfitCard(
+      {required this.controller,
+      required this.outfit,
+      required this.userId,
+      required this.token});
 
   final StylistController controller;
   final StylistOutfit outfit;
@@ -614,7 +686,8 @@ class _OutfitCard extends StatelessWidget {
                         Image.network(
                           outfit.items.first.product.imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const _ProductImageFallback(),
+                          errorBuilder: (_, __, ___) =>
+                              const _ProductImageFallback(),
                         ),
                         DecoratedBox(
                           decoration: BoxDecoration(
@@ -645,7 +718,9 @@ class _OutfitCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           if (outfit.whyItMatches.isNotEmpty)
-            Text(outfit.whyItMatches, style: textTheme.bodyMedium?.copyWith(color: AppColors.ink.withValues(alpha: 0.85))),
+            Text(outfit.whyItMatches,
+                style: textTheme.bodyMedium
+                    ?.copyWith(color: AppColors.ink.withValues(alpha: 0.85))),
           const SizedBox(height: 12),
           for (final item in outfit.items) ...[
             _OutfitItemTile(item: item),
@@ -676,14 +751,22 @@ class _OutfitCard extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: controller.isSubmittingFeedback
                     ? null
-                    : () => controller.submitFeedback(userId: userId, outfit: outfit, eventType: 'liked', token: token),
+                    : () => controller.submitFeedback(
+                        userId: userId,
+                        outfit: outfit,
+                        eventType: 'liked',
+                        token: token),
                 icon: const Icon(Icons.thumb_up_alt_outlined, size: 18),
                 label: const Text('Liked'),
               ),
               OutlinedButton.icon(
                 onPressed: controller.isSubmittingFeedback
                     ? null
-                    : () => controller.submitFeedback(userId: userId, outfit: outfit, eventType: 'disliked', token: token),
+                    : () => controller.submitFeedback(
+                        userId: userId,
+                        outfit: outfit,
+                        eventType: 'disliked',
+                        token: token),
                 icon: const Icon(Icons.thumb_down_alt_outlined, size: 18),
                 label: const Text('Disliked'),
               ),
@@ -710,12 +793,16 @@ class _MetaPill extends StatelessWidget {
       shadowOpacity: 0.35,
       child: RichText(
         text: TextSpan(
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: AppColors.muted),
           children: [
             TextSpan(text: '$label: '),
             TextSpan(
               text: value,
-              style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                  color: AppColors.ink, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -765,7 +852,8 @@ class _OutfitItemTile extends StatelessWidget {
                   ? Image.network(
                       product.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const _ProductImageFallback(compact: true),
+                      errorBuilder: (_, __, ___) =>
+                          const _ProductImageFallback(compact: true),
                     )
                   : const _ProductImageFallback(compact: true),
             ),
@@ -775,18 +863,27 @@ class _OutfitItemTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(product.name, style: Theme.of(context).textTheme.titleMedium),
+                Text(product.name,
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 4),
                 Text(
                   '${product.category}  ${product.price.toStringAsFixed(0)} VND',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink.withValues(alpha: 0.72)),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.ink.withValues(alpha: 0.72)),
                 ),
                 if (product.shopName.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(product.shopName, style: Theme.of(context).textTheme.bodySmall),
+                  Text(product.shopName,
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
                 const SizedBox(height: 8),
-                Text(item.reason, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.ink)),
+                Text(item.reason,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: AppColors.ink)),
               ],
             ),
           ),
@@ -821,6 +918,3 @@ class _ProductImageFallback extends StatelessWidget {
     );
   }
 }
-
-
-

@@ -12,7 +12,7 @@ import '../../marketplace/presentation/controllers/marketplace_controller.dart';
 import '../../marketplace/presentation/product_detail_page.dart';
 import '../../marketplace/presentation/widgets/catalog_product_card.dart';
 
-import '../../try_on/presentation/try_on_page.dart';
+import '../../navigation/app_shell.dart';
 
 const _homeGreetingTitle = 'Hello';
 const _homeWelcomeLabel = 'Welcome back to MIROIR';
@@ -112,9 +112,7 @@ class _HomePageState extends State<HomePage> {
       _showAuthPrompt();
       return;
     }
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TryOnPage(prefilledProduct: product)),
-    );
+    AppShell.openCatalogTryOn(context, product);
   }
 
   Future<void> _refreshQuickCounts() async {
@@ -693,7 +691,7 @@ class _ProductGrid extends StatelessWidget {
                         onPressed: () => onTryOn(product),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accentStrong,
-                          foregroundColor: AppColors.ink,
+                          foregroundColor: Colors.white,
                           minimumSize: const Size.fromHeight(40),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -864,7 +862,7 @@ class _HomeUtilityButton extends StatelessWidget {
                       child: Text(
                         count > 99 ? '99+' : '$count',
                         style: const TextStyle(
-                          color: AppColors.ink,
+                          color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                         ),

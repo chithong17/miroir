@@ -7,7 +7,7 @@ import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../commerce/presentation/commerce_pages.dart';
-import '../../try_on/presentation/try_on_page.dart';
+import '../../navigation/app_shell.dart';
 import '../data/catalog_models.dart';
 import '../data/catalog_service.dart';
 import 'widgets/product_feedback_card.dart';
@@ -340,9 +340,7 @@ class ProductDetailPage extends StatelessWidget {
       return;
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TryOnPage(prefilledProduct: product)),
-    );
+    AppShell.openCatalogTryOn(context, product);
   }
 }
 
@@ -711,3 +709,4 @@ String _fallbackValue(String value) {
   final trimmed = value.trim();
   return trimmed.isEmpty ? 'Not provided' : trimmed;
 }
+

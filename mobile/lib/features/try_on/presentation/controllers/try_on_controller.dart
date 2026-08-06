@@ -21,6 +21,7 @@ enum TryOnViewState {
 enum TryOnImageSlot { model, dress, upper, lower }
 
 class TryOnController extends ChangeNotifier {
+  static final shared = TryOnController();
   TryOnController({TryOnService? service})
       : _service = service ?? TryOnService();
 
@@ -38,6 +39,7 @@ class TryOnController extends ChangeNotifier {
   String _taskId = '';
   String _resultUrl = '';
   String _errorMessage = '';
+  bool _hasUnreadCompletion = false;
   String _prefillLabel = '';
   CatalogProduct? _catalogProduct;
   Timer? _pollTimer;
@@ -52,6 +54,7 @@ class TryOnController extends ChangeNotifier {
   String get taskId => _taskId;
   String get resultUrl => _resultUrl;
   String get errorMessage => _errorMessage;
+  bool get hasUnreadCompletion => _hasUnreadCompletion;
   String get prefillLabel => _prefillLabel;
   CatalogProduct? get catalogProduct => _catalogProduct;
   bool get isCatalogTryOn => _catalogProduct != null;
@@ -167,6 +170,7 @@ class TryOnController extends ChangeNotifier {
     _taskId = '';
     _resultUrl = '';
     _errorMessage = '';
+    _hasUnreadCompletion = false;
     _log(
       'submit start type=$_tryOnType '
       'model=${_modelImage?.name} dress=${_dressImage?.name} '
@@ -252,6 +256,7 @@ class TryOnController extends ChangeNotifier {
         _state = _resultUrl.isEmpty
             ? TryOnViewState.completedWithoutUrl
             : TryOnViewState.completed;
+        _hasUnreadCompletion = true;
         if (_resultUrl.isEmpty) {
           _errorMessage = 'Task completed but no result URL was returned.';
         }
@@ -272,6 +277,12 @@ class TryOnController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void markCompletionSeen() {
+    if (!_hasUnreadCompletion) return;
+    _hasUnreadCompletion = false;
+    notifyListeners();
+  }
+
   void reset() {
     _pollTimer?.cancel();
     _tryOnType = 'dress';
@@ -284,6 +295,7 @@ class TryOnController extends ChangeNotifier {
     _taskId = '';
     _resultUrl = '';
     _errorMessage = '';
+    _hasUnreadCompletion = false;
     _prefillLabel = '';
     _catalogProduct = null;
     _log('reset');
@@ -322,3 +334,7 @@ class TryOnController extends ChangeNotifier {
     super.dispose();
   }
 }
+
+
+
+

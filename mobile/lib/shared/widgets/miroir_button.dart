@@ -20,7 +20,7 @@ class MiroirButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final background =
         isSecondary ? AppColors.accentSoft : AppColors.accentStrong;
-    final foreground = AppColors.ink;
+    final foreground = isSecondary ? AppColors.ink : Colors.white;
 
     return SizedBox(
       width: double.infinity,

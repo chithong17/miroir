@@ -8,8 +8,10 @@ import { extractImagesByRowFromWorkbook } from "./xlsxImage.service.js";
 const COLUMNS = [
   "id",
   "name",
+  "description",
   "price",
   "availability",
+  "colors",
   "sizes",
   "material",
   "imageUrl",
@@ -18,8 +20,10 @@ const COLUMNS = [
 const EXAMPLE_ROW = {
   id: "",
   name: "Linen Shirt",
+  description: "Breathable everyday linen shirt.",
   price: 590000,
   availability: "in_stock",
+  colors: "white, beige",
   sizes: "S, M, L",
   material: "linen",
   imageUrl: "https://example.com/product.jpg",
@@ -74,6 +78,14 @@ const normalizeShopImportPayload = (payload) => {
     normalized.sizes = asStringArray(payload.sizes);
   }
 
+  if (payload.colors !== undefined) {
+    normalized.colors = asStringArray(payload.colors);
+  }
+
+  if (payload.description !== undefined) {
+    normalized.description = cleanString(payload.description);
+  }
+
   if (payload.material !== undefined) {
     normalized.material = cleanString(payload.material);
   }
@@ -122,13 +134,17 @@ export const generateProductImportTemplate = () => {
   const notes = [
     ["Column", "Notes"],
     ["availability", "Allowed values: in_stock, out_of_stock."],
+    ["description", "Optional product description shown to customers and used by AI Stylist."],
+    ["colors", "Use comma-separated values, for example: white, beige."],
     ["sizes", "Use comma-separated values, for example: S, M, L."],
     ["imageUrl", "Use a public http(s) URL, or place an image in this row and it will be uploaded."],
-    ["manager fields", "Category, description, gender, status, style tags, occasion tags, and fit type are managed by the system team."],
+    ["manager fields", "Category, gender, status, style tags, occasion tags, and fit type are managed by the system team."],
   ];
   const notesSheet = XLSX.utils.aoa_to_sheet(notes);
 
-  productsSheet["!cols"] = COLUMNS.map(() => ({ wch: 22 }));
+  productsSheet["!cols"] = COLUMNS.map((column) => ({
+    wch: column === "description" ? 48 : column === "imageUrl" ? 42 : 22,
+  }));
   notesSheet["!cols"] = [{ wch: 28 }, { wch: 90 }];
 
   XLSX.utils.book_append_sheet(workbook, productsSheet, "Products");

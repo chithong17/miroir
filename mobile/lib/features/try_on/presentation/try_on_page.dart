@@ -14,9 +14,13 @@ class TryOnPage extends StatefulWidget {
   const TryOnPage({
     super.key,
     this.prefilledProduct,
+    this.controller,
+    this.previewKey,
   });
 
   final CatalogProduct? prefilledProduct;
+  final TryOnController? controller;
+  final GlobalKey? previewKey;
 
   @override
   State<TryOnPage> createState() => _TryOnPageState();
@@ -24,8 +28,14 @@ class TryOnPage extends StatefulWidget {
 
 class _TryOnPageState extends State<TryOnPage> {
   final _picker = ImagePicker();
-  final _controller = TryOnController();
+  late final TryOnController _controller;
   bool _didPrefill = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controller ?? TryOnController.shared;
+  }
 
   @override
   void didChangeDependencies() {
@@ -36,11 +46,6 @@ class _TryOnPageState extends State<TryOnPage> {
     }
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   Future<void> _pickImage(TryOnImageSlot slot) async {
     final file = await _picker.pickImage(source: ImageSource.gallery);
@@ -78,13 +83,19 @@ class _TryOnPageState extends State<TryOnPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
-            Text('How Studio works', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+            Text('How Studio works',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
             SizedBox(height: 16),
-            _HowItWorksStep(number: '1', text: 'Upload a clear, full-body photo.'),
+            _HowItWorksStep(
+                number: '1', text: 'Upload a clear, full-body photo.'),
             SizedBox(height: 12),
-            _HowItWorksStep(number: '2', text: 'Choose a garment or open Studio from a product.'),
+            _HowItWorksStep(
+                number: '2',
+                text: 'Choose a garment or open Studio from a product.'),
             SizedBox(height: 12),
-            _HowItWorksStep(number: '3', text: 'Generate your private virtual try-on preview.'),
+            _HowItWorksStep(
+                number: '3',
+                text: 'Generate your private virtual try-on preview.'),
           ],
         ),
       ),
@@ -120,7 +131,8 @@ class _TryOnPageState extends State<TryOnPage> {
                         const SizedBox(height: 4),
                         Text(
                           'See how it looks on you',
-                          style: textTheme.bodyLarge?.copyWith(color: AppColors.muted),
+                          style: textTheme.bodyLarge
+                              ?.copyWith(color: AppColors.muted),
                         ),
                       ],
                     ),
@@ -198,9 +210,12 @@ class _TryOnPageState extends State<TryOnPage> {
                 _TryOnError(message: _controller.errorMessage),
               ],
               const SizedBox(height: 20),
-              _PreviewPanel(
-                controller: _controller,
-                prefilledProduct: widget.prefilledProduct,
+              KeyedSubtree(
+                key: widget.previewKey,
+                child: _PreviewPanel(
+                  controller: _controller,
+                  prefilledProduct: widget.prefilledProduct,
+                ),
               ),
               if (_controller.state != TryOnViewState.idle) ...[
                 const SizedBox(height: 16),
@@ -234,9 +249,10 @@ class _StudioHero extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.asset(
-              'assets/images/try-on-bg.png',
+              'assets/images/try-on.png',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: AppColors.elevated),
+              errorBuilder: (_, __, ___) =>
+                  Container(color: AppColors.elevated),
             ),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -335,7 +351,8 @@ class _HeroModePill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(color: AppColors.ink, fontWeight: FontWeight.w800),
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
       ),
     );
   }
@@ -371,7 +388,8 @@ class _ModeCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: selected ? AppColors.moss : AppColors.line),
+            border:
+                Border.all(color: selected ? AppColors.moss : AppColors.line),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,7 +407,8 @@ class _ModeCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   if (selected)
-                    const Icon(Icons.check_circle_rounded, color: AppColors.accentStrong),
+                    const Icon(Icons.check_circle_rounded,
+                        color: AppColors.accentStrong),
                 ],
               ),
               const Spacer(),
@@ -478,7 +497,8 @@ class _UploadGrid extends StatelessWidget {
             Expanded(child: garmentTile),
           ],
         ),
-        if (!controller.isCatalogTryOn && controller.tryOnType == 'upper_lower') ...[
+        if (!controller.isCatalogTryOn &&
+            controller.tryOnType == 'upper_lower') ...[
           const SizedBox(height: 12),
           _UploadTile(
             title: 'Lower garment',
@@ -527,8 +547,10 @@ class _UploadTile extends StatelessWidget {
             border: Border.all(color: AppColors.line),
           ),
           child: compact
-              ? _CompactUploadContent(title: title, subtitle: subtitle, icon: icon, image: image)
-              : _UploadTileContent(title: title, subtitle: subtitle, icon: icon, image: image),
+              ? _CompactUploadContent(
+                  title: title, subtitle: subtitle, icon: icon, image: image)
+              : _UploadTileContent(
+                  title: title, subtitle: subtitle, icon: icon, image: image),
         ),
       ),
     );
@@ -578,10 +600,12 @@ class _UploadTileContent extends StatelessWidget {
                                   shape: const CircleBorder(),
                                   child: InkWell(
                                     customBorder: const CircleBorder(),
-                                    onTap: () => _showImagePreview(context, image!),
+                                    onTap: () =>
+                                        _showImagePreview(context, image!),
                                     child: const Padding(
                                       padding: EdgeInsets.all(7),
-                                      child: Icon(Icons.open_in_full_rounded, size: 15),
+                                      child: Icon(Icons.open_in_full_rounded,
+                                          size: 15),
                                     ),
                                   ),
                                 ),
@@ -598,14 +622,19 @@ class _UploadTileContent extends StatelessWidget {
             ],
           ),
         ),
-        Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleSmall),
+        Text(title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 4),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: AppColors.muted),
         ),
       ],
     );
@@ -700,6 +729,7 @@ void _showImagePreview(BuildContext context, LocalImageData image) {
     ),
   );
 }
+
 class _CatalogUploadTile extends StatelessWidget {
   const _CatalogUploadTile({required this.product});
 
@@ -728,7 +758,8 @@ class _CatalogUploadTile extends StatelessWidget {
                     : Image.network(
                         product.imageUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(color: AppColors.surface),
+                        errorBuilder: (_, __, ___) =>
+                            Container(color: AppColors.surface),
                       ),
               ),
             ),
@@ -761,7 +792,8 @@ class _RequiredPill extends StatelessWidget {
       ),
       child: const Text(
         'Required',
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.ink),
+        style: TextStyle(
+            fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.ink),
       ),
     );
   }
@@ -775,7 +807,8 @@ class _PrivacyNotice extends StatelessWidget {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.verified_user_outlined, size: 18, color: AppColors.accentStrong),
+        Icon(Icons.verified_user_outlined,
+            size: 18, color: AppColors.accentStrong),
         SizedBox(width: 8),
         Text('Your images are private and secure'),
       ],
@@ -817,18 +850,21 @@ class _PreviewPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget content;
-    if (controller.state == TryOnViewState.completed && controller.resultUrl.isNotEmpty) {
+    if (controller.state == TryOnViewState.completed &&
+        controller.resultUrl.isNotEmpty) {
       content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your preview is ready', style: Theme.of(context).textTheme.titleLarge),
+          Text('Your preview is ready',
+              style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Image.network(
               controller.resultUrl,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => SelectableText(controller.resultUrl),
+              errorBuilder: (_, __, ___) =>
+                  SelectableText(controller.resultUrl),
             ),
           ),
           if (prefilledProduct != null) ...[
@@ -837,11 +873,13 @@ class _PreviewPanel extends StatelessWidget {
           ],
         ],
       );
-    } else if (controller.state == TryOnViewState.polling || controller.state == TryOnViewState.creating) {
+    } else if (controller.state == TryOnViewState.polling ||
+        controller.state == TryOnViewState.creating) {
       content = const _PreviewStatus(
         icon: Icons.auto_awesome_rounded,
         title: 'Creating your preview',
-        message: 'This may take a moment. Keep the app open while we prepare it.',
+        message:
+            'This may take a moment. Keep the app open while we prepare it.',
         loading: true,
       );
     } else if (controller.state == TryOnViewState.completedWithoutUrl) {
@@ -900,7 +938,8 @@ class _PreviewStatus extends StatelessWidget {
         Container(
           width: 48,
           height: 48,
-          decoration: const BoxDecoration(color: AppColors.elevated, shape: BoxShape.circle),
+          decoration: const BoxDecoration(
+              color: AppColors.elevated, shape: BoxShape.circle),
           child: loading
               ? const Padding(
                   padding: EdgeInsets.all(13),
@@ -937,9 +976,11 @@ class _HowItWorksStep extends StatelessWidget {
         Container(
           width: 28,
           height: 28,
-          decoration: const BoxDecoration(color: AppColors.accentSoft, shape: BoxShape.circle),
+          decoration: const BoxDecoration(
+              color: AppColors.accentSoft, shape: BoxShape.circle),
           alignment: Alignment.center,
-          child: Text(number, style: const TextStyle(fontWeight: FontWeight.w800)),
+          child:
+              Text(number, style: const TextStyle(fontWeight: FontWeight.w800)),
         ),
         const SizedBox(width: 12),
         Expanded(child: Text(text)),
@@ -947,3 +988,5 @@ class _HowItWorksStep extends StatelessWidget {
     );
   }
 }
+
+
