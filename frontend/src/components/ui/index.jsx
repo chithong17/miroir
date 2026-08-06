@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { LanguageToggle, useLanguage } from "../../i18n.jsx";
 import { addCartItem, getCart, listNotifications, readNotification, removeCartItem, updateCartItem } from "../../api/commerceApi.js";
 import { getUserToken } from "../../api/userApi.js";
+import { listChatConversations } from "../../api/chatApi.js";
+import { connectChatSocket } from "../../api/chatSocket.js";
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -32,19 +34,29 @@ export function TopNav({ user, onLogout, compact = false }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [cart, setCart] = useState(null);
+  const [chatUnread, setChatUnread] = useState(0);
   const [cartNotice, setCartNotice] = useState("");
   useEffect(() => {
     if (!user) return undefined;
-    const refresh = () => Promise.all([listNotifications(), getCart()]).then(([result, cartResult]) => { setNotifications(result.notifications || []); setUnreadCount(result.unreadCount || 0); setCart(cartResult.cart || null); }).catch(() => {});
+    const refresh = () => Promise.all([listNotifications(), getCart(), listChatConversations("user", { limit: 1 })]).then(([result, cartResult, chatResult]) => { setNotifications(result.notifications || []); setUnreadCount(result.unreadCount || 0); setCart(cartResult.cart || null); setChatUnread(chatResult.totalUnread || 0); }).catch(() => {});
     refresh();
     const interval = setInterval(refresh, 30000);
     const focus = () => refresh();
     window.addEventListener("focus", focus);
     window.addEventListener("miroir:cart-updated", refresh);
+    window.addEventListener("miroir:chat-updated", refresh);
+    const unread = (event) => setChatUnread(Number(event.detail || 0));
+    window.addEventListener("miroir:chat-unread", unread);
+    const socket = connectChatSocket("user");
+    socket.on("chat:unread.updated", ({ totalUnread }) => setChatUnread(Number(totalUnread || 0)));
+    socket.on("chat:conversation.updated", refresh);
     return () => {
       clearInterval(interval);
       window.removeEventListener("focus", focus);
       window.removeEventListener("miroir:cart-updated", refresh);
+      window.removeEventListener("miroir:chat-updated", refresh);
+      window.removeEventListener("miroir:chat-unread", unread);
+      socket.disconnect();
     };
   }, [user?.id]);
   const cartCount = cart?.itemCount || 0;
@@ -100,6 +112,10 @@ export function TopNav({ user, onLogout, compact = false }) {
           </div>
           {user ? (
             <>
+            <a aria-label="Tin nhắn" title="Tin nhắn" href="/app/messages" className={`relative flex h-10 w-10 items-center justify-center rounded-full border bg-white transition hover:bg-panel ${pathname.startsWith("/app/messages") ? "border-mintDeep text-mintDeep" : "border-line text-ink"}`}>
+              <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5m8-2a9 9 0 1 1-4.2-7.6L21 3v9Z" /></svg>
+              {chatUnread ? <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-mintDeep px-1 text-center text-[10px] font-black text-white">{chatUnread > 99 ? "99+" : chatUnread}</span> : null}
+            </a>
             <details className="relative">
               <summary
                 aria-label="Giỏ hàng"

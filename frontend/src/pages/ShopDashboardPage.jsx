@@ -27,6 +27,8 @@ import {
   getShopAiJobStatus,
 } from "../api/shopApi.js";
 import { decideShopCancellation, getShopOrder, listOwnerDisputes, listShopNotifications, listShopOrders, readShopNotification, replyOwnerDispute, updateShopOrderPayment, updateShopOrderStatus } from "../api/commerceApi.js";
+import { beginShopOrderChat, listChatConversations } from "../api/chatApi.js";
+import { connectChatSocket } from "../api/chatSocket.js";
 
 const fieldClass =
   "w-full rounded-lg border border-mintSoft bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-mintDeep focus:ring-2 focus:ring-mintSoft/50";
@@ -129,7 +131,10 @@ const formatPercent = (value) => `${Math.round(Number(value || 0) * 100)}%`;
 
 function ShopDashboardPage() {
   const { t } = useLanguage();
-  const [view, setView] = useState("products");
+  const [view, setView] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("view");
+    return ["products", "orders", "analytics", "insights", "trash", "shop", "import"].includes(requested) ? requested : "products";
+  });
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
   const [shopForm, setShopForm] = useState(emptyShop);
@@ -157,6 +162,7 @@ function ShopDashboardPage() {
   const [orderFilters, setOrderFilters] = useState({ search: "", orderStatus: "", paymentStatus: "" });
   const [shopNotifications, setShopNotifications] = useState([]);
   const [shopUnreadCount, setShopUnreadCount] = useState(0);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const [shopDisputes, setShopDisputes] = useState([]);
 
   const shop = shops[0] || null;
@@ -165,6 +171,22 @@ function ShopDashboardPage() {
   const editingExistingProduct = Boolean(
     productForm.id && products.some((product) => product.id === productForm.id)
   );
+
+  useEffect(() => {
+    const refreshChat = () => listChatConversations("shop", { limit: 1 }).then((result) => setChatUnreadCount(result.totalUnread || 0)).catch(() => {});
+    refreshChat();
+    const socket = connectChatSocket("shop");
+    socket.on("chat:unread.updated", ({ totalUnread }) => setChatUnreadCount(Number(totalUnread || 0)));
+    socket.on("chat:conversation.updated", refreshChat);
+    return () => socket.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const orderId = new URLSearchParams(window.location.search).get("orderId");
+    if (!orderId) return;
+    setView("orders");
+    getShopOrder(orderId).then((result) => setSelectedOrder(result.order)).catch(() => {});
+  }, []);
 
   const stats = useMemo(() => {
     const next = {
@@ -736,6 +758,7 @@ function ShopDashboardPage() {
           stats={stats}
           view={view}
           unreadCount={shopUnreadCount}
+          chatUnreadCount={chatUnreadCount}
         />
 
         <main className="min-w-0 p-3 sm:p-4 md:p-6">
@@ -852,7 +875,7 @@ function ShopDashboardPage() {
   );
 }
 
-function DashboardSidebar({ logout, setView, shop, stats, unreadCount, view }) {
+function DashboardSidebar({ chatUnreadCount, logout, setView, shop, stats, unreadCount, view }) {
   const { t, language, toggleLanguage } = useLanguage();
   const navItems = [
     ["products", t("shopAdmin.products") || "Products"],
@@ -889,6 +912,7 @@ function DashboardSidebar({ logout, setView, shop, stats, unreadCount, view }) {
         </div>
 
         <nav className="flex gap-2 overflow-x-auto px-3 pb-1 lg:grid lg:gap-1 lg:overflow-visible lg:pb-0">
+          <a href="/shop/messages" className="shrink-0 rounded-lg px-4 py-3 text-left text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:shrink">Tin nhắn{chatUnreadCount ? ` (${chatUnreadCount})` : ""}</a>
           {navItems.map(([key, label]) => (
             <button
               key={key}
@@ -2636,7 +2660,7 @@ function ShopOrderModal({ onChanged, onClose, order }) {
   const actStatus = async (status) => { const reason = status === "cancelled" ? window.prompt("Lý do hủy đơn (bắt buộc):") : ""; if (status === "cancelled" && !reason) return; try { await updateShopOrderStatus(order.id, status, reason); await onChanged(); } catch (e) { setNotice(e.response?.data?.message || "Không cập nhật được trạng thái."); } };
   const actPayment = async (action) => { const reason = ["reject_transfer", "mark_refunded"].includes(action) ? window.prompt(action === "reject_transfer" ? "Lý do từ chối:" : "Ghi chú hoàn tiền:") : ""; try { await updateShopOrderPayment(order.id, action, reason, action === "mark_refunded" ? refundProof : null); await onChanged(); } catch (e) { setNotice(e.response?.data?.message || "Không cập nhật được thanh toán."); } };
   const nextStatuses = { pending_confirmation: ["confirmed", "cancelled"], confirmed: ["preparing", "cancelled"], preparing: ["shipping", "cancelled"], shipping: ["delivered", "cancelled"] }[order.orderStatus] || [];
-  return <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm" onMouseDown={onClose}><div className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase text-accentStrong">Chi tiết đơn hàng</p><button className="mt-2 font-mono text-2xl font-black hover:underline" onClick={() => navigator.clipboard.writeText(order.orderCode)}>{commerceCode(order.orderCode)} · Copy</button><p className="mt-1 text-muted">{commerceOrderLabels[order.orderStatus]} · {commercePaymentLabels[order.paymentStatus]}</p></div><button className={`${buttonBase} border border-line`} onClick={onClose}>Đóng</button></div>{notice ? <Notice message={notice} type="error" /> : null}
+  return <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm" onMouseDown={onClose}><div className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase text-accentStrong">Chi tiết đơn hàng</p><button className="mt-2 font-mono text-2xl font-black hover:underline" onClick={() => navigator.clipboard.writeText(order.orderCode)}>{commerceCode(order.orderCode)} · Copy</button><p className="mt-1 text-muted">{commerceOrderLabels[order.orderStatus]} · {commercePaymentLabels[order.paymentStatus]}</p></div><div className="flex gap-2"><button className={`${buttonBase} bg-mintDeep text-white`} onClick={() => beginShopOrderChat(order.id)}>Nhắn khách</button><button className={`${buttonBase} border border-line`} onClick={onClose}>Đóng</button></div></div>{notice ? <Notice message={notice} type="error" /> : null}
     <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_360px]"><div className="grid gap-5"><section className="rounded-xl border border-line p-4"><h3 className="font-black">Customer & địa chỉ snapshot</h3><p className="mt-3 font-bold">{order.recipient.name} · {order.recipient.phone}</p><p className="text-muted">{order.recipient.fullAddress}</p>{order.recipient.note ? <p className="mt-2">Ghi chú: {order.recipient.note}</p> : null}</section><section className="rounded-xl border border-line p-4"><h3 className="font-black">Sản phẩm</h3>{order.items.map((item) => <div className="mt-3 flex justify-between gap-3 border-t border-line pt-3" key={item.variantId}><div><p className="font-bold">{item.name}</p><p className="text-sm text-muted">SKU {item.sku} · {item.color || "Mặc định"} · {item.size || "Một cỡ"} · x{item.quantity}</p></div><p className="font-black">{formatMoney(item.lineTotal)}</p></div>)}</section>{order.paymentProof?.imageUrl ? <section className="rounded-xl border border-line p-4"><h3 className="font-black">Biên lai customer</h3><img className="mt-3 max-h-80 rounded-xl" src={order.paymentProof.imageUrl} alt="Biên lai" /></section> : null}</div>
     <aside className="grid h-fit gap-4"><section className="rounded-xl bg-accentSoft p-4"><p className="text-sm text-muted">Tổng tiền</p><p className="text-3xl font-black">{formatMoney(order.total)}</p>{order.paymentSnapshot ? <><p className="mt-4 text-sm">{order.paymentSnapshot.bankName}</p><p className="font-mono font-black">{order.paymentSnapshot.accountNumber}</p><p className="font-bold">{order.paymentSnapshot.accountHolder}</p><p className="mt-3 font-mono">Nội dung: {order.transferContent}</p></> : null}</section>
       <section className="rounded-xl border border-line p-4"><h3 className="font-black">Cập nhật đơn</h3><div className="mt-3 grid gap-2">{nextStatuses.map((status) => <button className={`${buttonBase} ${status === "cancelled" ? "border border-red-200 text-red-700" : "bg-mintDeep text-white"}`} key={status} onClick={() => actStatus(status)}>{commerceOrderLabels[status]}</button>)}{order.orderStatus === "cancel_requested" ? <><button className={`${buttonBase} bg-mintDeep text-white`} onClick={async () => { await decideShopCancellation(order.id, true, "Shop chấp nhận"); onChanged(); }}>Chấp nhận hủy</button><button className={`${buttonBase} border border-line`} onClick={async () => { await decideShopCancellation(order.id, false, "Shop từ chối"); onChanged(); }}>Từ chối hủy</button></> : null}</div></section>

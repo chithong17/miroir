@@ -12,6 +12,7 @@ import ShopPublicPage from "./pages/ShopPublicPage.jsx";
 import TryOnStudioPage from "./pages/TryOnStudioPage.jsx";
 import UserAppPage from "./pages/UserAppPage.jsx";
 import CommercePage from "./pages/CommercePage.jsx";
+import ChatPage from "./pages/ChatPage.jsx";
 import { getUserToken } from "./api/userApi.js";
 
 function App() {
@@ -83,6 +84,10 @@ function App() {
     return <CommercePage mode="order" orderId={decodeURIComponent(pathname.split("/").pop())} />;
   }
 
+  if (pathname === "/app/messages" || pathname.startsWith("/app/messages/")) {
+    return <ChatPage actorType="user" initialConversationId={pathname.startsWith("/app/messages/") ? decodeURIComponent(pathname.split("/").pop()) : ""} />;
+  }
+
   if (pathname.startsWith("/app/shops/")) {
     return <ShopPublicPage />;
   }
@@ -98,6 +103,10 @@ function App() {
 
   if (pathname === "/shop/dashboard") {
     return <ShopDashboardPage />;
+  }
+
+  if (pathname === "/shop/messages" || pathname.startsWith("/shop/messages/")) {
+    return <ChatPage actorType="shop" initialConversationId={pathname.startsWith("/shop/messages/") ? decodeURIComponent(pathname.split("/").pop()) : ""} />;
   }
 
   if (pathname.startsWith("/shop/products/")) {

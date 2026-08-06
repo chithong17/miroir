@@ -14,6 +14,8 @@
     "migrate:variants": "node scripts/migrateProductVariants.js --apply",
     "stock:products:dry": "node scripts/setProductStock.js --stock=100",
     "stock:products": "node scripts/setProductStock.js --stock=100 --apply",
+    "catalog:dedupe:dry": "node scripts/curateDemoProducts.js",
+    "catalog:dedupe": "node scripts/curateDemoProducts.js --apply",
     "diagnose:commerce": "node scripts/diagnoseCommerceData.js",
     "test": "node --test tests/*.test.js",
     "dev": "nodemon server.js",
@@ -31,6 +33,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^6.21.0",
     "multer": "^2.0.2",
+    "socket.io": "^4.8.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

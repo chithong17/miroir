@@ -31,3 +31,8 @@ export const uploadImageBuffer = (buffer, originalFilename = "upload") =>
 
     uploadStream.end(buffer);
   });
+
+export const deleteImageByPublicId = async (publicId) => {
+  if (!publicId) return;
+  await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+};

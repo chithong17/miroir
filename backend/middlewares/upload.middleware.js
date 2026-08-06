@@ -34,6 +34,25 @@ export const uploadCatalogTryOnImage = upload.fields([
 export const uploadProductImage = upload.single("image");
 export const uploadOrderAttachments = upload.array("images", 3);
 
+const chatImageTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
+
+const chatUpload = multer({
+  storage,
+  fileFilter: (_req, file, cb) => {
+    if (chatImageTypes.has(String(file.mimetype || "").toLowerCase())) return cb(null, true);
+    return cb(new Error("Only image files in JPEG, PNG, WebP, HEIC, or HEIF format are allowed."));
+  },
+  limits: { fileSize: 10 * 1024 * 1024, files: 3 },
+});
+
+export const uploadChatImages = chatUpload.array("images", 3);
+
 const excelUpload = multer({
   storage,
   fileFilter: (_req, file, cb) => {

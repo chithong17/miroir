@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCatalogProduct, listCatalogProducts, submitProductFeedback } from "../api/catalogApi.js";
 import { getUserMe, setUserToken } from "../api/userApi.js";
+import { beginCustomerChat } from "../api/chatApi.js";
 import {
   AppShell,
   Button,
@@ -27,6 +28,7 @@ export default function ProductDetailPage({ productId }) {
       .then((result) => setUser(result.user))
       .catch(() => {
         setUserToken("");
+        sessionStorage.setItem("miroir_after_login", window.location.pathname);
         window.location.href = "/login";
       });
   }, []);
@@ -105,6 +107,7 @@ export default function ProductDetailPage({ productId }) {
                   <a className="dark-button block text-center" href={`/app/try-on?productId=${encodeURIComponent(product.id)}`}>Thử đồ với AI</a>
                   {product.shopId ? <a className="soft-button block text-center" href={`/app/shops/${encodeURIComponent(product.shopId)}`}>Xem shop</a> : null}
                 </div>
+                {product.shopId ? <Button className="mt-3 w-full" variant="secondary" onClick={() => beginCustomerChat({ shopId: product.shopId }, { type: "product", id: product.id })}>Nhắn tin cho shop</Button> : null}
 
                 {product.shop ? (
                   <div className="mt-6 rounded-2xl border border-line bg-white p-4">

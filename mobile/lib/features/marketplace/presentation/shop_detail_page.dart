@@ -6,6 +6,7 @@ import '../data/catalog_models.dart';
 import '../data/catalog_service.dart';
 import 'product_detail_page.dart';
 import 'widgets/catalog_product_card.dart';
+import '../../chat/presentation/chat_pages.dart';
 
 class ShopDetailPage extends StatefulWidget {
   const ShopDetailPage({super.key, required this.shop});
@@ -186,6 +187,15 @@ class _ShopDetailPageState extends State<ShopDetailPage> {
                         ],
                       ),
                     ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => openCustomerChat(context, shopId: shop.id),
+                        icon: const Icon(Icons.chat_bubble_outline_rounded),
+                        label: const Text('Message shop'),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     const Divider(height: 1, color: AppColors.line),
                     const SizedBox(height: 24),

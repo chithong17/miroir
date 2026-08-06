@@ -12,6 +12,8 @@ import '../data/catalog_models.dart';
 import '../data/catalog_service.dart';
 import 'widgets/product_feedback_card.dart';
 import 'shop_detail_page.dart';
+import '../../chat/data/chat_models.dart';
+import '../../chat/presentation/chat_pages.dart';
 
 
 class ProductDetailPage extends StatelessWidget {
@@ -281,6 +283,18 @@ class ProductDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
+              if (shop != null) ...[
+                IconButton.filledTonal(
+                  tooltip: 'Message shop',
+                  onPressed: () => openCustomerChat(
+                    context,
+                    shopId: shop.id,
+                    contextDraft: ChatContextDraft(type: 'product', id: product.id, label: product.name),
+                  ),
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                ),
+                const SizedBox(width: 10),
+              ],
               Expanded(
                 flex: 1,
                 child: MiroirButton(

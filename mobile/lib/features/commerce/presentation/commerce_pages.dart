@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/app/app_session_scope.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../chat/data/chat_models.dart';
+import '../../chat/presentation/chat_pages.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../marketplace/data/catalog_models.dart';
 import '../data/commerce_models.dart';
@@ -777,7 +779,10 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = _orderStatus(order.orderStatus);
-    return Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => _CustomerOrderDetailPage(order: order))),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -847,8 +852,36 @@ class _OrderCard extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
+}
+
+class _CustomerOrderDetailPage extends StatelessWidget {
+  const _CustomerOrderDetailPage({required this.order});
+  final CommerceOrder order;
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: Text('Order ${order.orderCode}')),
+        body: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text(order.shopName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 8),
+            Text('${_orderStatus(order.orderStatus).$1} · ${_paymentStatus(order.paymentStatus)}'),
+            const SizedBox(height: 20),
+            ...order.items.map((item) => ListTile(contentPadding: EdgeInsets.zero, leading: item.imageUrl.isEmpty ? const Icon(Icons.checkroom) : Image.network(item.imageUrl, width: 56, height: 56, fit: BoxFit.cover), title: Text(item.name), subtitle: Text('x${item.quantity}'), trailing: Text(formatVnd(item.lineTotal)))),
+            const Divider(),
+            Text('Total: ${formatVnd(order.total)}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () => openCustomerChat(context, orderId: order.id, contextDraft: ChatContextDraft(type: 'order', id: order.id, label: 'Order ${order.orderCode}')),
+              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              label: const Text('Message shop'),
+            ),
+          ],
+        ),
+      );
 }
 
 (String, IconData, Color) _orderStatus(String value) {

@@ -10,6 +10,7 @@ import '../stylist/presentation/stylist_page.dart';
 import '../try_on/presentation/try_on_page.dart';
 import '../try_on/presentation/controllers/try_on_controller.dart';
 import '../marketplace/data/catalog_models.dart';
+import '../chat/presentation/chat_pages.dart';
 
 final _catalogTryOnRequest = ValueNotifier<int>(0);
 
@@ -45,6 +46,7 @@ class _AppShellState extends State<AppShell> {
       previewKey: _tryOnPreviewKey,
     ),
     const StylistPage(),
+    const ChatInboxPage(),
     const AccountPage(),
   ];
 
@@ -121,6 +123,7 @@ class _AppShellState extends State<AppShell> {
       (Icons.home_outlined, Icons.home_rounded, AppLocalizations.t(context, 'nav.marketplace')),
       (Icons.checkroom_outlined, Icons.checkroom, AppLocalizations.t(context, 'nav.tryOn')),
       (Icons.auto_awesome_outlined, Icons.auto_awesome, AppLocalizations.t(context, 'nav.stylist')),
+      (Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded, 'Messages'),
       (Icons.person_outline, Icons.person, AppLocalizations.t(context, 'nav.account')),
     ];
   }
@@ -196,7 +199,17 @@ class _AppShellState extends State<AppShell> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(icon, size: 20, color: color),
+                            index == 3
+                                ? ValueListenableBuilder<int>(
+                                    valueListenable: customerChatUnread,
+                                    builder: (_, count, child) => Badge(
+                                      isLabelVisible: count > 0,
+                                      label: Text(count > 99 ? '99+' : '$count'),
+                                      child: child,
+                                    ),
+                                    child: Icon(icon, size: 20, color: color),
+                                  )
+                                : Icon(icon, size: 20, color: color),
                             const SizedBox(height: 4),
                             Text(
                               item.$3,

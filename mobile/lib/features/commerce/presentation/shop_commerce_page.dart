@@ -4,6 +4,7 @@ import '../../../core/app/app_session_scope.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../chat/presentation/chat_pages.dart';
 
 class ShopCommercePage extends StatefulWidget {
   const ShopCommercePage({super.key});
@@ -111,6 +112,20 @@ class _ShopCommercePageState extends State<ShopCommercePage>
                                     .replaceAll('_', ' ');
                                 return Card(
                                   child: ListTile(
+                                    onTap: () => showModalBottomSheet<void>(
+                                      context: context,
+                                      showDragHandle: true,
+                                      builder: (sheetContext) => Padding(
+                                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                                        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                          Text('Order ${order['orderCode'] ?? ''}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                                          const SizedBox(height: 8),
+                                          Text('$name · $status'),
+                                          const SizedBox(height: 20),
+                                          SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: () { Navigator.of(sheetContext).pop(); openShopOrderChat(context, '${order['id'] ?? ''}'); }, icon: const Icon(Icons.chat_bubble_outline_rounded), label: const Text('Message customer'))),
+                                        ]),
+                                      ),
+                                    ),
                                     title: Text(
                                       '${order['orderCode'] ?? ''}',
                                       style: const TextStyle(

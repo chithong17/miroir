@@ -1,6 +1,8 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import { createServer } from "node:http";
+import { Server as SocketServer } from "socket.io";
 import adminAuthRoutes from "./routes/adminAuth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import catalogRoutes from "./routes/catalog.routes.js";
@@ -18,9 +20,12 @@ import orderRoutes from "./routes/order.routes.js";
 import shopOrderRoutes from "./routes/shopOrder.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import shopNotificationRoutes from "./routes/shopNotification.routes.js";
+import chatRoutes from "./routes/chat.routes.js";
+import shopChatRoutes from "./routes/shopChat.routes.js";
 import { configureCloudinary } from "./services/cloudinary.service.js";
 import { ensureCommerceIndexes } from "./services/commerceIndexes.service.js";
 import { expireCommerceOrders } from "./services/commerce.service.js";
+import { configureChatSocket } from "./services/chatSocket.service.js";
 
 dotenv.config();
 
@@ -106,21 +111,22 @@ const app = express();
 const port = process.env.PORT || 5000;
 const configuredFrontendOrigin = process.env.FRONTEND_URL;
 
+const checkOrigin = (origin, callback) => {
+  if (
+    !origin ||
+    origin === configuredFrontendOrigin ||
+    isAllowedDevOrigin(origin) ||
+    isAllowedVercelPreviewOrigin(origin, configuredFrontendOrigin)
+  ) {
+    callback(null, true);
+    return;
+  }
+  callback(new Error(`Origin ${origin} is not allowed by CORS.`));
+};
+
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (
-        !origin ||
-        origin === configuredFrontendOrigin ||
-        isAllowedDevOrigin(origin) ||
-        isAllowedVercelPreviewOrigin(origin, configuredFrontendOrigin)
-      ) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`Origin ${origin} is not allowed by CORS.`));
-    },
+    origin: checkOrigin,
   })
 );
 app.use(express.json());
@@ -151,6 +157,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/shop-orders", shopOrderRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/shop-notifications", shopNotificationRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/shop-chat", shopChatRoutes);
 app.use("/api/admin-auth", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/payments", paymentRoutes);
@@ -162,10 +170,10 @@ app.use("/api/shop-products", shopProductRoutes);
 app.use((err, _req, res, _next) => {
   console.error("Unhandled server error:", err);
 
-  if (err.code === "LIMIT_FILE_SIZE") {
+  if (String(err.code || "").startsWith("LIMIT_")) {
     return res.status(400).json({
       success: false,
-      message: "Uploaded file is too large.",
+      message: err.code === "LIMIT_FILE_SIZE" ? "Uploaded file is too large." : "Upload file limits were exceeded.",
     });
   }
 
@@ -189,7 +197,11 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-app.listen(port, () => {
+const httpServer = createServer(app);
+const io = new SocketServer(httpServer, { cors: { origin: checkOrigin } });
+configureChatSocket(io);
+
+httpServer.listen(port, () => {
   console.log(`MIROIR backend listening on port ${port}`);
   console.log("Loaded PIAPI_KEY env info:", describeEnvValue(process.env.PIAPI_KEY));
 });

@@ -12,6 +12,7 @@ import {
   formatMoney,
 } from "../components/ui/index.jsx";
 import { useLanguage } from "../i18n.jsx";
+import { beginCustomerChat } from "../api/chatApi.js";
 
 const getShopIdFromPath = () => {
   const match = window.location.pathname.match(/^\/app\/shops\/([^/]+)/);
@@ -38,6 +39,17 @@ function ShopPublicPage() {
         setUser(null);
       });
   }, []);
+
+  useEffect(() => {
+    if (!user || !shopId) return;
+    try {
+      const pending = JSON.parse(sessionStorage.getItem("miroir_pending_chat") || "null");
+      if (pending?.shopId === shopId) {
+        sessionStorage.removeItem("miroir_pending_chat");
+        beginCustomerChat({ shopId }).catch((error) => setMessage(error.response?.data?.message || "Không mở được cuộc trò chuyện."));
+      }
+    } catch { sessionStorage.removeItem("miroir_pending_chat"); }
+  }, [user?.id, shopId]);
 
   useEffect(() => {
     loadShopPage(1);
@@ -84,6 +96,16 @@ function ShopPublicPage() {
     window.location.href = `/app/products/${encodeURIComponent(product.id)}`;
   };
 
+  const messageShop = () => {
+    if (!user) {
+      sessionStorage.setItem("miroir_after_login", window.location.pathname);
+      sessionStorage.setItem("miroir_pending_chat", JSON.stringify({ shopId }));
+      window.location.href = "/login";
+      return;
+    }
+    beginCustomerChat({ shopId }).catch((error) => setMessage(error.response?.data?.message || "Không mở được cuộc trò chuyện."));
+  };
+
   return (
     <AppShell nav={<TopNav user={user} onLogout={onLogout} />}>
       <main className="section-shell py-8">
@@ -91,7 +113,7 @@ function ShopPublicPage() {
           eyebrow={t("shopPage.eyebrow")}
           title={displayName}
           description={shop?.description}
-          action={<a className="soft-button px-5 py-2" href="/app">{t("nav.marketplace")}</a>}
+          action={<div className="flex gap-2"><Button onClick={messageShop}>Nhắn tin</Button><a className="soft-button px-5 py-2" href="/app">{t("nav.marketplace")}</a></div>}
         />
 
         {message ? (

@@ -14,6 +14,7 @@ import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/miroir_button.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../commerce/presentation/shop_commerce_page.dart';
+import '../../chat/presentation/chat_pages.dart';
 import '../../payments/data/payment_models.dart';
 import '../../payments/data/payment_service.dart';
 import '../../password_reset/data/password_reset_service.dart';
@@ -791,6 +792,7 @@ class _ProfilePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const ChatUnreadMonitor(actorType: 'shop'),
           Text(
             owner?.name ?? 'Shop owner',
             style: Theme.of(context)
@@ -831,6 +833,16 @@ class _ProfilePanel extends StatelessWidget {
             icon: Icons.receipt_long_outlined,
             isSecondary: true,
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ShopCommercePage())),
+          ),
+          const SizedBox(height: 10),
+          ValueListenableBuilder<int>(
+            valueListenable: shopChatUnread,
+            builder: (_, unread, __) => MiroirButton(
+              label: unread > 0 ? 'Shop messages ($unread)' : 'Shop messages',
+              icon: Icons.chat_bubble_outline_rounded,
+              isSecondary: true,
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ChatInboxPage(actorType: 'shop'))),
+            ),
           ),
           const SizedBox(height: 10),
           MiroirButton(

@@ -14,6 +14,14 @@ export const ensureCommerceIndexes = async () => {
     db.collection("orders").createIndex({ shopId: 1, createdAt: -1 }),
     db.collection("orders").createIndex({ expiresAt: 1, orderStatus: 1 }),
     db.collection("notifications").createIndex({ audienceType: 1, audienceId: 1, createdAt: -1 }),
+    db.collection("chat_conversations").createIndex({ userId: 1, shopId: 1 }, { unique: true }),
+    db.collection("chat_conversations").createIndex({ userId: 1, lastMessageAt: -1, id: -1 }),
+    db.collection("chat_conversations").createIndex({ shopId: 1, lastMessageAt: -1, id: -1 }),
+    db.collection("chat_messages").createIndex({ conversationId: 1, createdAt: -1, id: -1 }),
+    db.collection("chat_messages").createIndex(
+      { conversationId: 1, senderType: 1, clientMessageId: 1 },
+      { unique: true }
+    ),
     db.collection("order_disputes").createIndex({ id: 1 }, { unique: true }),
     db.collection("order_disputes").createIndex(
       { orderId: 1, type: 1 },
