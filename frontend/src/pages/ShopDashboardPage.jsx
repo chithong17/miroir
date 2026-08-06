@@ -15,7 +15,6 @@ import {
   hardDeleteProduct,
   importProductsExcel,
   listMyShops,
-  listPaymentPlans,
   listShopProducts,
   restoreProduct,
   setShopToken,
@@ -151,7 +150,6 @@ function ShopDashboardPage() {
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [ownerSubscription, setOwnerSubscription] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState("");
-  const [paymentPlans, setPaymentPlans] = useState([]);
   const [analyticsRange, setAnalyticsRange] = useState("30d");
   const [analytics, setAnalytics] = useState(null);
   const [commerceDashboard, setCommerceDashboard] = useState(null);
@@ -167,7 +165,6 @@ function ShopDashboardPage() {
 
   const shop = shops[0] || null;
   const hasActiveShopPlan = Boolean(ownerSubscription?.isPremium);
-  const shopOwnerPlan = paymentPlans.find((plan) => plan.code === "SHOP_OWNER_MONTHLY");
   const editingExistingProduct = Boolean(
     productForm.id && products.some((product) => product.id === productForm.id)
   );
@@ -248,11 +245,10 @@ function ShopDashboardPage() {
 
   const loadDashboard = async () => {
     try {
-      const [shopResponse, productResponse, paymentResponse, plansResponse] = await Promise.all([
+      const [shopResponse, productResponse, paymentResponse] = await Promise.all([
         listMyShops(),
         listShopProducts(),
         getShopPaymentMe(),
-        listPaymentPlans(),
       ]);
       const nextShops = shopResponse.shops || [];
       const nextShop = nextShops[0] || null;
@@ -260,7 +256,6 @@ function ShopDashboardPage() {
       setShops(nextShops);
       setProducts(productResponse.products || []);
       setOwnerSubscription(paymentResponse.subscription || null);
-      setPaymentPlans(plansResponse.plans || []);
 
       if (nextShop) {
         setShopForm(shopToForm(nextShop));
@@ -749,20 +744,24 @@ function ShopDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <div className="min-h-screen lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-[#F6F8F3] text-slate-900">
+      <div className="min-h-screen lg:grid lg:grid-cols-[236px_minmax(0,1fr)]">
         <DashboardSidebar
+          hasActiveShopPlan={hasActiveShopPlan}
           logout={logout}
+          onCheckout={startShopCheckout}
+          paymentStatus={paymentStatus}
           setView={setView}
           shop={shop}
           stats={stats}
+          subscription={ownerSubscription}
           view={view}
           unreadCount={shopUnreadCount}
           chatUnreadCount={chatUnreadCount}
         />
 
-        <main className="min-w-0 p-3 sm:p-4 md:p-6">
-          <div className="mx-auto max-w-[1440px]">
+        <main className="min-w-0 bg-[#F6F8F3] p-3 sm:p-4 md:p-6">
+          <div className="mx-auto max-w-[1520px]">
             <DashboardHeader
               hasActiveShopPlan={hasActiveShopPlan}
               filters={filters}
@@ -770,14 +769,6 @@ function ShopDashboardPage() {
               shop={shop}
               updateFilter={updateFilter}
               view={view}
-            />
-
-            <ShopSubscriptionBanner
-              hasActiveShopPlan={hasActiveShopPlan}
-              paymentStatus={paymentStatus}
-              plan={shopOwnerPlan}
-              subscription={ownerSubscription}
-              onCheckout={startShopCheckout}
             />
 
             {notice ? <Notice message={notice} type={noticeType} /> : null}
@@ -817,7 +808,7 @@ function ShopDashboardPage() {
               />
             ) : null}
 
-            {view === "orders" ? <ShopOrdersView orders={orders} disputes={shopDisputes} filters={orderFilters} setFilters={setOrderFilters} reload={loadOrders} onSelect={async (id) => setSelectedOrder((await getShopOrder(id)).order)} notifications={shopNotifications} onReadNotification={async (item) => { if (!item.readAt) { await readShopNotification(item.id); setShopUnreadCount((count) => Math.max(count - 1, 0)); setShopNotifications((all) => all.map((entry) => entry.id === item.id ? { ...entry, readAt: new Date() } : entry)); } if (item.orderId) setSelectedOrder((await getShopOrder(item.orderId)).order); }} onReplyDispute={async (item) => { const message = window.prompt("Phản hồi customer về khiếu nại:"); if (message) { await replyOwnerDispute(item.id, message); loadOrders(); } }} /> : null}
+            {view === "orders" ? <ShopOrdersView orders={orders} disputes={shopDisputes} filters={orderFilters} setFilters={setOrderFilters} reload={loadOrders} onSelect={async (id) => setSelectedOrder((await getShopOrder(id)).order)} notifications={shopNotifications} onReadNotification={async (item) => { if (!item.readAt) { await readShopNotification(item.id); setShopUnreadCount((count) => Math.max(count - 1, 0)); setShopNotifications((all) => all.map((entry) => entry.id === item.id ? { ...entry, readAt: new Date() } : entry)); } if (item.orderId) setSelectedOrder((await getShopOrder(item.orderId)).order); }} onReplyDispute={async (item) => { const message = window.prompt("Phản hồi khách hàng về khiếu nại:"); if (message) { await replyOwnerDispute(item.id, message); loadOrders(); } }} /> : null}
 
             {view === "import" ? (
               <ImportView
@@ -875,92 +866,104 @@ function ShopDashboardPage() {
   );
 }
 
-function DashboardSidebar({ chatUnreadCount, logout, setView, shop, stats, unreadCount, view }) {
-  const { t, language, toggleLanguage } = useLanguage();
-  const navItems = [
-    ["products", t("shopAdmin.products") || "Products"],
-    ["orders", `Đơn hàng${unreadCount ? ` (${unreadCount})` : ""}`],
-    ["analytics", t("shopAdmin.analytics") || "Analytics"],
-    ["insights", t("shopAdmin.insights") || "Customer Insights"],
-    ["trash", t("shopAdmin.trash") || "Trash"],
-    ["shop", t("shopAdmin.shopProfile") || "Shop Profile"],
-    ["import", t("shopAdmin.excelImport") || "Excel Import"],
+function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onCheckout, paymentStatus, setView, shop, subscription, unreadCount, view }) {
+  const { language, toggleLanguage } = useLanguage();
+  const primaryItems = [
+    ["products", "Sản phẩm", "products"],
+    ["orders", "Đơn hàng", "orders", unreadCount],
+    ["analytics", "Phân tích", "analytics"],
+    ["insights", "Khách hàng", "customers"],
   ];
+  const manageItems = [
+    ["shop", "Hồ sơ shop", "shop"],
+    ["import", "Nhập sản phẩm", "import"],
+    ["trash", "Thùng rác", "trash"],
+  ];
+  const selectView = (key) => {
+    setView(key);
+    window.history.replaceState({}, "", `/shop/dashboard?view=${encodeURIComponent(key)}`);
+  };
+  const expiresAt = subscription?.expiresAt
+    ? new Date(subscription.expiresAt).toLocaleDateString("vi-VN")
+    : "";
+
+  const renderItem = ([key, label, icon, count]) => (
+    <button
+      key={key}
+      type="button"
+      onClick={() => selectView(key)}
+      className={`group flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition lg:w-full ${view === key ? "bg-[#E5F0D8] text-[#49652D]" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
+    >
+      <ShopNavIcon name={icon} active={view === key} />
+      <span className="whitespace-nowrap lg:min-w-0 lg:flex-1">{label}</span>
+      {count ? <span className="rounded-full bg-[#86A95E] px-2 py-0.5 text-[11px] font-black text-white">{count}</span> : null}
+    </button>
+  );
 
   return (
-    <aside className="border-b border-line bg-white/80 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
+    <aside className="border-b border-[#E1E8D8] bg-[#FBFCF9] lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:border-b-0 lg:border-r">
       <div className="flex min-h-full flex-col">
-        <div className="border-b border-line p-4 sm:p-5">
-          <a href="/" className="font-display text-2xl font-extrabold text-rose">
+        <div className="flex items-center justify-between border-b border-[#E8EDE3] px-4 py-4 lg:block lg:px-5 lg:py-5">
+          <a href="/shop/dashboard" className="font-display text-2xl font-extrabold text-[#89A960]">
             MIROIR
           </a>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-            {t("shopAdmin.title") || "Shop Owner"}
-          </p>
+          <p className="mt-1 hidden text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 lg:block">Kênh người bán</p>
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold lg:hidden ${hasActiveShopPlan ? "bg-[#E5F0D8] text-[#49652D]" : "bg-amber-100 text-amber-700"}`}>{hasActiveShopPlan ? "Gói đang hoạt động" : "Gói cơ bản"}</span>
         </div>
 
-        <div className="p-3 sm:p-4">
-          <div className="rounded-xl border border-line bg-white/80 p-4">
-            <p className={labelClass}>{t("shopAdmin.currentShop") || "Current shop"}</p>
-            <p className="mt-2 truncate text-base font-bold text-ink">
-              {shop?.name || t("shopAdmin.noShopYet") || "No shop yet"}
-            </p>
-            <p className="mt-1 text-sm text-muted">
-              {shop ? `${shop.slug} / ${shop.status}` : t("shopAdmin.createProfileFirst") || "Create profile first"}
-            </p>
+        <div className="hidden px-3 pt-4 lg:block">
+          <div className="rounded-2xl border border-[#DFE8D5] bg-white p-3.5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#E5F0D8] font-black text-[#668443]">{shop?.logoUrl ? <img className="h-full w-full object-cover" src={shop.logoUrl} alt="" /> : (shop?.name || "S").slice(0, 1).toUpperCase()}</div>
+              <div className="min-w-0 flex-1"><p className="truncate text-sm font-black text-slate-900">{shop?.name || "Chưa có shop"}</p><p className="truncate text-xs text-slate-500">{shop?.slug || "Tạo hồ sơ để bắt đầu"}</p></div>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#EEF2EA] pt-3">
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${hasActiveShopPlan ? "bg-[#E5F0D8] text-[#49652D]" : "bg-amber-100 text-amber-700"}`}>{hasActiveShopPlan ? "Đang hoạt động" : "Gói cơ bản"}</span>
+              {hasActiveShopPlan && expiresAt ? <span className="text-[11px] font-medium text-slate-500">Đến {expiresAt}</span> : <button type="button" onClick={onCheckout} className="text-[11px] font-black text-[#668443] hover:underline">Nâng cấp</button>}
+            </div>
+            {paymentStatus ? <p className="mt-2 text-[11px] text-slate-500">{paymentStatus}</p> : null}
           </div>
         </div>
 
-        <nav className="flex gap-2 overflow-x-auto px-3 pb-1 lg:grid lg:gap-1 lg:overflow-visible lg:pb-0">
-          <a href="/shop/messages" className="shrink-0 rounded-lg px-4 py-3 text-left text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:shrink">Tin nhắn{chatUnreadCount ? ` (${chatUnreadCount})` : ""}</a>
-          {navItems.map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setView(key)}
-              className={`shrink-0 rounded-lg px-4 py-3 text-left text-sm font-semibold transition lg:shrink ${
-                view === key
-                  ? "bg-mintDeep text-white"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <nav className="flex gap-1 overflow-x-auto px-3 py-3 lg:grid lg:gap-1 lg:overflow-visible lg:py-4">
+          <a href="/shop/messages" className="group flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 lg:w-full"><ShopNavIcon name="messages" /><span className="whitespace-nowrap lg:min-w-0 lg:flex-1">Tin nhắn</span>{chatUnreadCount ? <span className="rounded-full bg-[#86A95E] px-2 py-0.5 text-[11px] font-black text-white">{chatUnreadCount}</span> : null}</a>
+          {primaryItems.map(renderItem)}
+          <p className="mt-3 hidden px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 lg:block">Quản lý</p>
+          {manageItems.map(renderItem)}
         </nav>
 
-        <div className="hidden grid-cols-2 gap-2 p-4 sm:grid">
-          <Metric label={t("common.total")} value={stats.total} />
-          <Metric label={t("common.live")} value={stats.published} />
-          <Metric label={t("common.draft")} value={stats.draft} />
-          <Metric label={t("common.trash")} value={stats.trashed} />
-        </div>
-
-        <div className="mt-3 grid gap-2 border-t border-line p-3 sm:p-4 lg:mt-auto">
-          <a
-            href="/stylist"
-            className="rounded-lg px-4 py-3 text-sm font-semibold text-muted hover:bg-accentSoft/70 hover:text-ink"
-          >
-            AI Stylist
-          </a>
+        <div className="mt-auto hidden shrink-0 gap-1 border-t border-[#E8EDE3] p-3 lg:grid">
           <button
             type="button"
             onClick={toggleLanguage}
-            className="rounded-lg px-4 py-3 text-left text-sm font-semibold text-muted hover:bg-accentSoft/70 hover:text-ink"
+            className="rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-500 hover:bg-white hover:text-slate-900 lg:text-sm"
           >
-            {language === "en" ? "🇻🇳 Tiếng Việt" : "🇬🇧 English"}
+            {language === "vi" ? "English" : "Tiếng Việt"}
           </button>
           <button
             type="button"
             onClick={logout}
-            className="rounded-lg bg-tertiarySoft px-4 py-3 text-left text-sm font-semibold text-ink"
+            className="rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-500 hover:bg-red-50 hover:text-red-700 lg:text-sm"
           >
-            {t("shopAdmin.logout") || "Logout"}
+            Đăng xuất
           </button>
         </div>
       </div>
     </aside>
   );
+}
+
+function ShopNavIcon({ active = false, name }) {
+  const iconClass = `h-[18px] w-[18px] shrink-0 ${active ? "text-[#668443]" : "text-slate-400 group-hover:text-slate-600"}`;
+  const common = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: 1.8 };
+  if (name === "messages") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M7 18.5 3.5 21v-5A8.5 8.5 0 1 1 7 18.5Z" /><path d="M8 10h8M8 14h5" /></svg>;
+  if (name === "products") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="m4 8 8-4 8 4-8 4-8-4Z" /><path d="m4 8v8l8 4 8-4V8M12 12v8" /></svg>;
+  if (name === "orders") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4" /></svg>;
+  if (name === "analytics") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>;
+  if (name === "customers") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 6.5a3 3 0 0 1 0 5.5M16 15a5 5 0 0 1 4.5 4" /></svg>;
+  if (name === "shop") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M3 10h18l-2-6H5l-2 6ZM5 10v10h14V10M9 20v-6h6v6" /><path d="M3 10a3 3 0 0 0 5 2 3 3 0 0 0 4 0 3 3 0 0 0 4 0 3 3 0 0 0 5-2" /></svg>;
+  if (name === "import") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M12 3v12M8 11l4 4 4-4M5 20h14" /></svg>;
+  return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6" /></svg>;
 }
 
 function DashboardHeader({
@@ -971,103 +974,34 @@ function DashboardHeader({
   updateFilter,
   view,
 }) {
-  const { t } = useLanguage();
-  const title =
-    view === "shop"
-      ? t("shopAdmin.shopProfile")
-      : view === "import"
-        ? t("shopAdmin.excelImport")
-        : view === "analytics"
-          ? t("shopAdmin.analytics")
-          : view === "insights"
-            ? t("shopAdmin.insights")
-        : view === "orders"
-          ? "Đơn hàng"
-        : view === "trash"
-          ? t("shopAdmin.trash")
-          : t("shopAdmin.products");
+  if (view !== "products" && view !== "trash") return null;
 
   return (
-    <header className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {shop ? t("shopAdmin.headerDescription") : t("shopAdmin.createToBegin")}
-          </p>
-        </div>
-
+    <header className="mb-4 rounded-2xl border border-[#DFE8D5] bg-white p-3 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <input
+          className={`${fieldClass} min-w-0 flex-1 !border-[#DFE8D5] !py-2.5`}
+          placeholder={view === "trash" ? "Tìm trong thùng rác..." : "Tìm sản phẩm theo tên, danh mục..."}
+          value={filters.query}
+          onChange={updateFilter("query")}
+        />
+        {view !== "trash" ? <select className={`${fieldClass} md:w-44`} value={filters.status} onChange={updateFilter("status")}><option value="all">Mọi trạng thái</option><option value="published">Đang bán</option><option value="draft">Bản nháp</option><option value="archived">Đã lưu trữ</option></select> : null}
         {view === "products" ? (
           <button
             type="button"
             onClick={resetProductForm}
             disabled={!shop || !hasActiveShopPlan}
-            className={`${buttonBase} bg-mintDeep text-white hover:bg-mint`}
+            className={`${buttonBase} whitespace-nowrap bg-mintDeep text-white hover:bg-mint`}
           >
-            {t("product.new")}
+            + Thêm sản phẩm
           </button>
         ) : null}
       </div>
-
-      {view === "products" || view === "trash" ? (
-        <div className={`mt-4 grid gap-3 ${view === "trash" ? "" : "md:grid-cols-[minmax(0,1fr)_180px]"}`}>
-          <input
-            className={fieldClass}
-            placeholder={t("product.searchPlaceholder")}
-            value={filters.query}
-            onChange={updateFilter("query")}
-          />
-          {view !== "trash" ? (
-            <select className={fieldClass} value={filters.status} onChange={updateFilter("status")}>
-              <option value="all">{t("common.allStatus")}</option>
-              <option value="published">{t("common.published")}</option>
-              <option value="draft">{t("common.draft")}</option>
-              <option value="archived">{t("common.archived")}</option>
-            </select>
-          ) : null}
-        </div>
-      ) : null}
     </header>
   );
 }
 
-function ShopSubscriptionBanner({
-  hasActiveShopPlan,
-  onCheckout,
-  paymentStatus,
-  plan,
-  subscription,
-}) {
-  const { t } = useLanguage();
-  return (
-    <section className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`rounded-md px-2 py-1 text-xs font-bold ${hasActiveShopPlan ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}`}>
-            {hasActiveShopPlan ? t("shopAdmin.active") : t("shopAdmin.free")}
-          </span>
-          <p className="text-sm font-semibold text-slate-900">
-            {t("shopAdmin.planSummary", { amount: formatMoney(plan?.amount || 349000), days: plan?.durationDays || 30 })}
-          </p>
-        </div>
-        <p className="mt-1 text-xs text-slate-500">
-          {t("shopAdmin.planBenefits")}
-        </p>
-        {hasActiveShopPlan && subscription?.expiresAt ? (
-          <p className="mt-1 text-xs text-slate-500">
-            {t("shopAdmin.expiresAt", { date: new Date(subscription.expiresAt).toLocaleDateString("vi-VN") })}
-          </p>
-        ) : null}
-        {paymentStatus ? <p className="mt-1 text-xs text-slate-500">{paymentStatus}</p> : null}
-      </div>
-      {!hasActiveShopPlan ? (
-        <button type="button" className={`${buttonBase} bg-mintDeep text-white hover:bg-mint`} onClick={onCheckout}>
-          {t("shopAdmin.checkout")}
-        </button>
-      ) : null}
-    </section>
-  );
-}function ProductsView({
+function ProductsView({
   archiveProduct,
   deleteSelectedProducts,
   editProduct,
@@ -1955,15 +1889,7 @@ function AnalyticsView({ analytics, commerceDashboard, range, setRange, status }
 
   return (
     <section className="grid gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div>
-          <h2 className="text-base font-bold text-slate-900">{t("shopAdmin.analyticsTitle")}</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            {t("shopAdmin.analyticsDescription")}
-          </p>
-        </div>
-        <RangeControl range={range} setRange={setRange} />
-      </div>
+      <div className="flex justify-end"><RangeControl range={range} setRange={setRange} /></div>
 
       <SalesDashboardSummary dashboard={commerceDashboard} />
 
@@ -2044,24 +1970,24 @@ function SalesDashboardSummary({ dashboard }) {
   return (
     <section className="grid gap-5">
       <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Metric label="Collected revenue" value={formatMoney(summary.collectedRevenue)} />
-        <Metric label="Projected revenue" value={formatMoney(summary.projectedRevenue)} />
-        <Metric label="Orders" value={summary.totalOrders || 0} />
-        <Metric label="Average order" value={formatMoney(summary.averageOrderValue)} />
-        <Metric label="Pending orders" value={summary.pendingOrders || 0} />
-        <Metric label="Refund value" value={formatMoney(summary.refundValue)} />
+        <Metric label="Doanh thu đã thu" value={formatMoney(summary.collectedRevenue)} />
+        <Metric label="Doanh thu dự kiến" value={formatMoney(summary.projectedRevenue)} />
+        <Metric label="Đơn hàng" value={summary.totalOrders || 0} />
+        <Metric label="Giá trị đơn trung bình" value={formatMoney(summary.averageOrderValue)} />
+        <Metric label="Đơn đang xử lý" value={summary.pendingOrders || 0} />
+        <Metric label="Giá trị hoàn tiền" value={formatMoney(summary.refundValue)} />
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
         <RevenueDashboardChart series={salesSeries} />
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="font-bold text-slate-900">Customer journey</h3>
+          <h3 className="font-bold text-slate-900">Hành trình khách hàng</h3>
           <FunnelDashboardChart funnel={funnel} />
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {[["Views", funnel.views], ["Try-ons", funnel.tryOns], ["Stylist", funnel.stylistMatches], ["Feedback", funnel.feedback], ["Orders", funnel.orders], ["Paid", funnel.paidOrders]].map(([label, value]) => <Metric key={label} label={label} value={value || 0} />)}
+            {[["Lượt xem", funnel.views], ["Thử đồ", funnel.tryOns], ["Gợi ý AI", funnel.stylistMatches], ["Phản hồi", funnel.feedback], ["Đơn hàng", funnel.orders], ["Đã trả tiền", funnel.paidOrders]].map(([label, value]) => <Metric key={label} label={label} value={value || 0} />)}
           </div>
         </section>
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="font-bold text-slate-900">Catalog health</h3>
+          <h3 className="font-bold text-slate-900">Tình trạng danh mục</h3>
           <div className="mt-4 flex flex-wrap gap-2 text-sm font-semibold text-slate-700">
             <span className="rounded-full bg-mintSoft px-3 py-2">{t("common.published")}: {inventory.published || 0}</span>
             <span className="rounded-full bg-slate-100 px-3 py-2">{t("common.draft")}: {inventory.draft || 0}</span>
@@ -2071,12 +1997,12 @@ function SalesDashboardSummary({ dashboard }) {
         </section>
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
-        <BreakdownDashboardChart title="Order status" items={orderStatuses} />
-        <BreakdownDashboardChart title="Payment status" items={paymentStatuses} />
+        <BreakdownDashboardChart title="Trạng thái đơn hàng" items={orderStatuses} />
+        <BreakdownDashboardChart title="Trạng thái thanh toán" items={paymentStatuses} />
       </div>
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h3 className="font-bold text-slate-900">Best sellers by collected revenue</h3>
-        {!bestSellers.length ? <p className="mt-3 text-sm text-slate-500">No paid orders in this period.</p> : <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead className="text-xs uppercase tracking-[0.1em] text-slate-500"><tr><th className="pb-2">Product</th><th className="pb-2">Sold</th><th className="pb-2">Orders</th><th className="pb-2">Collected revenue</th></tr></thead><tbody>{bestSellers.map((product) => <tr key={product.productId || product.name} className="border-t border-slate-100"><td className="py-3 font-semibold text-slate-900">{product.name}</td><td>{product.quantity}</td><td>{product.orderCount}</td><td className="font-semibold">{formatMoney(product.collectedRevenue)}</td></tr>)}</tbody></table></div>}
+        <h3 className="font-bold text-slate-900">Sản phẩm bán chạy theo doanh thu</h3>
+        {!bestSellers.length ? <p className="mt-3 text-sm text-slate-500">Chưa có đơn đã thanh toán trong kỳ này.</p> : <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead className="text-xs uppercase tracking-[0.1em] text-slate-500"><tr><th className="pb-2">Sản phẩm</th><th className="pb-2">Đã bán</th><th className="pb-2">Đơn hàng</th><th className="pb-2">Doanh thu đã thu</th></tr></thead><tbody>{bestSellers.map((product) => <tr key={product.productId || product.name} className="border-t border-slate-100"><td className="py-3 font-semibold text-slate-900">{product.name}</td><td>{product.quantity}</td><td>{product.orderCount}</td><td className="font-semibold">{formatMoney(product.collectedRevenue)}</td></tr>)}</tbody></table></div>}
       </section>
     </section>
   );
@@ -2094,22 +2020,22 @@ function RevenueDashboardChart({ series = [] }) {
   const pathFor = (key) => series.map((item, index) => `${index ? "L" : "M"} ${xAt(index)} ${yAt(item[key])}`).join(" ");
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="font-bold text-slate-900">Revenue trend</h3>
-      <p className="mt-1 text-sm text-slate-500">Collected versus projected revenue.</p>
+      <h3 className="font-bold text-slate-900">Xu hướng doanh thu</h3>
+      <p className="mt-1 text-sm text-slate-500">So sánh doanh thu đã thu và doanh thu dự kiến.</p>
       {!series.length ? <EmptyChart /> : <>
         <svg viewBox={`0 0 ${width} ${height}`} className="mt-4 h-56 w-full overflow-visible">
           {[0, 1, 2, 3].map((index) => <line key={index} x1={padding.left} x2={width - padding.right} y1={padding.top + (plotHeight * index) / 3} y2={padding.top + (plotHeight * index) / 3} stroke="#e7eedc" strokeDasharray="4 4" />)}
           <path d={pathFor("projectedRevenue")} fill="none" stroke="#B3D07E" strokeWidth="3" strokeLinecap="round" />
           <path d={pathFor("collectedRevenue")} fill="none" stroke="#94B16F" strokeWidth="3" strokeLinecap="round" />
         </svg>
-        <div className="flex gap-4 text-xs font-semibold text-slate-600"><span><i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-mintDeep" />Collected</span><span><i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-mint" />Projected</span></div>
+        <div className="flex gap-4 text-xs font-semibold text-slate-600"><span><i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-mintDeep" />Đã thu</span><span><i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-mint" />Dự kiến</span></div>
       </>}
     </section>
   );
 }
 
 function FunnelDashboardChart({ funnel = {} }) {
-  const steps = [["Views", funnel.views], ["Try-ons", funnel.tryOns], ["Stylist", funnel.stylistMatches], ["Orders", funnel.orders], ["Paid", funnel.paidOrders]];
+  const steps = [["Lượt xem", funnel.views], ["Thử đồ", funnel.tryOns], ["Gợi ý AI", funnel.stylistMatches], ["Đơn hàng", funnel.orders], ["Đã trả", funnel.paidOrders]];
   const maxValue = Math.max(1, ...steps.map(([, value]) => Number(value || 0)));
   return <div className="mt-4 space-y-3">{steps.map(([label, value]) => <div key={label} className="grid grid-cols-[78px_1fr_32px] items-center gap-3 text-sm"><span className="font-medium text-slate-600">{label}</span><div className="h-2.5 overflow-hidden rounded-full bg-mintSoft"><div className="h-full rounded-full bg-mintDeep" style={{ width: `${(Number(value || 0) / maxValue) * 100}%` }} /></div><strong className="text-right">{value || 0}</strong></div>)}</div>;
 }
@@ -2129,21 +2055,21 @@ function BreakdownDashboardChart({ title, items = [] }) {
 
 function humanizeDashboardStatus(value) {
   const labels = {
-    pending_confirmation: "Pending confirmation",
-    preparing: "Preparing",
-    delivered: "Delivered",
-    cancelled: "Cancelled",
-    cod_pending: "COD pending",
-    awaiting_transfer: "Awaiting transfer",
-    pending_verification: "Payment verification",
-    paid: "Paid",
-    refund_pending: "Refund pending",
-    refunded: "Refunded",
+    pending_confirmation: "Chờ xác nhận",
+    preparing: "Đang chuẩn bị",
+    delivered: "Đã giao",
+    cancelled: "Đã hủy",
+    cod_pending: "Chờ thu COD",
+    awaiting_transfer: "Chờ chuyển khoản",
+    pending_verification: "Chờ đối soát",
+    paid: "Đã thanh toán",
+    refund_pending: "Chờ hoàn tiền",
+    refunded: "Đã hoàn tiền",
   };
-  return labels[value] || String(value || "Unknown").replaceAll("_", " ");
+  return labels[value] || String(value || "Không xác định").replaceAll("_", " ");
 }
 function EmptyChart() {
-  return <div className="flex h-32 items-center justify-center text-sm text-slate-500">No data for this period.</div>;
+  return <div className="flex h-32 items-center justify-center text-sm text-slate-500">Chưa có dữ liệu trong kỳ này.</div>;
 }
 function AnalyticsTrendChart({ series = [], loading = false }) {
   const { language, t } = useLanguage();
@@ -2552,15 +2478,7 @@ function InsightsView({ insights, range, setRange, status }) {
 
   return (
     <section className="grid gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div>
-          <h2 className="text-base font-bold text-slate-900">{t("shopAdmin.anonymousInsights")}</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            {t("shopAdmin.privacyDescription")}
-          </p>
-        </div>
-        <RangeControl range={range} setRange={setRange} />
-      </div>
+      <div className="flex justify-end"><RangeControl range={range} setRange={setRange} /></div>
 
       {status === "loading" ? (
         <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">
@@ -2660,8 +2578,8 @@ function ShopOrderModal({ onChanged, onClose, order }) {
   const actStatus = async (status) => { const reason = status === "cancelled" ? window.prompt("Lý do hủy đơn (bắt buộc):") : ""; if (status === "cancelled" && !reason) return; try { await updateShopOrderStatus(order.id, status, reason); await onChanged(); } catch (e) { setNotice(e.response?.data?.message || "Không cập nhật được trạng thái."); } };
   const actPayment = async (action) => { const reason = ["reject_transfer", "mark_refunded"].includes(action) ? window.prompt(action === "reject_transfer" ? "Lý do từ chối:" : "Ghi chú hoàn tiền:") : ""; try { await updateShopOrderPayment(order.id, action, reason, action === "mark_refunded" ? refundProof : null); await onChanged(); } catch (e) { setNotice(e.response?.data?.message || "Không cập nhật được thanh toán."); } };
   const nextStatuses = { pending_confirmation: ["confirmed", "cancelled"], confirmed: ["preparing", "cancelled"], preparing: ["shipping", "cancelled"], shipping: ["delivered", "cancelled"] }[order.orderStatus] || [];
-  return <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm" onMouseDown={onClose}><div className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase text-accentStrong">Chi tiết đơn hàng</p><button className="mt-2 font-mono text-2xl font-black hover:underline" onClick={() => navigator.clipboard.writeText(order.orderCode)}>{commerceCode(order.orderCode)} · Copy</button><p className="mt-1 text-muted">{commerceOrderLabels[order.orderStatus]} · {commercePaymentLabels[order.paymentStatus]}</p></div><div className="flex gap-2"><button className={`${buttonBase} bg-mintDeep text-white`} onClick={() => beginShopOrderChat(order.id)}>Nhắn khách</button><button className={`${buttonBase} border border-line`} onClick={onClose}>Đóng</button></div></div>{notice ? <Notice message={notice} type="error" /> : null}
-    <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_360px]"><div className="grid gap-5"><section className="rounded-xl border border-line p-4"><h3 className="font-black">Customer & địa chỉ snapshot</h3><p className="mt-3 font-bold">{order.recipient.name} · {order.recipient.phone}</p><p className="text-muted">{order.recipient.fullAddress}</p>{order.recipient.note ? <p className="mt-2">Ghi chú: {order.recipient.note}</p> : null}</section><section className="rounded-xl border border-line p-4"><h3 className="font-black">Sản phẩm</h3>{order.items.map((item) => <div className="mt-3 flex justify-between gap-3 border-t border-line pt-3" key={item.variantId}><div><p className="font-bold">{item.name}</p><p className="text-sm text-muted">SKU {item.sku} · {item.color || "Mặc định"} · {item.size || "Một cỡ"} · x{item.quantity}</p></div><p className="font-black">{formatMoney(item.lineTotal)}</p></div>)}</section>{order.paymentProof?.imageUrl ? <section className="rounded-xl border border-line p-4"><h3 className="font-black">Biên lai customer</h3><img className="mt-3 max-h-80 rounded-xl" src={order.paymentProof.imageUrl} alt="Biên lai" /></section> : null}</div>
+  return <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/50 p-4 backdrop-blur-sm" onMouseDown={onClose}><div className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl" onMouseDown={(event) => event.stopPropagation()}><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase text-accentStrong">Chi tiết đơn hàng</p><button className="mt-2 font-mono text-2xl font-black hover:underline" onClick={() => navigator.clipboard.writeText(order.orderCode)}>{commerceCode(order.orderCode)} · Sao chép</button><p className="mt-1 text-muted">{commerceOrderLabels[order.orderStatus]} · {commercePaymentLabels[order.paymentStatus]}</p></div><div className="flex gap-2"><button className={`${buttonBase} bg-mintDeep text-white`} onClick={() => beginShopOrderChat(order.id)}>Nhắn khách</button><button className={`${buttonBase} border border-line`} onClick={onClose}>Đóng</button></div></div>{notice ? <Notice message={notice} type="error" /> : null}
+    <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_360px]"><div className="grid gap-5"><section className="rounded-xl border border-line p-4"><h3 className="font-black">Khách hàng và địa chỉ giao hàng</h3><p className="mt-3 font-bold">{order.recipient.name} · {order.recipient.phone}</p><p className="text-muted">{order.recipient.fullAddress}</p>{order.recipient.note ? <p className="mt-2">Ghi chú: {order.recipient.note}</p> : null}</section><section className="rounded-xl border border-line p-4"><h3 className="font-black">Sản phẩm</h3>{order.items.map((item) => <div className="mt-3 flex justify-between gap-3 border-t border-line pt-3" key={item.variantId}><div><p className="font-bold">{item.name}</p><p className="text-sm text-muted">SKU {item.sku} · {item.color || "Mặc định"} · {item.size || "Một cỡ"} · x{item.quantity}</p></div><p className="font-black">{formatMoney(item.lineTotal)}</p></div>)}</section>{order.paymentProof?.imageUrl ? <section className="rounded-xl border border-line p-4"><h3 className="font-black">Biên lai của khách hàng</h3><img className="mt-3 max-h-80 rounded-xl" src={order.paymentProof.imageUrl} alt="Biên lai" /></section> : null}</div>
     <aside className="grid h-fit gap-4"><section className="rounded-xl bg-accentSoft p-4"><p className="text-sm text-muted">Tổng tiền</p><p className="text-3xl font-black">{formatMoney(order.total)}</p>{order.paymentSnapshot ? <><p className="mt-4 text-sm">{order.paymentSnapshot.bankName}</p><p className="font-mono font-black">{order.paymentSnapshot.accountNumber}</p><p className="font-bold">{order.paymentSnapshot.accountHolder}</p><p className="mt-3 font-mono">Nội dung: {order.transferContent}</p></> : null}</section>
       <section className="rounded-xl border border-line p-4"><h3 className="font-black">Cập nhật đơn</h3><div className="mt-3 grid gap-2">{nextStatuses.map((status) => <button className={`${buttonBase} ${status === "cancelled" ? "border border-red-200 text-red-700" : "bg-mintDeep text-white"}`} key={status} onClick={() => actStatus(status)}>{commerceOrderLabels[status]}</button>)}{order.orderStatus === "cancel_requested" ? <><button className={`${buttonBase} bg-mintDeep text-white`} onClick={async () => { await decideShopCancellation(order.id, true, "Shop chấp nhận"); onChanged(); }}>Chấp nhận hủy</button><button className={`${buttonBase} border border-line`} onClick={async () => { await decideShopCancellation(order.id, false, "Shop từ chối"); onChanged(); }}>Từ chối hủy</button></> : null}</div></section>
       <section className="rounded-xl border border-line p-4"><h3 className="font-black">Đối soát thanh toán</h3><div className="mt-3 grid gap-2">{["cod_pending", "awaiting_transfer", "pending_verification"].includes(order.paymentStatus) ? <button className={`${buttonBase} bg-mintDeep text-white`} onClick={() => actPayment("confirm_paid")}>Xác nhận đã nhận tiền</button> : null}{order.paymentStatus === "pending_verification" ? <button className={`${buttonBase} border border-red-200 text-red-700`} onClick={() => actPayment("reject_transfer")}>Từ chối biên lai</button> : null}{order.paymentStatus === "refund_pending" ? <><input className={fieldClass} type="file" accept="image/*" onChange={(event) => setRefundProof(event.target.files?.[0] || null)} /><button className={`${buttonBase} bg-mintDeep text-white`} onClick={() => actPayment("mark_refunded")}>Đánh dấu đã hoàn tiền</button></> : null}</div></section>
@@ -2679,9 +2597,9 @@ function Field({ children, label, wide = false }) {
 
 function Metric({ label, value }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-bold text-slate-900">{value}</p>
+    <div className="rounded-2xl border border-[#DFE8D5] bg-white p-4 shadow-sm">
+      <p className="text-xs font-semibold text-slate-500">{label}</p>
+      <p className="mt-1.5 text-xl font-black text-slate-900">{value}</p>
     </div>
   );
 }

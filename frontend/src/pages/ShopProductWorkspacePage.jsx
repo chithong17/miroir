@@ -169,7 +169,7 @@ export default function ShopProductWorkspacePage({ productId }) {
   const save = async (event) => {
     event.preventDefault();
     if (!shop) return showNotice("Hãy tạo shop trước khi thêm sản phẩm.", "error");
-    if (!hasActivePlan) return showNotice("Cần gói Shop Owner đang hoạt động để lưu sản phẩm.", "error");
+    if (!hasActivePlan) return showNotice("Cần gói người bán đang hoạt động để lưu sản phẩm.", "error");
     if (!form.name.trim() || !form.category.trim() || !form.description.trim()) return showNotice("Tên, danh mục và mô tả là bắt buộc.", "error");
     if (!Number.isFinite(Number(form.price)) || Number(form.price) < 0) return showNotice("Giá sản phẩm không hợp lệ.", "error");
     const variants = form.variants.map((variant) => ({
@@ -228,13 +228,13 @@ export default function ShopProductWorkspacePage({ productId }) {
   if (status === "loading") return <div className="grid min-h-screen place-items-center bg-white text-muted">Đang tải không gian sản phẩm...</div>;
 
   return (
-    <div className="min-h-screen bg-white text-ink">
+    <div className="min-h-screen bg-[#F6F8F3] text-ink">
       <header className="sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-4">
             <a className="font-display text-2xl font-black" href="/shop/dashboard">MIROIR</a>
             <div className="hidden h-8 border-l border-line sm:block" />
-            <div className="min-w-0"><p className="truncate text-sm font-black">{isNew ? "Tạo sản phẩm mới" : form.name || "Chi tiết sản phẩm"}</p><p className="truncate text-xs text-muted">{shop?.name || "Shop Owner"}</p></div>
+            <div className="min-w-0"><p className="truncate text-sm font-black">{isNew ? "Tạo sản phẩm mới" : form.name || "Chi tiết sản phẩm"}</p><div className="mt-0.5 flex items-center gap-2"><p className="truncate text-xs text-muted">{shop?.name || "Kênh người bán"}</p><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${hasActivePlan ? "bg-[#E5F0D8] text-[#49652D]" : "bg-amber-100 text-amber-700"}`}>{hasActivePlan ? "Gói hoạt động" : "Cần gia hạn"}</span></div></div>
           </div>
           <div className="flex items-center gap-2">
             <a className="soft-button !px-4 !py-2.5" href="/shop/dashboard">Quay lại danh sách</a>
@@ -262,13 +262,12 @@ export default function ShopProductWorkspacePage({ productId }) {
 
         <form id="shop-product-form" className="min-w-0 overflow-hidden" onSubmit={save}>
           {notice ? <div className={`mb-5 rounded-xl border p-4 text-sm font-bold ${noticeType === "error" ? "border-red-200 bg-red-50 text-red-700" : noticeType === "success" ? "border-mintSoft bg-accentSoft text-mintDeep" : "border-line bg-panel text-ink"}`}>{notice}</div> : null}
-          {!hasActivePlan ? <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-800">Gói Shop Owner chưa hoạt động. Bạn vẫn có thể xem sản phẩm nhưng cần gia hạn để lưu thay đổi.</div> : null}
 
           <ProductSummary form={form} totalStock={totalStock} activeVariantCount={activeVariantCount} />
 
           <div className="mt-5 grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
             <div className="grid min-w-0 gap-5">
-              <EditorSection title="Thông tin cơ bản" description="Thông tin customer nhìn thấy trên marketplace và trang chi tiết.">
+              <EditorSection title="Thông tin cơ bản" description="Thông tin khách hàng nhìn thấy trên sàn và trang chi tiết.">
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField label="Tên sản phẩm" required><input className={inputClass} required value={form.name} onChange={updateField("name")} /></FormField>
                   <FormField label="Danh mục" required><input className={inputClass} required placeholder="Ví dụ: Jeans, Áo, Váy" value={form.category} onChange={updateField("category")} /></FormField>
@@ -325,7 +324,7 @@ function ProductSummary({ activeVariantCount, form, totalStock }) {
     <section className="overflow-hidden rounded-2xl border border-line bg-white shadow-glow">
       <div className="grid gap-5 p-5 sm:grid-cols-[150px_minmax(0,1fr)] sm:p-6">
         <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-panel">{form.imageUrl ? <img src={form.imageUrl} alt="" className="h-full w-full object-cover" /> : null}</div>
-        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><StatusBadge status={form.status} /><span className="rounded-full bg-panel px-3 py-1.5 text-xs font-bold text-muted">{form.category || "Chưa có danh mục"}</span></div><h1 className="mt-3 font-display text-3xl font-black sm:text-4xl">{form.name || "Sản phẩm mới"}</h1><p className="mt-2 text-2xl font-black text-mintDeep">{formatMoney(form.price)}</p><p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-muted">{form.description || "Nhập mô tả để customer hiểu rõ sản phẩm."}</p><div className="mt-5 flex flex-wrap gap-4 text-sm"><span><strong>{activeVariantCount}</strong> biến thể đang bật</span><span><strong>{totalStock}</strong> sản phẩm trong kho</span>{form.id ? <span className="font-mono text-xs text-muted">ID: {form.id}</span> : null}</div></div>
+        <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><StatusBadge status={form.status} /><span className="rounded-full bg-panel px-3 py-1.5 text-xs font-bold text-muted">{form.category || "Chưa có danh mục"}</span></div><h1 className="mt-3 font-display text-3xl font-black sm:text-4xl">{form.name || "Sản phẩm mới"}</h1><p className="mt-2 text-2xl font-black text-mintDeep">{formatMoney(form.price)}</p><p className="mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-muted">{form.description || "Nhập mô tả để khách hàng hiểu rõ sản phẩm."}</p><div className="mt-5 flex flex-wrap gap-4 text-sm"><span><strong>{activeVariantCount}</strong> biến thể đang bật</span><span><strong>{totalStock}</strong> sản phẩm trong kho</span>{form.id ? <span className="font-mono text-xs text-muted">ID: {form.id}</span> : null}</div></div>
       </div>
     </section>
   );

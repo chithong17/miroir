@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const LANGUAGE_KEY = "miroir_language";
+const VI_DEFAULT_MIGRATION_KEY = "miroir_language_vi_default_v1";
 
 const translations = {
   en: {
@@ -792,7 +793,13 @@ const format = (template, values = {}) =>
   String(template).replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
 
 export function LanguageProvider({ children }) {
-  const [language, setLanguageState] = useState(() => localStorage.getItem(LANGUAGE_KEY) || "en");
+  const [language, setLanguageState] = useState(() => {
+    if (!localStorage.getItem(VI_DEFAULT_MIGRATION_KEY)) {
+      localStorage.setItem(VI_DEFAULT_MIGRATION_KEY, "1");
+      return "vi";
+    }
+    return localStorage.getItem(LANGUAGE_KEY) || "vi";
+  });
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -842,6 +849,7 @@ export function LanguageToggle({ className = "" }) {
 }
 
 export function FloatingLanguageToggle() {
+  if (window.location.pathname.startsWith("/shop/")) return null;
   return (
     <div className="fixed bottom-5 right-5 z-[70]">
       <LanguageToggle />
