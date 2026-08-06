@@ -9,6 +9,7 @@ import { buildProductEmbeddingText, hashEmbeddingText } from "./embeddingText.se
 const COLUMNS = [
   "id",
   "name",
+  "category",
   "description",
   "price",
   "availability",
@@ -20,6 +21,7 @@ const COLUMNS = [
 const EXAMPLE_ROW = {
   id: "",
   name: "Linen Shirt",
+  category: "Shirts",
   description: "Breathable everyday linen shirt.",
   price: 590000,
   availability: "in_stock",
@@ -128,12 +130,13 @@ export const generateProductImportTemplate = () => {
   });
   const notes = [
     ["Column", "Notes"],
+    ["category", "The category of the product (e.g., T-shirt, Jeans, Dress, Accessories)."],
     ["availability", "Allowed values: in_stock, out_of_stock."],
     ["description", "Optional product description (including fabric material, length, width, waist, etc.) shown to customers and used by AI Stylist."],
     ["colors", "Use comma-separated values, for example: white, beige."],
     ["sizes", "Use comma-separated values, for example: S, M, L."],
     ["imageUrl", "Use a public http(s) URL, or place an image in this row and it will be uploaded."],
-    ["manager fields", "Category, gender, status, style tags, occasion tags, and fit type are managed by the system team."],
+    ["manager fields", "Gender, status, style tags, occasion tags, and fit type are managed by the system team."],
   ];
   const notesSheet = XLSX.utils.aoa_to_sheet(notes);
 
