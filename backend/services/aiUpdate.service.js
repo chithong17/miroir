@@ -4,7 +4,7 @@ import { getSingleOwnerShop } from "./shop.service.js";
 import { generateEmbedding } from "./gemini.service.js";
 import { buildProductEmbeddingText, hashEmbeddingText } from "./embeddingText.service.js";
 
-export const createAiUpdateJob = async ({ ownerId }) => {
+export const createAiUpdateJob = async ({ ownerId, productIds }) => {
   const db = await getMongoDb();
   const shop = await getSingleOwnerShop(ownerId);
   if (!shop) {
@@ -23,16 +23,20 @@ export const createAiUpdateJob = async ({ ownerId }) => {
     return activeJob;
   }
 
-  // Find products needing update
-  const filter = {
-    shopId: shop.id,
-    $or: [
+  const filter = { shopId: shop.id };
+
+  if (Array.isArray(productIds) && productIds.length > 0) {
+    // If specific product IDs are provided, force update them regardless of stale status
+    filter.id = { $in: productIds };
+  } else {
+    // Otherwise, find products needing update
+    filter.$or = [
       { embeddingStale: true },
       { embeddingTextHash: { $in: [null, ""] } },
       { embedding: { $in: [null, []] } },
       { embedding: { $exists: false } },
-    ],
-  };
+    ];
+  }
 
   const productsToUpdate = await db.collection("products").find(filter).toArray();
   const totalCount = productsToUpdate.length;

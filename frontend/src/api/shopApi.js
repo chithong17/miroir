@@ -162,8 +162,8 @@ export const listPaymentPlans = async () => {
   return response.data;
 };
 
-export const triggerShopAiUpdate = async () => {
-  const response = await shopClient.post("/shop-products/update-ai");
+export const triggerShopAiUpdate = async (productIds = []) => {
+  const response = await shopClient.post("/shop-products/update-ai", { productIds });
   return response.data;
 };
 

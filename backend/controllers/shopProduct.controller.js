@@ -230,6 +230,7 @@ export const updateShopProductsAI = async (req, res, next) => {
   try {
     const aiJob = await createAiUpdateJob({
       ownerId: req.owner.id,
+      productIds: req.body.productIds,
     });
 
     return res.json({

@@ -637,10 +637,11 @@ function ShopDashboardPage() {
     URL.revokeObjectURL(url);
   };
 
-  const triggerAiUpdate = async () => {
+  const triggerAiUpdate = async (productIds = []) => {
     try {
+      const idsToUpdate = Array.isArray(productIds) ? productIds : [];
       showNotice(t("product.updatingAi"));
-      const response = await triggerShopAiUpdate();
+      const response = await triggerShopAiUpdate(idsToUpdate);
       setAiJob(response.aiJob);
       if (response.aiJob.status === "completed") {
         showNotice(t("shopAdmin.importCompletedSuccessfully"));
@@ -664,6 +665,15 @@ function ShopDashboardPage() {
         setAiJob(response.aiJob);
         if (response.aiJob.status === "completed" || response.aiJob.status === "failed") {
           clearInterval(intervalId);
+          setImportResult((prev) => 
+            prev 
+              ? { 
+                  ...prev, 
+                  aiUpdateRequiredCount: 0, 
+                  aiReadyCount: prev.aiReadyCount + prev.aiUpdateRequiredCount 
+                } 
+              : null
+          );
           await loadDashboard();
         }
       } catch (err) {
@@ -1130,6 +1140,18 @@ function ShopSubscriptionBanner({
             >
               <Icon name="edit" />
               <span className="ml-2">{t("product.bulkEdit")}</span>
+            </button>
+          ) : null}
+          {selectedCount && !inTrash ? (
+            <button
+              type="button"
+              onClick={() => triggerAiUpdate(Array.from(selectedProductSet))}
+              disabled={!hasActiveShopPlan || (aiJob && (aiJob.status === "pending" || aiJob.status === "processing"))}
+              className={`${buttonBase} border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 disabled:bg-slate-100 disabled:text-slate-400`}
+              title={t("shopAdmin.updateAi")}
+            >
+              <span className="font-mono font-bold text-lg leading-none">★</span>
+              <span className="ml-2">{t("shopAdmin.updateAi")}</span>
             </button>
           ) : null}
           {selectedCount ? (

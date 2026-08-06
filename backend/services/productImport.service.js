@@ -83,6 +83,10 @@ const normalizeShopImportPayload = (payload) => {
     normalized.colors = asStringArray(payload.colors);
   }
 
+  if (payload.category !== undefined) {
+    normalized.category = cleanString(payload.category);
+  }
+
   if (payload.description !== undefined) {
     normalized.description = cleanString(payload.description);
   }
