@@ -793,6 +793,8 @@ function ShopDashboardPage() {
                 importExcel={importExcel}
                 importResult={importResult}
                 shop={shop}
+                aiJob={aiJob}
+                triggerAiUpdate={triggerAiUpdate}
               />
             ) : null}
 
@@ -1698,6 +1700,8 @@ function ImportView({
   importExcel,
   importResult,
   shop,
+  aiJob,
+  triggerAiUpdate,
 }) {
   const { t } = useLanguage();
   return (
