@@ -59,6 +59,14 @@ export const TryOnProvider = ({ children }) => {
         }
       } catch (error) {
         console.error("Failed to poll task status", error);
+        if (!isCancelled) {
+          setCurrentTask((prev) => 
+            prev?.id === taskId 
+              ? { ...prev, status: "failed", errorMessage: error.response?.data?.message || "Lỗi kết nối khi lấy kết quả." }
+              : prev
+          );
+        }
+        return; // Stop polling on error to match original behavior
       }
 
       // If not completed or failed, and not cancelled, schedule next poll
@@ -68,8 +76,8 @@ export const TryOnProvider = ({ children }) => {
     };
 
     if (currentTask && currentTask.status === "processing") {
-      // Start the polling loop (wait 5s before first check to match interval behavior)
-      timeoutId = setTimeout(() => pollTaskStatus(currentTask.id), 5000);
+      // Start the polling loop (wait 15s before first check to match older code)
+      timeoutId = setTimeout(() => pollTaskStatus(currentTask.id), 15000);
     }
 
     return () => {
