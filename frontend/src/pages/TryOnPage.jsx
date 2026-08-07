@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
 import { createTryOnTask, getTryOnTaskStatus } from "../api/tryonApi.js";
+import { useTryOn } from "../contexts/TryOnContext.jsx";
 
 const initialFiles = {
   modelImage: null,
@@ -35,7 +35,7 @@ const revokePreviewUrls = (previews) => {
   });
 };
 
-function TryOnPage() {
+  const { currentTask, startTask: startGlobalTask, clearTask } = useTryOn();
   const [tryOnType, setTryOnType] = useState("dress");
   const [files, setFiles] = useState(initialFiles);
   const [previews, setPreviews] = useState(initialPreviews);
@@ -44,7 +44,6 @@ function TryOnPage() {
   const [resultUrl, setResultUrl] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isPolling, setIsPolling] = useState(false);
 
   useEffect(() => () => revokePreviewUrls(previews), [previews]);
 
@@ -94,60 +93,22 @@ function TryOnPage() {
     }
   }, [files.dressImage, files.lowerImage, files.upperImage, tryOnType]);
 
-  const pollTaskStatus = async (currentTaskId) => {
-    try {
-      const response = await getTryOnTaskStatus(currentTaskId);
-      const nextStatus = response.status || "pending";
-
-      setStatus(nextStatus);
-
-      if (nextStatus === "completed") {
-        setIsPolling(false);
-
-        if (response.resultUrl) {
-          setResultUrl(response.resultUrl);
-          setErrorMessage("");
-        } else {
-          setErrorMessage("Task completed but no result URL was found.");
-        }
-
-        return;
-      }
-
-      if (nextStatus === "failed" || response.success === false) {
-        setIsPolling(false);
-        setErrorMessage(response.errorMessage || "Virtual try-on task failed.");
-      }
-    } catch (error) {
-      setIsPolling(false);
-      setStatus("failed");
-      setErrorMessage(
-        error.response?.data?.message ||
-          "Could not fetch task status from the backend."
-      );
-    }
-  };
-
   useEffect(() => {
-    if (!taskId || !isPolling) {
-      return undefined;
-    }
-
-    let interval;
-    const initialTimeout = setTimeout(() => {
-      pollTaskStatus(taskId);
-      interval = setInterval(() => {
-        pollTaskStatus(taskId);
-      }, POLLING_INTERVAL);
-    }, INITIAL_POLL_DELAY);
-
-    return () => {
-      clearTimeout(initialTimeout);
-      if (interval) {
-        clearInterval(interval);
+    if (currentTask) {
+      setTaskId(currentTask.id);
+      if (currentTask.status === "completed") {
+        setStatus("completed");
+        setResultUrl(currentTask.resultUrl);
+        setErrorMessage("");
+      } else if (currentTask.status === "failed") {
+        setStatus("failed");
+        setErrorMessage(currentTask.errorMessage);
+      } else {
+        setStatus("processing");
+        setErrorMessage("");
       }
-    };
-  }, [isPolling, taskId]);
+    }
+  }, [currentTask]);
 
   const handleFileChange = (fieldName) => (event) => {
     const file = event.target.files?.[0] || null;
@@ -189,7 +150,6 @@ function TryOnPage() {
 
     try {
       setIsSubmitting(true);
-      setIsPolling(false);
       setStatus("pending");
       setResultUrl("");
       setTaskId("");
@@ -198,7 +158,7 @@ function TryOnPage() {
       const response = await createTryOnTask(formData);
       setTaskId(response.taskId);
       setStatus("processing");
-      setIsPolling(true);
+      startGlobalTask(response.taskId, null, tryOnType);
     } catch (error) {
       setStatus("failed");
       setErrorMessage(
@@ -390,7 +350,7 @@ function TryOnPage() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isSubmitting || isPolling}
+                  disabled={isSubmitting || status === "processing"}
                   className="flex w-full items-center justify-center gap-2 rounded-full bg-mintDeep py-4 text-sm font-semibold uppercase tracking-wider text-white transition hover:bg-mint hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span>Generate Try-On</span>
@@ -418,7 +378,7 @@ function TryOnPage() {
               <div className="absolute inset-0 bg-gradient-to-tr from-white to-tertiarySoft/10 opacity-50" />
               <div
                 className={`absolute inset-0 rounded-[2rem] border ${
-                  isPolling ? "border-tertiarySoft pulse-border" : "border-transparent"
+                  status === "processing" ? "border-tertiarySoft pulse-border" : "border-transparent"
                 }`}
               />
 
@@ -431,7 +391,7 @@ function TryOnPage() {
                   />
                 ) : (
                   <>
-                    <div className={`mb-6 text-5xl text-mintDeep ${isPolling ? "spin-slow" : ""}`}>
+                    <div className={`mb-6 text-5xl text-mintDeep ${status === "processing" ? "spin-slow" : ""}`}>
                       ✦
                     </div>
                     <h3 className="text-2xl font-semibold text-ink">
@@ -441,14 +401,14 @@ function TryOnPage() {
                     </h3>
                     <p className="mt-2 text-base text-muted">
                       {errorMessage ||
-                        (isPolling
+                        (status === "processing"
                           ? "AI is creating your virtual try-on result. The first status check starts after about 15 seconds."
                           : "Upload your images and start a new try-on render.")}
                     </p>
                     <div className="mt-8 h-1 w-48 overflow-hidden rounded-full bg-panel">
                       <div
                         className={`h-full rounded-full bg-mintDeep ${
-                          isPolling ? "w-1/2 animate-pulse" : "w-1/4"
+                          status === "processing" ? "w-1/2 animate-pulse" : "w-1/4"
                         }`}
                       />
                     </div>
@@ -466,7 +426,7 @@ function TryOnPage() {
                     setTaskId("");
                     setResultUrl("");
                     setErrorMessage("");
-                    setIsPolling(false);
+                    clearTask();
                   }}
                   className="glass-panel flex-1 py-3 text-sm font-semibold text-ink"
                 >
@@ -487,7 +447,7 @@ function TryOnPage() {
                 </a>
               </div>
 
-              {isPolling ? (
+              {status === "processing" ? (
                 <p className="relative z-10 mt-4 text-center text-xs text-muted">
                   MIROIR waits briefly after task creation, then checks status every few seconds.
                 </p>

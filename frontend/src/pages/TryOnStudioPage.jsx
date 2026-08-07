@@ -4,9 +4,11 @@ import { createCatalogTryOnTask, createCustomTryOnTask, createTryOnTask, getTryO
 import { getUserMe, getUserToken, setUserToken } from "../api/userApi.js";
 import { AppShell, Button, EmptyState, PageHeader, ProductCard, ProductPurchaseActions, SegmentedTabs, SelectField, TextField, TopNav, formatMoney } from "../components/ui/index.jsx";
 import { useLanguage } from "../i18n.jsx";
+import { useTryOn } from "../contexts/TryOnContext.jsx";
 
 function TryOnStudioPage() {
   const { t } = useLanguage();
+  const { currentTask, startTask: startGlobalTask } = useTryOn();
   const params = new URLSearchParams(window.location.search);
   const initialProductId = params.get("productId") || "";
   const [user, setUser] = useState(null);
@@ -44,6 +46,23 @@ function TryOnStudioPage() {
     if (!initialProductId) return;
     loadProduct(initialProductId);
   }, [initialProductId]);
+
+  useEffect(() => {
+    if (currentTask) {
+      if (currentTask.status === "completed") {
+        setStatus("completed");
+        setResultUrl(currentTask.resultUrl);
+        setCompletedTryOnProductId(currentTask.product?.id || "");
+        setMessage("");
+      } else if (currentTask.status === "failed") {
+        setStatus("error");
+        setMessage(currentTask.errorMessage);
+      } else {
+        setStatus("processing");
+        setMessage("MIROIR is creating your virtual try-on in the background...");
+      }
+    }
+  }, [currentTask]);
 
   const loadProduct = async (productId) => {
     setMessage("");
@@ -96,34 +115,7 @@ function TryOnStudioPage() {
     if (file) setModelPreview(URL.createObjectURL(file));
   };
 
-  const poll = async (taskId, feedbackProductId = "") => {
-    setStatus("processing");
-    setMessage("Task created. Waiting for the first result check...");
-    for (let attempt = 0; attempt < 72; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, attempt === 0 ? 15000 : 5000));
-      const response = await getTryOnTaskStatus(taskId);
-      if (response.status === "completed" && response.resultUrl) {
-        setResultUrl(response.resultUrl);
-        setCompletedTryOnProductId(feedbackProductId);
-        setStatus("completed");
-        setMessage("");
-        return;
-      }
-      if (response.status === "completed" && !response.resultUrl) {
-        setStatus("error");
-        setMessage("Task completed, but the result image was not returned.");
-        return;
-      }
-      if (response.status === "failed" || response.success === false) {
-        setStatus("error");
-        setMessage(response.errorMessage || "Try-on failed.");
-        return;
-      }
-      setMessage("Still processing. MIROIR is checking the result...");
-    }
-    setStatus("processing");
-    setMessage("Still processing after several minutes. Please keep this page open and try again shortly.");
-  };
+  // Background polling is handled by TryOnContext
 
   const startTryOn = async () => {
     const isLoggedIn = Boolean(getUserToken());
@@ -158,7 +150,8 @@ function TryOnStudioPage() {
         if (lowerFile) formData.append("lowerImage", lowerFile);
         response = await createTryOnTask(formData);
       }
-      await poll(response.taskId, isPlatform ? product.id : "");
+      
+      startGlobalTask(response.taskId, isPlatform ? product : null, customTryOnType);
     } catch (error) {
       setStatus("error");
       setMessage(error.response?.data?.message || "Could not start try-on.");
