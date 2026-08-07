@@ -364,6 +364,7 @@ export const updateShopOrderStatus = async ({ ownerId, orderId, status, reason }
     patch.confirmedAt = now;
     if (order.paymentMethod === "bank_transfer" && order.paymentStatus === "awaiting_transfer") patch.paymentDueAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   }
+  if (status === "delivered") patch.deliveredAt = now;
   if (status === "cancelled") {
     order = await restoreInventory({ db, session, order });
     patch.paymentStatus = paymentAfterCancellation(order);

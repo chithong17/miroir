@@ -40,6 +40,17 @@ export const createRefundDispute = async (orderId, message, images = []) => {
   const form = new FormData(); form.append("message", message); images.slice(0, 3).forEach((image) => form.append("images", image));
   return (await client.post(`/orders/me/${encodeURIComponent(orderId)}/disputes`, form, { headers: { "Content-Type": "multipart/form-data" } })).data;
 };
+export const createReturnRequest = async (orderId, payload, images = []) => {
+  const form = new FormData();
+  form.append("items", JSON.stringify(payload.items)); form.append("reason", payload.reason);
+  form.append("bankName", payload.bankName); form.append("accountNumber", payload.accountNumber); form.append("accountHolder", payload.accountHolder);
+  images.slice(0, 3).forEach((image) => form.append("images", image));
+  return (await client.post(`/orders/returns/me/${encodeURIComponent(orderId)}`, form, { headers: { "Content-Type": "multipart/form-data" } })).data;
+};
+export const listMyReturns = async () => (await client.get("/orders/returns/me")).data;
+export const getMyReturn = async (id) => (await client.get(`/orders/returns/me/${encodeURIComponent(id)}`)).data;
+export const submitReturnShipment = async (id, trackingCode, images = []) => { const form = new FormData(); form.append("trackingCode", trackingCode); images.slice(0, 3).forEach((image) => form.append("images", image)); return (await client.post(`/orders/returns/${encodeURIComponent(id)}/shipment`, form, { headers: { "Content-Type": "multipart/form-data" } })).data; };
+export const escalateReturn = async (id, message) => (await client.post(`/orders/returns/${encodeURIComponent(id)}/disputes`, { message })).data;
 export const listMyDisputes = async () => (await client.get("/orders/disputes/me")).data;
 export const replyMyDispute = async (id, message, images = []) => {
   const form = new FormData(); form.append("message", message); images.slice(0, 3).forEach((image) => form.append("images", image));
@@ -70,3 +81,7 @@ export const replyOwnerDispute = async (id, message, images = []) => {
   const form = new FormData(); form.append("message", message); images.slice(0, 3).forEach((image) => form.append("images", image));
   return (await shopClient.post(`/shop-orders/disputes/${encodeURIComponent(id)}/messages`, form, { headers: { "Content-Type": "multipart/form-data" } })).data;
 };
+export const listShopReturns = async (params) => (await shopClient.get("/shop-orders/returns", { params })).data;
+export const decideShopReturn = async (id, approved, reason, instructions = "") => (await shopClient.patch(`/shop-orders/returns/${encodeURIComponent(id)}/decision`, { approved, reason, instructions })).data;
+export const receiveShopReturn = async (id) => (await shopClient.patch(`/shop-orders/returns/${encodeURIComponent(id)}/received`)).data;
+export const refundShopReturn = async (id, note, image) => { const form = new FormData(); if (note) form.append("note", note); if (image) form.append("images", image); return (await shopClient.patch(`/shop-orders/returns/${encodeURIComponent(id)}/refund`, form, { headers: { "Content-Type": "multipart/form-data" } })).data; };
