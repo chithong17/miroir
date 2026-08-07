@@ -135,10 +135,11 @@ export function TopNav({ user, onLogout, compact = false }) {
           className="flex items-center gap-2 font-display text-xl font-extrabold tracking-normal text-ink sm:text-2xl"
         >
           <img
-            src="/app-logo.jpg"
+            src="/logo-web.png"
             alt="Miroir Logo"
             className="h-16 w-24 rounded-lg object-cover"
           />
+          MIROIR
         </a>
         <div className="hidden items-center gap-2 rounded-full border border-line/70 bg-panel/80 p-1.5 text-sm font-semibold md:flex">
           {navItems.map((item) => (
