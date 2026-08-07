@@ -91,13 +91,7 @@ function LandingPage() {
               ))}
             </div>
             
-            <div className="glass-panel flex items-center justify-between p-5 text-center sm:p-6">
-              <div className="text-left">
-                <p className="text-sm font-bold text-muted">{t("landing.freeTryOns")}</p>
-                <p className="text-xs text-muted/60 mt-1">{t("landing.availableThisMonth")}</p>
-              </div>
-              <p className="font-display text-4xl font-black text-rose sm:text-5xl">5</p>
-            </div>
+
           </aside>
         </section>
 

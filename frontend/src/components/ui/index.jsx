@@ -90,7 +90,8 @@ export function TopNav({ user, onLogout, compact = false }) {
   return (
     <nav className="sticky top-3 z-40 mx-auto max-w-[1440px] px-3 sm:px-4 md:px-8 xl:px-20">
       <div className="flex items-center justify-between gap-3 rounded-[26px] border border-white/80 bg-white/80 px-4 py-3 backdrop-blur-xl shadow-glass sm:rounded-[34px] sm:px-5 sm:py-3.5">
-        <a href={user ? "/app" : "/"} className="font-display text-xl font-extrabold tracking-normal text-ink sm:text-2xl">
+        <a href={user ? "/app" : "/"} className="flex items-center gap-2 font-display text-xl font-extrabold tracking-normal text-ink sm:text-2xl">
+          <img src="/app-logo.jpg" alt="Miroir Logo" className="h-8 w-8 rounded-[8px] object-cover" />
           MIROIR
         </a>
         <div className="hidden items-center gap-2 rounded-full border border-line/70 bg-panel/80 p-1.5 text-sm font-semibold md:flex">

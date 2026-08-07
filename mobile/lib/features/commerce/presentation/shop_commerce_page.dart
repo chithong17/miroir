@@ -252,28 +252,89 @@ class _ShopCommercePageState extends State<ShopCommercePage>
                                 final recipient = order['recipient'] as Map?;
                                 final name = recipient?['name'] ?? 'Customer';
                                 final status = (order['orderStatus'] ?? '').toString().replaceAll('_', ' ');
-                                return Card(
-                                  child: ListTile(
-                                    onTap: () => showModalBottomSheet<void>(
-                                      context: context,
-                                      showDragHandle: true,
-                                      builder: (sheetContext) => Padding(
-                                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                                        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                          Text('Order ${order['orderCode'] ?? ''}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-                                          const SizedBox(height: 8),
-                                          Text('$name · $status'),
-                                          const SizedBox(height: 20),
-                                          SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: () { Navigator.of(sheetContext).pop(); openShopOrderChat(context, '${order['id'] ?? ''}'); }, icon: const Icon(Icons.chat_bubble_outline_rounded), label: const Text('Message customer'))),
-                                        ]),
+                                  final isPaid = '${order['paymentStatus']}'.toLowerCase() == 'paid';
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(color: AppColors.line),
+                                      boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 10, offset: Offset(0, 4))],
+                                    ),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(24),
+                                      onTap: () => showModalBottomSheet<void>(
+                                        context: context,
+                                        showDragHandle: true,
+                                        builder: (sheetContext) => Padding(
+                                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                                          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                            Text('Order ${order['orderCode'] ?? ''}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                                            const SizedBox(height: 8),
+                                            Text('$name · $status'),
+                                            const SizedBox(height: 20),
+                                            SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: () { Navigator.of(sheetContext).pop(); openShopOrderChat(context, '${order['id'] ?? ''}'); }, icon: const Icon(Icons.chat_bubble_outline_rounded), label: const Text('Message customer'))),
+                                          ]),
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(20),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  child: Text('${order['orderCode'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(_formatMoney(order['total']), style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.accentStrong, fontSize: 15)),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.person_outline_rounded, size: 16, color: AppColors.muted),
+                                                const SizedBox(width: 6),
+                                                Text(name, style: const TextStyle(color: AppColors.muted, fontWeight: FontWeight.w500)),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Row(
+                                              children: [
+                                                _StatusPill(status: status),
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    color: isPaid ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                                                    borderRadius: BorderRadius.circular(999),
+                                                    border: Border.all(color: isPaid ? Colors.green.withValues(alpha: 0.2) : Colors.orange.withValues(alpha: 0.2)),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(isPaid ? Icons.check_circle_outline_rounded : Icons.pending_actions_rounded, size: 14, color: isPaid ? Colors.green : Colors.orange),
+                                                      const SizedBox(width: 6),
+                                                      Text(
+                                                        isPaid ? 'Paid' : 'COD Pending',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.w800,
+                                                          color: isPaid ? Colors.green : Colors.orange,
+                                                          letterSpacing: 0.2,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                    title: Text('${order['orderCode'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                                    subtitle: Text('$name - $status\n${order['paymentStatus'] ?? ''}'),
-                                    isThreeLine: true,
-                                    trailing: Text('${order['total'] ?? 0} VND', style: const TextStyle(fontWeight: FontWeight.w700)),
-                                  ),
-                                );
+                                  );
                               },
                             ),
                           ),
@@ -288,39 +349,63 @@ class _ShopCommercePageState extends State<ShopCommercePage>
                               itemBuilder: (_, index) {
                                 final ret = _returns[index];
                                 final status = (ret['status'] ?? '').toString().replaceAll('_', ' ');
-                                return Card(
-                                  child: ListTile(
-                                    onTap: () => showModalBottomSheet<void>(
-                                      context: context,
-                                      showDragHandle: true,
-                                      builder: (sheetContext) => Padding(
-                                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                                        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                          Text('Return for ${ret['orderCode'] ?? ''}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-                                          const SizedBox(height: 8),
-                                          Text('Status: $status'),
-                                          const SizedBox(height: 8),
-                                          Text('Reason: ${ret['reason'] ?? ''}'),
-                                          const SizedBox(height: 20),
-                                          if (ret['status'] == 'requested') ...[
-                                            Row(children: [
-                                              Expanded(child: FilledButton.tonal(onPressed: () { Navigator.of(sheetContext).pop(); _showDecideDialog('${ret['id']}', false); }, child: const Text('Reject'))),
-                                              const SizedBox(width: 12),
-                                              Expanded(child: FilledButton(onPressed: () { Navigator.of(sheetContext).pop(); _showDecideDialog('${ret['id']}', true); }, child: const Text('Approve'))),
-                                            ])
-                                          ] else if (ret['status'] == 'return_shipped') ...[
-                                            SizedBox(width: double.infinity, child: FilledButton(onPressed: () { Navigator.of(sheetContext).pop(); _receiveReturn('${ret['id']}'); }, child: const Text('Mark Received'))),
-                                          ] else if (ret['status'] == 'received') ...[
-                                            SizedBox(width: double.infinity, child: FilledButton(onPressed: () { Navigator.of(sheetContext).pop(); _showRefundDialog('${ret['id']}'); }, child: const Text('Process Refund'))),
-                                          ]
-                                        ]),
+                                return Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(color: AppColors.line),
+                                      boxShadow: const [BoxShadow(color: Color(0x05000000), blurRadius: 10, offset: Offset(0, 4))],
+                                    ),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(24),
+                                      onTap: () => showModalBottomSheet<void>(
+                                        context: context,
+                                        showDragHandle: true,
+                                        builder: (sheetContext) => Padding(
+                                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+                                          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                            Text('Return for ${ret['orderCode'] ?? ''}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                                            const SizedBox(height: 8),
+                                            Text('Status: $status'),
+                                            const SizedBox(height: 8),
+                                            Text('Reason: ${ret['reason'] ?? ''}'),
+                                            const SizedBox(height: 20),
+                                            if (ret['status'] == 'requested') ...[
+                                              Row(children: [
+                                                Expanded(child: FilledButton.tonal(onPressed: () { Navigator.of(sheetContext).pop(); _showDecideDialog('${ret['id']}', false); }, child: const Text('Reject'))),
+                                                const SizedBox(width: 12),
+                                                Expanded(child: FilledButton(onPressed: () { Navigator.of(sheetContext).pop(); _showDecideDialog('${ret['id']}', true); }, child: const Text('Approve'))),
+                                              ])
+                                            ] else if (ret['status'] == 'return_shipped') ...[
+                                              SizedBox(width: double.infinity, child: FilledButton(onPressed: () { Navigator.of(sheetContext).pop(); _receiveReturn('${ret['id']}'); }, child: const Text('Mark Received'))),
+                                            ] else if (ret['status'] == 'received') ...[
+                                              SizedBox(width: double.infinity, child: FilledButton(onPressed: () { Navigator.of(sheetContext).pop(); _showRefundDialog('${ret['id']}'); }, child: const Text('Process Refund'))),
+                                            ]
+                                          ]),
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(20),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  child: Text('Return ${ret['orderCode'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(_formatMoney(ret['refundAmount']), style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.accentStrong, fontSize: 15)),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 12),
+                                            _StatusPill(status: status),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                    title: Text('Return ${ret['orderCode'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                                    subtitle: Text('Status: $status\nAmount: ${ret['refundAmount'] ?? 0} VND'),
-                                    isThreeLine: true,
-                                  ),
-                                );
+                                  );
                               },
                             ),
                           ),
@@ -371,6 +456,93 @@ class _ShopCommercePageState extends State<ShopCommercePage>
                           ),
                   ],
                 ),
+    );
+  }
+}
+
+String _formatMoney(dynamic value) {
+  final num val = value is num ? value : num.tryParse(value?.toString() ?? '0') ?? 0;
+  final rounded = val.round().toString();
+  final buffer = StringBuffer();
+  for (var i = 0; i < rounded.length; i++) {
+    final reverseIndex = rounded.length - i;
+    buffer.write(rounded[i]);
+    if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+      buffer.write('.');
+    }
+  }
+  return '${buffer.toString()} VND';
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    String label = status;
+    IconData icon = Icons.info_outline_rounded;
+    Color color = AppColors.muted;
+
+    switch (status.toLowerCase()) {
+      case 'pending confirmation':
+      case 'pending_confirmation':
+      case 'requested':
+        label = status == 'requested' ? 'Requested' : 'Pending';
+        icon = Icons.hourglass_empty_rounded;
+        color = AppColors.accentStrong;
+        break;
+      case 'preparing':
+      case 'approved':
+        label = status == 'approved' ? 'Approved' : 'Preparing';
+        icon = Icons.inventory_2_outlined;
+        color = Colors.orange;
+        break;
+      case 'shipping':
+      case 'return_shipped':
+        label = 'Shipping';
+        icon = Icons.local_shipping_outlined;
+        color = Colors.blue;
+        break;
+      case 'delivered':
+      case 'received':
+      case 'refunded':
+        label = status == 'refunded' ? 'Refunded' : (status == 'received' ? 'Received' : 'Delivered');
+        icon = Icons.check_circle_outline_rounded;
+        color = Colors.green;
+        break;
+      case 'cancelled':
+      case 'rejected':
+        label = status == 'rejected' ? 'Rejected' : 'Cancelled';
+        icon = Icons.cancel_outlined;
+        color = Colors.red;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: color,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

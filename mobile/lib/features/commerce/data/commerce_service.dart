@@ -27,6 +27,16 @@ class CommerceService {
   Future<(List<CommerceNotification>, int)> notifications(String token) async { final json = await _get('/notifications', token); final list = ((json['notifications'] as List?) ?? const []).whereType<Map>().map((e) => CommerceNotification.fromJson(e.cast<String, dynamic>())).toList(); return (list, (json['unreadCount'] as num?)?.toInt() ?? 0); }
   Future<void> readNotification(String token, String id) async { await _patch('/notifications/$id/read', token, const {}); }
   
+  Future<List<Map<String, dynamic>>> getProvinces(String token) async {
+    final json = await _get('/locations/provinces', token);
+    return (json['provinces'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? const [];
+  }
+
+  Future<List<Map<String, dynamic>>> getWards(String token, String provinceCode) async {
+    final json = await _get('/locations/provinces/$provinceCode/wards', token);
+    return (json['wards'] as List?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? const [];
+  }
+  
   // Return methods
   Future<List<CommerceReturn>> listMyReturns(String token) async {
     final json = await _get('/orders/returns/me', token);

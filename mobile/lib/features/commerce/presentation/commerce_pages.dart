@@ -458,6 +458,118 @@ class AddressesPage extends StatefulWidget {
   State<AddressesPage> createState() => _AddressesPageState();
 }
 
+class _AddAddressDialog extends StatefulWidget {
+  const _AddAddressDialog();
+
+  @override
+  State<_AddAddressDialog> createState() => _AddAddressDialogState();
+}
+
+class _AddAddressDialogState extends State<_AddAddressDialog> {
+  final _service = CommerceService();
+  final _labelCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _streetCtrl = TextEditingController();
+  
+  List<Map<String, dynamic>> _provinces = [];
+  List<Map<String, dynamic>> _wards = [];
+  String? _selectedProvince;
+  String? _selectedWard;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadProvinces());
+  }
+
+  Future<void> _loadProvinces() async {
+    try {
+      final token = AppSessionScope.of(context).authToken;
+      _provinces = await _service.getProvinces(token);
+    } catch (_) {}
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _onProvinceChanged(String? code) async {
+    setState(() {
+      _selectedProvince = code;
+      _selectedWard = null;
+      _wards = [];
+    });
+    if (code == null) return;
+    try {
+      final token = AppSessionScope.of(context).authToken;
+      final wards = await _service.getWards(token, code);
+      if (mounted) setState(() => _wards = wards);
+    } catch (_) {}
+  }
+
+  void _submit() {
+    if (_selectedProvince == null || _selectedWard == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select Province and Ward')));
+      return;
+    }
+    Navigator.of(context).pop({
+      'label': _labelCtrl.text,
+      'recipientName': _nameCtrl.text,
+      'phone': _phoneCtrl.text,
+      'provinceCode': _selectedProvince,
+      'wardCode': _selectedWard,
+      'addressLine': _streetCtrl.text,
+    });
+  }
+
+  @override
+  void dispose() {
+    _labelCtrl.dispose();
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _streetCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add a new address'),
+      content: _loading ? const SizedBox(height: 100, child: Center(child: CircularProgressIndicator())) : SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: _labelCtrl, decoration: const InputDecoration(labelText: 'Address label (e.g. Home)')),
+            const SizedBox(height: 12),
+            TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Recipient name')),
+            const SizedBox(height: 12),
+            TextField(controller: _phoneCtrl, decoration: const InputDecoration(labelText: 'Phone number')),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: 'Province'),
+              value: _selectedProvince,
+              items: _provinces.map((p) => DropdownMenuItem(value: p['code'] as String, child: Text(p['name'] as String))).toList(),
+              onChanged: _onProvinceChanged,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(labelText: 'Ward'),
+              value: _selectedWard,
+              items: _wards.map((w) => DropdownMenuItem(value: w['code'] as String, child: Text(w['name'] as String))).toList(),
+              onChanged: (code) => setState(() => _selectedWard = code),
+            ),
+            const SizedBox(height: 12),
+            TextField(controller: _streetCtrl, decoration: const InputDecoration(labelText: 'Street address')),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        FilledButton(onPressed: _submit, child: const Text('Save address')),
+      ],
+    );
+  }
+}
+
 class _AddressesPageState extends State<AddressesPage> {
   final _service = CommerceService();
   List<UserAddress> _addresses = [];
@@ -477,56 +589,13 @@ class _AddressesPageState extends State<AddressesPage> {
   }
 
   Future<void> _add() async {
-    final controllers = List.generate(6, (_) => TextEditingController());
-    const labels = [
-      'Address label',
-      'Recipient name',
-      'Phone number',
-      'Province code',
-      'Ward code',
-      'Street address',
-    ];
-    final save = await showDialog<bool>(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add a new address'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(
-              labels.length,
-              (index) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: TextField(
-                  controller: controllers[index],
-                  decoration: InputDecoration(labelText: labels[index]),
-                ),
-              ),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save address'),
-          ),
-        ],
-      ),
+      builder: (context) => const _AddAddressDialog(),
     );
-    if (save == true) {
+    if (result != null) {
       try {
-        await _service.createAddress(AppSessionScope.of(context).authToken, {
-          'label': controllers[0].text,
-          'recipientName': controllers[1].text,
-          'phone': controllers[2].text,
-          'provinceCode': controllers[3].text,
-          'wardCode': controllers[4].text,
-          'addressLine': controllers[5].text,
-        });
+        await _service.createAddress(AppSessionScope.of(context).authToken, result);
         await _load();
       } on ApiError catch (error) {
         if (mounted) {
@@ -535,9 +604,6 @@ class _AddressesPageState extends State<AddressesPage> {
           );
         }
       }
-    }
-    for (final controller in controllers) {
-      controller.dispose();
     }
   }
 

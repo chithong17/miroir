@@ -106,6 +106,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
     _controller.closeProduct();
+    _refreshQuickCounts();
   }
 
   void _openTryOn(CatalogProduct product) {
