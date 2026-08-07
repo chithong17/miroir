@@ -251,4 +251,83 @@ class OwnerShopService {
       throw ApiError.from(error);
     }
   }
+
+  Future<List<ShopReturn>> listShopReturns(String token, {int? page}) async {
+    try {
+      final response = await _client.instance.get<Map<String, dynamic>>(
+        '/shop-orders/returns',
+        queryParameters: page != null ? {'page': page} : null,
+        options: _client.authorizedOptions(token),
+      );
+      return (response.data?['returns'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(ShopReturn.fromJson)
+          .toList();
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
+
+  Future<void> decideShopReturn(
+    String token,
+    String returnId,
+    bool approved,
+    String reason,
+    String instructions,
+  ) async {
+    try {
+      await _client.instance.patch<Map<String, dynamic>>(
+        '/shop-orders/returns/$returnId/decision',
+        data: {
+          'approved': approved,
+          'reason': reason,
+          'instructions': instructions,
+        },
+        options: _client.authorizedOptions(token),
+      );
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
+
+  Future<void> receiveShopReturn(String token, String returnId) async {
+    try {
+      await _client.instance.patch<Map<String, dynamic>>(
+        '/shop-orders/returns/$returnId/received',
+        options: _client.authorizedOptions(token),
+      );
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
+
+  Future<void> refundShopReturn(
+    String token,
+    String returnId,
+    String note,
+    LocalImageData? image,
+  ) async {
+    try {
+      final formData = FormData.fromMap({
+        if (note.isNotEmpty) 'note': note,
+      });
+      if (image != null) {
+        formData.files.add(MapEntry(
+          'images',
+          MultipartFile.fromBytes(
+            image.bytes,
+            filename: image.name,
+            contentType: MediaType.parse(image.mimeType ?? 'image/jpeg'),
+          ),
+        ));
+      }
+      await _client.instance.patch<Map<String, dynamic>>(
+        '/shop-orders/returns/$returnId/refund',
+        data: formData,
+        options: _client.authorizedOptions(token),
+      );
+    } catch (error) {
+      throw ApiError.from(error);
+    }
+  }
 }

@@ -224,6 +224,7 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                   onNotificationsTap: () async {
+                    setState(() => _notificationCount = 0);
                     await Navigator.of(context).push(
                       MaterialPageRoute(
                           builder: (_) => const NotificationsPage()),

@@ -97,3 +97,34 @@ class CommerceNotification {
   final String createdAt;
   factory CommerceNotification.fromJson(Map<String, dynamic> json) => CommerceNotification(id: '${json['id'] ?? ''}', title: '${json['title'] ?? ''}', message: '${json['message'] ?? ''}', read: json['readAt'] != null, orderId: json['orderId']?.toString(), createdAt: '${json['createdAt'] ?? ''}');
 }
+
+class CommerceReturnItem {
+  const CommerceReturnItem({required this.productId, required this.variantId, required this.quantity, required this.name, required this.imageUrl, required this.unitPrice, required this.lineTotal});
+  final String productId;
+  final String variantId;
+  final int quantity;
+  final String name;
+  final String imageUrl;
+  final double unitPrice;
+  final double lineTotal;
+  factory CommerceReturnItem.fromJson(Map<String, dynamic> json) => CommerceReturnItem(productId: '${json['productId'] ?? ''}', variantId: '${json['variantId'] ?? ''}', quantity: (json['quantity'] as num?)?.toInt() ?? 0, name: '${json['name'] ?? ''}', imageUrl: '${json['imageUrl'] ?? ''}', unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0, lineTotal: (json['lineTotal'] as num?)?.toDouble() ?? 0);
+}
+
+class CommerceReturn {
+  const CommerceReturn({required this.id, required this.orderId, required this.orderCode, required this.shopId, required this.status, required this.refundAmount, required this.reason, required this.items, required this.createdAt, required this.attachments});
+  final String id;
+  final String orderId;
+  final String orderCode;
+  final String shopId;
+  final String status;
+  final double refundAmount;
+  final String reason;
+  final List<CommerceReturnItem> items;
+  final String createdAt;
+  final List<String> attachments;
+  factory CommerceReturn.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['items'] as List? ?? const [];
+    final rawAttachments = json['attachments'] as List? ?? const [];
+    return CommerceReturn(id: '${json['id'] ?? ''}', orderId: '${json['orderId'] ?? ''}', orderCode: '${json['orderCode'] ?? ''}', shopId: '${json['shopId'] ?? ''}', status: '${json['status'] ?? ''}', refundAmount: (json['refundAmount'] as num?)?.toDouble() ?? 0, reason: '${json['reason'] ?? ''}', items: rawItems.whereType<Map>().map((e) => CommerceReturnItem.fromJson(e.cast<String, dynamic>())).toList(), createdAt: '${json['createdAt'] ?? ''}', attachments: rawAttachments.whereType<String>().toList());
+  }
+}

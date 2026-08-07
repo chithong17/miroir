@@ -210,3 +210,23 @@ class ShopProductDraft {
     return payload;
   }
 }
+
+class ShopReturn {
+  const ShopReturn({required this.id, required this.orderId, required this.orderCode, required this.userId, required this.status, required this.refundAmount, required this.reason, required this.items, required this.createdAt, required this.attachments});
+  final String id;
+  final String orderId;
+  final String orderCode;
+  final String userId;
+  final String status;
+  final double refundAmount;
+  final String reason;
+  final List<Map<String, dynamic>> items;
+  final String createdAt;
+  final List<String> attachments;
+  factory ShopReturn.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['items'] as List? ?? const [];
+    final rawAttachments = json['attachments'] as List? ?? const [];
+    return ShopReturn(id: '${json['id'] ?? ''}', orderId: '${json['orderId'] ?? ''}', orderCode: '${json['orderCode'] ?? ''}', userId: '${json['userId'] ?? ''}', status: '${json['status'] ?? ''}', refundAmount: (json['refundAmount'] as num?)?.toDouble() ?? 0, reason: '${json['reason'] ?? ''}', items: rawItems.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList(), createdAt: '${json['createdAt'] ?? ''}', attachments: rawAttachments.whereType<String>().toList());
+  }
+}
+

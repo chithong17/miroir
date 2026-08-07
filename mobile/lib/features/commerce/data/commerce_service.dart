@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../shared/models/local_image_data.dart';
 import 'commerce_models.dart';
 
 class CommerceService {
@@ -22,6 +26,57 @@ class CommerceService {
   Future<void> cancelOrder(String token, String id, String reason) async { await _post('/orders/me/$id/cancel', token, {'reason': reason}); }
   Future<(List<CommerceNotification>, int)> notifications(String token) async { final json = await _get('/notifications', token); final list = ((json['notifications'] as List?) ?? const []).whereType<Map>().map((e) => CommerceNotification.fromJson(e.cast<String, dynamic>())).toList(); return (list, (json['unreadCount'] as num?)?.toInt() ?? 0); }
   Future<void> readNotification(String token, String id) async { await _patch('/notifications/$id/read', token, const {}); }
+  
+  // Return methods
+  Future<List<CommerceReturn>> listMyReturns(String token) async {
+    final json = await _get('/orders/returns/me', token);
+    return ((json['returns'] as List?) ?? const []).whereType<Map>().map((e) => CommerceReturn.fromJson(e.cast<String, dynamic>())).toList();
+  }
+
+  Future<CommerceReturn> getMyReturn(String token, String returnId) async {
+    final json = await _get('/orders/returns/me/$returnId', token);
+    return CommerceReturn.fromJson((json['return'] as Map<String, dynamic>?) ?? const {});
+  }
+
+  Future<CommerceReturn> createReturnRequest(String token, String orderId, Map<String, dynamic> payload, List<LocalImageData> images) async {
+    try {
+      final formMap = <String, dynamic>{
+        'items': jsonEncode(payload['items']),
+        'reason': payload['reason'],
+        'bankName': payload['bankName'],
+        'accountNumber': payload['accountNumber'],
+        'accountHolder': payload['accountHolder'],
+      };
+      final form = FormData.fromMap(formMap);
+      for (final image in images.take(3)) {
+        form.files.add(MapEntry(
+          'images',
+          MultipartFile.fromBytes(image.bytes, filename: image.name, contentType: MediaType.parse(image.mimeType ?? 'image/jpeg')),
+        ));
+      }
+      final response = await _client.instance.post<Map<String, dynamic>>('/orders/returns/me/$orderId', data: form, options: _options(token));
+      return CommerceReturn.fromJson((response.data?['return'] as Map<String, dynamic>?) ?? const {});
+    } catch (error) { throw ApiError.from(error); }
+  }
+
+  Future<CommerceReturn> submitReturnShipment(String token, String returnId, String trackingCode, List<LocalImageData> images) async {
+    try {
+      final form = FormData.fromMap({'trackingCode': trackingCode});
+      for (final image in images.take(3)) {
+        form.files.add(MapEntry(
+          'images',
+          MultipartFile.fromBytes(image.bytes, filename: image.name, contentType: MediaType.parse(image.mimeType ?? 'image/jpeg')),
+        ));
+      }
+      final response = await _client.instance.post<Map<String, dynamic>>('/orders/returns/$returnId/shipment', data: form, options: _options(token));
+      return CommerceReturn.fromJson((response.data?['return'] as Map<String, dynamic>?) ?? const {});
+    } catch (error) { throw ApiError.from(error); }
+  }
+
+  Future<void> escalateReturn(String token, String returnId, String message) async {
+    await _post('/orders/returns/$returnId/disputes', token, {'message': message});
+  }
+
   Future<CommerceCart> _requestCart(Future<dynamic> Function() request) async { try { final response = await request(); return CommerceCart.fromJson(((response.data as Map?)?['cart'] as Map?)?.cast<String, dynamic>() ?? const {}); } catch (error) { throw ApiError.from(error); } }
   Future<Map<String, dynamic>> _get(String path, String token) async { try { return (await _client.instance.get<Map<String, dynamic>>(path, options: _options(token))).data ?? const {}; } catch (error) { throw ApiError.from(error); } }
   Future<Map<String, dynamic>> _post(String path, String token, Map<String, dynamic> data) async { try { return (await _client.instance.post<Map<String, dynamic>>(path, data: data, options: _options(token))).data ?? const {}; } catch (error) { throw ApiError.from(error); } }

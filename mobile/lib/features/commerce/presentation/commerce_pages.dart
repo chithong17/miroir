@@ -9,6 +9,8 @@ import '../../../shared/widgets/miroir_button.dart';
 import '../../marketplace/data/catalog_models.dart';
 import '../data/commerce_models.dart';
 import '../data/commerce_service.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../shared/models/local_image_data.dart';
 
 String formatVnd(double value) {
   final digits = value.round().toString();
@@ -706,8 +708,9 @@ class OrdersPage extends StatefulWidget {
   State<OrdersPage> createState() => _OrdersPageState();
 }
 
-class _OrdersPageState extends State<OrdersPage> {
+class _OrdersPageState extends State<OrdersPage> with SingleTickerProviderStateMixin {
   final _service = CommerceService();
+  late final TabController _tabs = TabController(length: 2, vsync: this);
   List<CommerceOrder> _orders = [];
   bool _loading = true;
 
@@ -725,47 +728,188 @@ class _OrdersPageState extends State<OrdersPage> {
   }
 
   @override
+  void dispose() {
+    _tabs.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My orders')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: _orders.isEmpty
-                  ? ListView(
-                      padding: const EdgeInsets.all(24),
-                      children: const [
-                        SizedBox(height: 96),
-                        Icon(Icons.receipt_long_outlined, size: 48),
-                        SizedBox(height: 16),
-                        Center(
-                          child: Text(
-                            'No orders yet',
-                            style: TextStyle(fontWeight: FontWeight.w800),
-                          ),
+      appBar: AppBar(
+        title: const Text('My orders'),
+        bottom: TabBar(
+          controller: _tabs,
+          tabs: const [
+            Tab(text: 'Orders'),
+            Tab(text: 'Returns'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabs,
+        children: [
+          _loading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: _orders.isEmpty
+                      ? ListView(
+                          padding: const EdgeInsets.all(24),
+                          children: const [
+                            SizedBox(height: 96),
+                            Icon(Icons.receipt_long_outlined, size: 48),
+                            SizedBox(height: 16),
+                            Center(
+                              child: Text(
+                                'No orders yet',
+                                style: TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Center(
+                              child: Text(
+                                'Your completed checkout will appear here.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: AppColors.muted),
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                          children: [
+                            const _CommerceSectionHeader(
+                              title: 'Order activity',
+                              subtitle: 'Track each shop order in one place.',
+                            ),
+                            const SizedBox(height: 20),
+                            ..._orders.map((order) => _OrderCard(order: order)),
+                          ],
                         ),
-                        SizedBox(height: 8),
-                        Center(
-                          child: Text(
-                            'Your completed checkout will appear here.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.muted),
-                          ),
+                ),
+          const _CustomerReturnsTabView(),
+        ],
+      ),
+    );
+  }
+}
+
+class _CustomerReturnsTabView extends StatefulWidget {
+  const _CustomerReturnsTabView();
+  @override
+  State<_CustomerReturnsTabView> createState() => _CustomerReturnsTabViewState();
+}
+
+class _CustomerReturnsTabViewState extends State<_CustomerReturnsTabView> {
+  final _service = CommerceService();
+  List<CommerceReturn> _returns = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _load() async {
+    try {
+      _returns = await _service.listMyReturns(AppSessionScope.of(context).authToken);
+    } on ApiError catch (_) {}
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: _returns.isEmpty
+          ? ListView(
+              padding: const EdgeInsets.all(24),
+              children: const [
+                SizedBox(height: 96),
+                Icon(Icons.assignment_return_outlined, size: 48),
+                SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    'No returns requested',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            )
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+              children: [
+                const _CommerceSectionHeader(
+                  title: 'Return requests',
+                  subtitle: 'Manage your returned items and refunds.',
+                ),
+                const SizedBox(height: 20),
+                ..._returns.map(
+                  (ret) {
+                    final status = _returnStatus(ret.status);
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => _CustomerReturnDetailPage(returnId: ret.id)),
+                        );
+                        _load();
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppColors.line),
+                          boxShadow: const [BoxShadow(color: AppColors.glassShadow, blurRadius: 16, offset: Offset(0, 8))],
                         ),
-                      ],
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-                      children: [
-                        const _CommerceSectionHeader(
-                          title: 'Order activity',
-                          subtitle: 'Track each shop order in one place.',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'Return Request',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                ),
+                                Text(
+                                  formatVnd(ret.refundAmount),
+                                  style: const TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            _StatusPill(label: status.$1, icon: status.$2, color: status.$3),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                const Icon(Icons.receipt_outlined, size: 18, color: AppColors.muted),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Order ${ret.orderCode}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(color: AppColors.muted),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-                        ..._orders.map((order) => _OrderCard(order: order)),
-                      ],
-                    ),
+                      ),
+                    );
+                  }
+                ),
+              ],
             ),
     );
   }
@@ -823,8 +967,6 @@ class _OrderCard extends StatelessWidget {
             color: status.$3,
           ),
           const SizedBox(height: 16),
-          const Divider(height: 1),
-          const SizedBox(height: 16),
           Row(
             children: [
               const Icon(Icons.receipt_outlined, size: 18, color: AppColors.muted),
@@ -871,7 +1013,7 @@ class _CustomerOrderDetailPage extends StatelessWidget {
             Text('${_orderStatus(order.orderStatus).$1} · ${_paymentStatus(order.paymentStatus)}'),
             const SizedBox(height: 20),
             ...order.items.map((item) => ListTile(contentPadding: EdgeInsets.zero, leading: item.imageUrl.isEmpty ? const Icon(Icons.checkroom) : Image.network(item.imageUrl, width: 56, height: 56, fit: BoxFit.cover), title: Text(item.name), subtitle: Text('x${item.quantity}'), trailing: Text(formatVnd(item.lineTotal)))),
-            const Divider(),
+            const SizedBox(height: 16),
             Text('Total: ${formatVnd(order.total)}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -879,6 +1021,14 @@ class _CustomerOrderDetailPage extends StatelessWidget {
               icon: const Icon(Icons.chat_bubble_outline_rounded),
               label: const Text('Message shop'),
             ),
+            if (order.orderStatus.toLowerCase() == 'delivered' || order.orderStatus.toLowerCase() == 'completed') ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => CreateReturnPage(order: order))),
+                icon: const Icon(Icons.assignment_return_outlined),
+                label: const Text('Request Return'),
+              ),
+            ],
           ],
         ),
       );
@@ -898,6 +1048,28 @@ class _CustomerOrderDetailPage extends StatelessWidget {
       return ('Cancelled', Icons.cancel_outlined, Colors.redAccent);
     default:
       return ('Awaiting confirmation', Icons.schedule_outlined, AppColors.mossDark);
+  }
+}
+
+(String, IconData, Color) _returnStatus(String value) {
+  switch (value.toLowerCase()) {
+    case 'requested':
+      return ('Requested', Icons.pending_actions_outlined, AppColors.mossDark);
+    case 'approved':
+      return ('Approved', Icons.check_circle_outline, AppColors.success);
+    case 'rejected':
+      return ('Rejected', Icons.cancel_outlined, Colors.redAccent);
+    case 'return_shipped':
+      return ('Return Shipped', Icons.local_shipping_outlined, AppColors.mossDark);
+    case 'received':
+      return ('Shop Received', Icons.inbox_outlined, AppColors.mossDark);
+    case 'refunded':
+      return ('Refunded', Icons.monetization_on_outlined, AppColors.success);
+    case 'escalated':
+      return ('Escalated', Icons.gavel_outlined, Colors.orange);
+    default:
+      final formatted = value.isNotEmpty ? value[0].toUpperCase() + value.substring(1).replaceAll('_', ' ') : value;
+      return (formatted, Icons.info_outline, AppColors.ink);
   }
 }
 
@@ -991,10 +1163,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _load() async {
     try {
-      final response = await _service.notifications(
-        AppSessionScope.of(context).authToken,
-      );
+      final token = AppSessionScope.of(context).authToken;
+      final response = await _service.notifications(token);
       _items = response.$1;
+      
+      for (final item in _items) {
+        if (!item.read) {
+          _service.readNotification(token, item.id);
+        }
+      }
     } on ApiError catch (_) {}
     if (mounted) setState(() => _loading = false);
   }
@@ -1008,12 +1185,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
           : _items.isEmpty
               ? const Center(child: Text('You are all caught up.'))
               : ListView.separated(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                   itemCount: _items.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (_, index) {
                     final item = _items[index];
-                    return ListTile(
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: item.read ? AppColors.surface : AppColors.accentSoft.withValues(alpha: .2),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: item.read ? AppColors.line : Colors.transparent),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       leading: CircleAvatar(
                         backgroundColor: item.read
                             ? AppColors.elevated
@@ -1023,26 +1208,303 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           color: item.read ? AppColors.muted : AppColors.ink,
                         ),
                       ),
-                      tileColor: item.read
-                          ? null
-                          : AppColors.accentSoft.withValues(alpha: .3),
                       title: Text(
                         item.title,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
-                      subtitle: Text(item.message),
-                      onTap: () async {
-                        if (!item.read) {
-                          await _service.readNotification(
-                            AppSessionScope.of(context).authToken,
-                            item.id,
-                          );
-                          await _load();
-                        }
-                      },
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(() {
+                          final msg = item.message;
+                          final parts = msg.split(': ');
+                          if (parts.length == 2 && parts[1].isNotEmpty) {
+                            final status = parts[1];
+                            final cap = status[0].toUpperCase() + status.substring(1).replaceAll('_', ' ');
+                            return '${parts[0]}: $cap';
+                          }
+                          return msg;
+                        }()),
+                      ),
+                      onTap: () async {},
+                    ),
                     );
                   },
                 ),
+    );
+  }
+}
+
+class CreateReturnPage extends StatefulWidget {
+  const CreateReturnPage({super.key, required this.order});
+  final CommerceOrder order;
+
+  @override
+  State<CreateReturnPage> createState() => _CreateReturnPageState();
+}
+
+class _CreateReturnPageState extends State<CreateReturnPage> {
+  final _service = CommerceService();
+  final _picker = ImagePicker();
+  final _reasonController = TextEditingController();
+  final _bankNameController = TextEditingController();
+  final _accountNumberController = TextEditingController();
+  final _accountHolderController = TextEditingController();
+  final List<CommerceCartItem> _selectedItems = [];
+  final List<LocalImageData> _images = [];
+  bool _submitting = false;
+
+  Future<void> _pickImage() async {
+    if (_images.length >= 3) return;
+    final file = await _picker.pickImage(source: ImageSource.gallery);
+    if (file != null) {
+      final bytes = await file.readAsBytes();
+      setState(() => _images.add(LocalImageData(name: file.name, bytes: bytes, mimeType: file.mimeType)));
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_selectedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select at least one item to return.')));
+      return;
+    }
+    if (_reasonController.text.isEmpty || _bankNameController.text.isEmpty || _accountNumberController.text.isEmpty || _accountHolderController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill in all fields.')));
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      final payload = {
+        'items': _selectedItems.map((item) => {'productId': item.productId, 'variantId': item.variantId, 'quantity': item.quantity}).toList(),
+        'reason': _reasonController.text,
+        'bankName': _bankNameController.text,
+        'accountNumber': _accountNumberController.text,
+        'accountHolder': _accountHolderController.text,
+      };
+      await _service.createReturnRequest(AppSessionScope.of(context).authToken, widget.order.id, payload, _images);
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Return requested successfully.')));
+      }
+    } on ApiError catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.message)));
+    }
+    if (mounted) setState(() => _submitting = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Request Return')),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const Text('Select items to return:', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          ...widget.order.items.map((item) => CheckboxListTile(
+            value: _selectedItems.any((e) => e.productId == item.productId && e.variantId == item.variantId),
+            onChanged: (selected) {
+              setState(() {
+                if (selected == true) {
+                  _selectedItems.add(item);
+                } else {
+                  _selectedItems.removeWhere((e) => e.productId == item.productId && e.variantId == item.variantId);
+                }
+              });
+            },
+            title: Text(item.name),
+            subtitle: Text('Qty: ${item.quantity}'),
+            secondary: item.imageUrl.isNotEmpty ? Image.network(item.imageUrl, width: 40, height: 40, fit: BoxFit.cover) : const Icon(Icons.image),
+          )),
+          const SizedBox(height: 20),
+          TextField(controller: _reasonController, decoration: const InputDecoration(labelText: 'Reason for return', border: OutlineInputBorder()), maxLines: 3),
+          const SizedBox(height: 20),
+          const Text('Proof of Issue (Max 3)', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            children: [
+              ..._images.map((img) => Stack(
+                children: [
+                  Image.memory(img.bytes, width: 80, height: 80, fit: BoxFit.cover),
+                  Positioned(
+                    right: 0, top: 0,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _images.remove(img)),
+                      child: Container(color: Colors.black54, child: const Icon(Icons.close, color: Colors.white, size: 16)),
+                    ),
+                  ),
+                ],
+              )),
+              if (_images.length < 3)
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: 80, height: 80,
+                    color: AppColors.canvas,
+                    child: const Icon(Icons.add_photo_alternate_outlined, color: AppColors.muted),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text('Refund Bank Account', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          TextField(controller: _bankNameController, decoration: const InputDecoration(labelText: 'Bank Name')),
+          const SizedBox(height: 10),
+          TextField(controller: _accountNumberController, decoration: const InputDecoration(labelText: 'Account Number')),
+          const SizedBox(height: 10),
+          TextField(controller: _accountHolderController, decoration: const InputDecoration(labelText: 'Account Holder Name')),
+          const SizedBox(height: 24),
+          MiroirButton(
+            label: _submitting ? 'Submitting...' : 'Submit Request',
+            onPressed: _submitting ? null : _submit,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CustomerReturnDetailPage extends StatefulWidget {
+  const _CustomerReturnDetailPage({required this.returnId});
+  final String returnId;
+
+  @override
+  State<_CustomerReturnDetailPage> createState() => _CustomerReturnDetailPageState();
+}
+
+class _CustomerReturnDetailPageState extends State<_CustomerReturnDetailPage> {
+  final _service = CommerceService();
+  final _picker = ImagePicker();
+  final _trackingCodeController = TextEditingController();
+  final List<LocalImageData> _shipmentImages = [];
+  CommerceReturn? _returnReq;
+  bool _loading = true;
+  bool _submittingShipment = false;
+  String _error = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _load() async {
+    try {
+      _returnReq = await _service.getMyReturn(AppSessionScope.of(context).authToken, widget.returnId);
+    } on ApiError catch (e) {
+      _error = e.message;
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _pickShipmentImage() async {
+    if (_shipmentImages.length >= 3) return;
+    final file = await _picker.pickImage(source: ImageSource.gallery);
+    if (file != null) {
+      final bytes = await file.readAsBytes();
+      setState(() => _shipmentImages.add(LocalImageData(name: file.name, bytes: bytes, mimeType: file.mimeType)));
+    }
+  }
+
+  Future<void> _submitShipment() async {
+    if (_trackingCodeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a tracking code.')));
+      return;
+    }
+    setState(() => _submittingShipment = true);
+    try {
+      await _service.submitReturnShipment(
+        AppSessionScope.of(context).authToken,
+        widget.returnId,
+        _trackingCodeController.text,
+        _shipmentImages,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shipment info submitted successfully.')));
+      }
+      await _load();
+    } on ApiError catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    }
+    if (mounted) setState(() => _submittingShipment = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_error.isNotEmpty || _returnReq == null) return Scaffold(appBar: AppBar(title: const Text('Return Details')), body: Center(child: Text(_error)));
+    final ret = _returnReq!;
+    final status = _returnStatus(ret.status);
+    return Scaffold(
+      appBar: AppBar(title: Text('Return for ${ret.orderCode}')),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          _StatusPill(label: status.$1, icon: status.$2, color: status.$3),
+          const SizedBox(height: 20),
+          Text('Reason: ${ret.reason}', style: const TextStyle(color: AppColors.muted)),
+          const SizedBox(height: 20),
+          Text('Refund amount: ${formatVnd(ret.refundAmount)}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 32),
+          const Text('Returned Items', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 10),
+          ...ret.items.map((item) => ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: item.imageUrl.isEmpty ? const Icon(Icons.checkroom) : Image.network(item.imageUrl, width: 56, height: 56, fit: BoxFit.cover),
+            title: Text(item.name),
+            subtitle: Text('Qty: ${item.quantity}'),
+            trailing: Text(formatVnd(item.lineTotal)),
+          )),
+          if (ret.status.toLowerCase() == 'approved') ...[
+            const SizedBox(height: 32),
+            const Text('Submit Return Shipment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 8),
+            const Text('Your return request has been approved. Please ship the items back to the shop and provide the tracking code below.', style: TextStyle(color: AppColors.muted)),
+            const SizedBox(height: 16),
+            TextField(controller: _trackingCodeController, decoration: const InputDecoration(labelText: 'Tracking Code', border: OutlineInputBorder())),
+            const SizedBox(height: 16),
+            const Text('Shipping Proof (Max 3)', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 12,
+              children: [
+                ..._shipmentImages.map((img) => Stack(
+                  children: [
+                    Image.memory(img.bytes, width: 80, height: 80, fit: BoxFit.cover),
+                    Positioned(
+                      right: 0, top: 0,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _shipmentImages.remove(img)),
+                        child: Container(color: Colors.black54, child: const Icon(Icons.close, color: Colors.white, size: 16)),
+                      ),
+                    ),
+                  ],
+                )),
+                if (_shipmentImages.length < 3)
+                  GestureDetector(
+                    onTap: _pickShipmentImage,
+                    child: Container(
+                      width: 80, height: 80,
+                      color: AppColors.canvas,
+                      child: const Icon(Icons.add_photo_alternate_outlined, color: AppColors.muted),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            MiroirButton(
+              label: _submittingShipment ? 'Submitting...' : 'Submit Shipment Info',
+              onPressed: _submittingShipment ? null : _submitShipment,
+            ),
+          ] else if (ret.status.toLowerCase() == 'return_shipped') ...[
+            const SizedBox(height: 32),
+            const Text('Return Shipped', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 8),
+            const Text('You have submitted the return shipment info. Awaiting shop confirmation.', style: TextStyle(color: AppColors.muted)),
+          ],
+        ],
+      ),
     );
   }
 }
