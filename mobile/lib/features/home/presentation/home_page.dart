@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/app/app_session_scope.dart';
@@ -8,6 +9,7 @@ import '../../../shared/widgets/miroir_button.dart';
 import '../../marketplace/data/catalog_models.dart';
 import '../../commerce/presentation/commerce_pages.dart';
 import '../../commerce/data/commerce_service.dart';
+import '../../chat/presentation/chat_pages.dart';
 import '../../marketplace/presentation/controllers/marketplace_controller.dart';
 import '../../marketplace/presentation/product_detail_page.dart';
 import '../../marketplace/presentation/widgets/catalog_product_card.dart';
@@ -212,24 +214,23 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-                _HomeUtilityButton(
-                  icon: Icons.notifications_none_rounded,
-                  tooltip: 'Notifications',
-                  count: _notificationCount,
-                  onTap: () async {
+                _HomeActionCluster(
+                  messageCount: customerChatUnread,
+                  notificationCount: _notificationCount,
+                  cartCount: _cartCount,
+                  onMessagesTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ChatInboxPage()),
+                    );
+                  },
+                  onNotificationsTap: () async {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
                           builder: (_) => const NotificationsPage()),
                     );
                     await _refreshQuickCounts();
                   },
-                ),
-                const SizedBox(width: 8),
-                _HomeUtilityButton(
-                  icon: Icons.shopping_bag_outlined,
-                  tooltip: 'Your bag',
-                  count: _cartCount,
-                  onTap: () async {
+                  onCartTap: () async {
                     await Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const CartPage()),
                     );
@@ -810,8 +811,72 @@ String _formatMoney(double value) {
   return '${buffer.toString()} VND';
 }
 
-class _HomeUtilityButton extends StatelessWidget {
-  const _HomeUtilityButton({
+class _HomeActionCluster extends StatelessWidget {
+  const _HomeActionCluster({
+    required this.messageCount,
+    required this.notificationCount,
+    required this.cartCount,
+    required this.onMessagesTap,
+    required this.onNotificationsTap,
+    required this.onCartTap,
+  });
+
+  final ValueListenable<int> messageCount;
+  final int notificationCount;
+  final int cartCount;
+  final VoidCallback onMessagesTap;
+  final VoidCallback onNotificationsTap;
+  final VoidCallback onCartTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.line),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D536B39),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ValueListenableBuilder<int>(
+            valueListenable: messageCount,
+            builder: (_, count, __) => _ClusterActionButton(
+              icon: Icons.chat_bubble_outline_rounded,
+              tooltip: 'Messages',
+              count: count,
+              onTap: onMessagesTap,
+            ),
+          ),
+          _ClusterActionButton(
+            icon: Icons.notifications_none_rounded,
+            tooltip: 'Notifications',
+            count: notificationCount,
+            onTap: onNotificationsTap,
+          ),
+          _ClusterActionButton(
+            icon: Icons.shopping_bag_outlined,
+            tooltip: 'Your bag',
+            count: cartCount,
+            onTap: onCartTap,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClusterActionButton extends StatelessWidget {
+  const _ClusterActionButton({
     required this.icon,
     required this.tooltip,
     required this.onTap,
@@ -829,17 +894,13 @@ class _HomeUtilityButton extends StatelessWidget {
       message: tooltip,
       child: Material(
         color: Colors.transparent,
+        shape: const CircleBorder(),
         child: InkWell(
+          customBorder: const CircleBorder(),
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Ink(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.line),
-            ),
+          child: SizedBox(
+            width: 40,
+            height: 40,
             child: Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
@@ -847,24 +908,27 @@ class _HomeUtilityButton extends StatelessWidget {
                 Icon(icon, color: AppColors.ink, size: 21),
                 if (count > 0)
                   Positioned(
-                    right: -6,
-                    top: -6,
+                    right: 2,
+                    top: 2,
                     child: Container(
-                      constraints:
-                          const BoxConstraints(minWidth: 18, minHeight: 18),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: AppColors.accentStrong,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
                       child: Text(
                         count > 99 ? '99+' : '$count',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 9,
+                          height: 1,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ),

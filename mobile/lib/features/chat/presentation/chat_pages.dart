@@ -25,10 +25,56 @@ class _ChatUnreadMonitorState extends State<ChatUnreadMonitor> {
   final _service = ChatService();
   ChatSocketGateway? _socket;
   StreamSubscription? _subscription;
-  bool _started = false;
-  @override void didChangeDependencies() { super.didChangeDependencies(); if (_started) return; _started = true; final session = AppSessionScope.of(context); final token = widget.actorType == 'shop' ? session.shopOwnerToken : session.authToken; if (token.isEmpty) return; Future<void> refresh() async { try { final result = await _service.conversations(actorType: widget.actorType, token: token); (widget.actorType == 'shop' ? shopChatUnread : customerChatUnread).value = result.totalUnread; } catch (_) {} } _socket = ChatSocketGateway(actorType: widget.actorType, token: token)..connect(); _subscription = _socket!.events.listen((_) => refresh()); refresh(); }
-  @override void dispose() { _subscription?.cancel(); _socket?.dispose(); super.dispose(); }
-  @override Widget build(BuildContext context) => const SizedBox.shrink();
+  String _activeToken = '';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final session = AppSessionScope.of(context);
+    final token = widget.actorType == 'shop'
+        ? session.shopOwnerToken
+        : session.authToken;
+    if (token == _activeToken) return;
+    _activeToken = token;
+    _reconnect();
+  }
+
+  Future<void> _refresh() async {
+    if (_activeToken.isEmpty) {
+      (widget.actorType == 'shop' ? shopChatUnread : customerChatUnread).value = 0;
+      return;
+    }
+    try {
+      final result = await _service.conversations(
+        actorType: widget.actorType,
+        token: _activeToken,
+      );
+      (widget.actorType == 'shop' ? shopChatUnread : customerChatUnread).value =
+          result.totalUnread;
+    } catch (_) {}
+  }
+
+  void _reconnect() {
+    _subscription?.cancel();
+    _socket?.dispose();
+    _subscription = null;
+    _socket = null;
+    _refresh();
+    if (_activeToken.isEmpty) return;
+    _socket = ChatSocketGateway(actorType: widget.actorType, token: _activeToken)
+      ..connect();
+    _subscription = _socket!.events.listen((_) => _refresh());
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _socket?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 Future<void> openCustomerChat(BuildContext context, {String? shopId, String? orderId, ChatContextDraft? contextDraft}) async {
@@ -138,3 +184,4 @@ class _MessageBubble extends StatelessWidget {
 }
 
 class _ContextCard extends StatelessWidget { const _ContextCard({required this.context, required this.mine}); final ChatMessageContext context; final bool mine; @override Widget build(BuildContext contextWidget) => InkWell(onTap: () => showDialog<void>(context: contextWidget, builder: (_) => AlertDialog(title: Text(context.title), content: Text('${context.detail}\n${context.amount.toStringAsFixed(0)} VND'), actions: [TextButton(onPressed: () => Navigator.of(contextWidget, rootNavigator: true).pop(), child: const Text('Close'))])), borderRadius: BorderRadius.circular(14), child: Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: mine ? Colors.white12 : AppColors.accentSoft, borderRadius: BorderRadius.circular(14)), child: Row(mainAxisSize: MainAxisSize.min, children: [if (context.imageUrl.isNotEmpty) ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(context.imageUrl, width: 48, height: 48, fit: BoxFit.cover)), const SizedBox(width: 8), Flexible(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(context.title, style: TextStyle(fontWeight: FontWeight.w800, color: mine ? Colors.white : AppColors.ink)), Text('${context.detail} · ${context.amount.toStringAsFixed(0)} VND', style: TextStyle(fontSize: 11, color: mine ? Colors.white70 : AppColors.muted))]))]))); }
+

@@ -33,7 +33,7 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  late int _currentIndex = widget.initialIndex;
+  late int _currentIndex = _normalizeTabIndex(widget.initialIndex);
   final _tryOnController = TryOnController.shared;
   final _tryOnPreviewKey = GlobalKey();
   OverlayEntry? _tryOnStatusOverlay;
@@ -46,15 +46,21 @@ class _AppShellState extends State<AppShell> {
       previewKey: _tryOnPreviewKey,
     ),
     const StylistPage(),
-    const ChatInboxPage(),
     const AccountPage(),
   ];
 
   void _selectTab(int index) {
-    if (_currentIndex != index) {
-      setState(() => _currentIndex = index);
+    final normalizedIndex = _normalizeTabIndex(index);
+    if (_currentIndex != normalizedIndex) {
+      setState(() => _currentIndex = normalizedIndex);
     }
-    _showTryOnBubble.value = index != 1;
+    _showTryOnBubble.value = normalizedIndex != 1;
+  }
+
+  int _normalizeTabIndex(int index) {
+    if (index < 0) return 0;
+    if (index > 3) return 3;
+    return index;
   }
 
   void _openCatalogTryOn() {
@@ -123,7 +129,6 @@ class _AppShellState extends State<AppShell> {
       (Icons.home_outlined, Icons.home_rounded, AppLocalizations.t(context, 'nav.marketplace')),
       (Icons.checkroom_outlined, Icons.checkroom, AppLocalizations.t(context, 'nav.tryOn')),
       (Icons.auto_awesome_outlined, Icons.auto_awesome, AppLocalizations.t(context, 'nav.stylist')),
-      (Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded, 'Messages'),
       (Icons.person_outline, Icons.person, AppLocalizations.t(context, 'nav.account')),
     ];
   }
@@ -149,11 +154,17 @@ class _AppShellState extends State<AppShell> {
             children: [
               Positioned.fill(
                 child: IndexedStack(
-                  index: _currentIndex,
+                  index: _normalizeTabIndex(_currentIndex),
                   children: _pages,
                 ),
               ),
-
+              const Positioned(
+                left: 0,
+                top: 0,
+                width: 0,
+                height: 0,
+                child: ChatUnreadMonitor(actorType: 'user'),
+              ),
             ],
           ),
         ),
@@ -169,7 +180,7 @@ class _AppShellState extends State<AppShell> {
           child: Row(
             children: List.generate(_getItems(context).length, (index) {
               final item = _getItems(context)[index];
-              final isSelected = index == _currentIndex;
+              final isSelected = index == _normalizeTabIndex(_currentIndex);
               final icon = isSelected ? item.$2 : item.$1;
               final color = isSelected ? Colors.white : AppColors.muted;
 
@@ -199,17 +210,7 @@ class _AppShellState extends State<AppShell> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            index == 3
-                                ? ValueListenableBuilder<int>(
-                                    valueListenable: customerChatUnread,
-                                    builder: (_, count, child) => Badge(
-                                      isLabelVisible: count > 0,
-                                      label: Text(count > 99 ? '99+' : '$count'),
-                                      child: child,
-                                    ),
-                                    child: Icon(icon, size: 20, color: color),
-                                  )
-                                : Icon(icon, size: 20, color: color),
+                            Icon(icon, size: 20, color: color),
                             const SizedBox(height: 4),
                             Text(
                               item.$3,
@@ -236,6 +237,12 @@ class _AppShellState extends State<AppShell> {
     );
   }
 }
+
+
+
+
+
+
 
 
 
