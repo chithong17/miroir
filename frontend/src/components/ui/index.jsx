@@ -137,7 +137,7 @@ export function TopNav({ user, onLogout, compact = false }) {
           <img
             src="/logo-web.png"
             alt="Miroir Logo"
-            className="h-16 w-24 rounded-lg object-cover"
+            className="h-12 w-16 rounded-lg object-contain"
           />
           MIROIR
         </a>
