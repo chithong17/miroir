@@ -2,7 +2,6 @@ import { generateEmbedding } from "./gemini.service.js";
 import { getMongoDb } from "./mongo.service.js";
 import { getReviewSummariesByProductIds } from "./reviewSummary.service.js";
 import { getActiveShopsByIds } from "./shop.service.js";
-import { getPremiumShopIds } from "./subscription.service.js";
 
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -161,14 +160,12 @@ export const retrieveStylistContext = async ({ request, memory }) => {
     ...new Set(rawProducts.map((product) => product.shopId).filter(Boolean)),
   ]);
   const activeShopById = new Map(activeShops.map((shop) => [shop.id, shop]));
-  const premiumShopIds = await getPremiumShopIds(activeShops.map((shop) => shop.id));
   const shopFilteredProducts = rawProducts
     .filter(
       (product) =>
         product.status === "published" &&
         product.shopId &&
         activeShopById.has(product.shopId) &&
-        premiumShopIds.has(product.shopId) &&
         product.variants?.some((variant) => variant.active && variant.stockQuantity > 0)
     )
     .map((product) => {
