@@ -49,6 +49,10 @@ function TryOnStudioPage() {
 
   useEffect(() => {
     if (currentTask) {
+      if (currentTask.product && !product) {
+        setProduct(currentTask.product);
+      }
+      
       if (currentTask.status === "completed") {
         setStatus("completed");
         setResultUrl(currentTask.resultUrl);
@@ -62,7 +66,7 @@ function TryOnStudioPage() {
         setMessage("MIROIR is creating your virtual try-on in the background...");
       }
     }
-  }, [currentTask]);
+  }, [currentTask, product]);
 
   const loadProduct = async (productId) => {
     setMessage("");

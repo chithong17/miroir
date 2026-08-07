@@ -46,12 +46,12 @@ export function TryOnStatusBubble() {
   return (
     <div
       onClick={currentTask.status === "completed" ? handleClick : undefined}
-      className={`fixed bottom-6 left-6 z-[100] flex cursor-pointer items-center gap-3 rounded-full border border-line bg-white/90 px-4 py-2.5 shadow-glass backdrop-blur-md transition-all hover:scale-105 sm:bottom-8 sm:left-8 ${
+      className={`fixed bottom-6 left-6 z-[100] flex cursor-pointer items-center gap-3 rounded-full border border-line px-4 py-2.5 shadow-glass backdrop-blur-md transition-all hover:scale-105 sm:bottom-8 sm:left-8 ${
         currentTask.status === "completed"
           ? "border-mintSoft bg-mintDeep text-white shadow-glow"
           : currentTask.status === "failed"
-          ? "border-red-200 bg-red-50"
-          : ""
+          ? "border-red-200 bg-red-50 text-ink"
+          : "bg-white/90 text-ink"
       }`}
     >
       {/* Icon or Spinner */}
