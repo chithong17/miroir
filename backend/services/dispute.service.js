@@ -51,8 +51,10 @@ export const listAdminDisputes = async (query = {}) => {
   if (query.search) filter.orderCode = String(query.search).toUpperCase().replace(/[^A-Z0-9]/g, "");
   const disputes = await db.collection("order_disputes").find(filter).sort({ updatedAt: -1 }).toArray();
   const orders = disputes.length ? await db.collection("orders").find({ id: { $in: disputes.map((item) => item.orderId) } }).toArray() : [];
+  const returns = disputes.some((item) => item.returnId) ? await db.collection("order_returns").find({ id: { $in: disputes.filter((item) => item.returnId).map((item) => item.returnId) } }).toArray() : [];
   const orderById = new Map(orders.map((item) => [item.id, item]));
-  return disputes.map((item) => ({ ...item, orderSnapshot: orderById.get(item.orderId) || null }));
+  const returnById = new Map(returns.map((item) => [item.id, item]));
+  return disputes.map((item) => ({ ...item, orderSnapshot: orderById.get(item.orderId) || null, returnSnapshot: item.returnId ? returnById.get(item.returnId) || null : null }));
 };
 
 const getScopedDispute = async ({ db, disputeId, actorType, actorId }) => {

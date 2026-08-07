@@ -2,6 +2,8 @@ import { getMongoDb } from "./mongo.service.js";
 
 export const ensureCommerceIndexes = async () => {
   const db = await getMongoDb();
+  // The former unique index prevented two independent return disputes on one order.
+  await db.collection("order_disputes").dropIndex("orderId_1_type_1").catch(() => {});
   await Promise.all([
     db.collection("user_addresses").createIndex({ id: 1 }, { unique: true }),
     db.collection("user_addresses").createIndex({ userId: 1, isDefault: 1 }),
@@ -23,10 +25,11 @@ export const ensureCommerceIndexes = async () => {
       { unique: true }
     ),
     db.collection("order_disputes").createIndex({ id: 1 }, { unique: true }),
-    db.collection("order_disputes").createIndex(
-      { orderId: 1, type: 1 },
-      { unique: true, partialFilterExpression: { status: { $in: ["open", "shop_responded", "under_review"] } } }
-    ),
+    db.collection("order_returns").createIndex({ id: 1 }, { unique: true }),
+    db.collection("order_returns").createIndex({ userId: 1, updatedAt: -1 }),
+    db.collection("order_returns").createIndex({ shopId: 1, updatedAt: -1 }),
+    db.collection("order_returns").createIndex({ orderId: 1, status: 1 }),
+    db.collection("order_disputes").createIndex({ orderId: 1, type: 1, status: 1 }),
     db.collection("products").createIndex(
       { shopId: 1, "variants.sku": 1 },
       { unique: true, partialFilterExpression: { "variants.0": { $exists: true } } }
