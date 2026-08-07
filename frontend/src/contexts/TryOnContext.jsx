@@ -34,39 +34,47 @@ export const TryOnProvider = ({ children }) => {
 
   // Polling effect
   useEffect(() => {
-    let intervalId;
+    let isCancelled = false;
+    let timeoutId;
 
     const pollTaskStatus = async (taskId) => {
       try {
         const response = await getTryOnTaskStatus(taskId);
+        if (isCancelled) return;
+
         if (response.status === "completed") {
           setCurrentTask((prev) => 
             prev?.id === taskId 
               ? { ...prev, status: "completed", resultUrl: response.resultUrl || "" }
               : prev
           );
+          return; // Stop polling
         } else if (response.status === "failed" || response.success === false) {
           setCurrentTask((prev) => 
             prev?.id === taskId 
               ? { ...prev, status: "failed", errorMessage: response.errorMessage || "Try-on failed." }
               : prev
           );
+          return; // Stop polling
         }
       } catch (error) {
-        // Just log the error, don't fail immediately in case it's a network blip
         console.error("Failed to poll task status", error);
+      }
+
+      // If not completed or failed, and not cancelled, schedule next poll
+      if (!isCancelled) {
+        timeoutId = setTimeout(() => pollTaskStatus(taskId), 5000);
       }
     };
 
     if (currentTask && currentTask.status === "processing") {
-      // Poll every 5 seconds
-      intervalId = setInterval(() => {
-        pollTaskStatus(currentTask.id);
-      }, 5000);
+      // Start the polling loop (wait 5s before first check to match interval behavior)
+      timeoutId = setTimeout(() => pollTaskStatus(currentTask.id), 5000);
     }
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      isCancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [currentTask?.id, currentTask?.status]);
 
