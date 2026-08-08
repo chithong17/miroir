@@ -14,6 +14,8 @@
     "migrate:variants": "node scripts/migrateProductVariants.js --apply",
     "stock:products:dry": "node scripts/setProductStock.js --stock=100",
     "stock:products": "node scripts/setProductStock.js --stock=100 --apply",
+    "seed:fit:dry": "node scripts/seedFitMeasurements.js",
+    "seed:fit": "node scripts/seedFitMeasurements.js --apply",
     "catalog:dedupe:dry": "node scripts/curateDemoProducts.js",
     "catalog:dedupe": "node scripts/curateDemoProducts.js --apply",
     "diagnose:commerce": "node scripts/diagnoseCommerceData.js",

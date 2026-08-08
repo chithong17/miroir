@@ -1967,6 +1967,7 @@ function SalesDashboardSummary({ dashboard }) {
   const salesSeries = dashboard?.salesSeries || [];
   const orderStatuses = dashboard?.orderStatusBreakdown || [];
   const paymentStatuses = dashboard?.paymentStatusBreakdown || [];
+  const fitFinder = dashboard?.fitFinder || {};
 
   return (
     <section className="grid gap-5">
@@ -1997,6 +1998,11 @@ function SalesDashboardSummary({ dashboard }) {
           </div>
         </section>
       </div>
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h3 className="font-bold text-slate-900">Fit Finder</h3><p className="mt-1 text-sm text-slate-500">Chỉ số tổng hợp, không hiển thị số đo cá nhân của khách.</p></div><span className="rounded-full bg-mintSoft px-3 py-1.5 text-sm font-bold text-mintDeep">Tỷ lệ trả do size: {formatPercent(fitFinder.sizeReturnRate)}</span></div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["Mở Fit Finder", fitFinder.opened], ["Có đề xuất", fitFinder.recommended], ["Dùng size", fitFinder.applied], ["Thêm giỏ", fitFinder.addToCart], ["Checkout", fitFinder.checkout]].map(([label, value]) => <Metric key={label} label={label} value={value || 0} />)}</div>
+        <div className="mt-4 flex flex-wrap gap-2 text-sm font-semibold text-slate-700"><span className="rounded-full bg-slate-100 px-3 py-2">Phản hồi: {fitFinder.feedback?.total || 0}</span><span className="rounded-full bg-slate-100 px-3 py-2">Đúng size: {fitFinder.feedback?.trueToSize || 0}</span><span className="rounded-full bg-slate-100 px-3 py-2">Hơi chật: {fitFinder.feedback?.tooSmall || 0}</span><span className="rounded-full bg-slate-100 px-3 py-2">Hơi rộng: {fitFinder.feedback?.tooLarge || 0}</span>{(fitFinder.confidenceDistribution || []).map((item) => <span className="rounded-full bg-slate-100 px-3 py-2" key={item.label}>{item.label}: {item.count}</span>)}</div>
+      </section>
       <div className="grid gap-5 xl:grid-cols-2">
         <BreakdownDashboardChart title="Trạng thái đơn hàng" items={orderStatuses} />
         <BreakdownDashboardChart title="Trạng thái thanh toán" items={paymentStatuses} />

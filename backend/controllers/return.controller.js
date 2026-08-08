@@ -5,7 +5,7 @@ const attachments = async (files = []) => Promise.all(files.map(async (file) => 
 const parseItems = (value) => { try { return typeof value === "string" ? JSON.parse(value) : value; } catch { const error = new Error("items must be valid JSON."); error.statusCode = 400; throw error; } };
 const proof = async (files) => attachments(files);
 
-export const createMyReturn = async (req, res, next) => { try { res.status(201).json({ success: true, return: await createReturnRequest({ userId: req.user.id, orderId: req.params.orderId, items: parseItems(req.body.items), reason: req.body.reason, refundAccount: req.body, attachments: await attachments(req.files) }) }); } catch (error) { next(error); } };
+export const createMyReturn = async (req, res, next) => { try { res.status(201).json({ success: true, return: await createReturnRequest({ userId: req.user.id, orderId: req.params.orderId, items: parseItems(req.body.items), reason: req.body.reason, reasonCode: req.body.reasonCode, refundAccount: req.body, attachments: await attachments(req.files) }) }); } catch (error) { next(error); } };
 export const myReturns = async (req, res, next) => { try { res.json({ success: true, returns: await listCustomerReturns(req.user.id) }); } catch (error) { next(error); } };
 export const myReturn = async (req, res, next) => { try { res.json({ success: true, return: await getCustomerReturn({ userId: req.user.id, returnId: req.params.returnId }) }); } catch (error) { next(error); } };
 export const submitMyReturnShipment = async (req, res, next) => { try { res.json({ success: true, return: await submitReturnShipment({ userId: req.user.id, returnId: req.params.returnId, trackingCode: req.body.trackingCode, attachments: await proof(req.files) }) }); } catch (error) { next(error); } };

@@ -43,7 +43,7 @@ const validatedItems = async ({ db, order, requested, session }) => {
   });
 };
 
-export const createReturnRequest = async ({ userId, orderId, items, reason, refundAccount, attachments = [] }) => withMongoTransaction(async (db, session) => {
+export const createReturnRequest = async ({ userId, orderId, items, reason, reasonCode = "other", refundAccount, attachments = [] }) => withMongoTransaction(async (db, session) => {
   const order = await db.collection("orders").findOne({ id: orderId, userId }, { session });
   if (!order) fail("Order was not found.", 404);
   const deliveredAt = getReturnDeliveryDate(order);
@@ -55,7 +55,7 @@ export const createReturnRequest = async ({ userId, orderId, items, reason, refu
   if (!account.bankName || !account.accountNumber || !account.accountHolder) fail("Refund bank name, account number and account holder are required.");
   const returnItems = await validatedItems({ db, order, requested: items, session });
   const now = new Date();
-  const request = { id: crypto.randomUUID(), orderId: order.id, orderCode: order.orderCode, userId, shopId: order.shopId, orderSnapshot: { paymentStatus: order.paymentStatus, deliveredAt, shopName: order.shopSnapshot?.name || "" }, items: returnItems, reason: clean(reason), attachments, refundAccount: account, refundAmount: returnItems.reduce((sum, item) => sum + item.lineTotal, 0), status: "requested", returnInstructions: null, shipment: null, receipt: null, refund: null, disputeId: null, inventoryRestockedAt: null, history: [event("requested", "customer", userId, clean(reason))], createdAt: now, updatedAt: now };
+  const request = { id: crypto.randomUUID(), orderId: order.id, orderCode: order.orderCode, userId, shopId: order.shopId, orderSnapshot: { paymentStatus: order.paymentStatus, deliveredAt, shopName: order.shopSnapshot?.name || "" }, items: returnItems, reason: clean(reason), reasonCode: ["size_or_fit", "damaged", "wrong_item", "other"].includes(reasonCode) ? reasonCode : "other", attachments, refundAccount: account, refundAmount: returnItems.reduce((sum, item) => sum + item.lineTotal, 0), status: "requested", returnInstructions: null, shipment: null, receipt: null, refund: null, disputeId: null, inventoryRestockedAt: null, history: [event("requested", "customer", userId, clean(reason))], createdAt: now, updatedAt: now };
   await db.collection("order_returns").insertOne(request, { session });
   const shop = await db.collection("shops").findOne({ id: order.shopId }, { session });
   await createNotification({ audienceType: "shop", audienceId: shop?.ownerId, type: "return_requested", title: "Yêu cầu trả hàng mới", message: `${order.orderCode} có yêu cầu trả hàng mới.`, orderId: order.id, db, session });

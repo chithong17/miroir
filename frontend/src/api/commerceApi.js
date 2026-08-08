@@ -43,6 +43,7 @@ export const createRefundDispute = async (orderId, message, images = []) => {
 export const createReturnRequest = async (orderId, payload, images = []) => {
   const form = new FormData();
   form.append("items", JSON.stringify(payload.items)); form.append("reason", payload.reason);
+  form.append("reasonCode", payload.reasonCode || "other");
   form.append("bankName", payload.bankName); form.append("accountNumber", payload.accountNumber); form.append("accountHolder", payload.accountHolder);
   images.slice(0, 3).forEach((image) => form.append("images", image));
   return (await client.post(`/orders/returns/me/${encodeURIComponent(orderId)}`, form, { headers: { "Content-Type": "multipart/form-data" } })).data;
@@ -56,6 +57,7 @@ export const replyMyDispute = async (id, message, images = []) => {
   const form = new FormData(); form.append("message", message); images.slice(0, 3).forEach((image) => form.append("images", image));
   return (await client.post(`/orders/disputes/me/${encodeURIComponent(id)}/messages`, form, { headers: { "Content-Type": "multipart/form-data" } })).data;
 };
+export const submitFitFeedback = async (orderId, variantId, outcome) => (await client.post(`/orders/me/${encodeURIComponent(orderId)}/fit-feedback`, { variantId, outcome })).data;
 
 const shopClient = axios.create({ baseURL: API_BASE_URL, timeout: 90000 });
 shopClient.interceptors.request.use((config) => {

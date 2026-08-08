@@ -4,7 +4,7 @@ import { uploadOrderAttachments, uploadProductImage } from "../middlewares/uploa
 import { createMyDispute, myDispute, myDisputes, replyMyDispute } from "../controllers/dispute.controller.js";
 import {
   addToMyCart, cancelMyOrder, checkout, myCart, myOrder, myOrders, previewMyBuyNow,
-  removeMyCartItem, reportMyTransfer, setMyCartAddress, updateMyCartItem,
+  removeMyCartItem, reportMyTransfer, setMyCartAddress, submitMyFitFeedback, updateMyCartItem,
 } from "../controllers/commerce.controller.js";
 
 const router = Router();
@@ -20,6 +20,7 @@ router.get("/me", myOrders);
 router.get("/me/:orderId", myOrder);
 router.post("/me/:orderId/transfer-reported", uploadProductImage, reportMyTransfer);
 router.post("/me/:orderId/cancel", cancelMyOrder);
+router.post("/me/:orderId/fit-feedback", submitMyFitFeedback);
 router.get("/disputes/me", myDisputes);
 router.get("/disputes/me/:disputeId", myDispute);
 router.post("/me/:orderId/disputes", uploadOrderAttachments, createMyDispute);

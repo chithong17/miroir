@@ -151,6 +151,8 @@ const normalizeProfile = (body = {}) => {
     },
     modelImageUrl: cleanString(body.modelImageUrl),
     modelImagePublicId: cleanString(body.modelImagePublicId),
+    fitPreference: ["slim", "regular", "relaxed"].includes(body.fitPreference) ? body.fitPreference : undefined,
+    fitConsentAt: body.fitConsent === true ? new Date() : body.fitConsent === false ? null : undefined,
   };
 
   Object.keys(profile.measurements).forEach((key) => {
@@ -158,7 +160,7 @@ const normalizeProfile = (body = {}) => {
   });
   Object.keys(profile).forEach((key) => {
     if (
-      profile[key] === "" ||
+      profile[key] === "" || profile[key] === undefined ||
       (Array.isArray(profile[key]) && profile[key].length === 0) ||
       (key === "measurements" && Object.keys(profile.measurements).length === 0)
     ) {

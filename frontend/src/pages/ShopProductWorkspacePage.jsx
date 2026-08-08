@@ -21,6 +21,8 @@ const emptyForm = {
   gender: "unisex",
   status: "draft",
   fitType: "",
+  fitCategory: "",
+  fitIntent: "regular",
   styleTags: "",
   occasionTags: "",
   imageUrl: "",
@@ -38,7 +40,7 @@ const productToForm = (product) => ({
   price: product.price ?? "",
   styleTags: listText(product.styleTags),
   occasionTags: listText(product.occasionTags),
-  variants: (product.variants || []).map((variant) => ({ ...variant, stockQuantity: Number(variant.stockQuantity || 0) })),
+  variants: (product.variants || []).map((variant) => ({ ...variant, stockQuantity: Number(variant.stockQuantity || 0), fitMeasurements: variant.fitMeasurements || {} })),
 });
 const normalizeSkuPart = (value) => String(value || "")
   .normalize("NFD")
@@ -122,6 +124,7 @@ export default function ShopProductWorkspacePage({ productId }) {
         size: "",
         stockQuantity: 0,
         active: true,
+        fitMeasurements: {},
       }],
     }));
   };
@@ -179,6 +182,7 @@ export default function ShopProductWorkspacePage({ productId }) {
       size: String(variant.size || "").trim(),
       stockQuantity: Number(variant.stockQuantity),
       active: variant.active !== false,
+      fitMeasurements: Object.fromEntries(Object.entries(variant.fitMeasurements || {}).filter(([, value]) => value !== "" && value !== null && value !== undefined).map(([key, value]) => [key, Number(value)])),
     }));
     if (variants.some((variant) => !variant.sku)) return showNotice("Mỗi biến thể cần có SKU.", "error");
     if (variants.some((variant) => !Number.isInteger(variant.stockQuantity) || variant.stockQuantity < 0)) return showNotice("Tồn kho phải là số nguyên không âm.", "error");
@@ -197,6 +201,8 @@ export default function ShopProductWorkspacePage({ productId }) {
       styleTags: splitList(form.styleTags),
       occasionTags: splitList(form.occasionTags),
       fitType: form.fitType.trim(),
+      fitCategory: form.fitCategory,
+      fitIntent: form.fitIntent,
       imageUrl: form.imageUrl.trim(),
       imagePublicId: form.imagePublicId,
       variants,
@@ -278,8 +284,11 @@ export default function ShopProductWorkspacePage({ productId }) {
                 </div>
               </EditorSection>
 
+              <FitDataEditor form={form} updateField={updateField} />
+
               <VariantEditor
                 form={form}
+                fitCategory={form.fitCategory}
                 matrixColors={matrixColors}
                 matrixSizes={matrixSizes}
                 setMatrixColors={setMatrixColors}
@@ -330,7 +339,12 @@ function ProductSummary({ activeVariantCount, form, totalStock }) {
   );
 }
 
-function VariantEditor({ addVariant, form, generateVariantMatrix, matrixColors, matrixSizes, removeVariant, setMatrixColors, setMatrixSizes, updateVariant }) {
+const fitFieldsByCategory = { top: [["chest", "Vòng ngực"], ["waist", "Vòng eo"], ["hips", "Vòng mông"], ["shoulder", "Rộng vai"], ["length", "Dài áo"], ["sleeveLength", "Dài tay"]], dress: [["chest", "Vòng ngực"], ["waist", "Vòng eo"], ["hips", "Vòng mông"], ["shoulder", "Rộng vai"], ["length", "Dài váy"], ["sleeveLength", "Dài tay"]], outerwear: [["chest", "Vòng ngực"], ["waist", "Vòng eo"], ["hips", "Vòng mông"], ["shoulder", "Rộng vai"], ["length", "Dài áo"], ["sleeveLength", "Dài tay"]], bottom: [["waist", "Vòng eo"], ["hips", "Vòng mông"], ["inseam", "Dài trong ống"], ["outseam", "Dài quần"]] };
+function FitDataEditor({ form, updateField }) {
+  return <EditorSection title="Dữ liệu Fit Finder" description="Nhập số đo garment theo từng size để khách nhận gợi ý chính xác. Không có số đo, hệ thống chỉ ước tính theo nhãn size."><div className="grid gap-4 md:grid-cols-2"><FormField label="Loại trang phục"><select className={inputClass} value={form.fitCategory} onChange={updateField("fitCategory")}><option value="">Chưa cấu hình Fit Finder</option><option value="top">Áo / Top</option><option value="bottom">Quần / Bottom</option><option value="dress">Váy / Dress</option><option value="outerwear">Áo khoác / Outerwear</option></select></FormField><FormField label="Kiểu dáng mong muốn"><select className={inputClass} value={form.fitIntent} onChange={updateField("fitIntent")}><option value="slim">Slim</option><option value="regular">Regular</option><option value="relaxed">Relaxed</option></select></FormField></div>{form.fitCategory ? <p className="mt-3 rounded-xl bg-accentSoft p-3 text-sm text-mintDeep">Điền số đo centimet cho từng variant ở bảng bên dưới.</p> : null}</EditorSection>;
+}
+
+function VariantEditor({ addVariant, fitCategory, form, generateVariantMatrix, matrixColors, matrixSizes, removeVariant, setMatrixColors, setMatrixSizes, updateVariant }) {
   return (
     <EditorSection title="Biến thể, SKU và tồn kho" description="Mỗi dòng là một phiên bản màu–size riêng. Đơn hàng sẽ trừ tồn kho đúng dòng khách đã chọn.">
       <div className="rounded-2xl border border-mintSoft bg-accentSoft/60 p-4">
@@ -345,6 +359,7 @@ function VariantEditor({ addVariant, form, generateVariantMatrix, matrixColors, 
         {!form.variants.length ? <div className="p-8 text-center"><p className="font-bold">Chưa có biến thể</p><p className="mt-1 text-sm text-muted">Tạo tổ hợp màu–size hoặc thêm một dòng thủ công.</p></div> : null}
       </div>
       <button type="button" className="mt-3 rounded-xl border border-dashed border-mintDeep px-4 py-3 text-sm font-black text-mintDeep hover:bg-accentSoft" onClick={addVariant}>+ Thêm một biến thể</button>
+      {fitCategory ? <div className="mt-5 grid gap-3 rounded-2xl border border-mintSoft bg-accentSoft/50 p-4"><p className="font-black">Số đo Fit Finder (cm)</p>{form.variants.map((variant, index) => <div className="rounded-xl bg-white p-3" key={`fit-${variant.id || index}`}><p className="mb-2 text-sm font-bold">{variant.sku || `Biến thể ${index + 1}`} · {variant.size || "Chưa có size"}</p><div className="grid gap-2 sm:grid-cols-3">{fitFieldsByCategory[fitCategory].map(([key, label]) => <label className="grid gap-1 text-xs font-bold text-muted" key={key}>{label}<input className={inputClass} min="0" placeholder="cm" type="number" value={variant.fitMeasurements?.[key] || ""} onChange={(event) => updateVariant(index, "fitMeasurements", { ...(variant.fitMeasurements || {}), [key]: event.target.value })} /></label>)}</div></div>)}</div> : null}
     </EditorSection>
   );
 }

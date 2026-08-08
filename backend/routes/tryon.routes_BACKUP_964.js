@@ -17,19 +17,14 @@ router.post("/", uploadTryOnImages, createTryOnTask);
 router.post(
   "/catalog",
   requireUser,
-<<<<<<< HEAD
-  requireUserTryOnAccess,
   uploadCatalogTryOnImage,
-=======
-  uploadProductImage,
->>>>>>> 869a8b6f477271f29e72ff5502730aeb03fbe263
-  createCatalogTryOnTask
+  createCatalogTryOnTask,
 );
 router.post(
   "/custom",
   requireUser,
   uploadTryOnImages,
-  createCustomTryOnTask
+  createCustomTryOnTask,
 );
 router.get("/:taskId", getTryOnTaskStatus);
 
