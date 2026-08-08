@@ -37,20 +37,24 @@ function LandingPage() {
   return (
     <AppShell nav={<TopNav />}>
       {/* Floating download pill — only on landing, fixed bottom-left */}
-      <a
-        href="/download"
-        className="group fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-full border border-mintDeep/20 bg-white/90 px-4 py-2.5 shadow-glass backdrop-blur-md transition-all hover:border-mintDeep hover:bg-mintDeep hover:shadow-glow sm:bottom-8 sm:left-8"
-      >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-mintDeep/10 text-mintDeep transition group-hover:bg-white/20">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 18.5l-6-6m6 6l6-6m-6 6V5" />
-          </svg>
-        </span>
-        <div className="flex flex-col leading-tight">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-mintDeep transition group-hover:text-white/70">Android</span>
-          <span className="text-xs font-bold text-ink transition group-hover:text-white">Tải App miễn phí</span>
-        </div>
-      </a>
+      <div className="fixed bottom-6 left-6 z-50 sm:bottom-8 sm:left-8">
+        {/* Ping ring */}
+        <span className="download-pill-ping absolute inset-0 rounded-full bg-mintDeep/30" />
+        <a
+          href="/download"
+          className="download-pill group relative flex items-center gap-2.5 rounded-full border border-mintDeep/40 bg-white px-4 py-2.5 shadow-glow transition-all hover:border-mintDeep hover:bg-mintDeep hover:shadow-glowDeep"
+        >
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-mintDeep text-white shadow-sm transition group-hover:bg-white/20">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </span>
+          <div className="flex flex-col leading-tight">
+            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-mintDeep transition group-hover:text-white/70">Android</span>
+            <span className="text-xs font-bold text-ink transition group-hover:text-white">Tải App miễn phí</span>
+          </div>
+        </a>
+      </div>
       <main className="overflow-hidden">
         {/* HERO SECTION */}
         <section className="section-shell grid items-start gap-6 pb-10 pt-6 sm:gap-8 sm:pb-12 sm:pt-8 lg:grid-cols-[minmax(0,1fr)_420px]">
