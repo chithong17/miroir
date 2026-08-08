@@ -129,7 +129,7 @@ export function TopNav({ user, onLogout, compact = false }) {
 
   return (
     <nav className="sticky top-3 z-40 mx-auto max-w-[1440px] px-3 sm:px-4 md:px-8 xl:px-20">
-      <div className="flex items-center justify-between gap-3 rounded-[26px] border border-white/80 bg-white/80 px-4 py-3 backdrop-blur-xl shadow-glass sm:rounded-[34px] sm:px-5 sm:py-3.5">
+      <div className="flex items-center justify-between gap-3 rounded-[26px] border border-white/80 bg-white/80 px-4 py-1.5 backdrop-blur-xl shadow-glass sm:rounded-[34px] sm:px-5 sm:py-2">
         <a
           href={user ? "/app" : "/"}
           className="flex items-center gap-2 font-display text-xl font-extrabold tracking-normal text-ink sm:text-2xl"
@@ -137,7 +137,7 @@ export function TopNav({ user, onLogout, compact = false }) {
           <img
             src="/logo-web.png"
             alt="Miroir Logo"
-            className="h-20 w-20 rounded-lg object-contain"
+            className="h-10 w-10 rounded-lg object-contain"
           />
           MIROIR
         </a>

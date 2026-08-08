@@ -182,7 +182,7 @@ function TryOnStudioPage() {
 
   return (
     <AppShell nav={<TopNav user={user} onLogout={logout} />}>
-      <main className="section-shell py-6 sm:py-8">
+      <main className="section-shell py-4 sm:py-6">
         <PageHeader
           eyebrow={t("tryon.eyebrow")}
           title={t("tryon.title")}
@@ -302,7 +302,7 @@ function StudioPanel({ children, eyebrow, title }) {
 
 function PreviewFrame({ empty, image, isLoading = false, loadingText = "" }) {
   return (
-    <div className={`aspect-[4/5] overflow-hidden rounded-lg border border-line bg-white/80 ${isLoading ? "tryon-result-active" : ""}`}>
+    <div className={`aspect-square overflow-hidden rounded-lg border border-line bg-white/80 ${isLoading ? "tryon-result-active" : ""}`}>
       {image ? (
         <img src={image} alt="" className="h-full w-full object-cover" />
       ) : isLoading ? (
@@ -334,7 +334,7 @@ function GarmentPreview({ dressPreview, lowerPreview, product, upperPreview }) {
 
   if (dressPreview || upperPreview || lowerPreview) {
     return (
-      <div className="aspect-[4/5] overflow-hidden rounded-lg border border-line bg-white/80">
+      <div className="aspect-square overflow-hidden rounded-lg border border-line bg-white/80">
         <div className="grid h-full grid-cols-2 gap-2 p-2">
           {dressPreview ? <img src={dressPreview} alt="" className="col-span-2 h-full w-full rounded-lg object-cover" /> : null}
           {upperPreview ? <img src={upperPreview} alt="" className="h-full w-full rounded-lg object-cover" /> : null}

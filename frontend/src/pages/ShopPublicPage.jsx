@@ -247,9 +247,9 @@ function ShopProductModal({ onClose, onTryOn, product }) {
   return (
     <Modal onClose={onClose} maxWidth="max-w-4xl">
       <div className="grid gap-5 p-5 md:grid-cols-[0.9fr_1fr]">
-        <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-white/80">
+        <div className="mx-auto w-full max-w-[320px] md:max-w-[400px] aspect-[4/5] overflow-hidden rounded-2xl bg-panel">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />
+            <img src={product.imageUrl} alt="" className="h-full w-full object-contain mix-blend-multiply" />
           ) : null}
         </div>
         <div>

@@ -229,7 +229,7 @@ const revokePreviewUrls = (previews) => {
           </div>
 
           <section className="lg:col-span-3 flex flex-col gap-6">
-            <div className="glass-panel ambient-shadow flex min-h-[460px] flex-col rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[600px]">
+            <div className="glass-panel ambient-shadow flex min-h-[400px] flex-col rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[500px]">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-2xl font-semibold text-ink">
                   Your Silhouette
@@ -262,7 +262,7 @@ const revokePreviewUrls = (previews) => {
           </section>
 
           <section className="lg:col-span-4 flex flex-col gap-6">
-            <div className="glass-panel ambient-shadow flex min-h-[460px] flex-col rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[600px]">
+            <div className="glass-panel ambient-shadow flex min-h-[400px] flex-col rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[500px]">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-2xl font-semibold text-ink">The Garment</h2>
                 <span className="text-lg text-muted">Style</span>
@@ -374,7 +374,7 @@ const revokePreviewUrls = (previews) => {
           </section>
 
           <section className="lg:col-span-4 flex flex-col gap-6">
-            <div className="glass-panel ambient-shadow relative flex min-h-[460px] flex-col overflow-hidden rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[600px]">
+            <div className="glass-panel ambient-shadow relative flex min-h-[400px] flex-col overflow-hidden rounded-[1.5rem] p-4 sm:rounded-[2rem] sm:p-6 lg:h-[500px]">
               <div className="absolute inset-0 bg-gradient-to-tr from-white to-tertiarySoft/10 opacity-50" />
               <div
                 className={`absolute inset-0 rounded-[2rem] border ${

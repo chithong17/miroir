@@ -102,6 +102,10 @@ function StylistPage() {
     setFeedbackStatus("");
     setResult(null);
 
+    setTimeout(() => {
+      document.getElementById("stylist-results")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+
     try {
       const response = await getStylistRecommendation(buildPayload());
       setResult(response);
@@ -163,20 +167,20 @@ function StylistPage() {
         </div>
       </nav>
 
-      <main className="section-shell grid gap-8 pb-20 pt-28 lg:grid-cols-[420px_1fr]">
-        <form onSubmit={handleSubmit} className="glass-panel p-5">
-          <div className="mb-6">
-            <h1 className="editorial-title text-3xl font-bold">AI Stylist</h1>
-            <p className="mt-2 text-sm leading-6 text-muted">
+      <main className="section-shell grid gap-6 pb-20 pt-24 lg:grid-cols-[380px_1fr] lg:gap-8">
+        <form onSubmit={handleSubmit} className="glass-panel p-4 lg:p-5">
+          <div className="mb-4">
+            <h1 className="editorial-title text-2xl font-bold">AI Stylist</h1>
+            <p className="mt-1 text-sm leading-6 text-muted">
               Describe what you want, then get several grounded outfits from the catalog.
             </p>
           </div>
 
-          <div className="grid gap-4">
-            <label className="grid gap-2">
+          <div className="grid gap-3">
+            <label className="grid gap-1.5">
               <span className={labelClass}>Prompt</span>
               <textarea
-                className={`${inputClass} min-h-36 resize-none text-base leading-7`}
+                className={`${inputClass} min-h-24 resize-none text-sm leading-6`}
                 value={form.prompt}
                 onChange={updateField("prompt")}
                 placeholder="Vi du: Hom nay toi muon mot chiec vay cho buoi tiec sinh nhat."
@@ -265,8 +269,8 @@ function StylistPage() {
           </div>
         </form>
 
-        <section className="min-h-[680px]">
-          <div className="glass-panel h-full p-5">
+        <section id="stylist-results" className="min-h-[500px]">
+          <div className="glass-panel h-full p-4 lg:p-5">
             {status === "idle" ? (
               <div className="flex h-full items-center justify-center text-center text-muted">
                 <p className="max-w-md text-base leading-7">

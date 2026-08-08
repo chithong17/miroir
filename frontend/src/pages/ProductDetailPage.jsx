@@ -81,40 +81,59 @@ export default function ProductDetailPage({ productId }) {
 
         {product ? (
           <>
-            <section className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
-              <div className="glass-panel overflow-hidden p-3 sm:p-5">
-                <div className="aspect-[4/5] overflow-hidden rounded-[24px] bg-panel">
-                  {product.imageUrl ? <img alt={product.name} className="h-full w-full object-cover" src={product.imageUrl} /> : <div className="flex h-full items-center justify-center text-muted">Chưa có ảnh sản phẩm</div>}
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(380px,1.1fr)]">
+              <div className="flex h-full flex-col gap-4">
+                <div className="glass-panel flex flex-1 items-center justify-center p-4 sm:p-6">
+                  {product.imageUrl ? (
+                    <img 
+                      alt={product.name} 
+                      className="h-auto w-auto max-h-[440px] max-w-full rounded-[24px] shadow-sm" 
+                      src={product.imageUrl} 
+                    />
+                  ) : (
+                    <div className="flex h-64 w-full items-center justify-center rounded-[24px] bg-panel text-muted">
+                      Chưa có ảnh sản phẩm
+                    </div>
+                  )}
                 </div>
+
+                {product.shopId ? (
+                  <div className="glass-panel mt-auto p-4 sm:p-6">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-muted">Thông tin Shop</p>
+                    {product.shop ? (
+                      <div className="mt-3">
+                        <p className="font-black text-ink">{product.shop.name}</p>
+                        <p className="mt-1 text-sm text-muted">{product.shop.contact?.address || product.shop.contact?.email || "Shop chưa cập nhật thông tin liên hệ."}</p>
+                      </div>
+                    ) : null}
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <a className="dark-button block text-center" href={`/app/shops/${encodeURIComponent(product.shopId)}`}>Xem shop</a>
+                      <Button className="w-full" variant="primary" onClick={() => beginCustomerChat({ shopId: product.shopId }, { type: "product", id: product.id })}>Nhắn tin shop</Button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
-              <div className="glass-panel p-5 sm:p-7 lg:p-9">
+              <div className="glass-panel p-4 sm:p-6 lg:p-8">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-mintDeep">{product.category || "Sản phẩm"}</p>
-                <h1 className="mt-3 font-display text-3xl font-black leading-tight text-ink sm:text-5xl">{product.name}</h1>
-                <p className="mt-4 text-3xl font-black text-mintDeep">{formatMoney(product.price)}</p>
-                <p className="mt-6 text-base leading-7 text-muted">{product.description || "Shop chưa cung cấp mô tả cho sản phẩm này."}</p>
+                <h1 className="mt-2 font-display text-2xl font-black leading-tight text-ink sm:text-3xl md:text-4xl">{product.name}</h1>
+                <p className="mt-2 text-2xl font-black text-mintDeep">{formatMoney(product.price)}</p>
+                <p className="mt-4 text-sm leading-6 text-muted">{product.description || "Shop chưa cung cấp mô tả cho sản phẩm này."}</p>
 
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <ProductInfo label="Chất liệu" value={product.material} />
                   <ProductInfo label="Dáng sản phẩm" value={product.fitType} />
                   <ProductInfo label="Màu đang bán" value={(product.colors || []).join(", ")} />
                   <ProductInfo label="Kích thước" value={(product.sizes || []).join(", ")} />
                 </div>
 
-                <ProductPurchaseActions product={product} />
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <a className="dark-button block text-center" href={`/app/try-on?productId=${encodeURIComponent(product.id)}`}>Thử đồ với AI</a>
-                  {product.shopId ? <a className="soft-button block text-center" href={`/app/shops/${encodeURIComponent(product.shopId)}`}>Xem shop</a> : null}
+                <div className="mt-4">
+                  <ProductPurchaseActions product={product} />
                 </div>
-                {product.shopId ? <Button className="mt-3 w-full" variant="secondary" onClick={() => beginCustomerChat({ shopId: product.shopId }, { type: "product", id: product.id })}>Nhắn tin cho shop</Button> : null}
 
-                {product.shop ? (
-                  <div className="mt-6 rounded-2xl border border-line bg-white p-4">
-                    <p className="font-black text-ink">{product.shop.name}</p>
-                    <p className="mt-1 text-sm text-muted">{product.shop.contact?.address || product.shop.contact?.email || "Shop chưa cập nhật thông tin liên hệ."}</p>
-                  </div>
-                ) : null}
+                <div className="mt-4">
+                  <a className="dark-button block w-full text-center" href={`/app/try-on?productId=${encodeURIComponent(product.id)}`}>Thử đồ với AI</a>
+                </div>
               </div>
             </section>
 
