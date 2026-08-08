@@ -5,6 +5,9 @@ import { getOwnerShop, getSingleOwnerShop } from "./shop.service.js";
 const PRODUCT_STATUSES = ["draft", "published", "archived", "trashed"];
 const AVAILABILITIES = ["in_stock", "out_of_stock"];
 const GENDERS = ["female", "male", "unisex"];
+const FIT_CATEGORIES = ["top", "bottom", "dress", "outerwear"];
+const FIT_INTENTS = ["slim", "regular", "relaxed"];
+const FIT_MEASUREMENT_KEYS = ["chest", "waist", "hips", "shoulder", "length", "sleeveLength", "inseam", "outseam"];
 const EMBEDDING_FIELDS = [
   "name",
   "category",
@@ -57,7 +60,14 @@ const normalizeVariants = (value) => {
     if (skus.has(sku)) errors.push(`Duplicate SKU in product: ${sku}.`);
     ids.add(id);
     skus.add(sku);
-    return { id, sku, color, size, stockQuantity, active: item?.active !== false };
+    const fitMeasurements = {};
+    for (const key of FIT_MEASUREMENT_KEYS) {
+      if (item?.fitMeasurements?.[key] === undefined || item?.fitMeasurements?.[key] === "") continue;
+      const value = Number(item.fitMeasurements[key]);
+      if (!Number.isFinite(value) || value <= 0) errors.push(`variants[${index}].fitMeasurements.${key} must be a positive number.`);
+      else fitMeasurements[key] = value;
+    }
+    return { id, sku, color, size, stockQuantity, active: item?.active !== false, ...(Object.keys(fitMeasurements).length ? { fitMeasurements } : {}) };
   });
   return { variants, errors };
 };
@@ -92,6 +102,8 @@ export const toPublicProduct = (product) => ({
   occasionTags: product.occasionTags || [],
   material: product.material || "",
   fitType: product.fitType || "",
+  fitCategory: product.fitCategory || "",
+  fitIntent: product.fitIntent || "regular",
   status: product.status,
   embeddingStale: Boolean(product.embeddingStale),
   createdAt: product.createdAt,
@@ -149,6 +161,14 @@ export const normalizeProductPayload = (body, { partial = false } = {}) => {
       normalized.gender = body.gender;
     }
   }
+  if (body.fitCategory !== undefined) {
+    if (body.fitCategory && !FIT_CATEGORIES.includes(body.fitCategory)) errors.push(`fitCategory must be one of: ${FIT_CATEGORIES.join(", ")}.`);
+    else normalized.fitCategory = cleanString(body.fitCategory);
+  }
+  if (body.fitIntent !== undefined) {
+    if (!FIT_INTENTS.includes(body.fitIntent)) errors.push(`fitIntent must be one of: ${FIT_INTENTS.join(", ")}.`);
+    else normalized.fitIntent = body.fitIntent;
+  } else if (!partial) normalized.fitIntent = "regular";
 
   if (body.availability !== undefined) {
     if (!AVAILABILITIES.includes(body.availability)) {

@@ -719,7 +719,13 @@ const uniqueVariantValues = (variants, field) => [
 const variantOptionKey = (value) => value || "__default__";
 const variantOptionValue = (key) => (key === "__default__" ? "" : key);
 
-export function ProductPurchaseActions({ compact = false, product }) {
+export function ProductPurchaseActions({
+  compact = false,
+  onFitAction,
+  onOpenFitFinder,
+  product,
+  recommendedVariantId = "",
+}) {
   const variants = useMemo(
     () =>
       (product?.variants || []).filter(
@@ -747,6 +753,15 @@ export function ProductPurchaseActions({ compact = false, product }) {
     setNoticeTone("neutral");
     setQuickAction("");
   }, [product?.id]);
+  useEffect(() => {
+    if (!recommendedVariantId) return;
+    const variant = variants.find((item) => item.id === recommendedVariantId);
+    if (!variant) return;
+    if (hasColor) setColorKey(variantOptionKey(String(variant.color || "")));
+    if (variants.some((item) => String(item.size || ""))) setSizeKey(variantOptionKey(String(variant.size || "")));
+    setNotice(`Đã chọn size ${variant.size || "đề xuất"} phù hợp.`);
+    setNoticeTone("success");
+  }, [recommendedVariantId, variants, hasColor]);
 
   const colorFilteredVariants =
     hasColor && colorKey
@@ -801,6 +816,9 @@ export function ProductPurchaseActions({ compact = false, product }) {
         variantId: selectedVariant.id,
         quantity,
       });
+      if (selectedVariant.id === recommendedVariantId) {
+        onFitAction?.("add_to_cart", selectedVariant.id);
+      }
       window.dispatchEvent(new Event("miroir:cart-updated"));
       setNotice("Đã thêm vào giỏ hàng.");
       setNoticeTone("success");
@@ -814,6 +832,9 @@ export function ProductPurchaseActions({ compact = false, product }) {
   };
   const buyNow = () => {
     if (!validateSelection() || !requireLogin()) return;
+    if (selectedVariant.id === recommendedVariantId) {
+      onFitAction?.("checkout", selectedVariant.id);
+    }
     sessionStorage.setItem(
       "miroir_buy_now",
       JSON.stringify([
@@ -868,7 +889,28 @@ export function ProductPurchaseActions({ compact = false, product }) {
       ) : null}
 
       {hasSize ? (
-        <VariantBadgeGroup label="Kích thước">
+        <VariantBadgeGroup
+          label="Kích thước"
+          labelAction={
+            onOpenFitFinder ? (
+              <button
+                type="button"
+                aria-label="Tìm size phù hợp"
+                title="Tìm size phù hợp"
+                className="group relative grid h-9 w-9 place-items-center rounded-full border border-mintSoft bg-accentSoft text-mintDeep transition hover:border-mintDeep hover:bg-mintDeep hover:text-white"
+                onClick={onOpenFitFinder}
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
+                  <circle cx="9" cy="5" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M6.5 21 8 14l-2-3 2-3h2l2 3-1.5 3 1 7M14.5 6.5h6M17.5 6.5V18M15 10h5M15 14h5M15 18h5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+                </svg>
+                <span className="pointer-events-none absolute -top-10 left-1/2 z-20 w-max -translate-x-1/2 rounded-lg bg-ink px-2 py-1 text-[10px] font-bold text-white opacity-0 shadow-lg transition group-hover:opacity-100">
+                  Tìm size phù hợp
+                </span>
+              </button>
+            ) : null
+          }
+        >
           {sizeValues.map((value) => {
             const key = variantOptionKey(value);
             const selected = sizeKey === key;
@@ -1062,10 +1104,13 @@ export function ProductPurchaseActions({ compact = false, product }) {
   );
 }
 
-function VariantBadgeGroup({ children, label }) {
+function VariantBadgeGroup({ children, label, labelAction }) {
   return (
     <div className="grid gap-3 sm:grid-cols-[120px_1fr] sm:items-start">
-      <p className="pt-3 text-sm font-bold text-muted">{label}</p>
+      <div className="flex items-center gap-2 sm:pt-1.5">
+        <p className="text-sm font-bold text-muted">{label}</p>
+        {labelAction}
+      </div>
       <div className="flex flex-wrap gap-2.5">{children}</div>
     </div>
   );
@@ -1087,7 +1132,7 @@ export function ProductCard({
   };
 
   return (
-    <article className="group relative overflow-hidden rounded-[22px] border border-line bg-white p-2 shadow-glow transition-all duration-500 hover:-translate-y-0.5 hover:border-accentStrong/35 sm:rounded-[24px]">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-[22px] border border-line bg-white p-2 shadow-glow transition-all duration-500 hover:-translate-y-0.5 hover:border-accentStrong/35 sm:rounded-[24px]">
       {onFavoriteToggle ? (
         <button
           type="button"
@@ -1128,7 +1173,7 @@ export function ProductCard({
           </div>
         )}
       </button>
-      <div className="p-3 sm:p-5">
+      <div className="flex flex-1 flex-col p-3 sm:p-5">
         <p className="line-clamp-2 font-display text-base font-bold text-ink sm:line-clamp-1 sm:text-lg">
           {product?.name || t("product.untitled")}
         </p>
@@ -1143,7 +1188,7 @@ export function ProductCard({
             {t("shopPage.viewShop")}
           </a>
         ) : null}
-        <div className="mt-4 grid gap-3 sm:mt-5 sm:flex sm:items-center sm:justify-between">
+        <div className="mt-auto grid gap-3 pt-5 sm:flex sm:items-center sm:justify-between">
           <p className="text-lg font-extrabold text-ink sm:text-xl">
             {formatMoney(product?.price)}
           </p>

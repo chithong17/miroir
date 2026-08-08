@@ -5,6 +5,7 @@ import {
   previewBuyNow, removeCartItem, reportTransfer, selectCartAddress, updateCartItem,
   updateShopOrderStatus, updateShopPayment,
 } from "../services/commerce.service.js";
+import { createFitFeedback } from "../services/fit.service.js";
 
 const proofFromFile = async (file) => {
   if (!file) return null;
@@ -23,6 +24,7 @@ export const myOrders = async (req, res, next) => { try { res.json({ success: tr
 export const myOrder = async (req, res, next) => { try { res.json({ success: true, order: await getCustomerOrder({ userId: req.user.id, orderId: req.params.orderId }) }); } catch (e) { next(e); } };
 export const reportMyTransfer = async (req, res, next) => { try { res.json({ success: true, order: await reportTransfer({ userId: req.user.id, orderId: req.params.orderId, proof: await proofFromFile(req.file) }) }); } catch (e) { next(e); } };
 export const cancelMyOrder = async (req, res, next) => { try { res.json({ success: true, order: await customerCancelOrder({ userId: req.user.id, orderId: req.params.orderId, reason: req.body.reason }) }); } catch (e) { next(e); } };
+export const submitMyFitFeedback = async (req, res, next) => { try { res.status(201).json({ success: true, feedback: await createFitFeedback({ userId: req.user.id, orderId: req.params.orderId, item: req.body || {}, outcome: req.body.outcome }) }); } catch (e) { next(e); } };
 
 export const shopOrders = async (req, res, next) => { try { res.json({ success: true, orders: await listShopOrders({ ownerId: req.owner.id, query: req.query }) }); } catch (e) { next(e); } };
 export const shopOrder = async (req, res, next) => { try { res.json({ success: true, order: await getShopOrder({ ownerId: req.owner.id, orderId: req.params.orderId }) }); } catch (e) { next(e); } };

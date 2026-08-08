@@ -88,6 +88,7 @@ const buildGenerationPayload = ({ body, memory, context }) => ({
 const buildFallbackRecommendation = ({ body, context }) => {
   const desiredOutfitCount = normalizeDesiredOutfitCount(body.desiredOutfitCount);
   const products = context.products.slice(0, Math.max(desiredOutfitCount * 3, desiredOutfitCount));
+  const prompt = body.prompt.trim();
 
   const outfits = Array.from({ length: desiredOutfitCount }, (_, index) => {
     const primary = products[index] || products[0];
@@ -98,18 +99,19 @@ const buildFallbackRecommendation = ({ body, context }) => {
       .filter(Boolean)
       .map((product) => ({
         productId: product.id,
-        reason: `Matched to your prompt from the available catalog: ${product.name}.`,
+        reason: `Phù hợp với yêu cầu “${prompt}” và đang có sẵn trong catalog: ${product.name}.`,
       }));
 
     return {
       id: `fallback-outfit-${index + 1}`,
-      title: index === 0 ? "Best catalog match" : `Catalog match ${index + 1}`,
+      title:
+        index === 0 ? "Gợi ý phù hợp nhất" : `Gợi ý phối đồ ${index + 1}`,
       score: Math.max(70, Math.round((primary?.rerankScore || 0.7) * 100)),
       items,
       whyItMatches:
-        "MIROIR matched this outfit from the strongest catalog results for your prompt.",
+        `MIROIR chọn các sản phẩm phù hợp nhất với yêu cầu “${prompt}” từ catalog hiện có.`,
       fitWarnings: [],
-      fashionTips: ["Review sizes and availability before trying on."],
+      fashionTips: ["Hãy kiểm tra size và tồn kho trước khi thử đồ hoặc đặt mua."],
     };
   }).filter((outfit) => outfit.items.length);
 
@@ -118,7 +120,7 @@ const buildFallbackRecommendation = ({ body, context }) => {
       bodyShape: "",
       skinTone: "",
       styleMatch:
-        "MIROIR used catalog ranking to keep this recommendation grounded in available products.",
+        "MIROIR đã xếp hạng các sản phẩm sẵn có trong catalog để tạo gợi ý.",
     },
     outfits,
     recommended_outfit: outfits[0] || {
@@ -128,7 +130,7 @@ const buildFallbackRecommendation = ({ body, context }) => {
     },
     alternatives: [],
     fitWarnings: [],
-    fashionTips: ["Try a more specific prompt if you want a narrower result."],
+    fashionTips: ["Bạn có thể thêm màu sắc, phong cách hoặc ngân sách để nhận gợi ý cụ thể hơn."],
   };
 };
 
@@ -156,11 +158,11 @@ export const recommendOutfit = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         noMatch: true,
-        message: "No eligible products were found for this styling request.",
+        message: "Không tìm thấy sản phẩm phù hợp với yêu cầu phối đồ này.",
         analysis: {
           bodyShape: getProfile(body).bodyShape || "",
           skinTone: getProfile(body).skinTone || "",
-          styleMatch: "No product context was available for generation.",
+          styleMatch: "Không có ngữ cảnh sản phẩm để tạo gợi ý.",
         },
         recommended_outfit: {
           score: 0,

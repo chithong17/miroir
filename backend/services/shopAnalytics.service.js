@@ -249,10 +249,13 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
   const shop = await getOwnerShopOrThrow(ownerId);
   const normalizedRange = normalizeRange(range);
   const start = getRangeStart(normalizedRange);
-  const [analytics, orders, products] = await Promise.all([
+  const [analytics, orders, products, fitEvents, fitFeedback, returns] = await Promise.all([
     getShopAnalytics({ ownerId, range: normalizedRange }),
     db.collection("orders").find({ shopId: shop.id, createdAt: { $gte: start } }).sort({ createdAt: -1 }).toArray(),
     db.collection("products").find({ shopId: shop.id }).toArray(),
+    db.collection("fit_events").find({ shopId: shop.id, createdAt: { $gte: start } }).toArray(),
+    db.collection("fit_feedback").find({ shopId: shop.id, createdAt: { $gte: start } }).toArray(),
+    db.collection("order_returns").find({ shopId: shop.id, createdAt: { $gte: start } }).toArray(),
   ]);
 
   const paymentStatuses = new Map();
@@ -299,6 +302,9 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
     outOfStock: products.filter((product) => product.availability === "out_of_stock").length,
     needsEmbedding: products.filter((product) => product.embeddingStale || !Array.isArray(product.embedding) || !product.embedding.length).length,
   };
+  const fitCount = (type) => fitEvents.filter((item) => item.type === type).length;
+  const confidenceDistribution = ["high", "moderate", "low"].map((confidence) => ({ label: confidence, count: fitEvents.filter((item) => item.confidence === confidence).length }));
+  const sizeReturns = returns.filter((item) => item.reasonCode === "size_or_fit").length;
 
   return {
     range: normalizedRange,
@@ -322,6 +328,18 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
       feedback: analytics.summary.feedbackCount,
       orders: orders.length,
       paidOrders: orders.filter((order) => order.paymentStatus === "paid").length,
+    },
+    fitFinder: {
+      opened: fitCount("opened"), recommended: fitCount("recommended"), applied: fitCount("applied"), addToCart: fitCount("add_to_cart"), checkout: fitCount("checkout"),
+      confidenceDistribution,
+      feedback: {
+        total: fitFeedback.length,
+        tooSmall: fitFeedback.filter((item) => item.outcome === "too_small").length,
+        trueToSize: fitFeedback.filter((item) => item.outcome === "true_to_size").length,
+        tooLarge: fitFeedback.filter((item) => item.outcome === "too_large").length,
+      },
+      sizeReturnCount: sizeReturns,
+      sizeReturnRate: returns.length ? Number((sizeReturns / returns.length).toFixed(4)) : 0,
     },
     topProducts: [...productSales.values()]
       .sort((left, right) => right.collectedRevenue - left.collectedRevenue || right.quantity - left.quantity)

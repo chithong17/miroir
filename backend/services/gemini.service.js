@@ -91,8 +91,76 @@ const isTransientGeminiError = (error) => {
 
 const shouldOmitSamplingConfig = (model) => /^gemini-3/i.test(model);
 
+const STYLIST_ITEM_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    productId: { type: "STRING" },
+    reason: { type: "STRING" },
+  },
+  required: ["productId", "reason"],
+};
+
+const STYLIST_OUTFIT_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    id: { type: "STRING" },
+    title: { type: "STRING" },
+    score: { type: "NUMBER" },
+    items: { type: "ARRAY", items: STYLIST_ITEM_SCHEMA },
+    whyItMatches: { type: "STRING" },
+    fitWarnings: { type: "ARRAY", items: { type: "STRING" } },
+    fashionTips: { type: "ARRAY", items: { type: "STRING" } },
+  },
+  required: [
+    "id",
+    "title",
+    "score",
+    "items",
+    "whyItMatches",
+    "fitWarnings",
+    "fashionTips",
+  ],
+};
+
+const STYLIST_RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    analysis: {
+      type: "OBJECT",
+      properties: {
+        bodyShape: { type: "STRING" },
+        skinTone: { type: "STRING" },
+        styleMatch: { type: "STRING" },
+      },
+      required: ["bodyShape", "skinTone", "styleMatch"],
+    },
+    outfits: { type: "ARRAY", items: STYLIST_OUTFIT_SCHEMA },
+    recommended_outfit: {
+      type: "OBJECT",
+      properties: {
+        score: { type: "NUMBER" },
+        items: { type: "ARRAY", items: STYLIST_ITEM_SCHEMA },
+        whyItMatches: { type: "STRING" },
+      },
+      required: ["score", "items", "whyItMatches"],
+    },
+    alternatives: { type: "ARRAY", items: STYLIST_ITEM_SCHEMA },
+    fitWarnings: { type: "ARRAY", items: { type: "STRING" } },
+    fashionTips: { type: "ARRAY", items: { type: "STRING" } },
+  },
+  required: [
+    "analysis",
+    "outfits",
+    "recommended_outfit",
+    "alternatives",
+    "fitWarnings",
+    "fashionTips",
+  ],
+};
+
 const buildGenerationConfig = (model) => ({
   responseMimeType: "application/json",
+  responseSchema: STYLIST_RESPONSE_SCHEMA,
   ...(!shouldOmitSamplingConfig(model) ? { temperature: 0.35 } : {}),
 });
 

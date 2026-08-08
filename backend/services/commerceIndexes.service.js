@@ -29,6 +29,8 @@ export const ensureCommerceIndexes = async () => {
     db.collection("order_returns").createIndex({ userId: 1, updatedAt: -1 }),
     db.collection("order_returns").createIndex({ shopId: 1, updatedAt: -1 }),
     db.collection("order_returns").createIndex({ orderId: 1, status: 1 }),
+    db.collection("fit_events").createIndex({ shopId: 1, createdAt: -1 }),
+    db.collection("fit_feedback").createIndex({ shopId: 1, createdAt: -1 }),
     db.collection("order_disputes").createIndex({ orderId: 1, type: 1, status: 1 }),
     db.collection("products").createIndex(
       { shopId: 1, "variants.sku": 1 },

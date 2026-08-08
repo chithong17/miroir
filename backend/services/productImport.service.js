@@ -30,6 +30,12 @@ const EXAMPLE_ROW = {
   imageUrl: "https://example.com/product.jpg",
 };
 
+const FIT_COLUMNS = ["productId", "sku", "fitCategory", "fitIntent", "chest", "waist", "hips", "shoulder", "length", "sleeveLength", "inseam", "outseam"];
+const FIT_EXAMPLE_ROW = { productId: "Paste an existing product ID", sku: "LINEN-S-WHITE", fitCategory: "top", fitIntent: "regular", chest: 104, waist: 98, hips: "", shoulder: 44, length: 70, sleeveLength: 62, inseam: "", outseam: "" };
+const FIT_CATEGORIES = ["top", "bottom", "dress", "outerwear"];
+const FIT_INTENTS = ["slim", "regular", "relaxed"];
+const FIT_MEASUREMENT_FIELDS = FIT_COLUMNS.slice(4);
+
 const cleanString = (value) => String(value || "").trim();
 
 const asStringArray = (value) => {
@@ -143,19 +149,57 @@ export const generateProductImportTemplate = () => {
     ["manager fields", "Gender, status, style tags, occasion tags, and fit type are managed by the system team."],
   ];
   const notesSheet = XLSX.utils.aoa_to_sheet(notes);
+  const fitSheet = XLSX.utils.json_to_sheet([FIT_EXAMPLE_ROW], { header: FIT_COLUMNS });
 
   productsSheet["!cols"] = COLUMNS.map((column) => ({
     wch: column === "description" ? 48 : column === "imageUrl" ? 42 : 22,
   }));
   notesSheet["!cols"] = [{ wch: 28 }, { wch: 90 }];
+  fitSheet["!cols"] = FIT_COLUMNS.map((column) => ({ wch: ["productId", "sku"].includes(column) ? 30 : 18 }));
 
   XLSX.utils.book_append_sheet(workbook, productsSheet, "Products");
+  XLSX.utils.book_append_sheet(workbook, fitSheet, "FitMeasurements");
   XLSX.utils.book_append_sheet(workbook, notesSheet, "Notes");
 
   return XLSX.write(workbook, {
     type: "buffer",
     bookType: "xlsx",
   });
+};
+
+const applyFitMeasurements = async ({ db, ownerId, rows }) => {
+  const errors = [];
+  let successCount = 0;
+  for (const [index, row] of rows.entries()) {
+    const rowNumber = index + 2;
+    const productId = cleanString(row.productId);
+    const sku = cleanString(row.sku);
+    const fitCategory = cleanString(row.fitCategory);
+    const fitIntent = cleanString(row.fitIntent) || "regular";
+    if (!productId || !sku) { errors.push({ row: rowNumber, field: "productId/sku", message: "productId and sku are required." }); continue; }
+    if (!FIT_CATEGORIES.includes(fitCategory)) { errors.push({ row: rowNumber, field: "fitCategory", message: "fitCategory must be top, bottom, dress, or outerwear." }); continue; }
+    if (!FIT_INTENTS.includes(fitIntent)) { errors.push({ row: rowNumber, field: "fitIntent", message: "fitIntent must be slim, regular, or relaxed." }); continue; }
+    const measurements = {};
+    let invalid = false;
+    FIT_MEASUREMENT_FIELDS.forEach((field) => {
+      if (row[field] === "" || row[field] === undefined || row[field] === null) return;
+      const value = Number(row[field]);
+      if (!Number.isFinite(value) || value <= 0) { errors.push({ row: rowNumber, field, message: "Measurement must be a positive number in cm." }); invalid = true; return; }
+      measurements[field] = value;
+    });
+    if (invalid || !Object.keys(measurements).length) { if (!invalid) errors.push({ row: rowNumber, field: "measurements", message: "Provide at least one garment measurement." }); continue; }
+    const product = await db.collection("products").findOne({ id: productId });
+    if (!product) { errors.push({ row: rowNumber, field: "productId", message: "Product was not found." }); continue; }
+    const shop = await db.collection("shops").findOne({ id: product.shopId, ownerId });
+    if (!shop) { errors.push({ row: rowNumber, field: "productId", message: "Product does not belong to your shop." }); continue; }
+    const variantIndex = (product.variants || []).findIndex((variant) => cleanString(variant.sku) === sku);
+    if (variantIndex < 0) { errors.push({ row: rowNumber, field: "sku", message: "Variant SKU was not found on this product." }); continue; }
+    const variants = [...product.variants];
+    variants[variantIndex] = { ...variants[variantIndex], fitMeasurements: measurements };
+    await db.collection("products").updateOne({ id: productId }, { $set: { fitCategory, fitIntent, variants, updatedAt: new Date() } });
+    successCount += 1;
+  }
+  return { errors, successCount };
 };
 
 const getOwnerShops = async ({ db, ownerId }) => {
@@ -280,7 +324,8 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
       raw: false,
     });
 
-    job.totalRows = rows.length;
+    const fitRows = workbook.Sheets.FitMeasurements ? XLSX.utils.sheet_to_json(workbook.Sheets.FitMeasurements, { defval: "", raw: false }) : [];
+    job.totalRows = rows.length + fitRows.length;
 
     const { errors, normalizedRows } = await validateRows({
       db,
@@ -362,9 +407,10 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
 
     job.shopId = uniqueShopIds.length === 1 ? uniqueShopIds[0] : null;
     job.status = "completed";
-    job.successCount = importedProducts.length;
-    job.failedCount = 0;
-    job.errors = [];
+    const fitResult = await applyFitMeasurements({ db, ownerId, rows: fitRows });
+    job.successCount = importedProducts.length + fitResult.successCount;
+    job.failedCount = fitResult.errors.length;
+    job.errors = fitResult.errors;
     job.completedAt = new Date();
     job.products = importedProducts;
     job.aiReadyCount = aiReadyCount;
