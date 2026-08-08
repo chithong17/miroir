@@ -1,6 +1,7 @@
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import { getAdminToken } from "./api/adminApi.js";
 import AuthPage from "./pages/AuthPage.jsx";
+import DownloadPage from "./pages/DownloadPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import PaymentResultPage from "./pages/PaymentResultPage.jsx";
 import ProductDetailPage from "./pages/ProductDetailPage.jsx";
@@ -18,6 +19,10 @@ import { getUserToken } from "./api/userApi.js";
 function App() {
   const rawPathname = window.location.pathname;
   const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
+
+  if (pathname === "/download") {
+    return <DownloadPage />;
+  }
 
   if (pathname === "/try-on") {
     return <TryOnStudioPage />;
