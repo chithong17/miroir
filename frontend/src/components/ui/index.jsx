@@ -438,16 +438,6 @@ export function TopNav({ user, onLogout, compact = false }) {
             </>
           ) : (
             <>
-              <a
-                href="/download"
-                title="Tải app Android"
-                className="hidden items-center gap-1.5 rounded-full border border-mintDeep/30 bg-mintDeep/10 px-3 py-2 text-xs font-bold text-mintDeep transition hover:bg-mintDeep hover:text-white sm:flex"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 18.5l-6-6m6 6l6-6m-6 6V5" />
-                </svg>
-                Tải App
-              </a>
               <a href="/login" className="soft-button !px-4 !py-2.5 sm:!px-6">
                 {t("nav.login")}
               </a>
