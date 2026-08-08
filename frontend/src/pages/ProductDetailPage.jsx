@@ -54,14 +54,14 @@ export default function ProductDetailPage({ productId }) {
     setStatus("loading");
     Promise.all([
       getCatalogProduct(productId),
-      listCatalogProducts({ limit: 8 }),
+      listCatalogProducts({ limit: 10 }),
     ])
       .then(([detailResult, listResult]) => {
         setProduct(detailResult.product);
         setRelatedProducts(
           (listResult.products || [])
             .filter((item) => item.id !== productId)
-            .slice(0, 4),
+            .slice(0, 5),
         );
         setStatus("ready");
       })
@@ -156,8 +156,8 @@ export default function ProductDetailPage({ productId }) {
                       </div>
                     ) : null}
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      <a className="dark-button block text-center" href={`/app/shops/${encodeURIComponent(product.shopId)}`}>Xem shop</a>
-                      <Button className="w-full" variant="primary" onClick={() => beginCustomerChat({ shopId: product.shopId }, { type: "product", id: product.id })}>Nhắn tin shop</Button>
+                      <a className="soft-button block text-center" href={`/app/shops/${encodeURIComponent(product.shopId)}`}>Xem shop</a>
+                      <Button className="w-full" variant="secondary" onClick={() => beginCustomerChat({ shopId: product.shopId }, { type: "product", id: product.id })}>Nhắn tin shop</Button>
                     </div>
                   </div>
                 ) : null}
@@ -199,86 +199,93 @@ export default function ProductDetailPage({ productId }) {
                 </div>
 
                 <div className="mt-4">
-                  <a className="dark-button block w-full text-center" href={`/app/try-on?productId=${encodeURIComponent(product.id)}`}>Thử đồ với AI</a>
+                  <a className="soft-button block w-full text-center" href={`/app/try-on?productId=${encodeURIComponent(product.id)}`}>Thử đồ với AI</a>
                 </div>
               </div>
             </section>
 
-            <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_420px]">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-mintDeep">
-                  Có thể bạn cũng thích
-                </p>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  {relatedProducts.map((item) => (
-                    <ProductCard
-                      key={item.id}
-                      product={item}
-                      showPurchaseActions
-                      onTryOn={(chosen) => {
-                        window.location.href = `/app/try-on?productId=${encodeURIComponent(chosen.id)}`;
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <form className="glass-panel h-fit p-5" onSubmit={submitFeedback}>
+            <section className="mt-8">
+              <form className="glass-panel p-5 sm:p-6" onSubmit={submitFeedback}>
                 <h2 className="text-xl font-black text-ink">
                   Đánh giá sản phẩm
                 </h2>
-                <div className="mt-4 grid gap-3">
-                  <SelectField
-                    label="Số sao"
-                    value={feedback.rating}
-                    onChange={(event) =>
-                      setFeedback((current) => ({
-                        ...current,
-                        rating: event.target.value,
-                      }))
-                    }
-                  >
-                    {[5, 4, 3, 2, 1].map((rating) => (
-                      <option key={rating} value={rating}>
-                        {rating} sao
-                      </option>
-                    ))}
-                  </SelectField>
-                  <SelectField
-                    label="Độ vừa vặn"
-                    value={feedback.fitFeedback}
-                    onChange={(event) =>
-                      setFeedback((current) => ({
-                        ...current,
-                        fitFeedback: event.target.value,
-                      }))
-                    }
-                  >
-                    <option value="true_to_size">Đúng kích thước</option>
-                    <option value="runs_small">Nhỏ hơn dự kiến</option>
-                    <option value="runs_large">Lớn hơn dự kiến</option>
-                    <option value="not_sure">Chưa chắc chắn</option>
-                  </SelectField>
-                  <TextField
-                    as="textarea"
-                    label="Nhận xét"
-                    rows="4"
-                    value={feedback.comment}
-                    onChange={(event) =>
-                      setFeedback((current) => ({
-                        ...current,
-                        comment: event.target.value,
-                      }))
-                    }
-                  />
-                  <Button type="submit">Gửi đánh giá</Button>
-                  {feedbackNotice ? (
-                    <p className="text-sm font-semibold text-muted">
-                      {feedbackNotice}
-                    </p>
-                  ) : null}
+                <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end">
+                  <div className="w-full shrink-0 md:w-36">
+                    <SelectField
+                      label="Số sao"
+                      value={feedback.rating}
+                      onChange={(event) =>
+                        setFeedback((current) => ({
+                          ...current,
+                          rating: event.target.value,
+                        }))
+                      }
+                    >
+                      {[5, 4, 3, 2, 1].map((rating) => (
+                        <option key={rating} value={rating}>
+                          {rating} sao
+                        </option>
+                      ))}
+                    </SelectField>
+                  </div>
+                  <div className="w-full shrink-0 md:w-48">
+                    <SelectField
+                      label="Độ vừa vặn"
+                      value={feedback.fitFeedback}
+                      onChange={(event) =>
+                        setFeedback((current) => ({
+                          ...current,
+                          fitFeedback: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="true_to_size">Đúng kích thước</option>
+                      <option value="runs_small">Nhỏ hơn dự kiến</option>
+                      <option value="runs_large">Lớn hơn dự kiến</option>
+                      <option value="not_sure">Chưa chắc chắn</option>
+                    </SelectField>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <TextField
+                      label="Nhận xét"
+                      value={feedback.comment}
+                      placeholder="Chia sẻ cảm nhận của bạn..."
+                      onChange={(event) =>
+                        setFeedback((current) => ({
+                          ...current,
+                          comment: event.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="w-full shrink-0 md:w-auto">
+                    <Button type="submit" className="w-full">Gửi đánh giá</Button>
+                  </div>
                 </div>
+                {feedbackNotice ? (
+                  <p className="mt-3 text-sm font-semibold text-muted">
+                    {feedbackNotice}
+                  </p>
+                ) : null}
               </form>
+            </section>
+
+            <section className="mt-8">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-mintDeep">
+                Có thể bạn cũng thích
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {relatedProducts.map((item) => (
+                  <ProductCard
+                    key={item.id}
+                    product={item}
+                    showPurchaseActions
+                    onTryOn={(chosen) => {
+                      window.location.href = `/app/try-on?productId=${encodeURIComponent(chosen.id)}`;
+                    }}
+                  />
+                ))}
+              </div>
             </section>
           </>
         ) : null}

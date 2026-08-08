@@ -984,9 +984,9 @@ export function ProductPurchaseActions({
   );
 
   const actionButtons = compact ? (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="flex flex-col gap-2">
       <Button
-        className="w-full !px-3 !py-2.5"
+        className="w-full !px-3 !py-2.5 text-xs sm:text-sm"
         onClick={() => {
           setQuickAction("cart");
           setNotice("");
@@ -995,7 +995,7 @@ export function ProductPurchaseActions({
         Thêm vào giỏ
       </Button>
       <Button
-        className="w-full !px-3 !py-2.5"
+        className="w-full !px-3 !py-2.5 text-xs sm:text-sm"
         variant="secondary"
         onClick={() => {
           setQuickAction("buy");
@@ -1188,21 +1188,21 @@ export function ProductCard({
             {t("shopPage.viewShop")}
           </a>
         ) : null}
-        <div className="mt-auto grid gap-3 pt-5 sm:flex sm:items-center sm:justify-between">
-          <p className="text-lg font-extrabold text-ink sm:text-xl">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
+          <p className="text-lg font-extrabold text-ink">
             {formatMoney(product?.price)}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
-              className="!px-4 !py-2"
+              className="!px-3 !py-1.5 text-xs font-bold"
               variant="secondary"
               onClick={openDetail}
             >
               Chi tiết
             </Button>
             {onTryOn ? (
-              <Button className="!px-4 !py-2" onClick={() => onTryOn(product)}>
-                {t("common.tryOn")}
+              <Button className="!px-3 !py-1.5 text-xs font-bold" onClick={(event) => { event.stopPropagation(); onTryOn(product); }}>
+                Thử đồ
               </Button>
             ) : null}
           </div>

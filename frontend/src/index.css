@@ -71,11 +71,12 @@
 
   /* Buttons */
   .soft-button {
-    @apply inline-flex items-center justify-center rounded-[18px] border border-white/80 bg-white/75 px-5 py-3 text-sm font-bold text-ink shadow-sm backdrop-blur-md transition-all duration-300 hover:border-accentStrong/40 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-[20px] sm:px-7 sm:py-3.5;
+    @apply inline-flex items-center justify-center rounded-[18px] border border-mintDeep/30 bg-white px-5 py-3 text-sm font-black text-mintDeep backdrop-blur-md transition-all duration-300 hover:border-mintDeep hover:bg-mintDeep/10 disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-[20px] sm:px-7 sm:py-3.5;
+    box-shadow: 0 10px 24px -6px rgba(148, 177, 111, 0.45);
   }
 
   .dark-button {
-    @apply inline-flex items-center justify-center rounded-[18px] bg-mintDeep px-5 py-3 text-sm font-bold text-white shadow-glow transition-all duration-300 hover:bg-mint hover:shadow-glowDeep disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-[20px] sm:px-7 sm:py-3.5;
+    @apply inline-flex items-center justify-center rounded-[18px] bg-gradient-to-r from-mintDeep via-mint to-mintSoft px-5 py-3 text-sm font-bold text-white shadow-glow transition-all duration-300 hover:opacity-90 hover:shadow-glowDeep disabled:cursor-not-allowed disabled:opacity-50 sm:rounded-[20px] sm:px-7 sm:py-3.5;
   }
 
   /* Inputs */
