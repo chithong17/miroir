@@ -66,12 +66,6 @@ function LandingPage() {
                 <div className="mt-5 grid gap-3 sm:mt-6 sm:flex sm:flex-wrap">
                   <a href="/register" className="dark-button w-full !px-6 !py-3.5 text-base sm:w-auto sm:!px-8 sm:!py-4">{t("landing.startStyling")}</a>
                   <a href="/app" className="soft-button w-full !px-6 !py-3.5 text-base sm:w-auto sm:!px-8 sm:!py-4">{t("landing.browseMarketplace")}</a>
-                  <a href="/download" className="flex w-full items-center justify-center gap-2 rounded-full border border-line bg-white/80 !px-6 !py-3.5 text-base font-semibold text-ink backdrop-blur-md transition hover:bg-white sm:w-auto sm:!px-8 sm:!py-4">
-                    <svg className="h-5 w-5 text-mintDeep" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18.5l-6-6m6 6l6-6m-6 6V5" />
-                    </svg>
-                    Tải app Android
-                  </a>
                 </div>
               </div>
             </div>
