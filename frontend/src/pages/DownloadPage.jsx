@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import logoUrl from "../assets/logo-web.png";
+import { useState } from "react";
+import { AppShell, TopNav } from "../components/ui/index.jsx";
 
 const STEPS = [
   {
@@ -44,55 +44,20 @@ const STEPS = [
   },
 ];
 
-const FEATURES = [
-  {
-    emoji: "🪞",
-    title: "AI Virtual Try-On",
-    desc: "Thử đồ ảo bằng AI chỉ cần tải ảnh lên. Xem trang phục trên người bạn trước khi mua.",
-  },
-  {
-    emoji: "🛍",
-    title: "Fashion Marketplace",
-    desc: "Mua sắm từ hàng trăm shop thời trang, lọc theo phong cách, giá và size.",
-  },
-  {
-    emoji: "🤖",
-    title: "AI Stylist",
-    desc: "Nhận gợi ý trang phục cá nhân hóa dựa trên hình dáng, tông màu da và sở thích của bạn.",
-  },
-];
-
 export default function DownloadPage() {
   const [downloaded, setDownloaded] = useState(false);
   const [qrVisible, setQrVisible] = useState(false);
-  const qrRef = useRef(null);
 
   const handleDownload = () => {
     setDownloaded(true);
     setTimeout(() => setDownloaded(false), 4000);
   };
 
-  // Generate QR via public API (no library needed)
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + "/miroir.apk")}`;
 
   return (
-    <div className="min-h-screen bg-canvas font-body">
-      {/* NAV */}
-      <nav className="fixed left-0 top-0 z-50 w-full border-b border-line bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
-          <a href="/" className="flex items-center gap-2">
-            <img src={logoUrl} alt="Miroir" className="h-12 w-12 object-contain" />
-            <span className="font-display text-xl font-black tracking-tight text-ink">MIROIR</span>
-          </a>
-          <div className="flex items-center gap-3">
-            <a href="/" className="text-sm font-medium text-muted transition hover:text-ink">Trang chủ</a>
-            <a href="/app" className="text-sm font-medium text-muted transition hover:text-ink">Marketplace</a>
-            <a href="/login" className="rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-panel">Đăng nhập</a>
-          </div>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-6xl px-5 pb-24 pt-28">
+    <AppShell nav={<TopNav />}>
+      <main className="mx-auto max-w-6xl px-5 pb-24 pt-10">
 
         {/* HERO */}
         <section className="grid items-center gap-12 lg:grid-cols-2">
@@ -173,16 +138,13 @@ export default function DownloadPage() {
           {/* Right: phone mockup */}
           <div className="relative flex justify-center">
             <div className="relative h-[480px] w-[240px]">
-              {/* Phone frame */}
               <div className="absolute inset-0 rounded-[40px] border-4 border-ink/10 bg-gradient-to-br from-slate-100 to-slate-200 shadow-2xl" />
-              {/* Screen */}
               <div className="absolute inset-[8px] overflow-hidden rounded-[34px] bg-canvasDeep">
                 <img
                   src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=85"
                   alt=""
                   className="h-full w-full object-cover opacity-80"
                 />
-                {/* Overlay glass */}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-5">
                   <div className="rounded-2xl bg-white/10 p-3 backdrop-blur-md">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">AI Try-On</p>
@@ -190,7 +152,6 @@ export default function DownloadPage() {
                   </div>
                 </div>
               </div>
-              {/* Floating badge */}
               <div className="absolute -right-6 top-16 rounded-2xl border border-line bg-white px-3 py-2 shadow-glass">
                 <p className="text-[10px] font-bold text-mintDeep">AI Powered</p>
                 <p className="text-xs font-semibold text-ink">Virtual Try-On</p>
@@ -200,30 +161,6 @@ export default function DownloadPage() {
                 <p className="text-xs font-semibold text-ink">Smart Stylist</p>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* FEATURES */}
-        <section className="mt-24">
-          <h2 className="editorial-title text-center text-3xl font-extrabold md:text-4xl">
-            Tại sao chọn Miroir?
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-center text-muted">
-            Ứng dụng thời trang thông minh đầu tiên tích hợp AI để cá nhân hóa toàn bộ trải nghiệm mua sắm.
-          </p>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {FEATURES.map((feature) => (
-              <div
-                key={feature.title}
-                className="glass-panel flex flex-col items-start gap-4 p-6 transition-all hover:-translate-y-1 hover:shadow-glow"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-mintDeep/10 text-3xl">
-                  {feature.emoji}
-                </div>
-                <h3 className="text-lg font-bold text-ink">{feature.title}</h3>
-                <p className="text-sm leading-relaxed text-muted">{feature.desc}</p>
-              </div>
-            ))}
           </div>
         </section>
 
@@ -251,13 +188,12 @@ export default function DownloadPage() {
               ))}
             </div>
 
-            {/* Warning note */}
             <div className="mx-auto mt-10 flex max-w-xl items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-xs leading-relaxed text-amber-800">
-                <strong>Lưu ý bảo mật:</strong> Bật "Cài đặt ứng dụng không rõ nguồn gốc" chỉ khi cài Miroir xong nên tắt lại để bảo vệ điện thoại.
+                <strong>Lưu ý bảo mật:</strong> Bật "Cài đặt ứng dụng không rõ nguồn gốc" chỉ khi cài Miroir, xong nên tắt lại để bảo vệ điện thoại.
                 Để bật: <em>Cài đặt → Bảo mật → Cài đặt ứng dụng không rõ nguồn gốc</em>.
               </p>
             </div>
@@ -286,16 +222,6 @@ export default function DownloadPage() {
           <p className="mt-3 text-xs text-muted">~70 MB · Android 8.0 trở lên</p>
         </section>
       </main>
-
-      {/* FOOTER */}
-      <footer className="border-t border-line bg-white px-5 py-8 text-center">
-        <p className="text-xs text-muted">© 2025 Miroir. All rights reserved.</p>
-        <div className="mt-2 flex justify-center gap-4">
-          <a href="/" className="text-xs text-muted hover:text-ink">Trang chủ</a>
-          <a href="/app" className="text-xs text-muted hover:text-ink">Marketplace</a>
-          <a href="/app/try-on" className="text-xs text-muted hover:text-ink">Try-On</a>
-        </div>
-      </footer>
-    </div>
+    </AppShell>
   );
 }
