@@ -2,6 +2,7 @@ import { generateEmbedding } from "./gemini.service.js";
 import { getMongoDb } from "./mongo.service.js";
 import { getReviewSummariesByProductIds } from "./reviewSummary.service.js";
 import { getActiveShopsByIds } from "./shop.service.js";
+import { isGrowthPlan, isSubscriptionActive } from "./subscription.service.js";
 
 const asArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -159,7 +160,10 @@ export const retrieveStylistContext = async ({ request, memory }) => {
   const activeShops = await getActiveShopsByIds([
     ...new Set(rawProducts.map((product) => product.shopId).filter(Boolean)),
   ]);
-  const activeShopById = new Map(activeShops.map((shop) => [shop.id, shop]));
+  const ownerIds = [...new Set(activeShops.map((shop) => shop.ownerId))];
+  const owners = await (await getMongoDb()).collection("shop_owners").find({ id: { $in: ownerIds } }).toArray();
+  const eligibleOwners = new Map(owners.filter((owner) => isSubscriptionActive(owner.subscription) && !owner.subscription?.suspendedAt && isGrowthPlan(owner.subscription?.planCode)).map((owner) => [owner.id, owner.subscription.planCode]));
+  const activeShopById = new Map(activeShops.filter((shop) => eligibleOwners.has(shop.ownerId)).map((shop) => [shop.id, { ...shop, planCode: eligibleOwners.get(shop.ownerId) }]));
   const shopFilteredProducts = rawProducts
     .filter(
       (product) =>
@@ -173,12 +177,14 @@ export const retrieveStylistContext = async ({ request, memory }) => {
 
       return {
         ...product,
+        variants: (product.variants || []).map(({ costPrice: _costPrice, ...variant }) => variant),
         shop: shop
           ? {
               id: shop.id,
               name: shop.name,
               slug: shop.slug,
               logoUrl: shop.logoUrl,
+              planCode: shop.planCode,
             }
           : undefined,
       };
@@ -201,17 +207,18 @@ export const retrieveStylistContext = async ({ request, memory }) => {
     reviewSummaries.map((summary) => [summary.productId, summary])
   );
   const products = shopFilteredProducts
-    .map((product) => ({
-      ...product,
-      premiumBoostApplied: false,
-      rerankScore:
-        scoreProduct({
-          product,
-          request,
-          memory,
-          reviewSummary: reviewByProductId.get(product.id),
-        }),
-    }))
+    .map((product) => {
+      const pro = product.shop?.planCode === "PRO_INSIGHT";
+      const styleMatch = intersects(product.styleTags, request.stylePreferences);
+      const budgetMax = Number(request.budget?.max);
+      const budgetMatch = Number.isFinite(budgetMax) && budgetMax > 0 && Number(product.price) <= budgetMax;
+      const bonus = pro ? (styleMatch ? 0.08 : 0) + (budgetMatch ? 0.04 : 0) : 0;
+      return {
+        ...product,
+        premiumBoostApplied: bonus > 0,
+        rerankScore: scoreProduct({ product, request, memory, reviewSummary: reviewByProductId.get(product.id) }) + bonus,
+      };
+    })
     .sort((a, b) => b.rerankScore - a.rerankScore)
     .slice(0, 30);
 

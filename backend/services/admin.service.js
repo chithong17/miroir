@@ -200,7 +200,14 @@ export const listAdminShopOwners = async ({ status = "pending" } = {}) => {
     .sort({ createdAt: -1 })
     .toArray();
 
-  return owners.map(toPublicOwner);
+  return owners.map((owner) => ({
+    ...toPublicOwner(owner),
+    subscription: owner.subscription ? {
+      planCode: owner.subscription.planCode || null,
+      expiresAt: owner.subscription.expiresAt || null,
+      grantType: owner.subscription.grantType || null,
+    } : null,
+  }));
 };
 
 export const listAdminPaymentPlans = async () => listPaymentPlans();
@@ -492,7 +499,7 @@ export const createAdminProduct = async ({ shopId, body }) => {
   };
 
   await db.collection("products").insertOne(product);
-  return toPublicProduct(product);
+  return toPublicProduct(product, { includeCost: true });
 };
 
 const getAdminProduct = async ({ db, productId }) => {
@@ -531,7 +538,7 @@ export const updateAdminProduct = async ({ productId, body }) => {
   }
 
   await db.collection("products").updateOne({ id: productId }, { $set: patch });
-  return toPublicProduct({ ...product, ...patch });
+  return toPublicProduct({ ...product, ...patch }, { includeCost: true });
 };
 
 export const setAdminProductStatus = async ({ productId, status }) => {
@@ -646,7 +653,7 @@ export const importAdminProductsWorkbook = async ({ shopId, file }) => {
       }
 
       await db.collection("products").updateOne({ id: row.existing.id }, { $set: patch });
-      products.push(toPublicProduct({ ...row.existing, ...patch }));
+      products.push(toPublicProduct({ ...row.existing, ...patch }, { includeCost: true }));
       continue;
     }
 

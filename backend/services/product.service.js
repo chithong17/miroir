@@ -52,10 +52,13 @@ const normalizeVariants = (value) => {
     const color = cleanString(item?.color);
     const size = cleanString(item?.size);
     const stockQuantity = Number(item?.stockQuantity);
+    const hasCostPrice = Object.prototype.hasOwnProperty.call(item || {}, "costPrice");
+    const costPrice = !hasCostPrice ? undefined : item?.costPrice === "" || item?.costPrice == null ? null : Number(item.costPrice);
     if (!sku) errors.push(`variants[${index}].sku is required.`);
     if (!Number.isInteger(stockQuantity) || stockQuantity < 0) {
       errors.push(`variants[${index}].stockQuantity must be a non-negative integer.`);
     }
+    if (costPrice !== undefined && costPrice !== null && (!Number.isSafeInteger(costPrice) || costPrice < 0)) errors.push(`variants[${index}].costPrice must be a non-negative integer.`);
     if (ids.has(id)) errors.push(`Duplicate variant id: ${id}.`);
     if (skus.has(sku)) errors.push(`Duplicate SKU in product: ${sku}.`);
     ids.add(id);
@@ -67,7 +70,7 @@ const normalizeVariants = (value) => {
       if (!Number.isFinite(value) || value <= 0) errors.push(`variants[${index}].fitMeasurements.${key} must be a positive number.`);
       else fitMeasurements[key] = value;
     }
-    return { id, sku, color, size, stockQuantity, active: item?.active !== false, ...(Object.keys(fitMeasurements).length ? { fitMeasurements } : {}) };
+    return { id, sku, color, size, stockQuantity, ...(hasCostPrice ? { costPrice } : {}), active: item?.active !== false, ...(Object.keys(fitMeasurements).length ? { fitMeasurements } : {}) };
   });
   return { variants, errors };
 };
@@ -84,7 +87,7 @@ const applyVariantDerivedFields = (normalized) => {
 export const productNeedsEmbeddingReset = (body) =>
   EMBEDDING_FIELDS.some((field) => Object.prototype.hasOwnProperty.call(body, field));
 
-export const toPublicProduct = (product) => ({
+export const toPublicProduct = (product, { includeCost = false } = {}) => ({
   id: product.id,
   shopId: product.shopId,
   name: product.name,
@@ -92,7 +95,7 @@ export const toPublicProduct = (product) => ({
   description: product.description || "",
   colors: product.colors || [],
   sizes: product.sizes || [],
-  variants: product.variants || [],
+  variants: (product.variants || []).map((variant) => includeCost ? variant : Object.fromEntries(Object.entries(variant).filter(([key]) => key !== "costPrice"))),
   price: product.price,
   gender: product.gender,
   availability: product.availability,
@@ -237,7 +240,7 @@ export const listOwnerProducts = async ({ ownerId, query }) => {
     .sort({ updatedAt: -1 })
     .toArray();
 
-  return products.map(toPublicProduct);
+  return products.map((product) => toPublicProduct(product, { includeCost: true }));
 };
 
 export const getOwnerProduct = async ({ ownerId, productId }) => {
@@ -306,7 +309,7 @@ export const createProduct = async ({ ownerId, body }) => {
   }
 
   await db.collection("products").insertOne(product);
-  return toPublicProduct(product);
+  return toPublicProduct(product, { includeCost: true });
 };
 
 export const updateProduct = async ({ ownerId, productId, body }) => {
@@ -323,6 +326,11 @@ export const updateProduct = async ({ ownerId, productId, body }) => {
   }
 
   if (normalized.variants) {
+    normalized.variants = normalized.variants.map((variant) => {
+      if (Object.prototype.hasOwnProperty.call(variant, "costPrice")) return variant;
+      const previous = (product.variants || []).find((item) => item.id === variant.id || item.sku === variant.sku);
+      return previous && Object.prototype.hasOwnProperty.call(previous, "costPrice") ? { ...variant, costPrice: previous.costPrice } : variant;
+    });
     await ensureShopSkusUnique({
       db,
       shopId: nextShopId,
@@ -350,7 +358,7 @@ export const updateProduct = async ({ ownerId, productId, body }) => {
   }
 
   await db.collection("products").updateOne({ id: product.id }, { $set: patch });
-  return toPublicProduct({ ...product, ...patch });
+  return toPublicProduct({ ...product, ...patch }, { includeCost: true });
 };
 
 export const archiveProduct = async ({ ownerId, productId }) => {
@@ -362,7 +370,7 @@ export const archiveProduct = async ({ ownerId, productId }) => {
   };
 
   await db.collection("products").updateOne({ id: product.id }, { $set: patch });
-  return toPublicProduct({ ...product, ...patch });
+  return toPublicProduct({ ...product, ...patch }, { includeCost: true });
 };
 
 export const trashProduct = async ({ ownerId, productId }) => {
@@ -375,7 +383,7 @@ export const trashProduct = async ({ ownerId, productId }) => {
 
   await db.collection("products").updateOne({ id: product.id }, { $set: patch });
 
-  return toPublicProduct({ ...product, ...patch });
+  return toPublicProduct({ ...product, ...patch }, { includeCost: true });
 };
 
 export const restoreProduct = async ({ ownerId, productId }) => {
@@ -388,7 +396,7 @@ export const restoreProduct = async ({ ownerId, productId }) => {
 
   await db.collection("products").updateOne({ id: product.id }, { $set: patch });
 
-  return toPublicProduct({ ...product, ...patch });
+  return toPublicProduct({ ...product, ...patch }, { includeCost: true });
 };
 
 export const hardDeleteProduct = async ({ ownerId, productId }) => {
@@ -397,7 +405,7 @@ export const hardDeleteProduct = async ({ ownerId, productId }) => {
 
   await db.collection("products").deleteOne({ id: product.id });
 
-  return toPublicProduct(product);
+  return toPublicProduct(product, { includeCost: true });
 };
 
 export const productEnums = {

@@ -9,6 +9,8 @@
     "embed:fashion-rules": "node scripts/embedCollection.js fashion_rules",
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:shop-insights": "node scripts/seedShopInsightsMock.js",
+    "migrate:shop-plans:dry": "node scripts/migrateShopPlans.js",
+    "migrate:shop-plans": "node scripts/migrateShopPlans.js --apply",
     "sync:locations": "node scripts/syncVietnamLocations.js",
     "migrate:variants:dry": "node scripts/migrateProductVariants.js",
     "migrate:variants": "node scripts/migrateProductVariants.js --apply",

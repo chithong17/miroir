@@ -6,6 +6,7 @@ import {
   updateShopOrderStatus, updateShopPayment,
 } from "../services/commerce.service.js";
 import { createFitFeedback } from "../services/fit.service.js";
+import { syncOrderCommission } from "../services/billing.service.js";
 
 const proofFromFile = async (file) => {
   if (!file) return null;
@@ -28,6 +29,6 @@ export const submitMyFitFeedback = async (req, res, next) => { try { res.status(
 
 export const shopOrders = async (req, res, next) => { try { res.json({ success: true, orders: await listShopOrders({ ownerId: req.owner.id, query: req.query }) }); } catch (e) { next(e); } };
 export const shopOrder = async (req, res, next) => { try { res.json({ success: true, order: await getShopOrder({ ownerId: req.owner.id, orderId: req.params.orderId }) }); } catch (e) { next(e); } };
-export const changeShopOrderStatus = async (req, res, next) => { try { res.json({ success: true, order: await updateShopOrderStatus({ ownerId: req.owner.id, orderId: req.params.orderId, status: req.body.status, reason: req.body.reason }) }); } catch (e) { next(e); } };
+export const changeShopOrderStatus = async (req, res, next) => { try { const order = await updateShopOrderStatus({ ownerId: req.owner.id, orderId: req.params.orderId, status: req.body.status, reason: req.body.reason }); await syncOrderCommission(order.id).catch((error) => console.error("Commission sync deferred:", error)); res.json({ success: true, order }); } catch (e) { next(e); } };
 export const resolveShopCancellation = async (req, res, next) => { try { res.json({ success: true, order: await decideCancellation({ ownerId: req.owner.id, orderId: req.params.orderId, approved: req.body.approved === true, reason: req.body.reason }) }); } catch (e) { next(e); } };
-export const changeShopPayment = async (req, res, next) => { try { res.json({ success: true, order: await updateShopPayment({ ownerId: req.owner.id, orderId: req.params.orderId, action: req.body.action, reason: req.body.reason, proof: await proofFromFile(req.file) }) }); } catch (e) { next(e); } };
+export const changeShopPayment = async (req, res, next) => { try { const order = await updateShopPayment({ ownerId: req.owner.id, orderId: req.params.orderId, action: req.body.action, reason: req.body.reason, proof: await proofFromFile(req.file) }); await syncOrderCommission(order.id).catch((error) => console.error("Commission sync deferred:", error)); res.json({ success: true, order }); } catch (e) { next(e); } };

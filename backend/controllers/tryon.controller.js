@@ -9,10 +9,12 @@ import { getCatalogProduct } from "../services/catalog.service.js";
 import { trackShopEvent } from "../services/shopAnalytics.service.js";
 import { getRawUserById } from "../services/userAuth.service.js";
 import { findResultUrl } from "../utils/findResultUrl.js";
+import { findResultUrls } from "../utils/findResultUrl.js";
+import { assertShopTryOnAvailable, registerTryOnTask, settleTryOnTask } from "../services/billing.service.js";
 
 const parseBatchSize = (rawValue) => {
   const parsed = Number.parseInt(rawValue ?? "1", 10);
-  return Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
+  return Number.isNaN(parsed) || parsed < 1 ? 1 : Math.min(parsed, 4);
 };
 
 const validateTryOnInput = ({ tryOnType, files }) => {
@@ -186,6 +188,7 @@ export const createCatalogTryOnTask = async (req, res, next) => {
 
     const user = await getRawUserById(req.user.id);
     const { product } = await getCatalogProduct(productId);
+    await assertShopTryOnAvailable(product.shopId);
     let modelInput = user?.profile?.modelImageUrl || "";
 
     const uploadedModelFile = req.files?.modelImage?.[0] || req.files?.image?.[0];
@@ -233,6 +236,8 @@ export const createCatalogTryOnTask = async (req, res, next) => {
         message: "PiAPI did not return a task id.",
       });
     }
+
+    await registerTryOnTask({ taskId, shopId: product.shopId, productId: product.id, userId: req.user.id });
 
     await trackShopEvent({
       eventType: "tryon_started",
@@ -357,6 +362,7 @@ export const getTryOnTaskStatus = async (req, res, next) => {
     }
 
     const resultUrl = status === "completed" ? findResultUrl(output) : null;
+    if (status === "completed") await settleTryOnTask({ taskId, imageCount: findResultUrls(output).length || (resultUrl ? 1 : 0) });
 
     return res.status(200).json({
       success: true,

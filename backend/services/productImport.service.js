@@ -32,6 +32,8 @@ const EXAMPLE_ROW = {
 
 const FIT_COLUMNS = ["productId", "sku", "fitCategory", "fitIntent", "chest", "waist", "hips", "shoulder", "length", "sleeveLength", "inseam", "outseam"];
 const FIT_EXAMPLE_ROW = { productId: "Paste an existing product ID", sku: "LINEN-S-WHITE", fitCategory: "top", fitIntent: "regular", chest: 104, waist: 98, hips: "", shoulder: 44, length: 70, sleeveLength: 62, inseam: "", outseam: "" };
+const COST_COLUMNS = ["productId", "sku", "costPrice"];
+const COST_EXAMPLE_ROW = { productId: "Paste an existing product ID", sku: "LINEN-S-WHITE", costPrice: 250000 };
 const FIT_CATEGORIES = ["top", "bottom", "dress", "outerwear"];
 const FIT_INTENTS = ["slim", "regular", "relaxed"];
 const FIT_MEASUREMENT_FIELDS = FIT_COLUMNS.slice(4);
@@ -150,6 +152,7 @@ export const generateProductImportTemplate = () => {
   ];
   const notesSheet = XLSX.utils.aoa_to_sheet(notes);
   const fitSheet = XLSX.utils.json_to_sheet([FIT_EXAMPLE_ROW], { header: FIT_COLUMNS });
+  const costSheet = XLSX.utils.json_to_sheet([COST_EXAMPLE_ROW], { header: COST_COLUMNS });
 
   productsSheet["!cols"] = COLUMNS.map((column) => ({
     wch: column === "description" ? 48 : column === "imageUrl" ? 42 : 22,
@@ -159,12 +162,34 @@ export const generateProductImportTemplate = () => {
 
   XLSX.utils.book_append_sheet(workbook, productsSheet, "Products");
   XLSX.utils.book_append_sheet(workbook, fitSheet, "FitMeasurements");
+  XLSX.utils.book_append_sheet(workbook, costSheet, "VariantCosts");
   XLSX.utils.book_append_sheet(workbook, notesSheet, "Notes");
 
   return XLSX.write(workbook, {
     type: "buffer",
     bookType: "xlsx",
   });
+};
+
+const applyVariantCosts = async ({ db, ownerId, rows }) => {
+  const errors = [];
+  let successCount = 0;
+  for (const [index, row] of rows.entries()) {
+    const rowNumber = index + 2;
+    const productId = cleanString(row.productId);
+    const sku = cleanString(row.sku).toUpperCase();
+    const costPrice = Number(row.costPrice);
+    if (!productId || !sku || !Number.isSafeInteger(costPrice) || costPrice < 0) { errors.push({ row: rowNumber, field: "VariantCosts", message: "Valid productId, sku and non-negative integer costPrice are required." }); continue; }
+    const product = await db.collection("products").findOne({ id: productId });
+    const shop = product ? await db.collection("shops").findOne({ id: product.shopId, ownerId }) : null;
+    const indexOfVariant = product?.variants?.findIndex((variant) => variant.sku === sku) ?? -1;
+    if (!shop || indexOfVariant < 0) { errors.push({ row: rowNumber, field: "VariantCosts", message: "Product/SKU not found in your shop." }); continue; }
+    const variants = [...product.variants];
+    variants[indexOfVariant] = { ...variants[indexOfVariant], costPrice };
+    await db.collection("products").updateOne({ id: productId }, { $set: { variants, updatedAt: new Date() } });
+    successCount += 1;
+  }
+  return { errors, successCount };
 };
 
 const applyFitMeasurements = async ({ db, ownerId, rows }) => {
@@ -325,7 +350,8 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
     });
 
     const fitRows = workbook.Sheets.FitMeasurements ? XLSX.utils.sheet_to_json(workbook.Sheets.FitMeasurements, { defval: "", raw: false }) : [];
-    job.totalRows = rows.length + fitRows.length;
+    const costRows = workbook.Sheets.VariantCosts ? XLSX.utils.sheet_to_json(workbook.Sheets.VariantCosts, { defval: "", raw: false }) : [];
+    job.totalRows = rows.length + fitRows.length + costRows.length;
 
     const { errors, normalizedRows } = await validateRows({
       db,
@@ -378,7 +404,7 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
         await db
           .collection("products")
           .updateOne({ id: productId }, { $set: basePatch });
-        importedProducts.push(toPublicProduct({ ...existing, ...basePatch }));
+        importedProducts.push(toPublicProduct({ ...existing, ...basePatch }, { includeCost: true }));
       } else {
         const product = {
           id: productId,
@@ -397,7 +423,7 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
           createdAt: new Date(),
         };
         await db.collection("products").insertOne(product);
-        importedProducts.push(toPublicProduct(product));
+        importedProducts.push(toPublicProduct(product, { includeCost: true }));
       }
     }
 
@@ -408,9 +434,10 @@ export const importProductsFromWorkbook = async ({ ownerId, file }) => {
     job.shopId = uniqueShopIds.length === 1 ? uniqueShopIds[0] : null;
     job.status = "completed";
     const fitResult = await applyFitMeasurements({ db, ownerId, rows: fitRows });
-    job.successCount = importedProducts.length + fitResult.successCount;
-    job.failedCount = fitResult.errors.length;
-    job.errors = fitResult.errors;
+    const costResult = await applyVariantCosts({ db, ownerId, rows: costRows });
+    job.successCount = importedProducts.length + fitResult.successCount + costResult.successCount;
+    job.failedCount = fitResult.errors.length + costResult.errors.length;
+    job.errors = [...fitResult.errors, ...costResult.errors];
     job.completedAt = new Date();
     job.products = importedProducts;
     job.aiReadyCount = aiReadyCount;

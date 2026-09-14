@@ -3,6 +3,7 @@ import { useLanguage } from "../i18n.jsx";
 import {
   archiveProduct,
   createShopPayment,
+  claimShopTrial,
   createProduct,
   createShop,
   deleteProduct,
@@ -12,6 +13,10 @@ import {
   getShopDashboard,
   getShopInsights,
   getShopPaymentMe,
+  listPaymentPlans,
+  listShopInvoices,
+  getShopAdvice,
+  getShopStrategy,
   hardDeleteProduct,
   importProductsExcel,
   listMyShops,
@@ -28,6 +33,7 @@ import {
 import { decideShopCancellation, decideShopReturn, getShopOrder, listOwnerDisputes, listShopNotifications, listShopOrders, listShopReturns, readShopNotification, receiveShopReturn, refundShopReturn, replyOwnerDispute, updateShopOrderPayment, updateShopOrderStatus } from "../api/commerceApi.js";
 import { beginShopOrderChat, listChatConversations } from "../api/chatApi.js";
 import { connectChatSocket } from "../api/chatSocket.js";
+import ShopBillingView from "./ShopBillingView.jsx";
 
 const fieldClass =
   "w-full rounded-lg border border-mintSoft bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-mintDeep focus:ring-2 focus:ring-mintSoft/50";
@@ -132,7 +138,7 @@ function ShopDashboardPage() {
   const { t } = useLanguage();
   const [view, setView] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get("view");
-    return ["products", "orders", "analytics", "insights", "trash", "shop", "import"].includes(requested) ? requested : "products";
+    return ["products", "orders", "analytics", "insights", "billing", "trash", "shop", "import"].includes(requested) ? requested : "products";
   });
   const [shops, setShops] = useState([]);
   const [products, setProducts] = useState([]);
@@ -149,6 +155,10 @@ function ShopDashboardPage() {
   const [bulkEditForm, setBulkEditForm] = useState(emptyBulkEdit);
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [ownerSubscription, setOwnerSubscription] = useState(null);
+  const [paymentPlans, setPaymentPlans] = useState([]);
+  const [billingInvoices, setBillingInvoices] = useState([]);
+  const [shopAdvice, setShopAdvice] = useState(null);
+  const [strategyReport, setStrategyReport] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState("");
   const [analyticsRange, setAnalyticsRange] = useState("30d");
   const [analytics, setAnalytics] = useState(null);
@@ -166,6 +176,8 @@ function ShopDashboardPage() {
 
   const shop = shops[0] || null;
   const hasActiveShopPlan = Boolean(ownerSubscription?.isPremium);
+  const canUseGrowth = hasActiveShopPlan && ["GROWTH", "PRO_INSIGHT"].includes(ownerSubscription?.planCode);
+  const canUsePro = hasActiveShopPlan && ownerSubscription?.planCode === "PRO_INSIGHT";
   const editingExistingProduct = Boolean(
     productForm.id && products.some((product) => product.id === productForm.id)
   );
@@ -271,6 +283,11 @@ function ShopDashboardPage() {
     loadDashboard();
   }, []);
 
+  useEffect(() => {
+    if (view !== "billing") return;
+    Promise.all([listPaymentPlans(), listShopInvoices()]).then(([plans, invoices]) => { setPaymentPlans(plans.plans || []); setBillingInvoices(invoices.invoices || []); }).catch((error) => showNotice(error.response?.data?.message || "Không tải được thông tin thanh toán.", "error"));
+  }, [view]);
+
   const loadAnalytics = async (range = analyticsRange) => {
     if (!hasActiveShopPlan) return;
     try {
@@ -289,7 +306,7 @@ function ShopDashboardPage() {
   };
 
   const loadInsights = async (range = analyticsRange) => {
-    if (!hasActiveShopPlan) return;
+    if (!canUsePro) return;
     try {
       setPremiumDataStatus("loading");
       const response = await getShopInsights({ range });
@@ -304,7 +321,12 @@ function ShopDashboardPage() {
   useEffect(() => {
     if (view === "analytics") loadAnalytics(analyticsRange);
     if (view === "insights") loadInsights(analyticsRange);
-  }, [view, analyticsRange, hasActiveShopPlan]);
+  }, [view, analyticsRange, hasActiveShopPlan, ownerSubscription?.planCode]);
+
+  useEffect(() => {
+    if (view === "analytics" && canUseGrowth) getShopAdvice().then((result) => setShopAdvice(result.advice)).catch((error) => showNotice(error.response?.data?.message || "Không tạo được gợi ý AI.", "error"));
+    if (view === "insights" && canUsePro) getShopStrategy().then((result) => setStrategyReport(result.report)).catch((error) => showNotice(error.response?.data?.message || "Không tạo được báo cáo AI.", "error"));
+  }, [view, canUseGrowth, canUsePro]);
 
   const loadOrders = async () => {
     try { const [orderResult, disputeResult, returnResult] = await Promise.all([listShopOrders(orderFilters), listOwnerDisputes(), listShopReturns()]); setOrders(orderResult.orders || []); setShopDisputes(disputeResult.disputes || []); setShopReturns(returnResult.returns || []); }
@@ -734,13 +756,24 @@ function ShopDashboardPage() {
     window.location.href = "/login";
   };
 
-  const startShopCheckout = async () => {
+  const startShopCheckout = async (planCode, invoiceId = null) => {
     try {
       setPaymentStatus(t("shopAdmin.creatingPayOS"));
-      const response = await createShopPayment();
-      window.location.href = response.checkoutUrl;
+      const response = await createShopPayment(planCode, invoiceId);
+      if (response.checkoutUrl) window.location.href = response.checkoutUrl;
+      else { await loadDashboard(); setPaymentStatus(invoiceId ? "Hóa đơn đã được thanh toán." : "Đã ghi nhận thanh toán gói."); }
     } catch (error) {
       setPaymentStatus(error.response?.data?.message || t("shopAdmin.paymentCreateError"));
+    }
+  };
+  const startShopTrial = async (planCode) => {
+    try {
+      setPaymentStatus("Đang kích hoạt dùng thử...");
+      await claimShopTrial(planCode);
+      await loadDashboard();
+      setPaymentStatus("Đã kích hoạt dùng thử miễn phí 1 tháng.");
+    } catch (error) {
+      setPaymentStatus(error.response?.data?.message || "Không kích hoạt được dùng thử.");
     }
   };
 
@@ -750,7 +783,7 @@ function ShopDashboardPage() {
         <DashboardSidebar
           hasActiveShopPlan={hasActiveShopPlan}
           logout={logout}
-          onCheckout={startShopCheckout}
+          onCheckout={() => setView("billing")}
           paymentStatus={paymentStatus}
           setView={setView}
           shop={shop}
@@ -823,6 +856,8 @@ function ShopDashboardPage() {
               />
             ) : null}
 
+            {view === "billing" ? <ShopBillingView subscription={ownerSubscription} plans={paymentPlans} invoices={billingInvoices} onCheckout={(code) => startShopCheckout(code)} onTrial={startShopTrial} onInvoicePay={(id) => startShopCheckout(null, id)} status={paymentStatus} /> : null}
+
             {view === "analytics" ? (
               hasActiveShopPlan ? (
                 <AnalyticsView
@@ -831,14 +866,17 @@ function ShopDashboardPage() {
                   range={analyticsRange}
                   setRange={setAnalyticsRange}
                   status={premiumDataStatus}
+                  basic={!canUseGrowth}
                 />
               ) : (
-                <PremiumPaywall onCheckout={startShopCheckout} titleKey="shopAdmin.analyticsDashboard" />
+                <PremiumPaywall onCheckout={() => setView("billing")} titleKey="shopAdmin.analyticsDashboard" />
               )
             ) : null}
 
+            {view === "analytics" && canUseGrowth && shopAdvice ? <section className="mt-5 rounded-2xl border border-[#DFE8D5] bg-white p-5"><h2 className="font-black">Gợi ý kinh doanh bằng AI</h2><p className="mt-3 whitespace-pre-wrap text-sm leading-6">{shopAdvice.text}</p></section> : null}
+
             {view === "insights" ? (
-              hasActiveShopPlan ? (
+              canUsePro ? (
                 <InsightsView
                   insights={insights}
                   range={analyticsRange}
@@ -846,9 +884,10 @@ function ShopDashboardPage() {
                   status={premiumDataStatus}
                 />
               ) : (
-                <PremiumPaywall onCheckout={startShopCheckout} titleKey="shopAdmin.customerInsights" />
+                <PremiumPaywall onCheckout={() => setView("billing")} titleKey="shopAdmin.customerInsights" />
               )
             ) : null}
+            {view === "insights" && canUsePro && strategyReport ? <section className="mt-5 rounded-2xl border border-[#DFE8D5] bg-white p-5"><h2 className="font-black">Báo cáo tư vấn chiến lược bằng AI · Kỳ hiện tại</h2><p className="mt-3 whitespace-pre-wrap text-sm leading-6">{strategyReport.text}</p></section> : null}
           </div>
         </main>
       </div>
@@ -876,6 +915,7 @@ function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onChecko
     ["insights", "Khách hàng", "customers"],
   ];
   const manageItems = [
+    ["billing", "Gói & thanh toán", "billing"],
     ["shop", "Hồ sơ shop", "shop"],
     ["import", "Nhập sản phẩm", "import"],
     ["trash", "Thùng rác", "trash"],
@@ -920,7 +960,7 @@ function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onChecko
             </div>
             <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#EEF2EA] pt-3">
               <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${hasActiveShopPlan ? "bg-[#E5F0D8] text-[#49652D]" : "bg-amber-100 text-amber-700"}`}>{hasActiveShopPlan ? "Đang hoạt động" : "Gói cơ bản"}</span>
-              {hasActiveShopPlan && expiresAt ? <span className="text-[11px] font-medium text-slate-500">Đến {expiresAt}</span> : <button type="button" onClick={onCheckout} className="text-[11px] font-black text-[#668443] hover:underline">Nâng cấp</button>}
+              {hasActiveShopPlan && expiresAt ? <button type="button" onClick={onCheckout} className="text-[11px] font-medium text-[#668443] hover:underline">{subscription?.planName || subscription?.planCode} · Đến {expiresAt}</button> : <button type="button" onClick={onCheckout} className="text-[11px] font-black text-[#668443] hover:underline">Chọn gói</button>}
             </div>
             {paymentStatus ? <p className="mt-2 text-[11px] text-slate-500">{paymentStatus}</p> : null}
           </div>
@@ -961,6 +1001,7 @@ function ShopNavIcon({ active = false, name }) {
   if (name === "products") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="m4 8 8-4 8 4-8 4-8-4Z" /><path d="m4 8v8l8 4 8-4V8M12 12v8" /></svg>;
   if (name === "orders") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4" /></svg>;
   if (name === "analytics") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>;
+  if (name === "billing") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18M7 15h4" /></svg>;
   if (name === "customers") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 6.5a3 3 0 0 1 0 5.5M16 15a5 5 0 0 1 4.5 4" /></svg>;
   if (name === "shop") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M3 10h18l-2-6H5l-2 6ZM5 10v10h14V10M9 20v-6h6v6" /><path d="M3 10a3 3 0 0 0 5 2 3 3 0 0 0 4 0 3 3 0 0 0 4 0 3 3 0 0 0 5-2" /></svg>;
   if (name === "import") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M12 3v12M8 11l4 4 4-4M5 20h14" /></svg>;
@@ -1882,11 +1923,13 @@ function PremiumPaywall({ onCheckout, titleKey }) {
   );
 }
 
-function AnalyticsView({ analytics, commerceDashboard, range, setRange, status }) {
+function AnalyticsView({ analytics, commerceDashboard, range, setRange, status, basic = false }) {
   const summary = analytics?.summary || {};
   const timeSeries = analytics?.timeSeries || [];
   const topProducts = analytics?.topProducts || [];
   const { t } = useLanguage();
+
+  if (basic) return <section className="grid gap-5"><div className="flex justify-end"><RangeControl range={range} setRange={setRange} /></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Doanh thu đã thu" value={formatMoney(commerceDashboard?.summary?.collectedRevenue)} /><Metric label="Đơn hàng" value={commerceDashboard?.summary?.totalOrders || 0} /><Metric label="Sản phẩm" value={summary.totalProducts || 0} /><Metric label="Lượt thử AI" value={summary.tryOnClicks || 0} /><Metric label="Hết hàng" value={commerceDashboard?.inventoryHealth?.outOfStock || 0} /></div></section>;
 
   return (
     <section className="grid gap-5">
@@ -1968,9 +2011,11 @@ function SalesDashboardSummary({ dashboard }) {
   const orderStatuses = dashboard?.orderStatusBreakdown || [];
   const paymentStatuses = dashboard?.paymentStatusBreakdown || [];
   const fitFinder = dashboard?.fitFinder || {};
+  const finance = dashboard?.finance || {};
 
   return (
     <section className="grid gap-5">
+      <div className="grid gap-3 md:grid-cols-4"><Metric label="Doanh thu đủ điều kiện" value={formatMoney(finance.eligibleRevenue)} /><Metric label="Giá vốn đã biết" value={formatMoney(finance.knownCost)} /><Metric label="Lãi gộp" value={finance.grossProfit == null ? "Chưa đủ dữ liệu" : formatMoney(finance.grossProfit)} /><Metric label="Biên lợi nhuận" value={finance.marginRate == null ? "Chưa đủ dữ liệu" : formatPercent(finance.marginRate)} /></div>
       <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Metric label="Doanh thu đã thu" value={formatMoney(summary.collectedRevenue)} />
         <Metric label="Doanh thu dự kiến" value={formatMoney(summary.projectedRevenue)} />

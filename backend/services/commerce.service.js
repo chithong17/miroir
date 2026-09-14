@@ -53,7 +53,7 @@ export const formatOrderCode = (value) => {
 
 const getCartDocument = async (db, userId, session) => db.collection("carts").findOne({ userId }, { session });
 
-const enrichCart = async ({ db, userId, session, itemsOverride = null }) => {
+const enrichCart = async ({ db, userId, session, itemsOverride = null, includeCost = false }) => {
   const savedCart = await getCartDocument(db, userId, session) || { id: null, userId, items: [] };
   const cart = itemsOverride ? { ...savedCart, items: itemsOverride } : savedCart;
   const productIds = [...new Set(cart.items.map((item) => item.productId))];
@@ -76,7 +76,7 @@ const enrichCart = async ({ db, userId, session, itemsOverride = null }) => {
     const enriched = {
       ...item,
       product: product ? { id: product.id, name: product.name, imageUrl: product.imageUrl || "", price: product.price } : null,
-      variant: variant || null,
+      variant: variant ? (includeCost ? variant : Object.fromEntries(Object.entries(variant).filter(([key]) => key !== "costPrice"))) : null,
       shopId: product?.shopId || null,
       available,
       issue: !product ? "product_removed" : !variant?.active ? "variant_unavailable" : variant.stockQuantity < item.quantity ? "insufficient_stock" : !activePaidShopIds.has(product.shopId) ? "shop_subscription_inactive" : null,
@@ -187,7 +187,7 @@ export const checkoutCart = async ({ userId, body }) => {
       if (error.code === 11000) fail("Checkout with this idempotency key is already being processed.", 409);
       throw error;
     }
-    const cart = await enrichCart({ db, userId, session, itemsOverride: buyNowItems });
+    const cart = await enrichCart({ db, userId, session, itemsOverride: buyNowItems, includeCost: true });
     if (!cart.itemCount) fail("Cart is empty.", 409);
     if (cart.groups.some((group) => group.items.some((item) => !item.available))) fail("Cart contains unavailable items. No order was created.", 409);
     const recipient = await resolveCheckoutRecipient({
@@ -200,6 +200,7 @@ export const checkoutCart = async ({ userId, body }) => {
     const created = [];
     for (const group of cart.groups) {
       const shop = await db.collection("shops").findOne({ id: group.shop.id }, { session });
+      const shopOwner = await db.collection("shop_owners").findOne({ id: shop.ownerId }, { session });
       const paymentMethod = methods[shop.id] || "cash";
       if (!["cash", "bank_transfer"].includes(paymentMethod)) fail(`Invalid payment method for shop ${shop.name}.`);
       const settings = shop.paymentSettings || {};
@@ -217,6 +218,9 @@ export const checkoutCart = async ({ userId, body }) => {
       const order = {
         id: crypto.randomUUID(), orderCode, transferContent: orderCode,
         checkoutIdempotencyKey: idempotencyKey, userId, shopId: shop.id,
+        ownerIdSnapshot: shop.ownerId,
+        billingCycleIdSnapshot: shopOwner?.subscription?.cycleId || null,
+        commissionRateSnapshot: shopOwner?.subscription?.commissionRate ?? (shopOwner?.subscription?.planCode === "STARTER_A" ? 0.025 : 0),
         shopSnapshot: { id: shop.id, name: shop.name, logoUrl: shop.logoUrl || "" },
         recipient: {
           name: recipient.recipientName, phone: recipient.phone,
@@ -246,6 +250,7 @@ export const checkoutCart = async ({ userId, body }) => {
         createdAt: now, updatedAt: now,
       };
       await db.collection("orders").insertOne(order, { session });
+      await db.collection("order_cost_snapshots").insertOne({ orderId: order.id, shopId: shop.id, items: group.items.map((item) => ({ variantId: item.variantId, productId: item.productId, quantity: item.quantity, costPrice: Number.isSafeInteger(item.variant.costPrice) ? item.variant.costPrice : null })), createdAt: now }, { session });
       await createNotification({ audienceType: "shop", audienceId: shop.ownerId, type: "order_created", title: "Đơn hàng mới", message: `${orderCode} vừa được tạo.`, orderId: order.id, db, session });
       created.push(order);
     }
@@ -364,7 +369,7 @@ export const updateShopOrderStatus = async ({ ownerId, orderId, status, reason }
     patch.confirmedAt = now;
     if (order.paymentMethod === "bank_transfer" && order.paymentStatus === "awaiting_transfer") patch.paymentDueAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
   }
-  if (status === "delivered") patch.deliveredAt = now;
+  if (status === "delivered") { patch.deliveredAt = now; patch.billingSyncNeededAt = now; }
   if (status === "cancelled") {
     order = await restoreInventory({ db, session, order });
     patch.paymentStatus = paymentAfterCancellation(order);
@@ -393,7 +398,7 @@ export const updateShopPayment = async ({ ownerId, orderId, action, reason, proo
   const patch = { updatedAt: now };
   if (action === "confirm_paid") {
     if (!["cod_pending", "awaiting_transfer", "pending_verification"].includes(order.paymentStatus)) fail("Payment cannot be confirmed from its current state.", 409);
-    patch.paymentStatus = "paid"; patch.paidAt = now; patch.paymentDueAt = null;
+    patch.paymentStatus = "paid"; patch.paidAt = now; patch.paymentDueAt = null; patch.billingSyncNeededAt = now;
   } else if (action === "reject_transfer") {
     if (order.paymentStatus !== "pending_verification") fail("Transfer is not pending verification.", 409);
     if (!clean(reason)) fail("Rejection reason is required.");
@@ -402,6 +407,7 @@ export const updateShopPayment = async ({ ownerId, orderId, action, reason, proo
   } else if (action === "mark_refunded") {
     if (order.paymentStatus !== "refund_pending") fail("Refund is not pending.", 409);
     patch.paymentStatus = "refunded";
+    patch.billingSyncNeededAt = now;
     patch.refund = { ...(order.refund || {}), status: "refunded", note: clean(reason), proof: proof || null, handledBy: ownerId, refundedAt: now };
   } else fail("Unknown payment action.");
   const updated = await db.collection("orders").updateOne(

@@ -181,11 +181,13 @@ export default function ShopProductWorkspacePage({ productId }) {
       color: String(variant.color || "").trim(),
       size: String(variant.size || "").trim(),
       stockQuantity: Number(variant.stockQuantity),
+      costPrice: variant.costPrice === "" || variant.costPrice == null ? null : Number(variant.costPrice),
       active: variant.active !== false,
       fitMeasurements: Object.fromEntries(Object.entries(variant.fitMeasurements || {}).filter(([, value]) => value !== "" && value !== null && value !== undefined).map(([key, value]) => [key, Number(value)])),
     }));
     if (variants.some((variant) => !variant.sku)) return showNotice("Mỗi biến thể cần có SKU.", "error");
     if (variants.some((variant) => !Number.isInteger(variant.stockQuantity) || variant.stockQuantity < 0)) return showNotice("Tồn kho phải là số nguyên không âm.", "error");
+    if (variants.some((variant) => variant.costPrice !== null && (!Number.isSafeInteger(variant.costPrice) || variant.costPrice < 0))) return showNotice("Giá vốn phải là số nguyên không âm.", "error");
     const skuSet = new Set(variants.map((variant) => variant.sku));
     if (skuSet.size !== variants.length) return showNotice("SKU không được trùng trong cùng sản phẩm.", "error");
 
@@ -359,6 +361,10 @@ function VariantEditor({ addVariant, fitCategory, form, generateVariantMatrix, m
         {!form.variants.length ? <div className="p-8 text-center"><p className="font-bold">Chưa có biến thể</p><p className="mt-1 text-sm text-muted">Tạo tổ hợp màu–size hoặc thêm một dòng thủ công.</p></div> : null}
       </div>
       <button type="button" className="mt-3 rounded-xl border border-dashed border-mintDeep px-4 py-3 text-sm font-black text-mintDeep hover:bg-accentSoft" onClick={addVariant}>+ Thêm một biến thể</button>
+      <div className="mt-4 grid gap-2 rounded-2xl border border-line bg-panel p-4">
+        <p className="text-sm font-black">Giá vốn theo SKU (chỉ shop và quản trị viên thấy)</p>
+        {form.variants.map((variant, index) => <label className="grid items-center gap-2 text-sm sm:grid-cols-[minmax(0,1fr)_180px]" key={`cost-${variant.id || index}`}><span>{variant.sku || `Biến thể ${index + 1}`}</span><input className={inputClass} type="number" min="0" step="1" placeholder="Chưa có dữ liệu" value={variant.costPrice ?? ""} onChange={(event) => updateVariant(index, "costPrice", event.target.value)} /></label>)}
+      </div>
       {fitCategory ? <div className="mt-5 grid gap-3 rounded-2xl border border-mintSoft bg-accentSoft/50 p-4"><p className="font-black">Số đo Fit Finder (cm)</p>{form.variants.map((variant, index) => <div className="rounded-xl bg-white p-3" key={`fit-${variant.id || index}`}><p className="mb-2 text-sm font-bold">{variant.sku || `Biến thể ${index + 1}`} · {variant.size || "Chưa có size"}</p><div className="grid gap-2 sm:grid-cols-3">{fitFieldsByCategory[fitCategory].map(([key, label]) => <label className="grid gap-1 text-xs font-bold text-muted" key={key}>{label}<input className={inputClass} min="0" placeholder="cm" type="number" value={variant.fitMeasurements?.[key] || ""} onChange={(event) => updateVariant(index, "fitMeasurements", { ...(variant.fitMeasurements || {}), [key]: event.target.value })} /></label>)}</div></div>)}</div> : null}
     </EditorSection>
   );

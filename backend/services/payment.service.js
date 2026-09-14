@@ -5,9 +5,10 @@ import {
   PLAN_CODES,
   buildSubscriptionSummary,
   getPaymentPlan,
+  normalizePlanCode,
 } from "./subscription.service.js";
+import { activatePlanOrder, ensureLegacyCycle, getOwnerBillingSummary, markInvoicePaid, quotePlanChange } from "./billing.service.js";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const getPayOsClient = () => {
   const { PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY } = process.env;
@@ -44,7 +45,7 @@ const getPaymentUrls = ({ accountType, planCode, orderCode }) => {
 
 const createOrderCode = () => {
   const timestampPart = Date.now() % 10000000000;
-  const randomPart = crypto.randomInt(100, 999);
+  const randomPart = crypto.randomInt(10000, 100000);
   return Number(`${timestampPart}${randomPart}`.slice(0, 15));
 };
 
@@ -66,18 +67,39 @@ export const getPlanForAccount = async ({ planCode, accountType }) => {
   return plan;
 };
 
-export const createPaymentLink = async ({ account, planCode }) => {
-  const plan = await getPlanForAccount({
-    planCode,
-    accountType: account.accountType,
-  });
+export const createPaymentLink = async ({ account, planCode, invoiceId = null }) => {
+  const plan = invoiceId ? null : await getPlanForAccount({ planCode, accountType: account.accountType });
   const db = await getMongoDb();
+  if (plan && account.subscription?.pendingRenewal && account.subscription.planCode === plan.code) { const error = new Error("A renewal is already scheduled."); error.statusCode = 409; throw error; }
+  const invoice = invoiceId ? await db.collection("billing_invoices").findOne({ id: invoiceId, ownerId: account.id, status: { $in: ["unpaid", "overdue"] } }) : null;
+  if (invoiceId && !invoice) { const error = new Error("Invoice is not payable."); error.statusCode = 404; throw error; }
+  const pending = await db.collection("payment_orders").findOne({ accountId: account.id, status: "pending", ...(invoiceId ? { invoiceId } : { invoiceId: null }) }, { sort: { createdAt: -1 } });
+  if (pending?.checkoutUrl) {
+    const latest = await syncPaymentOrderWithPayOs(pending).catch(() => pending);
+    if (latest.status === "pending") {
+      if (invoiceId || latest.planCode === plan?.code) return { order: latest, checkoutUrl: latest.checkoutUrl };
+      const error = new Error("Complete or cancel the existing plan checkout first."); error.statusCode = 409; throw error;
+    }
+    if (latest.status === "paid") {
+      if (invoiceId || latest.planCode === plan?.code) return { order: latest, checkoutUrl: null };
+      const error = new Error("Subscription changed; refresh before choosing a new plan."); error.statusCode = 409; throw error;
+    }
+  }
+  const quote = plan ? await quotePlanChange({ owner: account, plan }) : null;
+  const amount = invoice ? invoice.amount : quote.payable;
+  if (plan && amount === 0) {
+    const now = new Date();
+    const order = { id: crypto.randomUUID(), orderCode: createOrderCode(), accountType: account.accountType, accountId: account.id, planCode: plan.code, amount: 0, planSnapshot: plan, quote, previousCycleId: account.subscription?.cycleId || null, checkoutKey: `plan:${account.id}`, status: "pending", createdAt: now, updatedAt: now };
+    await db.collection("payment_orders").insertOne(order);
+    await activatePlanOrder({ order, paymentRaw: { source: "credit" } });
+    return { order: { ...order, status: "paid" }, checkoutUrl: null };
+  }
   const payos = getPayOsClient();
   const now = new Date();
   const orderCode = createOrderCode();
   const { returnUrl, cancelUrl } = getPaymentUrls({
     accountType: account.accountType,
-    planCode,
+    planCode: invoice ? "INVOICE" : planCode,
     orderCode,
   });
 
@@ -86,27 +108,36 @@ export const createPaymentLink = async ({ account, planCode }) => {
     orderCode,
     accountType: account.accountType,
     accountId: account.id,
-    planCode,
-    amount: plan.amount,
+    planCode: invoice ? "INVOICE" : plan.code,
+    invoiceId: invoice?.id || null,
+    planSnapshot: plan,
+    quote,
+    checkoutKey: invoice ? `invoice:${invoice.id}` : `plan:${account.id}`,
+    previousCycleId: account.subscription?.cycleId || null,
+    amount,
     status: "pending",
     createdAt: now,
     updatedAt: now,
   };
 
-  await db.collection("payment_orders").insertOne(order);
+  try { await db.collection("payment_orders").insertOne(order); }
+  catch (error) {
+    if (error.code === 11000) { const conflict = new Error("A checkout is already in progress. Please retry shortly."); conflict.statusCode = 409; throw conflict; }
+    throw error;
+  }
 
   try {
     const paymentLink = await payos.paymentRequests.create({
       orderCode,
-      amount: plan.amount,
-      description: plan.description,
+      amount,
+      description: (invoice ? `MIROIR ${invoice.id.slice(0, 8)}` : plan.description).slice(0, 25),
       returnUrl,
       cancelUrl,
       items: [
         {
-          name: plan.name,
+          name: invoice ? "MIROIR invoice" : plan.name,
           quantity: 1,
-          price: plan.amount,
+          price: amount,
         },
       ],
       buyerEmail: account.email,
@@ -149,49 +180,22 @@ export const createPaymentLink = async ({ account, planCode }) => {
 };
 
 const activateSubscription = async ({ order, webhookData }) => {
-  const db = await getMongoDb();
-  const plan = await getPaymentPlan(order.planCode);
-  const collectionName =
-    order.accountType === "shop_owner" ? "shop_owners" : "users";
-  const account = await db.collection(collectionName).findOne({ id: order.accountId });
-  const now = new Date();
-  const currentExpiresAt = account?.subscription?.expiresAt
-    ? new Date(account.subscription.expiresAt)
-    : null;
-  const startsAt =
-    currentExpiresAt && currentExpiresAt > now ? currentExpiresAt : now;
-  const expiresAt = new Date(startsAt.getTime() + plan.durationDays * DAY_MS);
-
-  await db.collection(collectionName).updateOne(
-    { id: order.accountId },
-    {
-      $set: {
-        subscription: {
-          planCode: order.planCode,
-          status: "active",
-          expiresAt,
-          lastPaymentOrderCode: order.orderCode,
-          updatedAt: now,
-        },
-        updatedAt: now,
-      },
-    }
-  );
-
-  await db.collection("payment_orders").updateOne(
-    { orderCode: order.orderCode },
-    {
-      $set: {
-        status: "paid",
-        paidAt: now,
-        webhookRaw: webhookData,
-        subscriptionExpiresAt: expiresAt,
-        updatedAt: now,
-      },
-    }
-  );
-
-  return expiresAt;
+  if (order.invoiceId) {
+    await markInvoicePaid({ invoiceId: order.invoiceId, orderCode: order.orderCode });
+    const db = await getMongoDb();
+    await db.collection("payment_orders").updateOne({ id: order.id, status: { $ne: "paid" } }, { $set: { status: "paid", paidAt: new Date(), webhookRaw: webhookData } });
+    return null;
+  }
+  let payableOrder = order;
+  if (!order.planSnapshot) {
+    const db = await getMongoDb();
+    const owner = await ensureLegacyCycle(await db.collection("shop_owners").findOne({ id: order.accountId }));
+    const plan = await getPaymentPlan(normalizePlanCode(order.planCode));
+    if (!owner || !plan) throw new Error("Legacy payment plan could not be migrated.");
+    payableOrder = { ...order, planCode: plan.code, planSnapshot: { ...plan, amount: order.amount }, previousCycleId: owner.subscription?.cycleId || null, quote: { remainingCredit: owner.subscription?.creditBalance || 0 } };
+    await db.collection("payment_orders").updateOne({ id: order.id, planSnapshot: { $exists: false } }, { $set: { planCode: payableOrder.planCode, planSnapshot: payableOrder.planSnapshot, previousCycleId: payableOrder.previousCycleId, quote: payableOrder.quote } });
+  }
+  return activatePlanOrder({ order: payableOrder, paymentRaw: webhookData });
 };
 
 export const handlePayOsWebhook = async (body) => {
@@ -343,13 +347,15 @@ export const getPaymentStatus = async (orderCode) => {
 };
 
 export const getPaymentProfile = async (account) => {
-  return buildSubscriptionSummary({
+  const { owner, usage } = await getOwnerBillingSummary(account);
+  return { ...buildSubscriptionSummary({
     accountType: "shop_owner",
-    subscription: account.subscription,
-  });
+    subscription: owner.subscription,
+    usage,
+  }), trialEligible: !owner.trialUsedAt && !owner.subscription?.planCode };
 };
 
 export const getCheckoutPlanForAccountType = (accountType) =>
   accountType === "shop_owner"
-    ? PLAN_CODES.SHOP_OWNER_MONTHLY
+    ? PLAN_CODES.GROWTH
     : null;

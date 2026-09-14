@@ -7,6 +7,8 @@ import adminAuthRoutes from "./routes/adminAuth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import catalogRoutes from "./routes/catalog.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import { runBillingWorker } from "./services/billing.service.js";
+import { runStrategyReportWorker } from "./services/shopAdvice.service.js";
 import passwordResetRoutes from "./routes/passwordReset.routes.js";
 import shopAuthRoutes from "./routes/shopAuth.routes.js";
 import shopProductRoutes from "./routes/shopProduct.routes.js";
@@ -217,5 +219,11 @@ const commerceDeadlineWorker = setInterval(() => {
   expireCommerceOrders().catch((error) => console.error("Commerce deadline worker failed:", error));
 }, Number(process.env.COMMERCE_WORKER_INTERVAL_MS || 300000));
 commerceDeadlineWorker.unref();
+runBillingWorker().catch((error) => console.error("Billing worker failed:", error));
+const billingWorker = setInterval(() => runBillingWorker().catch((error) => console.error("Billing worker failed:", error)), 300000);
+billingWorker.unref();
+runStrategyReportWorker().catch((error) => console.error("Strategy worker failed:", error));
+const strategyWorker = setInterval(() => runStrategyReportWorker().catch((error) => console.error("Strategy worker failed:", error)), 3600000);
+strategyWorker.unref();
 
 

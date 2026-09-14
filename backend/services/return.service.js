@@ -108,6 +108,7 @@ export const refundReturn = async ({ ownerId, returnId, note, proof }) => {
   if (!proof) fail("Refund proof is required.");
   const now = new Date(); const refund = { amount: request.refundAmount, note: clean(note), proof, refundedBy: ownerId, refundedAt: now };
   await db.collection("order_returns").updateOne({ id: request.id, status: "refund_pending" }, { $set: { status: "refunded", refund, updatedAt: now }, $push: { history: event("refunded", "shop", ownerId, clean(note)) } });
+  await db.collection("orders").updateOne({ id: request.orderId }, { $set: { billingSyncNeededAt: now } });
   await createNotification({ audienceType: "customer", audienceId: request.userId, type: "return_refunded", title: "Đã hoàn tiền", message: `${request.orderCode}: ${request.refundAmount.toLocaleString("vi-VN")}đ`, orderId: request.orderId });
   return { ...request, status: "refunded", refund, updatedAt: now };
 };

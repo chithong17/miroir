@@ -17,7 +17,9 @@ import {
   restoreProduct,
   updateProduct,
   updatePaymentPlan,
+  grantPaymentPlan,
   updateShop,
+  adminBillingInvoices,
 } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middlewares/adminAuth.middleware.js";
 import { uploadProductImportFile } from "../middlewares/upload.middleware.js";
@@ -31,9 +33,11 @@ const router = Router();
 router.use(requireAdmin);
 
 router.get("/payment-plans", listPaymentPlans);
+router.get("/billing-invoices", adminBillingInvoices);
 router.put("/payment-plans/:planCode", updatePaymentPlan);
 
 router.get("/shop-owners", listShopOwners);
+router.post("/shop-owners/:ownerId/grant-plan", grantPaymentPlan);
 router.patch("/shop-owners/:ownerId/approve", approveShopOwner);
 router.patch("/shop-owners/:ownerId/reject", rejectShopOwner);
 router.patch("/shop-owners/:ownerId/deactivate", deactivateShopOwner);

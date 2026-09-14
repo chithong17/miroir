@@ -14,6 +14,13 @@ import {
   updateAdminPaymentPlan,
   updateAdminShop,
 } from "../services/admin.service.js";
+import { listAdminInvoices } from "../services/billing.service.js";
+import { grantShopPlan } from "../services/planGrant.service.js";
+
+export const adminBillingInvoices = async (_req, res, next) => {
+  try { res.json({ success: true, invoices: await listAdminInvoices() }); }
+  catch (error) { next(error); }
+};
 
 export const listPaymentPlans = async (_req, res, next) => {
   try {
@@ -34,6 +41,18 @@ export const updatePaymentPlan = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+export const grantPaymentPlan = async (req, res, next) => {
+  try {
+    const grant = await grantShopPlan({
+      ownerId: req.params.ownerId,
+      planCode: req.body?.planCode,
+      grantType: "admin_grant",
+      grantedBy: req.admin.id,
+    });
+    return res.status(201).json({ success: true, grant });
+  } catch (error) { next(error); }
 };
 
 export const listShopOwners = async (req, res, next) => {

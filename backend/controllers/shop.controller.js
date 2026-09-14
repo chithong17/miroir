@@ -11,6 +11,18 @@ import {
 } from "../services/shopAnalytics.service.js";
 import { uploadImageBuffer } from "../services/cloudinary.service.js";
 import { getSingleOwnerShop } from "../services/shop.service.js";
+import { isGrowthPlan } from "../services/subscription.service.js";
+import { getGrowthAdvice, getProStrategyReport } from "../services/shopAdvice.service.js";
+
+export const myShopAdvice = async (req, res, next) => {
+  try { res.json({ success: true, advice: await getGrowthAdvice(req.owner.id) }); }
+  catch (error) { next(error); }
+};
+
+export const myShopStrategy = async (req, res, next) => {
+  try { res.json({ success: true, report: await getProStrategyReport({ ownerId: req.owner.id, cycleId: req.owner.subscription?.cycleId }) }); }
+  catch (error) { next(error); }
+};
 
 export const listMyShops = async (req, res, next) => {
   try {
@@ -79,7 +91,8 @@ export const myShopAnalytics = async (req, res, next) => {
       ownerId: req.owner.id,
       range: req.query.range || "30d",
     });
-    return res.json({ success: true, analytics });
+    const basic = !isGrowthPlan(req.owner.subscription?.planCode);
+    return res.json({ success: true, analytics: basic ? { range: analytics.range, shop: analytics.shop, summary: analytics.summary, timeSeries: analytics.timeSeries } : analytics });
   } catch (error) {
     next(error);
   }
@@ -103,7 +116,8 @@ export const myShopDashboard = async (req, res, next) => {
       ownerId: req.owner.id,
       range: req.query.range || "30d",
     });
-    return res.json({ success: true, dashboard });
+    const basic = !isGrowthPlan(req.owner.subscription?.planCode);
+    return res.json({ success: true, dashboard: basic ? { range: dashboard.range, shop: dashboard.shop, tier: "basic", summary: { totalOrders: dashboard.summary.totalOrders, collectedRevenue: dashboard.summary.collectedRevenue }, inventoryHealth: dashboard.inventoryHealth } : { ...dashboard, tier: req.owner.subscription?.planCode === "PRO_INSIGHT" ? "pro" : "growth" } });
   } catch (error) {
     next(error);
   }

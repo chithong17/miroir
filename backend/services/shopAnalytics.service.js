@@ -257,6 +257,33 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
     db.collection("fit_feedback").find({ shopId: shop.id, createdAt: { $gte: start } }).toArray(),
     db.collection("order_returns").find({ shopId: shop.id, createdAt: { $gte: start } }).toArray(),
   ]);
+  const costSnapshots = await db.collection("order_cost_snapshots").find({ orderId: { $in: orders.map((order) => order.id) } }).toArray();
+  const financeReturns = await db.collection("order_returns").find({ orderId: { $in: orders.map((order) => order.id) }, status: "refunded" }).toArray();
+  const costByOrder = new Map(costSnapshots.map((item) => [item.orderId, item]));
+  const refundedByOrder = new Map();
+  for (const item of financeReturns) {
+    const current = refundedByOrder.get(item.orderId) || { amount: 0, quantities: new Map() };
+    current.amount += item.refundAmount || 0;
+    for (const returned of item.items || []) current.quantities.set(returned.variantId, (current.quantities.get(returned.variantId) || 0) + (returned.quantity || 0));
+    refundedByOrder.set(item.orderId, current);
+  }
+  const finance = { eligibleRevenue: 0, knownCost: 0, grossProfit: null, marginRate: null, missingCostItems: 0 };
+  for (const order of orders.filter((item) => item.orderStatus === "delivered" && ["paid", "refunded"].includes(item.paymentStatus))) {
+    const refund = refundedByOrder.get(order.id);
+    finance.eligibleRevenue += Math.max(0, (order.subtotal || 0) - (order.paymentStatus === "refunded" ? order.subtotal : refund?.amount || 0));
+    if (order.paymentStatus === "refunded") continue;
+    const snapshot = costByOrder.get(order.id);
+    if (!snapshot) { finance.missingCostItems += order.items?.length || 0; continue; }
+    for (const item of snapshot.items || []) {
+      const quantity = Math.max(0, item.quantity - (refund?.quantities.get(item.variantId) || 0));
+      if (item.costPrice == null) finance.missingCostItems += quantity;
+      else finance.knownCost += quantity * item.costPrice;
+    }
+  }
+  if (!finance.missingCostItems) {
+    finance.grossProfit = finance.eligibleRevenue - finance.knownCost;
+    finance.marginRate = finance.eligibleRevenue ? Number((finance.grossProfit / finance.eligibleRevenue).toFixed(4)) : 0;
+  }
 
   const paymentStatuses = new Map();
   const orderStatuses = new Map();
@@ -318,6 +345,7 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
       averageOrderValue: orders.length ? Math.round(collectedRevenue / orders.length) : 0,
       pendingOrders: orders.filter((order) => ["pending_confirmation", "preparing"].includes(order.orderStatus)).length,
     },
+    finance,
     salesSeries: buildSalesSeries(orders, normalizedRange),
     orderStatusBreakdown: topEntries(orderStatuses, 10),
     paymentStatusBreakdown: topEntries(paymentStatuses, 10),

@@ -62,3 +62,15 @@ const searchForUrl = (value) => {
 };
 
 export const findResultUrl = (output) => searchForUrl(output);
+
+export const findResultUrls = (output) => {
+  const urls = new Set();
+  const visit = (value) => {
+    if (!value) return;
+    if (typeof value === "string" && (isImageUrl(value) || value.startsWith("http"))) urls.add(value);
+    else if (Array.isArray(value)) value.forEach(visit);
+    else if (typeof value === "object") Object.values(value).forEach(visit);
+  };
+  visit(output);
+  return [...urls];
+};

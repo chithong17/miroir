@@ -9,8 +9,10 @@ import {
   deleteAdminShop,
   exportAdminProducts,
   getAdminMe,
+  grantShopPlan,
   importAdminProducts,
   listPaymentPlans as listAdminPaymentPlans,
+  listBillingInvoices,
   listAdminProducts,
   listAdminShops,
   listShopOwners,
@@ -103,7 +105,10 @@ function AdminDashboardPage() {
   const [selectedShopId, setSelectedShopId] = useState("");
   const [products, setProducts] = useState([]);
   const [paymentPlans, setPaymentPlans] = useState([]);
+  const [grantOwners, setGrantOwners] = useState([]);
+  const [billingInvoices, setBillingInvoices] = useState([]);
   const [savingPlanCode, setSavingPlanCode] = useState("");
+  const [grantingPlan, setGrantingPlan] = useState(false);
   const [productFilters, setProductFilters] = useState({
     search: "",
     status: "all",
@@ -174,8 +179,10 @@ function AdminDashboardPage() {
   };
 
   const loadPaymentPlans = async () => {
-    const response = await listAdminPaymentPlans();
+    const [response, invoices, active] = await Promise.all([listAdminPaymentPlans(), listBillingInvoices(), listShopOwners({ status: "active" })]);
     setPaymentPlans(response.plans || []);
+    setBillingInvoices(invoices.invoices || []);
+    setGrantOwners(active.owners || []);
   };
   const loadDisputes = async () => setDisputes((await listAdminDisputes()).disputes || []);
 
@@ -227,7 +234,7 @@ function AdminDashboardPage() {
         name: plan.name,
         description: plan.description,
         amount: Number(plan.amount),
-        durationDays: Number(plan.durationDays),
+        trialEnabled: Boolean(plan.trialEnabled),
         features: Array.isArray(plan.features)
           ? plan.features
           : String(plan.features || "")
@@ -245,6 +252,18 @@ function AdminDashboardPage() {
     } finally {
       setSavingPlanCode("");
     }
+  };
+
+  const grantPaymentPlan = async (ownerId, planCode) => {
+    if (!ownerId || !planCode) return;
+    try {
+      setGrantingPlan(true);
+      const { grant } = await grantShopPlan(ownerId, planCode);
+      await Promise.all([loadOwners("all"), loadPaymentPlans()]);
+      showNotice(`Đã cấp ${grant.planCode} miễn phí đến ${new Date(grant.expiresAt).toLocaleDateString("vi-VN")}.${grant.suspended ? " Quyền gói vẫn tạm ngừng đến khi trả hết công nợ." : ""}`);
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Không cấp được gói cho shop.", "error");
+    } finally { setGrantingPlan(false); }
   };
 
   const openShop = async (shop) => {
@@ -548,6 +567,10 @@ function AdminDashboardPage() {
           {view === "plans" ? (
             <PaymentPlansView
               paymentPlans={paymentPlans}
+              activeOwners={grantOwners}
+              billingInvoices={billingInvoices}
+              grantPaymentPlan={grantPaymentPlan}
+              grantingPlan={grantingPlan}
               savingPlanCode={savingPlanCode}
               savePaymentPlan={savePaymentPlan}
               updatePlanField={updatePlanField}
@@ -723,12 +746,33 @@ function OwnersView({ owners, ownerAction, ownerStatus, setOwnerStatus }) {
 
 function PaymentPlansView({
   paymentPlans,
+  activeOwners,
+  billingInvoices,
+  grantPaymentPlan,
+  grantingPlan,
   savePaymentPlan,
   savingPlanCode,
   updatePlanField,
 }) {
+  const [grantOwnerId, setGrantOwnerId] = useState("");
+  const [grantPlanCode, setGrantPlanCode] = useState("");
   return (
     <section className="mt-6 grid gap-4">
+      <div className="rounded-md border border-line bg-white p-4">
+        <h2 className="font-bold">Cấp gói miễn phí cho chủ shop</h2>
+        <p className="mt-1 text-sm text-muted">Kích hoạt ngay một tháng từ hôm nay; phí Try-On vượt quota và hoa hồng vẫn áp dụng. Công nợ cũ không được xóa.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <select className={fieldClass} value={grantOwnerId} onChange={(event) => setGrantOwnerId(event.target.value)} aria-label="Chủ shop nhận gói">
+            <option value="">Chọn chủ shop đang hoạt động</option>
+            {activeOwners.map((owner) => <option key={owner.id} value={owner.id}>{owner.name || owner.email} ({owner.email}){owner.subscription?.planCode ? ` · ${owner.subscription.planCode}` : ""}</option>)}
+          </select>
+          <select className={fieldClass} value={grantPlanCode} onChange={(event) => setGrantPlanCode(event.target.value)} aria-label="Gói cấp cho shop">
+            <option value="">Chọn gói</option>
+            {paymentPlans.map((plan) => <option key={plan.code} value={plan.code}>{plan.name}</option>)}
+          </select>
+          <button className={`${buttonClass} bg-mintDeep text-white disabled:opacity-50`} type="button" disabled={!grantOwnerId || !grantPlanCode || grantingPlan} onClick={() => grantPaymentPlan(grantOwnerId, grantPlanCode)}>{grantingPlan ? "Đang cấp..." : "Cấp gói 1 tháng"}</button>
+        </div>
+      </div>
       {paymentPlans.map((plan) => (
         <article key={plan.code} className="rounded-md border border-line bg-white/80 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -736,7 +780,7 @@ function PaymentPlansView({
               <h2 className="font-bold">{plan.name}</h2>
               <p className="mt-1 text-xs font-semibold uppercase text-muted">{plan.code}</p>
               <p className="mt-1 text-sm text-muted">
-                Default: {formatMoney(plan.defaultAmount)} / {plan.defaultDurationDays} days
+                Default: {formatMoney(plan.defaultAmount)} / 1 tháng
               </p>
             </div>
             <button
@@ -768,16 +812,10 @@ function PaymentPlansView({
                 onChange={(event) => updatePlanField(plan.code, "amount", event.target.value)}
               />
             </Field>
-            <Field label="Duration days">
-              <input
-                className={fieldClass}
-                type="number"
-                min="1"
-                step="1"
-                value={plan.durationDays ?? ""}
-                onChange={(event) => updatePlanField(plan.code, "durationDays", event.target.value)}
-              />
-            </Field>
+            <label className="flex items-center gap-2 text-sm md:col-span-2">
+              <input type="checkbox" checked={Boolean(plan.trialEnabled)} onChange={(event) => updatePlanField(plan.code, "trialEnabled", event.target.checked)} />
+              Cho phép chủ shop mới dùng thử gói này miễn phí 1 tháng (mỗi tài khoản một lần)
+            </label>
             <Field label="Description">
               <input
                 className={fieldClass}
@@ -802,6 +840,7 @@ function PaymentPlansView({
           No payment plans found.
         </div>
       ) : null}
+      <section className="rounded-md border border-line bg-white p-4"><h2 className="font-bold">Hóa đơn phí phát sinh</h2><div className="mt-3 grid gap-2">{billingInvoices.map((invoice) => <div className="rounded-lg border border-line p-3 text-sm" key={invoice.id}><strong>{invoice.ownerId}</strong> · {Number(invoice.amount || 0).toLocaleString("vi-VN")}đ · {invoice.status} · hạn {new Date(invoice.dueAt).toLocaleDateString("vi-VN")}<div className="mt-1 text-xs text-muted">{invoice.entries?.map((entry) => `${entry.type}: ${Number(entry.amount || 0).toLocaleString("vi-VN")}đ`).join(" · ")}</div></div>)}{!billingInvoices.length ? <p className="text-sm text-muted">Chưa có hóa đơn.</p> : null}</div></section>
     </section>
   );
 }

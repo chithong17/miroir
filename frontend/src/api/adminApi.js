@@ -134,6 +134,9 @@ export const updatePaymentPlan = async (planCode, payload) => {
   const response = await adminClient.put(`/admin/payment-plans/${planCode}`, payload);
   return response.data;
 };
+export const grantShopPlan = async (ownerId, planCode) =>
+  (await adminClient.post(`/admin/shop-owners/${encodeURIComponent(ownerId)}/grant-plan`, { planCode })).data;
+export const listBillingInvoices = async () => (await adminClient.get("/admin/billing-invoices")).data;
 
 export const listAdminDisputes = async (params = {}) => (await adminClient.get("/admin/disputes", { params })).data;
 export const getAdminDispute = async (id) => (await adminClient.get(`/admin/disputes/${encodeURIComponent(id)}`)).data;

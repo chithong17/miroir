@@ -145,12 +145,20 @@ export const importProductsExcel = async (file) => {
   return response.data;
 };
 
-export const createShopPayment = async () => {
+export const createShopPayment = async (planCode, invoiceId = null) => {
   const response = await shopClient.post("/payments/create", {
-    planCode: "SHOP_OWNER_MONTHLY",
+    planCode,
+    invoiceId,
   });
   return response.data;
 };
+export const claimShopTrial = async (planCode) =>
+  (await shopClient.post("/payments/trial", { planCode })).data;
+
+export const getShopPlanQuote = async (planCode) => (await shopClient.get(`/payments/quote/${encodeURIComponent(planCode)}`)).data;
+export const listShopInvoices = async () => (await shopClient.get("/payments/invoices")).data;
+export const getShopAdvice = async () => (await shopClient.get("/shops/me/advice")).data;
+export const getShopStrategy = async () => (await shopClient.get("/shops/me/strategy")).data;
 
 export const getShopPaymentMe = async () => {
   const response = await shopClient.get("/payments/me");

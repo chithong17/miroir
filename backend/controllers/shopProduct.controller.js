@@ -45,7 +45,7 @@ export const getProduct = async (req, res, next) => {
 
     return res.json({
       success: true,
-      product: toPublicProduct(product),
+      product: toPublicProduct(product, { includeCost: true }),
     });
   } catch (error) {
     next(error);
