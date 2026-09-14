@@ -159,6 +159,8 @@ function ShopDashboardPage() {
   const [billingInvoices, setBillingInvoices] = useState([]);
   const [shopAdvice, setShopAdvice] = useState(null);
   const [strategyReport, setStrategyReport] = useState(null);
+  const [adviceStatus, setAdviceStatus] = useState("idle");
+  const [strategyStatus, setStrategyStatus] = useState("idle");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [analyticsRange, setAnalyticsRange] = useState("30d");
   const [analytics, setAnalytics] = useState(null);
@@ -292,6 +294,8 @@ function ShopDashboardPage() {
     if (!hasActiveShopPlan) return;
     try {
       setPremiumDataStatus("loading");
+      setAnalytics(null);
+      setCommerceDashboard(null);
       const [analyticsResponse, dashboardResponse] = await Promise.all([
         getShopAnalytics({ range }),
         getShopDashboard({ range }),
@@ -299,9 +303,8 @@ function ShopDashboardPage() {
       setAnalytics(analyticsResponse.analytics);
       setCommerceDashboard(dashboardResponse.dashboard);
       setPremiumDataStatus("idle");
-    } catch (error) {
+    } catch {
       setPremiumDataStatus("error");
-      showNotice(error.response?.data?.message || t("shopAdmin.loadAnalyticsError"), "error");
     }
   };
 
@@ -323,9 +326,31 @@ function ShopDashboardPage() {
     if (view === "insights") loadInsights(analyticsRange);
   }, [view, analyticsRange, hasActiveShopPlan, ownerSubscription?.planCode]);
 
+  const loadShopAdvice = async () => {
+    setAdviceStatus("loading");
+    try {
+      const result = await getShopAdvice();
+      setShopAdvice(result.advice);
+      setAdviceStatus("idle");
+    } catch {
+      setAdviceStatus("error");
+    }
+  };
+
+  const loadShopStrategy = async () => {
+    setStrategyStatus("loading");
+    try {
+      const result = await getShopStrategy();
+      setStrategyReport(result.report);
+      setStrategyStatus("idle");
+    } catch {
+      setStrategyStatus("error");
+    }
+  };
+
   useEffect(() => {
-    if (view === "analytics" && canUseGrowth) getShopAdvice().then((result) => setShopAdvice(result.advice)).catch((error) => showNotice(error.response?.data?.message || "Không tạo được gợi ý AI.", "error"));
-    if (view === "insights" && canUsePro) getShopStrategy().then((result) => setStrategyReport(result.report)).catch((error) => showNotice(error.response?.data?.message || "Không tạo được báo cáo AI.", "error"));
+    if (view === "analytics" && canUseGrowth) loadShopAdvice();
+    if (view === "insights" && canUsePro) loadShopStrategy();
   }, [view, canUseGrowth, canUsePro]);
 
   const loadOrders = async () => {
@@ -866,6 +891,7 @@ function ShopDashboardPage() {
                   range={analyticsRange}
                   setRange={setAnalyticsRange}
                   status={premiumDataStatus}
+                  onRetry={() => loadAnalytics(analyticsRange)}
                   basic={!canUseGrowth}
                 />
               ) : (
@@ -873,7 +899,7 @@ function ShopDashboardPage() {
               )
             ) : null}
 
-            {view === "analytics" && canUseGrowth && shopAdvice ? <section className="mt-5 rounded-2xl border border-[#DFE8D5] bg-white p-5"><h2 className="font-black">Gợi ý kinh doanh bằng AI</h2><p className="mt-3 whitespace-pre-wrap text-sm leading-6">{shopAdvice.text}</p></section> : null}
+            {view === "analytics" && canUseGrowth ? <ShopAiReport title="Gợi ý kinh doanh bằng AI" report={shopAdvice} status={adviceStatus} onRetry={loadShopAdvice} retryLabel="Thử lại gợi ý AI" /> : null}
 
             {view === "insights" ? (
               canUsePro ? (
@@ -887,7 +913,7 @@ function ShopDashboardPage() {
                 <PremiumPaywall onCheckout={() => setView("billing")} titleKey="shopAdmin.customerInsights" />
               )
             ) : null}
-            {view === "insights" && canUsePro && strategyReport ? <section className="mt-5 rounded-2xl border border-[#DFE8D5] bg-white p-5"><h2 className="font-black">Báo cáo tư vấn chiến lược bằng AI · Kỳ hiện tại</h2><p className="mt-3 whitespace-pre-wrap text-sm leading-6">{strategyReport.text}</p></section> : null}
+            {view === "insights" && canUsePro ? <ShopAiReport title="Báo cáo tư vấn chiến lược bằng AI · Kỳ hiện tại" report={strategyReport} status={strategyStatus} onRetry={loadShopStrategy} retryLabel="Thử lại báo cáo AI" /> : null}
           </div>
         </main>
       </div>
@@ -1923,11 +1949,34 @@ function PremiumPaywall({ onCheckout, titleKey }) {
   );
 }
 
-function AnalyticsView({ analytics, commerceDashboard, range, setRange, status, basic = false }) {
+function ShopAiReport({ title, report, status, onRetry, retryLabel }) {
+  return (
+    <section className="mt-5 rounded-2xl border border-[#DFE8D5] bg-white p-5" aria-live="polite">
+      <h2 className="font-black">{title}</h2>
+      {status === "loading" ? <p className="mt-3 text-sm text-slate-600">Đang tạo phân tích AI...</p> : null}
+      {status === "error" ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+          <p>Dịch vụ AI tạm thời chưa phản hồi. Số liệu phân tích của shop vẫn có thể xem bình thường.</p>
+          <button type="button" onClick={onRetry} className="rounded-lg border border-[#B3D07E] px-3 py-2 font-semibold text-slate-900 hover:bg-mintSoft">{retryLabel}</button>
+        </div>
+      ) : null}
+      {report?.text ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{report.text}</p> : null}
+    </section>
+  );
+}
+
+function AnalyticsView({ analytics, commerceDashboard, range, setRange, status, onRetry, basic = false }) {
   const summary = analytics?.summary || {};
   const timeSeries = analytics?.timeSeries || [];
   const topProducts = analytics?.topProducts || [];
   const { t } = useLanguage();
+
+  if (status === "loading" && !analytics && !commerceDashboard) {
+    return <section className="grid gap-5"><div className="flex justify-end"><RangeControl range={range} setRange={setRange} /></div><p className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">Đang tải số liệu phân tích...</p></section>;
+  }
+  if (status === "error") {
+    return <section className="grid gap-5"><div className="flex justify-end"><RangeControl range={range} setRange={setRange} /></div><div className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600"><p>Chưa tải được số liệu phân tích của shop.</p><button type="button" onClick={onRetry} className="mt-3 rounded-lg border border-[#B3D07E] px-3 py-2 font-semibold text-slate-900 hover:bg-mintSoft">Tải lại số liệu</button></div></section>;
+  }
 
   if (basic) return <section className="grid gap-5"><div className="flex justify-end"><RangeControl range={range} setRange={setRange} /></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Doanh thu đã thu" value={formatMoney(commerceDashboard?.summary?.collectedRevenue)} /><Metric label="Đơn hàng" value={commerceDashboard?.summary?.totalOrders || 0} /><Metric label="Sản phẩm" value={summary.totalProducts || 0} /><Metric label="Lượt thử AI" value={summary.tryOnClicks || 0} /><Metric label="Hết hàng" value={commerceDashboard?.inventoryHealth?.outOfStock || 0} /></div></section>;
 
@@ -2012,9 +2061,11 @@ function SalesDashboardSummary({ dashboard }) {
   const paymentStatuses = dashboard?.paymentStatusBreakdown || [];
   const fitFinder = dashboard?.fitFinder || {};
   const finance = dashboard?.finance || {};
+  const hasActivity = Number(summary.totalOrders || 0) > 0 || [funnel.views, funnel.tryOns, funnel.stylistMatches, funnel.feedback].some((value) => Number(value || 0) > 0);
 
   return (
     <section className="grid gap-5">
+      {dashboard && !hasActivity ? <p className="rounded-xl border border-[#DFE8D5] bg-mintSoft/40 p-4 text-sm text-slate-700">Chưa có lượt xem, tương tác hoặc đơn hàng trong kỳ đã chọn. Hãy chọn khoảng thời gian dài hơn để kiểm tra dữ liệu cũ.</p> : null}
       <div className="grid gap-3 md:grid-cols-4"><Metric label="Doanh thu đủ điều kiện" value={formatMoney(finance.eligibleRevenue)} /><Metric label="Giá vốn đã biết" value={formatMoney(finance.knownCost)} /><Metric label="Lãi gộp" value={finance.grossProfit == null ? "Chưa đủ dữ liệu" : formatMoney(finance.grossProfit)} /><Metric label="Biên lợi nhuận" value={finance.marginRate == null ? "Chưa đủ dữ liệu" : formatPercent(finance.marginRate)} /></div>
       <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Metric label="Doanh thu đã thu" value={formatMoney(summary.collectedRevenue)} />
@@ -2070,11 +2121,12 @@ function RevenueDashboardChart({ series = [] }) {
   const xAt = (index) => padding.left + (series.length <= 1 ? plotWidth / 2 : (index / (series.length - 1)) * plotWidth);
   const yAt = (value) => padding.top + plotHeight - (Number(value || 0) / maxValue) * plotHeight;
   const pathFor = (key) => series.map((item, index) => `${index ? "L" : "M"} ${xAt(index)} ${yAt(item[key])}`).join(" ");
+  const hasRevenue = series.some((item) => Number(item.collectedRevenue || 0) > 0 || Number(item.projectedRevenue || 0) > 0);
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <h3 className="font-bold text-slate-900">Xu hướng doanh thu</h3>
       <p className="mt-1 text-sm text-slate-500">So sánh doanh thu đã thu và doanh thu dự kiến.</p>
-      {!series.length ? <EmptyChart /> : <>
+      {!hasRevenue ? <EmptyChart message="Chưa có doanh thu đã thu hoặc dự kiến trong kỳ này." /> : <>
         <svg viewBox={`0 0 ${width} ${height}`} className="mt-4 h-56 w-full overflow-visible">
           {[0, 1, 2, 3].map((index) => <line key={index} x1={padding.left} x2={width - padding.right} y1={padding.top + (plotHeight * index) / 3} y2={padding.top + (plotHeight * index) / 3} stroke="#e7eedc" strokeDasharray="4 4" />)}
           <path d={pathFor("projectedRevenue")} fill="none" stroke="#B3D07E" strokeWidth="3" strokeLinecap="round" />
@@ -2088,6 +2140,7 @@ function RevenueDashboardChart({ series = [] }) {
 
 function FunnelDashboardChart({ funnel = {} }) {
   const steps = [["Lượt xem", funnel.views], ["Thử đồ", funnel.tryOns], ["Gợi ý AI", funnel.stylistMatches], ["Đơn hàng", funnel.orders], ["Đã trả", funnel.paidOrders]];
+  if (steps.every(([, value]) => Number(value || 0) === 0)) return <EmptyChart />;
   const maxValue = Math.max(1, ...steps.map(([, value]) => Number(value || 0)));
   return <div className="mt-4 space-y-3">{steps.map(([label, value]) => <div key={label} className="grid grid-cols-[78px_1fr_32px] items-center gap-3 text-sm"><span className="font-medium text-slate-600">{label}</span><div className="h-2.5 overflow-hidden rounded-full bg-mintSoft"><div className="h-full rounded-full bg-mintDeep" style={{ width: `${(Number(value || 0) / maxValue) * 100}%` }} /></div><strong className="text-right">{value || 0}</strong></div>)}</div>;
 }
@@ -2120,8 +2173,8 @@ function humanizeDashboardStatus(value) {
   };
   return labels[value] || String(value || "Không xác định").replaceAll("_", " ");
 }
-function EmptyChart() {
-  return <div className="flex h-32 items-center justify-center text-sm text-slate-500">Chưa có dữ liệu trong kỳ này.</div>;
+function EmptyChart({ message = "Chưa có dữ liệu trong kỳ này." }) {
+  return <div className="flex h-32 items-center justify-center text-center text-sm text-slate-500">{message}</div>;
 }
 function AnalyticsTrendChart({ series = [], loading = false }) {
   const { language, t } = useLanguage();
