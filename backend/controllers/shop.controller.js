@@ -15,7 +15,7 @@ import { isGrowthPlan } from "../services/subscription.service.js";
 import { getGrowthAdvice, getProStrategyReport } from "../services/shopAdvice.service.js";
 
 export const myShopAdvice = async (req, res, next) => {
-  try { res.json({ success: true, advice: await getGrowthAdvice(req.owner.id) }); }
+  try { res.json({ success: true, advice: await getGrowthAdvice(req.owner.id, req.query.range || "30d") }); }
   catch (error) { next(error); }
 };
 

@@ -154,6 +154,45 @@ The final output has the following counters:
 
 ## Notes
 
+### Shop business advice and simulation
+
+The business advice panel uses the selected 7/30/90-day range. Each pricing,
+size and promotion section includes evidence, source and formula, reasoning,
+suggested actions and limitations. Calculations and claims are generated from
+shop records; Gemini can only rank the verified sections. If Gemini is unavailable,
+the same evidence-based report remains available with automatic prioritization.
+Cached reports refresh when the range or underlying figures change.
+
+Preview simulated data for all active shops, then apply it:
+
+```bash
+cd backend
+npm run seed:shop-commerce -- --all
+npm run seed:shop-commerce -- --all --apply
+node scripts/verifyShopCommerceMock.js
+```
+
+For one shop, replace `--all` with its exact ID, slug or quoted name. The existing
+`seed:shop-insights` command remains available for the older interaction-only data.
+The new simulation covers 90 days, with three scenarios assigned to shops in slug
+order: steady sales (96 orders), size issues (72 orders), and a new shop with
+missing cost data (12 orders). Subsequent runs retain each shop's assigned scenario.
+It includes order cost snapshots, product interactions, Fit Finder events,
+post-delivery feedback and linked refunds. Historical mock prices use existing
+products; cost prices are scenario assumptions, not actual shop costs.
+
+Records are tagged `mockSeed: shop-commerce-demo-v2`, with stable IDs scoped to
+each shop. Re-running updates those records without duplicating them. Existing
+products, stock, real orders, subscriptions and billing are not changed; mock
+orders have zero commission and do not trigger payment or notification flows.
+If a shop has no products, the script creates three tagged draft products.
+The dashboard includes mock records in its totals, and the advice panel labels
+the sample count so simulated results are distinguishable from actual business data.
+
+Verification: `node --test tests/*.test.js` in `backend`, and `npm run build`
+in `frontend`. `verifyShopCommerceMock.js` checks MongoDB-backed reports for every
+seeded shop across all three ranges and verifies reuse of the cached report.
+
 - PiAPI key is never exposed to the frontend.
 - The backend is organized into controllers, services, middleware, and utilities so it is easy to extend later with MongoDB or task persistence.
 - If PiAPI returns a different output shape, `backend/utils/findResultUrl.js` tries multiple patterns to find the generated image URL.

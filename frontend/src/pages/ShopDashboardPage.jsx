@@ -34,6 +34,7 @@ import { decideShopCancellation, decideShopReturn, getShopOrder, listOwnerDisput
 import { beginShopOrderChat, listChatConversations } from "../api/chatApi.js";
 import { connectChatSocket } from "../api/chatSocket.js";
 import ShopBillingView from "./ShopBillingView.jsx";
+import ShopBusinessAdvice from "../components/ShopBusinessAdvice.jsx";
 
 const fieldClass =
   "w-full rounded-lg border border-mintSoft bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-mintDeep focus:ring-2 focus:ring-mintSoft/50";
@@ -158,8 +159,10 @@ function ShopDashboardPage() {
   const [paymentPlans, setPaymentPlans] = useState([]);
   const [billingInvoices, setBillingInvoices] = useState([]);
   const [shopAdvice, setShopAdvice] = useState(null);
-  const [strategyReport, setStrategyReport] = useState(null);
   const [adviceStatus, setAdviceStatus] = useState("idle");
+  const [adviceError, setAdviceError] = useState("");
+  const [adviceRetry, setAdviceRetry] = useState(0);
+  const [strategyReport, setStrategyReport] = useState(null);
   const [strategyStatus, setStrategyStatus] = useState("idle");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [analyticsRange, setAnalyticsRange] = useState("30d");
@@ -326,17 +329,6 @@ function ShopDashboardPage() {
     if (view === "insights") loadInsights(analyticsRange);
   }, [view, analyticsRange, hasActiveShopPlan, ownerSubscription?.planCode]);
 
-  const loadShopAdvice = async () => {
-    setAdviceStatus("loading");
-    try {
-      const result = await getShopAdvice();
-      setShopAdvice(result.advice);
-      setAdviceStatus("idle");
-    } catch {
-      setAdviceStatus("error");
-    }
-  };
-
   const loadShopStrategy = async () => {
     setStrategyStatus("loading");
     try {
@@ -349,7 +341,24 @@ function ShopDashboardPage() {
   };
 
   useEffect(() => {
-    if (view === "analytics" && canUseGrowth) loadShopAdvice();
+    if (view !== "analytics" || !canUseGrowth || !shop?.id) return;
+    let active = true;
+    setShopAdvice(null);
+    setAdviceStatus("loading");
+    setAdviceError("");
+    getShopAdvice({ range: analyticsRange }).then((result) => {
+      if (!active) return;
+      setShopAdvice(result.advice);
+      setAdviceStatus("ready");
+    }).catch((error) => {
+      if (!active) return;
+      setAdviceStatus("error");
+      setAdviceError(error.response?.data?.message || "Không tải được gợi ý kinh doanh.");
+    });
+    return () => { active = false; };
+  }, [view, canUseGrowth, analyticsRange, shop?.id, adviceRetry]);
+
+  useEffect(() => {
     if (view === "insights" && canUsePro) loadShopStrategy();
   }, [view, canUseGrowth, canUsePro]);
 
@@ -899,7 +908,7 @@ function ShopDashboardPage() {
               )
             ) : null}
 
-            {view === "analytics" && canUseGrowth ? <ShopAiReport title="Gợi ý kinh doanh bằng AI" report={shopAdvice} status={adviceStatus} onRetry={loadShopAdvice} retryLabel="Thử lại gợi ý AI" /> : null}
+            {view === "analytics" && canUseGrowth ? <ShopBusinessAdvice advice={shopAdvice} status={adviceStatus} error={adviceError} onRetry={() => setAdviceRetry((value) => value + 1)} /> : null}
 
             {view === "insights" ? (
               canUsePro ? (
@@ -2095,7 +2104,7 @@ function SalesDashboardSummary({ dashboard }) {
         </section>
       </div>
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><h3 className="font-bold text-slate-900">Fit Finder</h3><p className="mt-1 text-sm text-slate-500">Chỉ số tổng hợp, không hiển thị số đo cá nhân của khách.</p></div><span className="rounded-full bg-mintSoft px-3 py-1.5 text-sm font-bold text-mintDeep">Tỷ lệ trả do size: {formatPercent(fitFinder.sizeReturnRate)}</span></div>
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h3 className="font-bold text-slate-900">Fit Finder</h3><p className="mt-1 text-sm text-slate-500">Chỉ số tổng hợp, không hiển thị số đo cá nhân của khách.</p></div><span className="rounded-full bg-mintSoft px-3 py-1.5 text-sm font-bold text-mintDeep">Do size / tổng yêu cầu trả: {fitFinder.sizeReturnCount || 0}/{fitFinder.totalReturns || 0} ({formatPercent(fitFinder.sizeReturnRate)})</span></div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{[["Mở Fit Finder", fitFinder.opened], ["Có đề xuất", fitFinder.recommended], ["Dùng size", fitFinder.applied], ["Thêm giỏ", fitFinder.addToCart], ["Checkout", fitFinder.checkout]].map(([label, value]) => <Metric key={label} label={label} value={value || 0} />)}</div>
         <div className="mt-4 flex flex-wrap gap-2 text-sm font-semibold text-slate-700"><span className="rounded-full bg-slate-100 px-3 py-2">Phản hồi: {fitFinder.feedback?.total || 0}</span><span className="rounded-full bg-slate-100 px-3 py-2">Đúng size: {fitFinder.feedback?.trueToSize || 0}</span><span className="rounded-full bg-slate-100 px-3 py-2">Hơi chật: {fitFinder.feedback?.tooSmall || 0}</span><span className="rounded-full bg-slate-100 px-3 py-2">Hơi rộng: {fitFinder.feedback?.tooLarge || 0}</span>{(fitFinder.confidenceDistribution || []).map((item) => <span className="rounded-full bg-slate-100 px-3 py-2" key={item.label}>{item.label}: {item.count}</span>)}</div>
       </section>

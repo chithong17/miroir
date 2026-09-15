@@ -19,6 +19,8 @@ const getRangeStart = (range = "30d") => {
 };
 
 const toDateKey = (date) => new Date(date).toISOString().slice(0, 10);
+const isCollectiblePending = (order) => !["cancelled", "expired"].includes(order.orderStatus)
+  && ["cod_pending", "awaiting_transfer", "pending_verification"].includes(order.paymentStatus);
 
 const buildDailySeries = (events = [], range = "30d") => {
   const days = RANGE_DAYS[normalizeRange(range)];
@@ -76,7 +78,7 @@ const buildSalesSeries = (orders = [], range = "30d") => {
     const total = Number(order.total || 0);
     bucket.orders += 1;
     if (order.paymentStatus === "paid") bucket.collectedRevenue += total;
-    if (["cod_pending", "awaiting_transfer", "pending_verification"].includes(order.paymentStatus)) {
+    if (isCollectiblePending(order)) {
       bucket.projectedRevenue += total;
     }
     if (["refund_pending", "refunded"].includes(order.paymentStatus)) bucket.refunds += total;
@@ -259,6 +261,11 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
   ]);
   const costSnapshots = await db.collection("order_cost_snapshots").find({ orderId: { $in: orders.map((order) => order.id) } }).toArray();
   const financeReturns = await db.collection("order_returns").find({ orderId: { $in: orders.map((order) => order.id) }, status: "refunded" }).toArray();
+  return buildShopDashboard({ shop, normalizedRange, analytics, orders, products, fitEvents, fitFeedback, returns, costSnapshots, financeReturns });
+};
+
+// Pure aggregation shared by production analytics and the simulation checks.
+export const buildShopDashboard = ({ shop, normalizedRange = "30d", analytics, orders = [], products = [], fitEvents = [], fitFeedback = [], returns = [], costSnapshots = [], financeReturns = [] }) => {
   const costByOrder = new Map(costSnapshots.map((item) => [item.orderId, item]));
   const refundedByOrder = new Map();
   for (const item of financeReturns) {
@@ -273,11 +280,11 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
     finance.eligibleRevenue += Math.max(0, (order.subtotal || 0) - (order.paymentStatus === "refunded" ? order.subtotal : refund?.amount || 0));
     if (order.paymentStatus === "refunded") continue;
     const snapshot = costByOrder.get(order.id);
-    if (!snapshot) { finance.missingCostItems += order.items?.length || 0; continue; }
-    for (const item of snapshot.items || []) {
+    for (const item of order.items || []) {
+      const cost = snapshot?.items?.find((entry) => entry.variantId === item.variantId);
       const quantity = Math.max(0, item.quantity - (refund?.quantities.get(item.variantId) || 0));
-      if (item.costPrice == null) finance.missingCostItems += quantity;
-      else finance.knownCost += quantity * item.costPrice;
+      if (cost?.costPrice == null || cost.quantity < item.quantity) finance.missingCostItems += quantity;
+      else finance.knownCost += quantity * cost.costPrice;
     }
   }
   if (!finance.missingCostItems) {
@@ -298,13 +305,14 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
     incrementMap(paymentStatuses, order.paymentStatus || "unknown");
     incrementMap(orderStatuses, order.orderStatus || "unknown");
     if (order.paymentStatus === "paid") collectedRevenue += total;
-    if (["cod_pending", "awaiting_transfer", "pending_verification"].includes(order.paymentStatus)) {
+    if (isCollectiblePending(order)) {
       projectedRevenue += total;
     }
     if (["refund_pending", "refunded"].includes(order.paymentStatus)) refundValue += total;
     if (order.orderStatus === "delivered") completedOrders += 1;
 
     (order.items || []).forEach((item) => {
+      if (order.paymentStatus !== "paid") return;
       const key = item.productId || item.name || "unknown";
       const existing = productSales.get(key) || {
         productId: item.productId || "",
@@ -314,7 +322,7 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
         collectedRevenue: 0,
       };
       existing.quantity += Number(item.quantity || 0);
-      existing.orderCount += 1;
+      if ((order.items || []).find((line) => (line.productId || line.name || "unknown") === key) === item) existing.orderCount += 1;
       if (order.paymentStatus === "paid") {
         existing.collectedRevenue += Number(item.lineTotal || Number(item.unitPrice || 0) * Number(item.quantity || 0));
       }
@@ -332,17 +340,27 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
   const fitCount = (type) => fitEvents.filter((item) => item.type === type).length;
   const confidenceDistribution = ["high", "moderate", "low"].map((confidence) => ({ label: confidence, count: fitEvents.filter((item) => item.confidence === confidence).length }));
   const sizeReturns = returns.filter((item) => item.reasonCode === "size_or_fit").length;
+  const paidOrders = orders.filter((order) => order.paymentStatus === "paid").length;
+  const mockOrderCount = orders.filter((order) => order.mockSeed).length;
+  const samples = [...orders, ...fitEvents, ...fitFeedback, ...returns];
 
   return {
     range: normalizedRange,
     shop: { id: shop.id, name: shop.name },
+    dataQuality: {
+      mockOrderCount,
+      realOrderCount: orders.length - mockOrderCount,
+      containsMockData: samples.some((item) => item.mockSeed),
+      scenarios: [...new Set(samples.map((item) => item.mockScenario).filter(Boolean))].sort(),
+    },
     summary: {
       totalOrders: orders.length,
       completedOrders,
+      paidOrders,
       collectedRevenue,
       projectedRevenue,
       refundValue,
-      averageOrderValue: orders.length ? Math.round(collectedRevenue / orders.length) : 0,
+      averageOrderValue: paidOrders ? Math.round(collectedRevenue / paidOrders) : 0,
       pendingOrders: orders.filter((order) => ["pending_confirmation", "preparing"].includes(order.orderStatus)).length,
     },
     finance,
@@ -367,6 +385,7 @@ export const getShopDashboard = async ({ ownerId, range = "30d" }) => {
         tooLarge: fitFeedback.filter((item) => item.outcome === "too_large").length,
       },
       sizeReturnCount: sizeReturns,
+      totalReturns: returns.length,
       sizeReturnRate: returns.length ? Number((sizeReturns / returns.length).toFixed(4)) : 0,
     },
     topProducts: [...productSales.values()]

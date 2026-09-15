@@ -157,7 +157,7 @@ export const claimShopTrial = async (planCode) =>
 
 export const getShopPlanQuote = async (planCode) => (await shopClient.get(`/payments/quote/${encodeURIComponent(planCode)}`)).data;
 export const listShopInvoices = async () => (await shopClient.get("/payments/invoices")).data;
-export const getShopAdvice = async () => (await shopClient.get("/shops/me/advice")).data;
+export const getShopAdvice = async ({ range = "30d" } = {}) => (await shopClient.get("/shops/me/advice", { params: { range } })).data;
 export const getShopStrategy = async () => (await shopClient.get("/shops/me/strategy")).data;
 
 export const getShopPaymentMe = async () => {
