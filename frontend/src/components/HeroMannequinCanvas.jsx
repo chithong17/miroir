@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { useLanguage } from "../i18n.jsx";
 
 export default function HeroMannequinCanvas({ mousePos }) {
+  const { t } = useLanguage();
   const mountRef = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -305,11 +307,11 @@ export default function HeroMannequinCanvas({ mousePos }) {
         }`}
       />
 
-      {/* Subtle editorial loader during initial stream */}
+      {/* Editorial loader during initial stream with white and green theme */}
       {!loaded && (
-        <div className="pointer-events-none absolute bottom-8 right-8 z-[1020] flex items-center gap-3 border border-white/20 bg-black/70 px-4 py-2 text-[11px] uppercase tracking-widest text-white backdrop-blur-md">
-          <span className="h-2 w-2 animate-ping rounded-full bg-white" />
-          <span>Loading 3D Mannequin {progress > 0 ? `${progress}%` : ""}</span>
+        <div className="pointer-events-none absolute bottom-8 right-8 z-[1020] flex items-center gap-3 rounded-full border border-mintSoft bg-white/90 px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-mintDeep shadow-glass backdrop-blur-md">
+          <span className="h-2 w-2 animate-ping rounded-full bg-mintDeep" />
+          <span>{t("hero.loadingMannequin")} {progress > 0 ? `${progress}%` : ""}</span>
         </div>
       )}
     </div>
