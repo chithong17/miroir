@@ -1,4 +1,4 @@
-import { PLAN_CODES, isSubscriptionActive, isGrowthPlan, isProPlan } from "../services/subscription.service.js";
+import { PLAN_CODES, isSubscriptionActive, isGrowthPlan } from "../services/subscription.service.js";
 
 export const requireActiveShopSubscription = (req, res, next) => {
   if (isSubscriptionActive(req.owner?.subscription) && req.owner.subscription.status !== "suspended") {
@@ -18,7 +18,3 @@ export const requireGrowthShopSubscription = (req, res, next) => {
   return res.status(403).json({ success: false, message: "Growth or Pro Insight plan is required.", subscriptionRequired: true });
 };
 
-export const requireProShopSubscription = (req, res, next) => {
-  if (isSubscriptionActive(req.owner?.subscription) && req.owner.subscription.status !== "suspended" && isProPlan(req.owner.subscription.planCode)) return next();
-  return res.status(403).json({ success: false, message: "Pro Insight plan is required.", subscriptionRequired: true });
-};

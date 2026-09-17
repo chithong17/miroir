@@ -182,7 +182,6 @@ function ShopDashboardPage() {
   const shop = shops[0] || null;
   const hasActiveShopPlan = Boolean(ownerSubscription?.isPremium);
   const canUseGrowth = hasActiveShopPlan && ["GROWTH", "PRO_INSIGHT"].includes(ownerSubscription?.planCode);
-  const canUsePro = hasActiveShopPlan && ownerSubscription?.planCode === "PRO_INSIGHT";
   const editingExistingProduct = Boolean(
     productForm.id && products.some((product) => product.id === productForm.id)
   );
@@ -312,7 +311,7 @@ function ShopDashboardPage() {
   };
 
   const loadInsights = async (range = analyticsRange) => {
-    if (!canUsePro) return;
+    if (!canUseGrowth) return;
     try {
       setPremiumDataStatus("loading");
       const response = await getShopInsights({ range });
@@ -359,8 +358,8 @@ function ShopDashboardPage() {
   }, [view, canUseGrowth, analyticsRange, shop?.id, adviceRetry]);
 
   useEffect(() => {
-    if (view === "insights" && canUsePro) loadShopStrategy();
-  }, [view, canUseGrowth, canUsePro]);
+    if (view === "insights" && canUseGrowth) loadShopStrategy();
+  }, [view, canUseGrowth]);
 
   const loadOrders = async () => {
     try { const [orderResult, disputeResult, returnResult] = await Promise.all([listShopOrders(orderFilters), listOwnerDisputes(), listShopReturns()]); setOrders(orderResult.orders || []); setShopDisputes(disputeResult.disputes || []); setShopReturns(returnResult.returns || []); }
@@ -909,9 +908,8 @@ function ShopDashboardPage() {
             ) : null}
 
             {view === "analytics" && canUseGrowth ? <ShopBusinessAdvice advice={shopAdvice} status={adviceStatus} error={adviceError} onRetry={() => setAdviceRetry((value) => value + 1)} /> : null}
-
             {view === "insights" ? (
-              canUsePro ? (
+              canUseGrowth ? (
                 <InsightsView
                   insights={insights}
                   range={analyticsRange}
@@ -922,7 +920,7 @@ function ShopDashboardPage() {
                 <PremiumPaywall onCheckout={() => setView("billing")} titleKey="shopAdmin.customerInsights" />
               )
             ) : null}
-            {view === "insights" && canUsePro ? <ShopAiReport title="Báo cáo tư vấn chiến lược bằng AI · Kỳ hiện tại" report={strategyReport} status={strategyStatus} onRetry={loadShopStrategy} retryLabel="Thử lại báo cáo AI" /> : null}
+            {view === "insights" && canUseGrowth ? <ShopAiReport title="Báo cáo tư vấn chiến lược bằng AI · Kỳ hiện tại" report={strategyReport} status={strategyStatus} onRetry={loadShopStrategy} retryLabel="Thử lại báo cáo AI" /> : null}
           </div>
         </main>
       </div>

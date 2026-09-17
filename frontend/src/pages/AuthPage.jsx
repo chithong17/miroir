@@ -58,8 +58,8 @@ function AuthPage({ mode = "login" }) {
 const resetAllTokens = () => { setAdminToken(""); setShopToken(""); setUserToken(""); };
 const loginAnyRole = async ({ email, password }) => {
   const payload = { email, password }; let shopStatusError = null;
-  try { const response = await loginAdmin(payload); resetAllTokens(); setAdminToken(response.token); window.location.href = "/admin/dashboard"; return; } catch (_error) {}
-  try { const response = await loginUser(payload); resetAllTokens(); setUserToken(response.token); const returnTo = sessionStorage.getItem("miroir_after_login"); sessionStorage.removeItem("miroir_after_login"); window.location.href = response.user.profileCompleted || response.user.profileSkipped ? (returnTo || "/app") : "/onboarding/profile"; return; } catch (_error) {}
+  try { const response = await loginAdmin(payload); resetAllTokens(); setAdminToken(response.token); window.location.href = "/admin/dashboard"; return; } catch (_error) { }
+  try { const response = await loginUser(payload); resetAllTokens(); setUserToken(response.token); const returnTo = sessionStorage.getItem("miroir_after_login"); sessionStorage.removeItem("miroir_after_login"); window.location.href = response.user.profileCompleted || response.user.profileSkipped ? (returnTo || "/app") : "/onboarding/profile"; return; } catch (_error) { }
   try { const response = await loginShopOwner(payload); resetAllTokens(); setShopToken(response.token); window.location.href = "/shop/dashboard"; return; } catch (error) { if (error.response?.status === 403) shopStatusError = error; }
   if (shopStatusError) throw shopStatusError;
   const error = new Error("Invalid email or password."); error.response = { data: { message: "Invalid email or password." } }; throw error;

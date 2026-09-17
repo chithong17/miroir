@@ -90,11 +90,15 @@ export const getProStrategyReport = async ({ ownerId, cycleId }) => {
 
 export const runStrategyReportWorker = async () => {
   const db = await getMongoDb();
-  const cycles = await db.collection("billing_cycles").find({ planCode: "PRO_INSIGHT", status: "open" }).sort({ startsAt: 1 }).limit(20).toArray();
+  const cycles = await db.collection("billing_cycles").find({ planCode: { $in: ["GROWTH", "PRO_INSIGHT"] }, status: "open" }).sort({ startsAt: 1 }).limit(20).toArray();
   for (const cycle of cycles) {
     const existing = await db.collection("shop_strategy_reports").findOne({ ownerId: cycle.ownerId, cycleId: cycle.id });
     if (existing) continue;
     try { await getProStrategyReport({ ownerId: cycle.ownerId, cycleId: cycle.id }); }
-    catch (error) { console.error(`Strategy report generation failed for ${cycle.id}:`, error); }
+    catch (error) {
+      if (error.statusCode !== 404) {
+        console.error(`Strategy report generation failed for ${cycle.id}:`, error);
+      }
+    }
   }
 };
