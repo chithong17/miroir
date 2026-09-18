@@ -198,7 +198,7 @@ export default function HeroAuthPage({ mode = "login" }) {
             </div>
 
             {/* Editorial Heading */}
-            <h1 className="font-display text-2xl sm:text-[28px] font-bold tracking-tight text-[#1C2A1B] drop-shadow-[0_1px_2px_rgba(255,255,255,0.85)] leading-tight">
+            <h1 className="font-display text-2xl sm:text-[28px] font-bold tracking-tight text-[#487236] drop-shadow-[0_1px_2px_rgba(255,255,255,0.85)] leading-tight">
               {isRegister
                 ? isVi
                   ? "Tạo tài khoản"
