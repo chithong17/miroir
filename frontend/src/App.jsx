@@ -13,6 +13,7 @@ import ShopPublicPage from "./pages/ShopPublicPage.jsx";
 import TryOnStudioPage from "./pages/TryOnStudioPage.jsx";
 import UserAppPage from "./pages/UserAppPage.jsx";
 import HeroPage from "./pages/HeroPage.jsx";
+import HeroAuthPage from "./pages/HeroAuthPage.jsx";
 import CommercePage from "./pages/CommercePage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import { getUserToken } from "./api/userApi.js";
@@ -23,6 +24,14 @@ function App() {
 
   if (pathname === "/hero") {
     return <HeroPage />;
+  }
+
+  if (pathname === "/hero/login") {
+    return <HeroAuthPage mode="login" />;
+  }
+
+  if (pathname === "/hero/signup" || pathname === "/hero/register") {
+    return <HeroAuthPage mode="signup" />;
   }
 
   if (pathname === "/download") {
