@@ -1005,7 +1005,8 @@ export function LanguageToggle({ className = "" }) {
 }
 
 export function FloatingLanguageToggle() {
-  if (window.location.pathname.startsWith("/shop/")) return null;
+  const pathname = window.location.pathname;
+  if (pathname.startsWith("/shop/") || pathname.startsWith("/hero")) return null;
   return (
     <div className="fixed bottom-5 right-5 z-[70]">
       <LanguageToggle />
