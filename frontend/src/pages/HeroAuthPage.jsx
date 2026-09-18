@@ -142,7 +142,7 @@ export default function HeroAuthPage({ mode = "login" }) {
       <header className="relative z-30 flex w-full items-center justify-between px-6 py-4 sm:px-12 sm:py-6 lg:px-20 lg:py-6">
         <a
           href="/hero"
-          className="group inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/70 px-4 py-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-300 hover:border-[#94B16F] hover:bg-white/95 hover:shadow-[0_4px_20px_rgba(148,177,111,0.2)] hover:scale-102"
+          className="group inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/70 px-4 py-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-300 hover:border-[#B3D07E] hover:bg-white/95 hover:shadow-[0_4px_20px_rgba(179,208,126,0.3)] hover:scale-102"
         >
           <svg
             className="h-4 w-4 text-[#3A5236] transition-transform duration-300 group-hover:-translate-x-0.5"
@@ -168,9 +168,9 @@ export default function HeroAuthPage({ mode = "login" }) {
           <button
             type="button"
             onClick={() => setLanguage(language === "vi" ? "en" : "vi")}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/70 px-3.5 py-1.5 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-[#2C3E2D] shadow-[0_4px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-200 hover:bg-white/95 hover:border-[#94B16F]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/70 px-3.5 py-1.5 font-display text-[11px] font-bold uppercase tracking-[0.16em] text-[#2C3E2D] shadow-[0_4px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-200 hover:bg-white/95 hover:border-[#B3D07E]"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-[#7CA463]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#B3D07E]" />
             {language === "vi" ? "VI" : "EN"}
           </button>
         </div>
@@ -191,8 +191,8 @@ export default function HeroAuthPage({ mode = "login" }) {
               </span>
             </div>
 
-            {/* Editorial Heading */}
-            <h1 className="font-display text-[26px] xl:text-[28px] font-bold tracking-tight text-[#1C2A1B] leading-tight">
+            {/* Editorial Heading in Web #B3D07E */}
+            <h1 className="font-display text-[26px] xl:text-[28px] font-bold tracking-tight text-[#B3D07E] leading-tight">
               {isRegister
                 ? isVi
                   ? "Tạo tài khoản"
@@ -221,7 +221,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   onClick={() => setForm((prev) => ({ ...prev, role: "user" }))}
                   className={`flex-1 rounded-full py-1.5 font-display text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
                     form.role === "user"
-                      ? "bg-white text-[#1C2A1B] shadow-xs"
+                      ? "bg-[#B3D07E] text-[#162912] shadow-xs"
                       : "text-[#5A6D58] hover:text-[#1C2A1B]"
                   }`}
                 >
@@ -232,7 +232,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   onClick={() => setForm((prev) => ({ ...prev, role: "shop" }))}
                   className={`flex-1 rounded-full py-1.5 font-display text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
                     form.role === "shop"
-                      ? "bg-white text-[#1C2A1B] shadow-xs"
+                      ? "bg-[#B3D07E] text-[#162912] shadow-xs"
                       : "text-[#5A6D58] hover:text-[#1C2A1B]"
                   }`}
                 >
@@ -254,7 +254,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                     value={form.name}
                     onChange={updateField("name")}
                     placeholder={isVi ? "Nhập họ và tên..." : "e.g. Eleanor Vance"}
-                    className="w-full rounded-full border border-[#D8DFD5] bg-[#FAF9F7] px-5 py-2.5 text-xs xl:text-sm text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#557845] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#557845]/20 shadow-xs"
+                    className="w-full rounded-full border border-[#D8DFD5] bg-[#FAF9F7] px-5 py-2.5 text-xs xl:text-sm text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#B3D07E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                   />
                 </div>
               )}
@@ -269,7 +269,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   value={form.email}
                   onChange={updateField("email")}
                   placeholder="name@example.com"
-                  className="w-full rounded-full border border-[#D8DFD5] bg-[#FAF9F7] px-5 py-2.5 text-xs xl:text-sm text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#557845] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#557845]/20 shadow-xs"
+                  className="w-full rounded-full border border-[#D8DFD5] bg-[#FAF9F7] px-5 py-2.5 text-xs xl:text-sm text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#B3D07E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                 />
               </div>
 
@@ -284,7 +284,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                     value={form.password}
                     onChange={updateField("password")}
                     placeholder="••••••••"
-                    className="w-full rounded-full border border-[#D8DFD5] bg-[#FAF9F7] px-5 py-2.5 pr-12 text-xs xl:text-sm text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#557845] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#557845]/20 shadow-xs"
+                    className="w-full rounded-full border border-[#D8DFD5] bg-[#FAF9F7] px-5 py-2.5 pr-12 text-xs xl:text-sm text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#B3D07E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                   />
                   <button
                     type="button"
@@ -315,7 +315,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   <button
                     type="button"
                     onClick={() => setShowPasswordReset(true)}
-                    className="font-sans text-xs font-bold text-[#4B6B38] hover:text-[#233A1C] transition-colors"
+                    className="font-sans text-xs font-bold text-[#6F9535] hover:text-[#4A681F] transition-colors"
                   >
                     {isVi ? "Quên mật khẩu?" : "Forgot password?"}
                   </button>
@@ -328,22 +328,22 @@ export default function HeroAuthPage({ mode = "login" }) {
                   className={`rounded-2xl border px-4 py-2 font-sans text-xs leading-tight transition-all ${
                     status === "error"
                       ? "border-[#E7B8B8] bg-[#FDF1F1] text-[#9A3838]"
-                      : "border-[#C5DDBB] bg-[#F2F8EE] text-[#3D6334]"
+                      : "border-[#B3D07E]/60 bg-[#F2F8EE] text-[#3D6334]"
                   }`}
                 >
                   {message}
                 </div>
               )}
 
-              {/* Primary Submit Button: Muted Sage Green */}
+              {/* Primary Submit Button: Miroir Mint #B3D07E */}
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full rounded-full bg-[#527744] hover:bg-[#436436] active:scale-[0.99] text-white py-3 px-6 font-display text-xs xl:text-sm font-bold tracking-wider uppercase shadow-[0_8px_20px_rgba(82,119,68,0.3)] hover:shadow-[0_12px_28px_rgba(82,119,68,0.4)] transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
+                className="w-full rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] active:scale-[0.99] text-[#162912] py-3 px-6 font-display text-xs xl:text-sm font-extrabold tracking-wider uppercase shadow-[0_8px_22px_rgba(179,208,126,0.45)] hover:shadow-[0_12px_28px_rgba(179,208,126,0.6)] transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
               >
                 {status === "loading" ? (
                   <span className="inline-flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                    <svg className="h-4 w-4 animate-spin text-[#162912]" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
@@ -376,7 +376,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                 <button
                   type="button"
                   onClick={() => toggleMode(!isRegister)}
-                  className="font-bold text-[#3B5B2C] hover:text-[#1F3315] underline-offset-3 hover:underline transition-colors"
+                  className="font-bold text-[#6F9535] hover:text-[#4A681F] underline-offset-3 hover:underline transition-colors"
                 >
                   {isRegister
                     ? isVi
@@ -422,8 +422,8 @@ export default function HeroAuthPage({ mode = "login" }) {
               </span>
             </div>
 
-            {/* Editorial Heading */}
-            <h1 className="font-display text-2xl font-bold tracking-tight text-[#1C2A1B] leading-tight">
+            {/* Editorial Heading in Web #B3D07E */}
+            <h1 className="font-display text-2xl font-bold tracking-tight text-[#B3D07E] leading-tight">
               {isRegister
                 ? isVi
                   ? "Tạo tài khoản"
@@ -452,7 +452,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   onClick={() => setForm((prev) => ({ ...prev, role: "user" }))}
                   className={`flex-1 rounded-full py-1 font-display text-[10.5px] font-bold uppercase tracking-wider transition-all ${
                     form.role === "user"
-                      ? "bg-[#527744] text-white shadow-xs"
+                      ? "bg-[#B3D07E] text-[#162912] shadow-xs"
                       : "text-[#4F644C] hover:text-[#1C2A1B]"
                   }`}
                 >
@@ -463,7 +463,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   onClick={() => setForm((prev) => ({ ...prev, role: "shop" }))}
                   className={`flex-1 rounded-full py-1 font-display text-[10.5px] font-bold uppercase tracking-wider transition-all ${
                     form.role === "shop"
-                      ? "bg-[#527744] text-white shadow-xs"
+                      ? "bg-[#B3D07E] text-[#162912] shadow-xs"
                       : "text-[#4F644C] hover:text-[#1C2A1B]"
                   }`}
                 >
@@ -485,7 +485,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                     value={form.name}
                     onChange={updateField("name")}
                     placeholder={isVi ? "Nhập họ và tên..." : "e.g. Eleanor Vance"}
-                    className="w-full rounded-full border border-white/90 bg-white/70 px-4 py-2.5 text-xs text-[#1C2A1B] placeholder-[#788C74] backdrop-blur-md transition-all focus:border-[#527744] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#527744]/20 shadow-xs"
+                    className="w-full rounded-full border border-white/90 bg-white/70 px-4 py-2.5 text-xs text-[#1C2A1B] placeholder-[#788C74] backdrop-blur-md transition-all focus:border-[#B3D07E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                   />
                 </div>
               )}
@@ -500,7 +500,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   value={form.email}
                   onChange={updateField("email")}
                   placeholder="name@example.com"
-                  className="w-full rounded-full border border-white/90 bg-white/70 px-4 py-2.5 text-xs text-[#1C2A1B] placeholder-[#788C74] backdrop-blur-md transition-all focus:border-[#527744] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#527744]/20 shadow-xs"
+                  className="w-full rounded-full border border-white/90 bg-white/70 px-4 py-2.5 text-xs text-[#1C2A1B] placeholder-[#788C74] backdrop-blur-md transition-all focus:border-[#B3D07E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                 />
               </div>
 
@@ -515,7 +515,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                     value={form.password}
                     onChange={updateField("password")}
                     placeholder="••••••••"
-                    className="w-full rounded-full border border-white/90 bg-white/70 px-4 py-2.5 pr-11 text-xs text-[#1C2A1B] placeholder-[#788C74] backdrop-blur-md transition-all focus:border-[#527744] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#527744]/20 shadow-xs"
+                    className="w-full rounded-full border border-white/90 bg-white/70 px-4 py-2.5 pr-11 text-xs text-[#1C2A1B] placeholder-[#788C74] backdrop-blur-md transition-all focus:border-[#B3D07E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                   />
                   <button
                     type="button"
@@ -546,7 +546,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   <button
                     type="button"
                     onClick={() => setShowPasswordReset(true)}
-                    className="font-sans text-[11px] font-bold text-[#4B6B38] hover:text-[#233A1C] transition-colors"
+                    className="font-sans text-[11px] font-bold text-[#6F9535] hover:text-[#4A681F] transition-colors"
                   >
                     {isVi ? "Quên mật khẩu?" : "Forgot password?"}
                   </button>
@@ -559,22 +559,22 @@ export default function HeroAuthPage({ mode = "login" }) {
                   className={`rounded-2xl border px-3.5 py-2 font-sans text-xs leading-tight transition-all ${
                     status === "error"
                       ? "border-[#E7B8B8] bg-[#FDF1F1] text-[#9A3838]"
-                      : "border-[#C5DDBB] bg-[#F2F8EE] text-[#3D6334]"
+                      : "border-[#B3D07E]/60 bg-[#F2F8EE] text-[#3D6334]"
                   }`}
                 >
                   {message}
                 </div>
               )}
 
-              {/* Primary Submit Button */}
+              {/* Primary Submit Button: Miroir Mint #B3D07E */}
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full rounded-full bg-[#527744] hover:bg-[#436436] active:scale-[0.99] text-white py-2.5 px-5 font-display text-xs font-bold tracking-wider uppercase shadow-[0_6px_18px_rgba(82,119,68,0.35)] transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
+                className="w-full rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] active:scale-[0.99] text-[#162912] py-2.5 px-5 font-display text-xs font-extrabold tracking-wider uppercase shadow-[0_6px_18px_rgba(179,208,126,0.45)] transition-all duration-300 disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-2"
               >
                 {status === "loading" ? (
                   <span className="inline-flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                    <svg className="h-4 w-4 animate-spin text-[#162912]" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
@@ -607,7 +607,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                 <button
                   type="button"
                   onClick={() => toggleMode(!isRegister)}
-                  className="font-bold text-[#2A4B20] hover:text-[#172F10] underline-offset-3 hover:underline transition-colors"
+                  className="font-bold text-[#6F9535] hover:text-[#4A681F] underline-offset-3 hover:underline transition-colors"
                 >
                   {isRegister
                     ? isVi
