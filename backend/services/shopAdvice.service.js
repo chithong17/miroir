@@ -106,8 +106,8 @@ export const getGrowthAdvice = async (ownerId, range = "30d") => {
 export const getProStrategyReport = async ({ ownerId, cycleId }) => {
   if (!cycleId) { const error = new Error("Active billing cycle is required."); error.statusCode = 409; throw error; }
   const db = await getMongoDb();
-  const previous = await db.collection("shop_strategy_reports").findOne({ ownerId, cycleId });
-  if (previous) return previous;
+  // const previous = await db.collection("shop_strategy_reports").findOne({ ownerId, cycleId });
+  // if (previous) return previous;
   const [dashboard, insights] = await Promise.all([getShopDashboard({ ownerId, range: "30d" }), getShopInsights({ ownerId, range: "30d" })]);
   const data = { summary: dashboard.summary, finance: dashboard.finance, inventoryHealth: dashboard.inventoryHealth, topProducts: dashboard.topProducts, insights: insights.enoughData ? insights.breakdowns : { enoughData: false, message: insights.message } };
   const rawAiResult = await generate({ data, strategic: true });
@@ -125,8 +125,18 @@ export const getProStrategyReport = async ({ ownerId, cycleId }) => {
   }
 
   const report = { id: crypto.randomUUID(), ownerId, cycleId, text: textToSave, structuredData, data, createdAt: new Date(), source: "AI" };
-  try { await db.collection("shop_strategy_reports").insertOne(report); return report; }
-  catch (error) { if (error.code === 11000) return db.collection("shop_strategy_reports").findOne({ ownerId, cycleId }); throw error; }
+  try {
+    await db.collection("shop_strategy_reports").updateOne(
+      { ownerId, cycleId },
+      { $set: report },
+      { upsert: true }
+    );
+    return report;
+  }
+  catch (error) {
+    console.error("Failed to save report:", error);
+    throw error;
+  }
 };
 
 export const runStrategyReportWorker = async () => {
