@@ -1959,20 +1959,36 @@ function PremiumPaywall({ onCheckout, titleKey }) {
 
 function ShopAiReport({ title, report, status, onRetry, retryLabel }) {
   return (
-    <section className="mt-5 rounded-2xl border border-[#DFE8D5] bg-white p-5" aria-live="polite">
-      <h2 className="font-black">{title}</h2>
-      {status === "loading" ? <p className="mt-3 text-sm text-slate-600">Đang tạo phân tích AI...</p> : null}
-      {status === "error" ? (
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-          <p>Dịch vụ AI tạm thời chưa phản hồi. Số liệu phân tích của shop vẫn có thể xem bình thường.</p>
-          <button type="button" onClick={onRetry} className="rounded-lg border border-[#B3D07E] px-3 py-2 font-semibold text-slate-900 hover:bg-mintSoft">{retryLabel}</button>
+    <section className="mt-6 overflow-hidden rounded-2xl border border-[#DCE5D4] bg-white shadow-sm" aria-live="polite">
+      <header className="flex items-center gap-4 border-b border-[#E2E9DC] bg-gradient-to-r from-[#EDF3E5] to-[#F8FAF5] p-5">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#DCE5D4] bg-white text-[#587541] shadow-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-6 w-6"><path d="m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3Z"/><path d="m20 2 .6 1.4L22 4l-1.4.6L20 6l-.6-1.4L18 4l1.4-.6L20 2Z"/></svg>
+        </span>
+        <div>
+          <h2 className="text-lg font-black tracking-tight text-[#243621]">{title}</h2>
+          <p className="mt-0.5 text-xs font-bold uppercase tracking-widest text-[#587541]">Miroir AI Insights</p>
         </div>
-      ) : null}
-      {report?.text ? (
-        <div className="mt-4 text-sm leading-relaxed space-y-4 [&>h1]:text-xl [&>h1]:font-black [&>h1]:text-slate-900 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mt-6 [&>h2]:text-slate-800 [&>h3]:text-base [&>h3]:font-bold [&>h3]:mt-4 [&>ul]:list-disc [&>ul]:ml-5 [&>ol]:list-decimal [&>ol]:ml-5 [&>li]:mt-1 [&>p]:mt-2 [&>strong]:font-bold [&>strong]:text-slate-900">
-          <ReactMarkdown>{report.text}</ReactMarkdown>
-        </div>
-      ) : null}
+      </header>
+      <div className="p-6">
+        {status === "loading" ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 w-3/4 rounded bg-slate-100"></div>
+            <div className="h-4 w-1/2 rounded bg-slate-100"></div>
+            <div className="h-4 w-5/6 rounded bg-slate-100"></div>
+          </div>
+        ) : null}
+        {status === "error" ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <p>Dịch vụ AI tạm thời chưa phản hồi. Số liệu phân tích của shop vẫn có thể xem bình thường.</p>
+            <button type="button" onClick={onRetry} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white hover:bg-red-800">{retryLabel}</button>
+          </div>
+        ) : null}
+        {report?.text ? (
+          <div className="text-[15px] leading-relaxed text-slate-700 space-y-5 [&>h1]:text-2xl [&>h1]:font-black [&>h1]:text-[#243621] [&>h1]:border-b [&>h1]:border-slate-100 [&>h1]:pb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:text-[#354B2A] [&>h3]:text-base [&>h3]:font-bold [&>h3]:mt-6 [&>h3]:text-slate-800 [&>ul]:list-none [&>ul]:space-y-3 [&>ul>li]:relative [&>ul>li]:pl-6 [&>ul>li::before]:content-[''] [&>ul>li::before]:absolute [&>ul>li::before]:left-1.5 [&>ul>li::before]:top-[10px] [&>ul>li::before]:h-1.5 [&>ul>li::before]:w-1.5 [&>ul>li::before]:rounded-full [&>ul>li::before]:bg-[#86A95E] [&>ol]:list-decimal [&>ol]:ml-5 [&>ol>li]:pl-2 [&>ol>li]:mt-3 [&>p]:mt-3 [&>strong]:font-bold [&>strong]:text-slate-900 [&>blockquote]:border-l-4 [&>blockquote]:border-[#86A95E] [&>blockquote]:bg-[#F8FAF5] [&>blockquote]:px-5 [&>blockquote]:py-3 [&>blockquote]:italic [&>blockquote]:text-slate-700 [&>blockquote]:rounded-r-xl">
+            <ReactMarkdown>{report.text}</ReactMarkdown>
+          </div>
+        ) : null}
+      </div>
     </section>
   );
 }
