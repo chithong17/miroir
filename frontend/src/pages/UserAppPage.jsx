@@ -67,14 +67,14 @@ function UserAppPage({ initialView = "products" }) {
     if (view === "favorites") loadFavorites();
   }, [view, filters.page]);
 
-  const loadProducts = async () => {
-    const response = await listCatalogProducts(compact(filters));
+  const loadProducts = async (currentFilters = filters) => {
+    const response = await listCatalogProducts(compact(currentFilters));
     setProducts(response.products || []);
     setPagination(response.pagination || { page: 1, totalPages: 1, total: 0 });
   };
 
-  const loadOutfits = async () => {
-    const response = await listCatalogOutfits(compact(filters));
+  const loadOutfits = async (currentFilters = filters) => {
+    const response = await listCatalogOutfits(compact(currentFilters));
     setOutfits(response.outfits || []);
     setPagination(response.pagination || { page: 1, totalPages: 1, total: 0 });
   };
@@ -86,8 +86,10 @@ function UserAppPage({ initialView = "products" }) {
   };
 
   const applyFilters = () => {
-    setFilters((previous) => ({ ...previous, page: 1 }));
-    setTimeout(() => (view === "outfits" ? loadOutfits() : loadProducts()), 0);
+    const newFilters = { ...filters, page: 1 };
+    setFilters(newFilters);
+    if (view === "outfits") loadOutfits(newFilters);
+    if (view === "products") loadProducts(newFilters);
   };
 
   const goToTryOn = (product) => {

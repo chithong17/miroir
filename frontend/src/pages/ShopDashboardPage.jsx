@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../i18n.jsx";
+import ReactMarkdown from "react-markdown";
 import {
   archiveProduct,
   createShopPayment,
@@ -981,8 +982,8 @@ function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onChecko
           <a href="/shop/dashboard" className="font-display text-2xl font-extrabold text-[#89A960]">
             MIROIR
           </a>
-          <p className="mt-1 hidden text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 lg:block">Kênh người bán</p>
-          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold lg:hidden ${hasActiveShopPlan ? "bg-[#E5F0D8] text-[#49652D]" : "bg-amber-100 text-amber-700"}`}>{hasActiveShopPlan ? "Gói đang hoạt động" : "Gói cơ bản"}</span>
+          <p className="mt-1 hidden text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 lg:block">{t("shopAdmin.sellerChannel")}</p>
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold lg:hidden ${hasActiveShopPlan ? "bg-[#E5F0D8] text-[#49652D] ring-1 ring-[#49652D]/20" : "bg-amber-100 text-amber-700 ring-1 ring-amber-700/20"}`}>{hasActiveShopPlan ? <><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#49652D] opacity-75"></span><span className="relative inline-flex h-2 w-2 rounded-full bg-[#49652D]"></span></span>{t("shopAdmin.activePlan")}</> : t("shopAdmin.basicPlan")}</span>
         </div>
 
         <div className="hidden px-3 pt-4 lg:block">
@@ -992,17 +993,17 @@ function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onChecko
               <div className="min-w-0 flex-1"><p className="truncate text-sm font-black text-slate-900">{shop?.name || "Chưa có shop"}</p><p className="truncate text-xs text-slate-500">{shop?.slug || "Tạo hồ sơ để bắt đầu"}</p></div>
             </div>
             <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#EEF2EA] pt-3">
-              <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${hasActiveShopPlan ? "bg-[#E5F0D8] text-[#49652D]" : "bg-amber-100 text-amber-700"}`}>{hasActiveShopPlan ? "Đang hoạt động" : "Gói cơ bản"}</span>
-              {hasActiveShopPlan && expiresAt ? <button type="button" onClick={onCheckout} className="text-[11px] font-medium text-[#668443] hover:underline">{subscription?.planName || subscription?.planCode} · Đến {expiresAt}</button> : <button type="button" onClick={onCheckout} className="text-[11px] font-black text-[#668443] hover:underline">Chọn gói</button>}
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${hasActiveShopPlan ? "bg-[#E5F0D8] text-[#49652D] ring-1 ring-[#49652D]/20" : "bg-amber-100 text-amber-700 ring-1 ring-amber-700/20"}`}>{hasActiveShopPlan ? <><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#49652D] opacity-75"></span><span className="relative inline-flex h-2 w-2 rounded-full bg-[#49652D]"></span></span>{t("shopAdmin.activePlan")}</> : t("shopAdmin.basicPlan")}</span>
+              {hasActiveShopPlan && expiresAt ? <button type="button" onClick={onCheckout} className="text-[11px] font-medium text-[#668443] hover:underline">{subscription?.planName || subscription?.planCode} · Đến {expiresAt}</button> : <button type="button" onClick={onCheckout} className="text-[11px] font-black text-[#668443] hover:underline">{t("shopAdmin.choosePlan")}</button>}
             </div>
             {paymentStatus ? <p className="mt-2 text-[11px] text-slate-500">{paymentStatus}</p> : null}
           </div>
         </div>
 
         <nav className="flex gap-1 overflow-x-auto px-3 py-3 lg:grid lg:gap-1 lg:overflow-visible lg:py-4">
-          <a href="/shop/messages" className="group flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 lg:w-full"><ShopNavIcon name="messages" /><span className="whitespace-nowrap lg:min-w-0 lg:flex-1">Tin nhắn</span>{chatUnreadCount ? <span className="rounded-full bg-[#86A95E] px-2 py-0.5 text-[11px] font-black text-white">{chatUnreadCount}</span> : null}</a>
+          <a href="/shop/messages" className="group flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 lg:w-full"><ShopNavIcon name="messages" /><span className="whitespace-nowrap lg:min-w-0 lg:flex-1">{t("shopAdmin.messages")}</span>{chatUnreadCount ? <span className="rounded-full bg-[#86A95E] px-2 py-0.5 text-[11px] font-black text-white">{chatUnreadCount}</span> : null}</a>
           {primaryItems.map(renderItem)}
-          <p className="mt-3 hidden px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 lg:block">Quản lý</p>
+          <p className="mt-3 hidden px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 lg:block">{t("shopAdmin.manage")}</p>
           {manageItems.map(renderItem)}
         </nav>
 
@@ -1967,7 +1968,11 @@ function ShopAiReport({ title, report, status, onRetry, retryLabel }) {
           <button type="button" onClick={onRetry} className="rounded-lg border border-[#B3D07E] px-3 py-2 font-semibold text-slate-900 hover:bg-mintSoft">{retryLabel}</button>
         </div>
       ) : null}
-      {report?.text ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{report.text}</p> : null}
+      {report?.text ? (
+        <div className="mt-4 text-sm leading-relaxed space-y-4 [&>h1]:text-xl [&>h1]:font-black [&>h1]:text-slate-900 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mt-6 [&>h2]:text-slate-800 [&>h3]:text-base [&>h3]:font-bold [&>h3]:mt-4 [&>ul]:list-disc [&>ul]:ml-5 [&>ol]:list-decimal [&>ol]:ml-5 [&>li]:mt-1 [&>p]:mt-2 [&>strong]:font-bold [&>strong]:text-slate-900">
+          <ReactMarkdown>{report.text}</ReactMarkdown>
+        </div>
+      ) : null}
     </section>
   );
 }
