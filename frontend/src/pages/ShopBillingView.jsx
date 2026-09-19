@@ -28,7 +28,7 @@ export default function ShopBillingView({ subscription, plans, invoices, onCheck
       {subscription?.creditBalance > 0 ? <p className="mt-3 text-sm">Tín dụng còn lại: <strong>{money(subscription.creditBalance)}</strong></p> : null}
       {subscription?.pendingRenewal ? <p className="mt-3 text-sm font-bold text-[#49652D]">Đã thanh toán kỳ tiếp theo: {subscription.pendingRenewal.planCode}. Gói sẽ tiếp tục khi kỳ hiện tại kết thúc.</p> : null}
     </div>
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {plans.map((plan) => {
         const annualDiscount = plan.code === "STARTER_A" ? 0 : plan.code === "STARTER_B" ? 10 : plan.code === "GROWTH" ? 15 : 0;
         const annualPrice = plan.amount * 12 * (1 - annualDiscount / 100);
