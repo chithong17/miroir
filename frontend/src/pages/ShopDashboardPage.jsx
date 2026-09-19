@@ -941,18 +941,18 @@ function ShopDashboardPage() {
 }
 
 function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onCheckout, paymentStatus, setView, shop, subscription, unreadCount, view }) {
-  const { language, toggleLanguage } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const primaryItems = [
-    ["products", "Sản phẩm", "products"],
-    ["orders", "Đơn hàng", "orders", unreadCount],
-    ["analytics", "Phân tích", "analytics"],
-    ["insights", "Khách hàng", "customers"],
+    ["products", t("shopAdmin.products"), "products"],
+    ["orders", t("shopAdmin.orders"), "orders", unreadCount],
+    ["analytics", t("shopAdmin.analytics"), "analytics"],
+    ["insights", t("shopAdmin.insights"), "customers"],
   ];
   const manageItems = [
-    ["billing", "Gói & thanh toán", "billing"],
-    ["shop", "Hồ sơ shop", "shop"],
-    ["import", "Nhập sản phẩm", "import"],
-    ["trash", "Thùng rác", "trash"],
+    ["billing", t("shopAdmin.billing"), "billing"],
+    ["shop", t("shopAdmin.shopProfile"), "shop"],
+    ["import", t("shopAdmin.excelImport"), "import"],
+    ["trash", t("shopAdmin.trash"), "trash"],
   ];
   const selectView = (key) => {
     setView(key);
@@ -992,7 +992,7 @@ function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onChecko
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#E5F0D8] font-black text-[#668443]">{shop?.logoUrl ? <img className="h-full w-full object-cover" src={shop.logoUrl} alt="" /> : (shop?.name || "S").slice(0, 1).toUpperCase()}</div>
               <div className="min-w-0 flex-1"><p className="truncate text-sm font-black text-slate-900">{shop?.name || "Chưa có shop"}</p><p className="truncate text-xs text-slate-500">{shop?.slug || "Tạo hồ sơ để bắt đầu"}</p></div>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#EEF2EA] pt-3">
+            <div className="mt-3 flex flex-col items-start gap-2 border-t border-[#EEF2EA] pt-3">
               <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${hasActiveShopPlan ? "bg-[#E5F0D8] text-[#49652D] ring-1 ring-[#49652D]/20" : "bg-amber-100 text-amber-700 ring-1 ring-amber-700/20"}`}>{hasActiveShopPlan ? <><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#49652D] opacity-75"></span><span className="relative inline-flex h-2 w-2 rounded-full bg-[#49652D]"></span></span>{t("shopAdmin.activePlan")}</> : t("shopAdmin.basicPlan")}</span>
               {hasActiveShopPlan && expiresAt ? <button type="button" onClick={onCheckout} className="text-[11px] font-medium text-[#668443] hover:underline">{subscription?.planName || subscription?.planCode} · Đến {expiresAt}</button> : <button type="button" onClick={onCheckout} className="text-[11px] font-black text-[#668443] hover:underline">{t("shopAdmin.choosePlan")}</button>}
             </div>
