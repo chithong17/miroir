@@ -2,7 +2,7 @@ import { getMongoDb } from "./mongo.service.js";
 
 export const PLAN_CODES = {
   FREE: "FREE", STARTER_A: "STARTER_A", STARTER_B: "STARTER_B",
-  GROWTH: "GROWTH", PRO_INSIGHT: "PRO_INSIGHT",
+  GROWTH: "GROWTH",
   SHOP_OWNER_MONTHLY: "SHOP_OWNER_MONTHLY", // Existing paid accounts.
 };
 
@@ -14,11 +14,11 @@ const plan = (code, name, amount, commissionRate, tryOnQuota, overagePrice, tier
 export const PAYMENT_PLANS = {
   STARTER_A: plan("STARTER_A", "Starter A", 99000, 0.025, 30, 3000, "basic", ["Dashboard cơ bản", "30 lượt Try-On", "Hoa hồng 2,5%"]),
   STARTER_B: plan("STARTER_B", "Starter B", 199000, 0, 30, 3000, "basic", ["Dashboard cơ bản", "30 lượt Try-On", "Không hoa hồng"]),
-  GROWTH: plan("GROWTH", "Growth", 349000, 0, 120, 2500, "growth", ["Dashboard nâng cao", "120 lượt Try-On", "Gợi ý kinh doanh AI", "Gợi ý phối đồ B2C", "Insight Style & Budget", "Báo cáo tư vấn AI mỗi kỳ"]),
+  GROWTH: plan("GROWTH", "Growth", 349000, 0, 60, 2500, "growth", ["Dashboard nâng cao", "60 lượt Try-On", "Gợi ý kinh doanh AI", "Gợi ý phối đồ B2C", "Insight Style & Budget", "Báo cáo tư vấn AI mỗi kỳ"]),
 };
 
-export const normalizePlanCode = (code) => code === PLAN_CODES.SHOP_OWNER_MONTHLY ? PLAN_CODES.GROWTH : code;
-export const isGrowthPlan = (code) => [PLAN_CODES.GROWTH, PLAN_CODES.PRO_INSIGHT, PLAN_CODES.SHOP_OWNER_MONTHLY].includes(code);
+export const normalizePlanCode = (code) => ["SHOP_OWNER_MONTHLY", "PRO_INSIGHT"].includes(code) ? PLAN_CODES.GROWTH : code;
+export const isGrowthPlan = (code) => [PLAN_CODES.GROWTH, "SHOP_OWNER_MONTHLY", "PRO_INSIGHT"].includes(code);
 
 export const addMonth = (date, anchorDay = new Date(date).getUTCDate()) => {
   const start = new Date(date);
@@ -99,7 +99,7 @@ export const buildSubscriptionSummary = ({ accountType, subscription = {}, usage
     startsAt: subscription.startsAt || null, expiresAt: subscription.expiresAt || null,
     cycleId: subscription.cycleId || null, isPremium: active,
     grantType: active ? subscription.grantType || null : null,
-    tier: active ? base?.tier : null, planName: subscription.planName || base?.name || null, features: active ? subscription.features || getPlanFeatures(code) : [],
+    tier: active ? base?.tier : null, planName: (subscription.planCode === "PRO_INSIGHT" || subscription.planCode === "SHOP_OWNER_MONTHLY") ? base?.name : (subscription.planName || base?.name || null), features: active ? subscription.features || getPlanFeatures(code) : [],
     tryOnQuota: subscription.tryOnQuota ?? base?.tryOnQuota ?? 0,
     overagePrice: subscription.overagePrice ?? base?.overagePrice ?? 0,
     commissionRate: subscription.commissionRate ?? base?.commissionRate ?? 0,
