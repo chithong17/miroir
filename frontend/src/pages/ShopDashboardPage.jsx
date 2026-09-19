@@ -941,7 +941,7 @@ function ShopDashboardPage() {
 }
 
 function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onCheckout, paymentStatus, setView, shop, subscription, unreadCount, view }) {
-  const { language, toggleLanguage } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const primaryItems = [
     ["products", "Sản phẩm", "products"],
     ["orders", "Đơn hàng", "orders", unreadCount],
