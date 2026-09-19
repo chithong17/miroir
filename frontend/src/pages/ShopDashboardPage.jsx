@@ -1981,14 +1981,12 @@ function ShopAiReport({ title, report, status, onRetry, retryLabel }) {
             <div className="h-4 w-3/4 rounded bg-slate-100"></div><div className="h-4 w-1/2 rounded bg-slate-100"></div><div className="h-4 w-5/6 rounded bg-slate-100"></div>
           </div>
         ) : null}
-        
         {status === "error" ? (
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             <p>Dịch vụ AI tạm thời chưa phản hồi. Số liệu phân tích của shop vẫn có thể xem bình thường.</p>
             <button type="button" onClick={onRetry} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white hover:bg-red-800">{retryLabel}</button>
           </div>
         ) : null}
-        
         {data ? (
           <div className="space-y-6">
             {/* Style Section */}
