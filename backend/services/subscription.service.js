@@ -2,7 +2,7 @@ import { getMongoDb } from "./mongo.service.js";
 
 export const PLAN_CODES = {
   FREE: "FREE", STARTER_A: "STARTER_A", STARTER_B: "STARTER_B",
-  GROWTH: "GROWTH", PRO_INSIGHT: "PRO_INSIGHT",
+  GROWTH: "GROWTH",
   SHOP_OWNER_MONTHLY: "SHOP_OWNER_MONTHLY", // Existing paid accounts.
 };
 
@@ -17,8 +17,8 @@ export const PAYMENT_PLANS = {
   GROWTH: plan("GROWTH", "Growth", 349000, 0, 120, 2500, "growth", ["Dashboard nâng cao", "120 lượt Try-On", "Gợi ý kinh doanh AI", "Gợi ý phối đồ B2C", "Insight Style & Budget", "Báo cáo tư vấn AI mỗi kỳ"]),
 };
 
-export const normalizePlanCode = (code) => code === PLAN_CODES.SHOP_OWNER_MONTHLY ? PLAN_CODES.GROWTH : code;
-export const isGrowthPlan = (code) => [PLAN_CODES.GROWTH, PLAN_CODES.PRO_INSIGHT, PLAN_CODES.SHOP_OWNER_MONTHLY].includes(code);
+export const normalizePlanCode = (code) => ["SHOP_OWNER_MONTHLY", "PRO_INSIGHT"].includes(code) ? PLAN_CODES.GROWTH : code;
+export const isGrowthPlan = (code) => [PLAN_CODES.GROWTH, "SHOP_OWNER_MONTHLY", "PRO_INSIGHT"].includes(code);
 
 export const addMonth = (date, anchorDay = new Date(date).getUTCDate()) => {
   const start = new Date(date);

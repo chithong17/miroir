@@ -182,7 +182,7 @@ function ShopDashboardPage() {
 
   const shop = shops[0] || null;
   const hasActiveShopPlan = Boolean(ownerSubscription?.isPremium);
-  const canUseGrowth = hasActiveShopPlan && ["GROWTH", "PRO_INSIGHT"].includes(ownerSubscription?.planCode);
+  const canUseGrowth = hasActiveShopPlan && ["GROWTH"].includes(ownerSubscription?.planCode);
   const editingExistingProduct = Boolean(
     productForm.id && products.some((product) => product.id === productForm.id)
   );
