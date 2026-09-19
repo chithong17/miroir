@@ -106,22 +106,64 @@ export const getGrowthAdvice = async (ownerId, range = "30d") => {
 export const getProStrategyReport = async ({ ownerId, cycleId }) => {
   if (!cycleId) { const error = new Error("Active billing cycle is required."); error.statusCode = 409; throw error; }
   const db = await getMongoDb();
-  // const previous = await db.collection("shop_strategy_reports").findOne({ ownerId, cycleId });
-  // if (previous) return previous;
+  const previous = await db.collection("shop_strategy_reports").findOne({ ownerId, cycleId });
+  if (previous && previous.structuredData) return previous;
   const [dashboard, insights] = await Promise.all([getShopDashboard({ ownerId, range: "30d" }), getShopInsights({ ownerId, range: "30d" })]);
-  const data = { summary: dashboard.summary, finance: dashboard.finance, inventoryHealth: dashboard.inventoryHealth, topProducts: dashboard.topProducts, insights: insights.enoughData ? insights.breakdowns : { enoughData: false, message: insights.message } };
-  const rawAiResult = await generate({ data, strategic: true });
+  
   let structuredData = null;
-  let textToSave = rawAiResult;
+  let textToSave = "";
+  
+  if (!insights.enoughData || dashboard.summary?.orders === 0) {
+    structuredData = {
+      style: {
+        topStyles: [{ name: "Công sở (Office)", count: 7, percentage: 70 }, { name: "Hiện đại (Modern)", count: 3, percentage: 30 }],
+        customerProfile: {
+          topGender: { name: "Nữ", count: 8, percentage: 80 },
+          topBodyShape: { name: "Dáng quả lê", count: 6, percentage: 60 }
+        },
+        favoriteColors: [{ name: "Trắng", count: 4, hex: "#ffffff" }, { name: "Beige", count: 3, hex: "#f5f5dc" }],
+        advice: "Phong cách Công sở và Hiện đại đang là xu hướng chính. Nên tập trung nhập thêm các mẫu áo sơ mi trắng và quần âu màu beige."
+      },
+      budget: {
+        segments: [{ name: "700k - 1.5m", count: 5, percentage: 50 }, { name: "300k - 700k", count: 3, percentage: 30 }, { name: "< 300k", count: 2, percentage: 20 }],
+        aov: "678,750 VND",
+        insight: "Khách hàng sẵn sàng chi trả mức giá tầm trung. Đề xuất thiết kế thêm các combo phối sẵn (Set đồ) để tăng AOV lên mức 800k."
+      },
+      priorities: [
+        {
+          id: 1,
+          title: "Tối ưu hóa danh mục sản phẩm (Đang bán & Nháp)",
+          evidences: ["Nhiều sản phẩm ở trạng thái Nháp (Draft) chưa tạo ra doanh thu.", "Sản phẩm Áo phông xanh bán chạy nhưng tồn kho thấp."],
+          impact: { revenue: "Tiềm năng tăng 15%", description: "Giải phóng dòng vốn đóng băng" },
+          action: "Tiến hành chụp ảnh, viết mô tả và chuyển trạng thái sang 'Đang bán' cho các sản phẩm nháp. Nhập thêm tồn kho áo phông xanh.",
+          actionLabel: "Cần làm ngay"
+        },
+        {
+          id: 2,
+          title: "Đẩy mạnh bán chéo (Cross-selling)",
+          evidences: ["Áo sơ mi trắng là sản phẩm phễu tốt.", "Phân khúc chi tiêu 700k-1.5m chiếm 50%."],
+          impact: { revenue: "+ 2,500,000 VND", description: "Tăng giá trị đơn (AOV)" },
+          action: "Tạo combo Áo sơ mi trắng + Quần âu Beige giảm giá 10% khi mua cùng nhau.",
+          actionLabel: "Thử nghiệm"
+        }
+      ],
+      additionalAdvice: "> **Lưu ý:** Đây là báo cáo mẫu (Demo) do hệ thống chưa có đủ dữ liệu bán hàng thực tế trong 30 ngày qua để AI phân tích. Khi shop phát sinh thêm các đơn hàng thành công, AI sẽ tự động phân tích và tạo báo cáo chiến lược dựa trên dữ liệu thật của shop."
+    };
+    textToSave = structuredData.additionalAdvice;
+  } else {
+    const data = { summary: dashboard.summary, finance: dashboard.finance, inventoryHealth: dashboard.inventoryHealth, topProducts: dashboard.topProducts, insights: insights.enoughData ? insights.breakdowns : { enoughData: false, message: insights.message } };
+    const rawAiResult = await generate({ data, strategic: true });
+    textToSave = rawAiResult;
 
-  try {
-    const cleanJson = rawAiResult.replace(/```json/gi, "").replace(/```/g, "").trim();
-    if (cleanJson.startsWith("{")) {
-      structuredData = JSON.parse(cleanJson);
-      textToSave = structuredData.additionalAdvice || "";
+    try {
+      const cleanJson = rawAiResult.replace(/```json/gi, "").replace(/```/g, "").trim();
+      if (cleanJson.startsWith("{")) {
+        structuredData = JSON.parse(cleanJson);
+        textToSave = structuredData.additionalAdvice || "";
+      }
+    } catch (error) {
+      console.error("Failed to parse JSON from AI report:", error);
     }
-  } catch (error) {
-    console.error("Failed to parse JSON from AI report:", error);
   }
 
   const report = { id: crypto.randomUUID(), ownerId, cycleId, text: textToSave, structuredData, data, createdAt: new Date(), source: "AI" };
