@@ -32,9 +32,36 @@ const generate = async ({ data, strategic }) => {
   const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = client.getGenerativeModel({ model: process.env.GEMINI_GENERATION_MODEL || "gemini-2.5-flash" });
   const instruction = strategic
-    ? "Viết báo cáo tư vấn chiến lược kinh doanh cho shop: 3 ưu tiên, bằng chứng số liệu, rủi ro và hành động tháng tới. Phân tích Style & Budget nếu có dữ liệu."
+    ? `Viết báo cáo tư vấn chiến lược kinh doanh cho shop. BẮT BUỘC TRẢ VỀ JSON theo cấu trúc sau (không kèm markdown block, chỉ trả về JSON thuần hợp lệ):
+{
+  "style": {
+    "topStyles": [{"name": "Tên", "count": 0, "percentage": 0}],
+    "customerProfile": {
+      "topGender": {"name": "Tên", "count": 0, "percentage": 0},
+      "topBodyShape": {"name": "Tên", "count": 0, "percentage": 0}
+    },
+    "favoriteColors": [{"name": "Tên màu", "count": 0, "hex": "#ffffff"}],
+    "advice": "Nhận định..."
+  },
+  "budget": {
+    "segments": [{"name": "Khoảng giá", "count": 0, "percentage": 0}],
+    "aov": "0 VND",
+    "insight": "Nhận định..."
+  },
+  "priorities": [
+    {
+      "id": 1,
+      "title": "Chiến lược...",
+      "evidences": ["Bằng chứng 1"],
+      "impact": {"revenue": "0 VND", "description": "Mô tả"},
+      "action": "Chi tiết hành động",
+      "actionLabel": "Đề xuất"
+    }
+  ],
+  "additionalAdvice": "Các lời khuyên khác bằng Markdown..."
+}`
     : "Đề xuất ngắn gọn về giá, bảng size, và promotion cho shop, mỗi đề xuất dẫn số liệu có thật. Không tự thay đổi giá hay tạo chương trình khuyến mãi.";
-  const prompt = `${instruction}\nChỉ dùng dữ liệu JSON sau. Không bịa số liệu; nếu thiếu dữ liệu thì ghi rõ chưa đủ dữ liệu. Không suy luận thông tin từng khách hàng.\n${JSON.stringify(data)}`;
+  const prompt = `${instruction}\nChỉ dùng dữ liệu JSON sau. Không bịa số liệu. Nếu thiếu dữ liệu để điền JSON, hãy tính toán hoặc trả về mảng rỗng.\n${JSON.stringify(data)}`;
   const text = await generateShopReportWithRetry(async () => {
     const response = await model.generateContent(prompt);
     const result = response.response.text().trim();
@@ -83,7 +110,21 @@ export const getProStrategyReport = async ({ ownerId, cycleId }) => {
   if (previous) return previous;
   const [dashboard, insights] = await Promise.all([getShopDashboard({ ownerId, range: "30d" }), getShopInsights({ ownerId, range: "30d" })]);
   const data = { summary: dashboard.summary, finance: dashboard.finance, inventoryHealth: dashboard.inventoryHealth, topProducts: dashboard.topProducts, insights: insights.enoughData ? insights.breakdowns : { enoughData: false, message: insights.message } };
-  const report = { id: crypto.randomUUID(), ownerId, cycleId, text: await generate({ data, strategic: true }), data, createdAt: new Date(), source: "AI" };
+  const rawAiResult = await generate({ data, strategic: true });
+  let structuredData = null;
+  let textToSave = rawAiResult;
+
+  try {
+    const cleanJson = rawAiResult.replace(/```json/gi, "").replace(/```/g, "").trim();
+    if (cleanJson.startsWith("{")) {
+      structuredData = JSON.parse(cleanJson);
+      textToSave = structuredData.additionalAdvice || "";
+    }
+  } catch (error) {
+    console.error("Failed to parse JSON from AI report:", error);
+  }
+
+  const report = { id: crypto.randomUUID(), ownerId, cycleId, text: textToSave, structuredData, data, createdAt: new Date(), source: "AI" };
   try { await db.collection("shop_strategy_reports").insertOne(report); return report; }
   catch (error) { if (error.code === 11000) return db.collection("shop_strategy_reports").findOne({ ownerId, cycleId }); throw error; }
 };

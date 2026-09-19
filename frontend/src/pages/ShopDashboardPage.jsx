@@ -1958,21 +1958,185 @@ function PremiumPaywall({ onCheckout, titleKey }) {
 }
 
 function ShopAiReport({ title, report, status, onRetry, retryLabel }) {
+  const data = report?.structuredData;
+
   return (
-    <section className="mt-5 rounded-2xl border border-[#DFE8D5] bg-white p-5" aria-live="polite">
-      <h2 className="font-black">{title}</h2>
-      {status === "loading" ? <p className="mt-3 text-sm text-slate-600">Đang tạo phân tích AI...</p> : null}
-      {status === "error" ? (
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-          <p>Dịch vụ AI tạm thời chưa phản hồi. Số liệu phân tích của shop vẫn có thể xem bình thường.</p>
-          <button type="button" onClick={onRetry} className="rounded-lg border border-[#B3D07E] px-3 py-2 font-semibold text-slate-900 hover:bg-mintSoft">{retryLabel}</button>
+    <section className="mt-6 overflow-hidden rounded-2xl border border-[#DCE5D4] bg-white shadow-sm" aria-live="polite">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E2E9DC] bg-gradient-to-r from-[#EDF3E5] to-[#F8FAF5] p-5">
+        <div className="flex items-center gap-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#DCE5D4] bg-white text-[#587541] shadow-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="h-6 w-6"><path d="m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3Z"/><path d="m20 2 .6 1.4L22 4l-1.4.6L20 6l-.6-1.4L18 4l1.4-.6L20 2Z"/></svg>
+          </span>
+          <div>
+            <h2 className="text-xl font-black tracking-tight text-[#243621]">{title}</h2>
+            <p className="mt-0.5 text-xs font-bold uppercase tracking-widest text-[#587541]">Dựa trên dữ liệu hành vi & phân khúc</p>
+          </div>
         </div>
-      ) : null}
-      {report?.text ? (
-        <div className="mt-4 text-sm leading-relaxed space-y-4 [&>h1]:text-xl [&>h1]:font-black [&>h1]:text-slate-900 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mt-6 [&>h2]:text-slate-800 [&>h3]:text-base [&>h3]:font-bold [&>h3]:mt-4 [&>ul]:list-disc [&>ul]:ml-5 [&>ol]:list-decimal [&>ol]:ml-5 [&>li]:mt-1 [&>p]:mt-2 [&>strong]:font-bold [&>strong]:text-slate-900">
-          <ReactMarkdown>{report.text}</ReactMarkdown>
-        </div>
-      ) : null}
+        <button className="flex items-center gap-2 rounded-lg bg-[#587541] px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#466130] focus:ring-2 focus:ring-[#86A95E] focus:ring-offset-2" type="button">Tải báo cáo PDF</button>
+      </header>
+      
+      <div className="p-6">
+        {status === "loading" ? (
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 w-3/4 rounded bg-slate-100"></div><div className="h-4 w-1/2 rounded bg-slate-100"></div><div className="h-4 w-5/6 rounded bg-slate-100"></div>
+          </div>
+        ) : null}
+        
+        {status === "error" ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <p>Dịch vụ AI tạm thời chưa phản hồi. Số liệu phân tích của shop vẫn có thể xem bình thường.</p>
+            <button type="button" onClick={onRetry} className="rounded-lg bg-red-700 px-4 py-2 font-bold text-white hover:bg-red-800">{retryLabel}</button>
+          </div>
+        ) : null}
+        
+        {data ? (
+          <div className="space-y-6">
+            {/* Style Section */}
+            {data.style ? <div className="rounded-2xl border border-[#E2E9DC] bg-white p-5">
+              <div className="flex items-center gap-3 border-b border-[#E2E9DC] pb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#587541] text-white font-black shadow-inner">1</div>
+                <div>
+                  <h3 className="text-lg font-black text-[#243621]">Phân tích phong cách (Style)</h3>
+                  <p className="text-sm text-slate-500">Xu hướng, đặc điểm khách hàng và tông màu được ưa chuộng</p>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                <div className="rounded-xl bg-[#F8FAF5] p-5 shadow-inner">
+                  <h4 className="font-bold text-[#354B2A] flex items-center gap-2">🌱 Xu hướng phong cách chủ đạo</h4>
+                  <div className="mt-4 grid gap-3">
+                    {data.style.topStyles?.map((style, i) => (
+                      <div key={i} className="text-sm">
+                        <div className="flex justify-between font-semibold text-slate-700 mb-1">
+                          <span>{style.name}</span><span>{style.percentage}%</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="h-2.5 flex-1 rounded-full bg-[#E2E9DC] overflow-hidden"><div className="h-full bg-[#86A95E] rounded-full" style={{width: `${style.percentage}%`}}></div></div>
+                          <span className="text-xs text-slate-500 w-12 text-right">{style.count} lượt</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {data.style.advice ? <div className="mt-5 text-sm rounded-lg border border-[#DCE5D4] bg-white p-3 text-slate-700 shadow-sm"><strong className="text-[#354B2A]">💡 Gợi ý:</strong> {data.style.advice}</div> : null}
+                </div>
+                <div className="rounded-xl border border-[#E2E9DC] p-5 shadow-sm">
+                  <h4 className="font-bold text-[#354B2A]">Đặc điểm khách hàng</h4>
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3"><div className="h-10 w-10 flex items-center justify-center rounded-full bg-pink-50 text-pink-500 font-bold">♀</div><div><p className="font-bold text-slate-700">{data.style.customerProfile?.topGender?.name || "N/A"}</p><p className="text-[11px] text-slate-500">{data.style.customerProfile?.topGender?.count} lượt ({data.style.customerProfile?.topGender?.percentage}%)</p></div></div>
+                    <div className="flex items-center gap-3"><div className="h-10 w-10 flex items-center justify-center rounded-full bg-green-50 text-green-600 font-bold">👗</div><div><p className="font-bold text-slate-700">{data.style.customerProfile?.topBodyShape?.name || "N/A"}</p><p className="text-[11px] text-slate-500">{data.style.customerProfile?.topBodyShape?.count} lượt ({data.style.customerProfile?.topBodyShape?.percentage}%)</p></div></div>
+                  </div>
+                  {data.style.favoriteColors?.length > 0 ? <><h4 className="mt-5 font-bold text-[#354B2A]">Tông màu yêu thích</h4>
+                  <div className="mt-3 flex items-center gap-4">
+                    {data.style.favoriteColors.map((color, i) => (
+                      <div key={i} className="flex flex-col items-center gap-1.5">
+                        <div className="h-8 w-8 rounded-full border border-slate-200 shadow-inner" style={{backgroundColor: color.hex || '#ccc'}}></div>
+                        <span className="text-xs font-semibold text-slate-600">{color.name}</span>
+                      </div>
+                    ))}
+                  </div></> : null}
+                </div>
+              </div>
+            </div> : null}
+
+            {/* Budget Section */}
+            {data.budget ? <div className="rounded-2xl border border-[#E2E9DC] bg-white p-5">
+              <div className="flex items-center gap-3 border-b border-[#E2E9DC] pb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#587541] text-white font-black shadow-inner">2</div>
+                <div>
+                  <h3 className="text-lg font-black text-[#243621]">Phân tích ngân sách (Budget)</h3>
+                  <p className="text-sm text-slate-500">Tổng quan dữ liệu đơn hàng và hiệu quả chi tiêu</p>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_220px_1fr]">
+                <div className="grid gap-3">
+                  {data.budget.segments?.map((seg, i) => (
+                    <div key={i} className="rounded-xl border border-[#E2E9DC] p-3 shadow-sm bg-white">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2"><span className="text-[#86A95E]">🛒</span><p className="font-bold text-sm text-slate-800">{seg.name}</p></div>
+                        <span className="text-xs font-bold text-slate-500">{seg.percentage}%</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5 mb-2 ml-6">{seg.count} lượt ghi nhận</p>
+                      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-[#587541] rounded-full" style={{width: `${seg.percentage}%`}}></div></div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col items-center justify-center rounded-xl bg-white p-4 text-center border border-[#E2E9DC] shadow-sm">
+                  <span className="text-3xl mb-1">💰</span>
+                  <p className="text-xs font-bold text-slate-500">Giá trị đơn hàng TB (AOV)</p>
+                  <p className="mt-1.5 text-xl font-black text-[#354B2A]">{data.budget.aov || "N/A"}</p>
+                </div>
+                <div className="rounded-xl bg-[#F8FAF5] p-5 border border-[#DCE5D4] text-sm shadow-inner">
+                  <h4 className="font-bold text-[#354B2A] flex items-center gap-2 mb-2">🎯 Nhận định</h4>
+                  <p className="text-slate-700 leading-relaxed">{data.budget.insight}</p>
+                </div>
+              </div>
+            </div> : null}
+
+            {/* Strategy Priorities Section */}
+            {data.priorities?.length > 0 ? <div className="rounded-2xl border border-[#E2E9DC] bg-white p-5">
+              <div className="flex items-center gap-3 border-b border-[#E2E9DC] pb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#587541] text-white font-black shadow-inner">3</div>
+                <div>
+                  <h3 className="text-lg font-black text-[#243621]">Ưu tiên chiến lược</h3>
+                  <p className="text-sm text-slate-500">Các đề xuất hành động dựa trên phân tích dữ liệu</p>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                {data.priorities.map((priority, i) => (
+                  <div key={i} className="flex flex-col overflow-hidden rounded-xl border border-[#E2E9DC] shadow-sm">
+                    <div className="p-5 flex-1">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl mt-0.5">{i === 0 ? "👗" : i === 1 ? "📋" : "📈"}</span>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="rounded bg-[#587541] px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm">Ưu tiên {priority.id || i + 1}</span>
+                          </div>
+                          <h4 className="font-bold text-[#243621] text-base leading-snug">{priority.title}</h4>
+                        </div>
+                      </div>
+                      <ul className="mt-4 space-y-2 text-sm text-slate-600 ml-9">
+                        {priority.evidences?.map((ev, j) => (
+                          <li key={j} className="flex items-start gap-2">
+                            <svg className="mt-1 h-3.5 w-3.5 shrink-0 text-[#86A95E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            <span>{ev}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {priority.action ? <div className="mt-5 rounded-lg bg-[#F8FAF5] p-3 text-sm border border-[#E2E9DC] shadow-inner">
+                        <strong className="text-[#354B2A] flex items-center gap-1.5"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>{priority.actionLabel || "Đề xuất"}</strong>
+                        <p className="mt-1.5 text-slate-700">{priority.action}</p>
+                      </div> : null}
+                    </div>
+                    {priority.impact?.revenue ? <div className="flex items-center justify-between border-t border-[#E2E9DC] bg-[#F8FAF5] p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">📊</span>
+                        <div>
+                          <p className="text-xs font-bold text-slate-500">Tác động tiềm năng</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{priority.impact.description}</p>
+                        </div>
+                      </div>
+                      <p className="font-black text-[#354B2A]">{priority.impact.revenue}</p>
+                    </div> : null}
+                  </div>
+                ))}
+              </div>
+            </div> : null}
+            
+            {/* Additional Advice Markdown section */}
+            {(data.additionalAdvice || report?.text) && (
+              <div className="rounded-2xl border border-[#E2E9DC] bg-[#FAFAFA] p-6 shadow-sm">
+                <h3 className="text-lg font-black text-[#243621] border-b border-[#E2E9DC] pb-4 flex items-center gap-2"><svg className="h-5 w-5 text-[#86A95E]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Tư vấn bổ sung từ AI</h3>
+                <div className="mt-5 text-[15px] leading-relaxed text-slate-700 space-y-4 [&>h1]:text-xl [&>h1]:font-black [&>h1]:text-slate-900 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mt-6 [&>h2]:text-slate-800 [&>h3]:text-base [&>h3]:font-bold [&>h3]:mt-4 [&>ul]:list-none [&>ul]:space-y-2 [&>ul>li]:relative [&>ul>li]:pl-5 [&>ul>li::before]:content-[''] [&>ul>li::before]:absolute [&>ul>li::before]:left-0 [&>ul>li::before]:top-[10px] [&>ul>li::before]:h-1.5 [&>ul>li::before]:w-1.5 [&>ul>li::before]:rounded-full [&>ul>li::before]:bg-[#86A95E] [&>ol]:list-decimal [&>ol]:ml-5 [&>li]:mt-1 [&>p]:mt-2 [&>strong]:font-bold [&>strong]:text-slate-900">
+                  <ReactMarkdown>{data.additionalAdvice || report.text}</ReactMarkdown>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : report?.text ? (
+          <div className="text-[15px] leading-relaxed text-slate-700 space-y-5 [&>h1]:text-2xl [&>h1]:font-black [&>h1]:text-[#243621] [&>h1]:border-b [&>h1]:border-slate-100 [&>h1]:pb-2 [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mt-8 [&>h2]:text-[#354B2A] [&>h3]:text-base [&>h3]:font-bold [&>h3]:mt-6 [&>h3]:text-slate-800 [&>ul]:list-none [&>ul]:space-y-3 [&>ul>li]:relative [&>ul>li]:pl-6 [&>ul>li::before]:content-[''] [&>ul>li::before]:absolute [&>ul>li::before]:left-1.5 [&>ul>li::before]:top-[10px] [&>ul>li::before]:h-1.5 [&>ul>li::before]:w-1.5 [&>ul>li::before]:rounded-full [&>ul>li::before]:bg-[#86A95E] [&>ol]:list-decimal [&>ol]:ml-5 [&>ol>li]:pl-2 [&>ol>li]:mt-3 [&>p]:mt-3 [&>strong]:font-bold [&>strong]:text-slate-900 [&>blockquote]:border-l-4 [&>blockquote]:border-[#86A95E] [&>blockquote]:bg-[#F8FAF5] [&>blockquote]:px-5 [&>blockquote]:py-3 [&>blockquote]:italic [&>blockquote]:text-slate-700 [&>blockquote]:rounded-r-xl">
+            <ReactMarkdown>{report.text}</ReactMarkdown>
+          </div>
+        ) : null}
+      </div>
     </section>
   );
 }
