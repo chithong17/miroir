@@ -880,7 +880,7 @@ const translations = {
     "shopPage.loadError": "Không thể tải shop.",
 
     // Hero Page - Section 1: Hero
-    "hero.supportingText": "Tôn vinh vóc dáng, tự do phong cách.",
+    "hero.supportingText": "Fit your business, free your mind.",
     "hero.description": "Khám phá phương thức mặc thông minh hơn cùng công nghệ thử đồ ảo và cá nhân hóa vóc dáng, giúp bạn tìm ra những phong cách thực sự phù hợp.",
     "hero.signIn": "Đăng nhập",
     "hero.signUp": "Đăng ký",
@@ -954,7 +954,7 @@ const translations = {
     "hero.footer.shopDashboard": "Bảng điều khiển shop",
     "hero.footer.editorialHero": "Trang bìa Editorial",
     "hero.footer.copyright": "© 2026 MIROIR ATELIER INC. BẢN QUYỀN ĐÃ ĐƯỢC BẢO LƯU.",
-    "hero.footer.slogan": "TÔN VINH VÓC DÁNG. TỰ DO PHONG CÁCH.",
+    "hero.footer.slogan": "FIT YOUR BUSINESS, FREE YOUR MIND.",
     "hero.footer.backToTop": "VỀ ĐẦU TRANG",
   },
 };
@@ -1009,9 +1009,8 @@ export function LanguageToggle({ className = "" }) {
           key={value}
           type="button"
           onClick={() => setLanguage(value)}
-          className={`rounded-full px-3 py-1.5 text-xs font-black transition ${
-            language === value ? "bg-rose text-white" : "text-muted hover:bg-white hover:text-ink"
-          }`}
+          className={`rounded-full px-3 py-1.5 text-xs font-black transition ${language === value ? "bg-rose text-white" : "text-muted hover:bg-white hover:text-ink"
+            }`}
         >
           {label}
         </button>
