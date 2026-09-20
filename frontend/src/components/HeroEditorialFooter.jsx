@@ -85,7 +85,7 @@ export default function HeroEditorialFooter() {
                 </a>
               </li>
               <li>
-                <a href="/hero" className="transition-colors duration-200 hover:text-mintDeep">
+                <a href="/" className="transition-colors duration-200 hover:text-mintDeep">
                   {t("hero.footer.editorialHero")}
                 </a>
               </li>

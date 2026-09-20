@@ -76,7 +76,7 @@ export default function HeroAuthPage({ mode = "login" }) {
     setIsRegister(targetRegister);
     setMessage("");
     setStatus("idle");
-    window.history.replaceState(null, "", targetRegister ? "/hero/signup" : "/hero/login");
+    window.history.replaceState(null, "", targetRegister ? "/signup" : "/login");
   };
 
   const handleSubmit = async (e) => {
@@ -141,7 +141,7 @@ export default function HeroAuthPage({ mode = "login" }) {
       {/* ============================================================ */}
       <header className="relative z-30 flex w-full shrink-0 items-center justify-between px-6 py-2.5 sm:px-10 sm:py-3 lg:px-16 lg:py-3.5">
         <a
-          href="/hero"
+          href="/"
           className="group inline-flex items-center gap-2.5 rounded-full border border-white/80 bg-white/70 px-4 py-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all duration-300 hover:border-[#B3D07E] hover:bg-white/95 hover:shadow-[0_4px_20px_rgba(179,208,126,0.3)] hover:scale-102"
         >
           <svg

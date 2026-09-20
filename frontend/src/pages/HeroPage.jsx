@@ -269,14 +269,14 @@ export default function HeroPage() {
             {/* Centered Website Signature CTA Buttons positioned lower below model feet */}
             <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
               <a
-                href="/hero/login"
+                href="/login"
                 className="soft-button !rounded-[20px] !border-mintDeep/40 !bg-white/95 !text-mintDeep hover:!border-mintDeep hover:!bg-mintPale !px-6 !py-2.5 sm:!px-7 sm:!py-3 text-xs sm:text-sm font-extrabold shadow-glass backdrop-blur-xl transition-all duration-300 hover:scale-105"
               >
                 <span>{t("hero.signIn")}</span>
                 <span className="ml-2 inline-block transition-transform duration-300 group-hover:translate-x-1">→</span>
               </a>
               <a
-                href="/hero/signup"
+                href="/signup"
                 className="dark-button !rounded-[20px] !bg-gradient-to-r !from-mintDeep !via-mint !to-mintSoft !text-white !px-7 !py-2.5 sm:!px-8 sm:!py-3 text-xs sm:text-sm font-bold shadow-glow hover:!shadow-glowDeep transition-all duration-300 hover:scale-105"
               >
                 <span>{t("hero.signUp")}</span>

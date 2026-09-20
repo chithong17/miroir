@@ -22,16 +22,63 @@ function App() {
   const rawPathname = window.location.pathname;
   const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
 
-  if (pathname === "/hero") {
+  if (pathname === "/" || pathname === "/hero") {
+    if (getAdminToken()) {
+      window.location.replace("/admin/dashboard");
+      return null;
+    }
+
+    if (getShopToken()) {
+      window.location.replace("/shop/dashboard");
+      return null;
+    }
+
+    if (getUserToken()) {
+      window.location.replace("/app");
+      return null;
+    }
+
     return <HeroPage />;
   }
 
-  if (pathname === "/hero/login") {
+  if (pathname === "/login" || pathname === "/hero/login") {
     return <HeroAuthPage mode="login" />;
   }
 
-  if (pathname === "/hero/signup" || pathname === "/hero/register") {
+  if (
+    pathname === "/signup" ||
+    pathname === "/register" ||
+    pathname === "/hero/signup" ||
+    pathname === "/hero/register"
+  ) {
     return <HeroAuthPage mode="signup" />;
+  }
+
+  if (pathname === "/old") {
+    if (getAdminToken()) {
+      window.location.replace("/admin/dashboard");
+      return null;
+    }
+
+    if (getShopToken()) {
+      window.location.replace("/shop/dashboard");
+      return null;
+    }
+
+    if (getUserToken()) {
+      window.location.replace("/app");
+      return null;
+    }
+
+    return <LandingPage />;
+  }
+
+  if (pathname === "/old/login") {
+    return <AuthPage mode="login" />;
+  }
+
+  if (pathname === "/old/signup" || pathname === "/old/register") {
+    return <AuthPage mode="register" />;
   }
 
   if (pathname === "/download") {
@@ -45,14 +92,6 @@ function App() {
   if (pathname === "/stylist") {
     window.location.replace("/app/stylist");
     return null;
-  }
-
-  if (pathname === "/login") {
-    return <AuthPage mode="login" />;
-  }
-
-  if (pathname === "/register") {
-    return <AuthPage mode="register" />;
   }
 
   if (pathname === "/onboarding/profile") {
@@ -141,24 +180,7 @@ function App() {
     return <AdminDashboardPage />;
   }
 
-  if (pathname === "/") {
-    if (getAdminToken()) {
-      window.location.replace("/admin/dashboard");
-      return null;
-    }
-
-    if (getShopToken()) {
-      window.location.replace("/shop/dashboard");
-      return null;
-    }
-
-    if (getUserToken()) {
-      window.location.replace("/app");
-      return null;
-    }
-  }
-
-  return <LandingPage />;
+  return <HeroPage />;
 }
 
 export default App;
