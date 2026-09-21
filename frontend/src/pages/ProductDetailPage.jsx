@@ -108,8 +108,19 @@ export default function ProductDetailPage({ productId }) {
 
   return (
     <AppShell nav={<TopNav user={user} onLogout={logout} />}>
-      <main className="section-shell py-8">
-        <nav className="mb-5 flex flex-wrap items-center gap-2 text-sm font-semibold text-muted">
+      <main 
+        className="min-h-screen py-8 relative"
+        style={{
+          backgroundImage: "url('/liquid-bg-clean.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
+          backgroundColor: "#F8FAF7"
+        }}
+      >
+        <div className="section-shell relative z-10">
+          <nav className="mb-5 flex flex-wrap items-center gap-2 text-sm font-semibold text-muted">
           <a className="hover:text-ink" href="/app">
             Marketplace
           </a>
@@ -319,6 +330,7 @@ export default function ProductDetailPage({ productId }) {
             }}
           />
         ) : null}
+        </div>
       </main>
     </AppShell>
   );
