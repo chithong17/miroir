@@ -128,35 +128,52 @@ export function TopNav({ user, onLogout, compact = false }) {
   ];
 
   return (
-    <nav className="sticky top-3 z-40 mx-auto max-w-[1440px] px-3 sm:px-4 md:px-8 xl:px-20">
-      <div className="flex items-center justify-between gap-3 rounded-[26px] border border-white/80 bg-white/80 px-4 py-1.5 backdrop-blur-xl shadow-glass sm:rounded-[34px] sm:px-5 sm:py-2">
+    <nav className="sticky top-4 z-40 mx-auto max-w-[1500px] px-3 sm:px-4 md:px-8 xl:px-12">
+      <div 
+        className="flex items-center justify-between gap-3 px-6 py-3 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.8)]"
+        style={{
+          background: "rgba(255, 255, 255, 0.45)",
+          backdropFilter: "blur(24px) saturate(130%)",
+          WebkitBackdropFilter: "blur(24px) saturate(130%)",
+          border: "1px solid rgba(255, 255, 255, 0.7)",
+          borderRadius: "999px"
+        }}
+      >
         <a
           href={user ? "/app" : "/"}
-          className="flex items-center gap-2 font-display text-xl font-extrabold tracking-normal text-ink sm:text-2xl"
+          className="flex items-center gap-2 font-display text-xl font-extrabold tracking-widest text-[#101512] sm:text-xl uppercase"
         >
-          <img
-            src="/logo-web.png"
-            alt="Miroir Logo"
-            className="h-10 w-10 rounded-lg object-contain"
+          <img 
+            src="/logo-web.png" 
+            alt="Miroir" 
+            className="w-8 h-8 rounded-xl object-cover bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]" 
           />
           MIROIR
         </a>
-        <div className="hidden items-center gap-2 rounded-full border border-line/70 bg-panel/80 p-1.5 text-sm font-semibold md:flex">
+        <div className="hidden items-center gap-6 text-sm font-semibold md:flex">
           {navItems.map((item) => (
             <a
               key={item.href}
-              className={`rounded-full px-5 py-2 transition ${
+              className={`relative px-1 py-1.5 transition-colors ${
                 item.active
-                  ? "bg-mintDeep text-white shadow-glow"
-                  : "text-muted hover:bg-white hover:text-ink"
+                  ? "text-[#91B76F]"
+                  : "text-[#253029] hover:text-[#91B76F]"
               }`}
               href={item.href}
             >
               {item.label}
+              {item.active && (
+                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-[#91B76F] rounded-t-sm"></span>
+              )}
             </a>
           ))}
         </div>
-        <div className="flex min-w-0 items-center gap-2 text-sm font-semibold sm:gap-3">
+        <div className="flex min-w-0 items-center gap-3 text-sm font-semibold sm:gap-4">
+          <button aria-label="Tìm kiếm" className="flex h-10 w-10 items-center justify-center rounded-full border border-[#91B76F]/20 bg-white transition hover:bg-[#F1F5F0] text-[#101512]">
+            <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </button>
           <div className="hidden sm:block">
             <LanguageToggle />
           </div>
@@ -1132,7 +1149,7 @@ export function ProductCard({
   };
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-[22px] border border-line bg-white p-2 shadow-glow transition-all duration-500 hover:-translate-y-0.5 hover:border-accentStrong/35 sm:rounded-[24px]">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-[24px] bg-white p-3 sm:p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_12px_30px_-10px_rgba(145,183,111,0.15)] border border-[#F1F5F0]">
       {onFavoriteToggle ? (
         <button
           type="button"
@@ -1143,10 +1160,10 @@ export function ProductCard({
             isFavorite ? t("product.removeFavorite") : t("product.addFavorite")
           }
           className={cx(
-            "absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border text-xl font-black shadow-glass backdrop-blur-xl transition",
+            "absolute right-6 top-6 z-10 flex h-8 w-8 items-center justify-center rounded-full text-lg shadow-sm backdrop-blur-md transition-all",
             isFavorite
-              ? "border-accentStrong/30 bg-accentSoft text-ink"
-              : "border-white/80 bg-white/85 text-muted hover:text-ink",
+              ? "bg-[#91B76F] text-white"
+              : "bg-white/90 text-gray-400 hover:text-red-500 hover:bg-white",
           )}
           onClick={(event) => {
             event.stopPropagation();
@@ -1156,16 +1173,17 @@ export function ProductCard({
           {isFavorite ? "♥" : "♡"}
         </button>
       ) : null}
+      
       <button
         type="button"
-        className="block aspect-[4/5] w-full overflow-hidden rounded-[18px] bg-panel"
+        className="block aspect-[4/5] w-full overflow-hidden rounded-[16px] bg-[#F1F5F0]"
         onClick={openDetail}
       >
         {product?.imageUrl ? (
           <img
             src={product.imageUrl}
             alt=""
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
           />
         ) : (
           <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">
@@ -1173,42 +1191,49 @@ export function ProductCard({
           </div>
         )}
       </button>
-      <div className="flex flex-1 flex-col p-3 sm:p-5">
-        <p className="line-clamp-2 font-display text-base font-bold text-ink sm:line-clamp-1 sm:text-lg">
+      
+      <div className="flex flex-1 flex-col pt-4 relative">
+        <p className="line-clamp-1 font-display text-[15px] font-semibold text-[#253029] transition-colors group-hover:text-[#91B76F] cursor-pointer" onClick={openDetail}>
           {product?.name || t("product.untitled")}
         </p>
-        <p className="mt-1 line-clamp-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-gray-500 line-clamp-1">
           {product?.shop?.name || product?.category || t("product.catalogue")}
         </p>
         {product?.shopId ? (
           <a
-            className="mt-2 inline-flex text-xs font-bold uppercase tracking-[0.16em] text-accentStrong transition hover:text-ink"
+            className="mt-1 inline-flex text-[10px] font-bold uppercase tracking-[0.16em] text-[#91B76F] transition hover:text-[#253029]"
             href={`/app/shops/${encodeURIComponent(product.shopId)}`}
           >
             {t("shopPage.viewShop")}
           </a>
         ) : null}
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
-          <p className="text-lg font-extrabold text-ink">
+        
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-[15px] font-black text-[#101512]">
             {formatMoney(product?.price)}
           </p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              className="!px-3 !py-1.5 text-xs font-bold"
-              variant="secondary"
-              onClick={openDetail}
+          <div className="flex items-center gap-1.5">
+            <button 
+              className="px-3 py-1.5 text-[10px] font-bold rounded-full border border-gray-200 text-gray-500 hover:border-[#91B76F] hover:text-[#91B76F] transition-colors"
+              onClick={(e) => { e.stopPropagation(); openDetail(); }}
             >
               Chi tiết
-            </Button>
+            </button>
             {onTryOn ? (
-              <Button className="!px-3 !py-1.5 text-xs font-bold" onClick={(event) => { event.stopPropagation(); onTryOn(product); }}>
+              <button 
+                className="px-3 py-1.5 text-[10px] font-bold rounded-full bg-[#A8C98B] text-white hover:bg-[#91B76F] shadow-sm transition-colors"
+                onClick={(e) => { e.stopPropagation(); onTryOn(product); }}
+              >
                 Thử đồ
-              </Button>
+              </button>
             ) : null}
           </div>
         </div>
+        
         {showPurchaseActions ? (
-          <ProductPurchaseActions compact product={product} />
+          <div className="mt-4 border-t border-gray-100 pt-3">
+             <ProductPurchaseActions compact product={product} />
+          </div>
         ) : null}
       </div>
     </article>

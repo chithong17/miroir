@@ -195,82 +195,113 @@ function UserAppPage({ initialView = "products" }) {
 
   return (
     <AppShell nav={<TopNav user={user} onLogout={onLogout} />}>
-      <main className="section-shell py-8">
-        <PageHeader
-          eyebrow={t("app.eyebrow")}
-          title={pageTitle}
-          description={pageDescription}
-          action={view === "products" || view === "outfits" ? (
-            <SegmentedTabs
-              items={[
-                { value: "products", label: t("app.products") },
-                { value: "outfits", label: t("app.outfits") },
-              ]}
-              value={view}
-              onChange={setView}
-            />
-          ) : null}
-        />
+      <main 
+        className="min-h-screen py-8 px-4 sm:px-8 xl:px-12 relative"
+        style={{
+          backgroundImage: "url('/liquid-bg-clean.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
+          backgroundColor: "#F8FAF7"
+        }}
+      >
+        <div className="relative z-10 max-w-[1500px] mx-auto">
+          {view === "products" || view === "outfits" ? (
+            <div className="flex flex-col gap-8">
+              {/* Marketplace Hero */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-2">
+                <div>
+                  <h1 className="text-4xl md:text-[3.5rem] leading-[1.1] font-display font-bold text-[#91B76F] mb-4">Marketplace</h1>
+                  <p className="text-sm md:text-base text-gray-600 max-w-lg">Khám phá hàng ngàn sản phẩm từ các thương hiệu và nhà thiết kế.<br/>Tạo nên phong cách của riêng bạn trong thế giới MIROIR.</p>
+                </div>
+                <div 
+                  className="flex p-1.5"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.45)",
+                    backdropFilter: "blur(24px) saturate(130%)",
+                    WebkitBackdropFilter: "blur(24px) saturate(130%)",
+                    border: "1px solid rgba(255, 255, 255, 0.7)",
+                    borderRadius: "999px",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+                  }}
+                >
+                  <button onClick={() => setView('products')} className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${view === 'products' ? 'bg-[#91B76F] text-white shadow-md' : 'text-gray-500 hover:text-[#101512] bg-transparent'}`}>Sản phẩm</button>
+                  <button onClick={() => setView('outfits')} className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${view === 'outfits' ? 'bg-[#91B76F] text-white shadow-md' : 'text-gray-500 hover:text-[#101512] bg-transparent'}`}>Outfit</button>
+                </div>
+              </div>
 
-        {view === "products" || view === "outfits" ? (
-          <CatalogFilters filters={filters} setFilters={setFilters} applyFilters={applyFilters} />
-        ) : null}
+              <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] xl:grid-cols-[320px_1fr] gap-8 items-start">
+                {/* Left Sidebar - Filters */}
+                <aside className="hidden lg:block z-10 relative">
+                  <CatalogFilters filters={filters} setFilters={setFilters} applyFilters={applyFilters} />
+                </aside>
+                
+                {/* Main Content */}
+                <div className="flex flex-col min-w-0">
+                  {/* Toolbar */}
+                  <div 
+                    className="flex flex-wrap items-center justify-between gap-4 mb-2 p-3 rounded-full"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.45)",
+                      backdropFilter: "blur(24px) saturate(130%)",
+                      WebkitBackdropFilter: "blur(24px) saturate(130%)",
+                      border: "1px solid rgba(255, 255, 255, 0.7)",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
+                    }}
+                  >
+                     <p className="text-sm font-semibold text-[#253029] ml-3">Kết quả tìm kiếm</p>
+                     <div className="flex items-center gap-4">
+                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Sắp xếp:</span>
+                       <div className="flex gap-1.5">
+                         <button className="px-5 py-2.5 text-xs font-bold rounded-full bg-[#91B76F] text-white shadow-sm transition-all hover:bg-[#A8C98B]">Liên quan</button>
+                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden sm:block">Mới nhất</button>
+                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden md:block">Bán chạy</button>
+                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden md:block">Giá: Thấp → Cao</button>
+                       </div>
+                       
+                       <div className="hidden lg:flex gap-1 bg-white/70 p-1 rounded-full border border-white ml-2">
+                         <button className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#101512] shadow-sm">
+                           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                         </button>
+                         <button className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-[#101512] transition-colors">
+                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                         </button>
+                       </div>
+                     </div>
+                  </div>
 
-        {view === "products" ? (
-          <ProductGrid
-            favoriteProductIds={favoriteIdSet}
-            products={shownProducts}
-            onDetail={openProduct}
-            onFavoriteToggle={toggleFavorite}
-            onTryOn={goToTryOn}
-          />
-        ) : null}
+                  {view === "products" ? (
+                    <ProductGrid favoriteProductIds={favoriteIdSet} products={shownProducts} onDetail={openProduct} onFavoriteToggle={toggleFavorite} onTryOn={goToTryOn} />
+                  ) : null}
 
-        {view === "favorites" ? (
-          <ProductGrid
-            emptyText={t("app.noFavorites")}
-            favoriteProductIds={favoriteIdSet}
-            products={favoriteProducts}
-            onDetail={openProduct}
-            onFavoriteToggle={toggleFavorite}
-            onTryOn={goToTryOn}
-          />
-        ) : null}
+                  {view === "outfits" ? (
+                    <OutfitGrid outfits={outfits} onTryOn={goToTryOn} />
+                  ) : null}
 
-        {view === "outfits" ? (
-          <OutfitGrid outfits={outfits} onTryOn={goToTryOn} />
-        ) : null}
+                  <Pagination pagination={pagination} setFilters={setFilters} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="section-shell">
+              <PageHeader eyebrow={t("app.eyebrow")} title={pageTitle} description={pageDescription} />
+              
+              {view === "favorites" ? (
+                <ProductGrid emptyText={t("app.noFavorites")} favoriteProductIds={favoriteIdSet} products={favoriteProducts} onDetail={openProduct} onFavoriteToggle={toggleFavorite} onTryOn={goToTryOn} />
+              ) : null}
 
-        {view === "products" || view === "outfits" ? (
-          <Pagination pagination={pagination} setFilters={setFilters} />
-        ) : null}
+              {view === "stylist" ? (
+                <StylistPanel budget={stylistBudget} prompt={stylistPrompt} result={stylistResult} status={stylistStatus} setBudget={setStylistBudget} setPrompt={setStylistPrompt} onSubmit={runStylist} onTryOn={goToTryOn} onDetail={openProduct} />
+              ) : null}
 
-        {view === "stylist" ? (
-          <StylistPanel
-            budget={stylistBudget}
-            prompt={stylistPrompt}
-            result={stylistResult}
-            status={stylistStatus}
-            setBudget={setStylistBudget}
-            setPrompt={setStylistPrompt}
-            onSubmit={runStylist}
-            onTryOn={goToTryOn}
-            onDetail={openProduct}
-          />
-        ) : null}
-
-        {view === "profile" ? (
-          <ProfilePanel
-            form={profileForm}
-            photoNotice={profilePhotoNotice}
-            setForm={setProfileForm}
-            onPhotoUpload={uploadProfilePhoto}
-            onSubmit={saveProfile}
-            user={user}
-          />
-        ) : null}
+              {view === "profile" ? (
+                <ProfilePanel form={profileForm} photoNotice={profilePhotoNotice} setForm={setProfileForm} onPhotoUpload={uploadProfilePhoto} onSubmit={saveProfile} user={user} />
+              ) : null}
+            </div>
+          )}
+        </div>
       </main>
-
     </AppShell>
   );
 }
@@ -278,38 +309,88 @@ function UserAppPage({ initialView = "products" }) {
 function CatalogFilters({ applyFilters, filters, setFilters }) {
   const { t } = useLanguage();
   const update = (field) => (event) => setFilters((previous) => ({ ...previous, [field]: event.target.value }));
-  const fields = (
-    <>
-      <TextField placeholder={t("common.search")} value={filters.search} onChange={update("search")} />
-      <TextField placeholder={t("common.category")} value={filters.category} onChange={update("category")} />
-      <SelectField value={filters.gender} onChange={update("gender")}>
-        <option value="">{t("common.gender")}</option>
-        <option value="female">{t("common.female")}</option>
-        <option value="male">{t("common.male")}</option>
-        <option value="unisex">{t("common.unisex")}</option>
-      </SelectField>
-      <TextField placeholder={t("common.minPrice")} value={filters.minPrice} onChange={update("minPrice")} />
-      <TextField placeholder={t("common.maxPrice")} value={filters.maxPrice} onChange={update("maxPrice")} />
-      <Button onClick={applyFilters}>{t("common.filter")}</Button>
-    </>
-  );
-
+  
   return (
-    <>
-      <details className="miroir-card mt-5 md:hidden">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-ink [&::-webkit-details-marker]:hidden">
-          <span>{t("common.filter")}</span>
-          <span className="rounded-full bg-accentSoft px-3 py-1 text-xs text-ink">v</span>
-        </summary>
-        <div className="mt-4 grid gap-3">
-          {fields}
-        </div>
-      </details>
-
-      <div className="miroir-card mt-6 hidden gap-3 md:grid md:grid-cols-6">
-        {fields}
+    <div 
+      className="w-full p-6 sm:p-8 relative overflow-hidden group"
+      style={{
+        background: "rgba(255, 255, 255, 0.35)",
+        backdropFilter: "blur(28px) saturate(130%)",
+        WebkitBackdropFilter: "blur(28px) saturate(130%)",
+        border: "1px solid rgba(255, 255, 255, 0.75)",
+        borderRadius: "28px",
+        boxShadow: "0 20px 60px rgba(80, 110, 70, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9)"
+      }}
+    >
+      {/* Liquid Inner Highlight */}
+      <div 
+        className="absolute inset-[1px] pointer-events-none"
+        style={{
+          borderRadius: "inherit",
+          background: "linear-gradient(135deg, rgba(255,255,255,0.55), transparent 35%, transparent 70%, rgba(255,255,255,0.15))"
+        }}
+      />
+      
+      <div className="relative z-10 flex items-center justify-between mb-8">
+        <h2 className="text-xl font-extrabold text-[#101512] flex items-center gap-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Bộ lọc tìm kiếm
+        </h2>
+        <button className="text-sm font-semibold text-gray-500 hover:text-[#101512] transition-colors" onClick={() => setFilters({search: "", category: "", gender: "", minPrice: "", maxPrice: "", page: 1})}>Đặt lại</button>
       </div>
-    </>
+
+      <div className="relative z-10 grid gap-8">
+        <div className="relative">
+          <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" placeholder="Tìm kiếm sản phẩm..." value={filters.search} onChange={update("search")} className="w-full bg-white/70 border border-white/80 rounded-full py-3.5 pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#91B76F]/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] transition-all placeholder:text-gray-400" />
+        </div>
+
+        <div>
+          <h3 className="text-sm font-bold text-[#101512] mb-4 flex justify-between items-center">
+            Danh mục <span className="text-gray-400">˅</span>
+          </h3>
+          <div className="grid gap-3">
+            {["Áo", "Quần", "Váy / Đầm", "Áo khoác", "Phụ kiện", "Giày dép"].map(cat => (
+              <label key={cat} className="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" className="w-5 h-5 rounded-[6px] border-gray-300 text-[#91B76F] focus:ring-[#91B76F] transition-colors" checked={filters.category === cat} onChange={() => setFilters(prev => ({...prev, category: filters.category === cat ? "" : cat}))} />
+                <span className="text-sm font-medium text-gray-600 group-hover:text-[#101512] transition-colors">{cat}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-bold text-[#101512] mb-4 flex justify-between items-center">
+            Giới tính <span className="text-gray-400">˅</span>
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setFilters(prev => ({...prev, gender: ""}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${!filters.gender ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>Tất cả</button>
+            <button onClick={() => setFilters(prev => ({...prev, gender: "female"}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filters.gender === 'female' ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>Nữ</button>
+            <button onClick={() => setFilters(prev => ({...prev, gender: "male"}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filters.gender === 'male' ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>Nam</button>
+            <button onClick={() => setFilters(prev => ({...prev, gender: "unisex"}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filters.gender === 'unisex' ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>Unisex</button>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-bold text-[#101512] mb-4">Khoảng giá</h3>
+          <div className="px-2">
+            <div className="h-1.5 w-full bg-black/5 rounded-full relative mb-4 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">
+              <div className="absolute left-[10%] right-[30%] h-full bg-[#91B76F] rounded-full"></div>
+              <div className="absolute left-[10%] top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#91B76F] rounded-full shadow-sm cursor-pointer hover:scale-110 transition-transform"></div>
+              <div className="absolute right-[30%] top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#91B76F] rounded-full shadow-sm cursor-pointer hover:scale-110 transition-transform"></div>
+            </div>
+            <div className="flex justify-between items-center text-xs font-bold text-gray-500">
+              <span>0 đ</span>
+              <span>5.000.000 đ+</span>
+            </div>
+          </div>
+        </div>
+        
+        <Button onClick={applyFilters} className="w-full mt-2 bg-[#101512] text-white !rounded-full hover:opacity-90 shadow-md">
+          Áp dụng
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -317,7 +398,7 @@ function ProductGrid({ emptyText, favoriteProductIds = new Set(), onDetail, onFa
   const { t } = useLanguage();
   if (!products.length) return <div className="mt-6"><EmptyState text={emptyText || t("app.noProducts")} /></div>;
   return (
-    <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mt-6 grid gap-6 grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => (
         <ProductCard
           key={product.id}
