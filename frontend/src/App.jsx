@@ -13,6 +13,7 @@ import ShopPublicPage from "./pages/ShopPublicPage.jsx";
 import TryOnStudioPage from "./pages/TryOnStudioPage.jsx";
 import UserAppPage from "./pages/UserAppPage.jsx";
 import HeroPage from "./pages/HeroPage.jsx";
+import HeroPage2 from "./pages/HeroPage2.jsx";
 import HeroAuthPage from "./pages/HeroAuthPage.jsx";
 import CommercePage from "./pages/CommercePage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
@@ -21,6 +22,10 @@ import { getUserToken } from "./api/userApi.js";
 function App() {
   const rawPathname = window.location.pathname;
   const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
+
+  if (pathname === "/hero2") {
+    return <HeroPage2 />;
+  }
 
   if (pathname === "/" || pathname === "/hero") {
     if (getAdminToken()) {

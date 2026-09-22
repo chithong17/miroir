@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Montserrat:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -235,6 +235,28 @@
   border: 1px solid rgba(226, 235, 213, 0.8);
   box-shadow: 4px 8px 18px rgba(195, 208, 180, 0.28), -4px -4px 14px #FFFFFF, inset 0 1px 1px rgba(255, 255, 255, 0.9);
   border-radius: 20px;
+}
+
+/* Editorial Floating Card Animations */
+@keyframes editorialFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+.animate-editorial-float {
+  animation: editorialFloat 6s ease-in-out infinite;
+}
+
+.animate-editorial-float-delayed {
+  animation: editorialFloat 7.5s ease-in-out 2s infinite;
+}
+
+.font-handwriting {
+  font-family: 'Caveat', cursive;
 }
 
 .neu-card-hover {
