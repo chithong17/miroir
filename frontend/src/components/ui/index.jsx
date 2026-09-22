@@ -375,7 +375,7 @@ export function TopNav({ user, onLogout, compact = false }) {
                     </span>
                   ) : null}
                 </summary>
-                <div className="absolute right-0 top-full mt-2 max-h-96 w-80 overflow-y-auto rounded-2xl border border-line bg-white p-2 shadow-2xl">
+                <div className="notification-popover absolute right-0 top-full mt-3 max-h-[30rem] w-[23rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[22px] border border-[#DDE9D8] bg-white/95 p-2 shadow-[0_22px_55px_rgba(44,67,38,0.16)] backdrop-blur-xl">
                   {notifications.slice(0, 12).map((item) => (
                     <button
                       key={item.id}
@@ -1210,19 +1210,19 @@ export function ProductCard({
           <p className="text-[15px] font-black text-[#101512]">
             {formatMoney(product?.price)}
           </p>
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1.5">
             <button 
-              className="px-3 py-1.5 text-[10px] font-bold rounded-full border border-gray-200 text-gray-500 hover:border-[#91B76F] hover:text-[#91B76F] transition-colors"
+              className="inline-flex h-8 min-w-[62px] shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-gray-200 px-2.5 text-[11px] font-bold leading-none text-gray-500 transition-colors hover:border-[#91B76F] hover:text-[#91B76F]"
               onClick={(e) => { e.stopPropagation(); openDetail(); }}
             >
-              Chi tiết
+              {t("common.details")}
             </button>
             {onTryOn ? (
               <button 
-                className="px-3 py-1.5 text-[10px] font-bold rounded-full bg-[#A8C98B] text-white hover:bg-[#91B76F] shadow-sm transition-colors"
+                className="inline-flex h-8 min-w-[62px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#A8C98B] px-2.5 text-[11px] font-bold leading-none text-white shadow-sm transition-colors hover:bg-[#91B76F]"
                 onClick={(e) => { e.stopPropagation(); onTryOn(product); }}
               >
-                Thử đồ
+                {t("common.tryOn")}
               </button>
             ) : null}
           </div>

@@ -10,6 +10,14 @@ import { useLanguage } from "../i18n.jsx";
 
 const sameDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString();
 const contextKey = (actorType, id) => `${actorType === "shop" ? "miroir_shop" : "miroir"}_chat_context_${id}`;
+const conversationTime = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return sameDay(date, new Date())
+    ? date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+    : date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+};
 
 export default function ChatPage({ actorType, initialConversationId = "" }) {
   const [user, setUser] = useState(null);
@@ -21,6 +29,7 @@ export default function ChatPage({ actorType, initialConversationId = "" }) {
   const [pendingContext, setPendingContext] = useState(null);
   const [text, setText] = useState("");
   const [images, setImages] = useState([]);
+  const [conversationSearch, setConversationSearch] = useState("");
   const [notice, setNotice] = useState("");
   const [lightboxUrl, setLightboxUrl] = useState("");
   const bottomRef = useRef(null);
@@ -141,6 +150,11 @@ export default function ChatPage({ actorType, initialConversationId = "" }) {
   try { storedConversation = JSON.parse(sessionStorage.getItem(`${actorType === "shop" ? "miroir_shop" : "miroir"}_chat_conversation_${activeId}`) || "null"); } catch { storedConversation = null; }
   const active = conversations.find((item) => item.id === activeId) || storedConversation;
   const counterpartReadAt = actorType === "user" ? active?.shopLastReadAt : active?.userLastReadAt;
+  const visibleConversations = conversations.filter((item) =>
+    `${item.counterpart?.name || ""} ${item.lastMessage?.preview || ""}`
+      .toLowerCase()
+      .includes(conversationSearch.trim().toLowerCase()),
+  );
 
   const deliverInBackground = async (outbox, optimisticId) => {
     setMessages((current) => current.map((message) => message.id === optimisticId ? { ...message, _status: "sending", _error: "" } : message));
@@ -204,42 +218,43 @@ export default function ChatPage({ actorType, initialConversationId = "" }) {
   };
 
   const content = (
-    <div className={`mx-auto grid max-w-[1440px] gap-4 overflow-hidden px-4 py-4 lg:grid-cols-[340px_minmax(0,1fr)] lg:px-8 ${actorType === "user" ? "h-[calc(100dvh-6rem)]" : "h-[calc(100dvh-2rem)]"}`}>
-      <aside className={`min-h-0 flex-col overflow-hidden rounded-3xl border border-line bg-white shadow-glass ${activeId ? "hidden lg:flex" : "flex"}`}>
-        <div className="border-b border-line p-5">
+    <div className={`relative mx-auto grid max-w-[1480px] gap-4 overflow-hidden px-4 py-4 lg:grid-cols-[420px_minmax(0,1fr)] lg:px-8 ${actorType === "user" ? "h-[calc(100dvh-5rem)]" : "h-[calc(100dvh-2rem)]"}`}>
+      <aside className={`relative min-h-0 flex-col overflow-hidden rounded-[24px] border ${actorType === "user" ? "border-[#D6E4CD] bg-white/85 shadow-[0_18px_44px_rgba(57,82,43,0.08)] backdrop-blur-sm" : "border-line bg-white shadow-glass"} ${activeId ? "hidden lg:flex" : "flex"}`}>
+        <div className="border-b border-[#E3EDE0] p-5 sm:p-6">
           {actorType === "user" ? <a href="/app" className="mb-4 inline-flex items-center gap-2 text-sm font-bold text-muted transition hover:text-ink"><span aria-hidden="true">←</span> Quay lại</a> : null}
-          <h1 className="text-2xl font-black">Tin nhắn</h1><p className="mt-1 text-sm text-muted">Trao đổi về sản phẩm và đơn hàng.</p>
+          <div className="flex items-start justify-between gap-3"><div><h1 className="text-3xl font-black tracking-tight text-[#151A14]">Tin nhắn</h1><p className="mt-1 text-sm text-[#687367]">Trao đổi về sản phẩm và đơn hàng.</p></div>{actorType === "user" ? <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#EEF6E9] text-[#4F733C]"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.5a2.12 2.12 0 013 3L8 18l-4 1 1-4z" /></svg></span> : null}</div>
+          {actorType === "user" ? <label className="relative mt-6 block"><svg className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#61705E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="6" /><path strokeLinecap="round" d="m20 20-4-4" /></svg><input value={conversationSearch} onChange={(event) => setConversationSearch(event.target.value)} className="h-11 w-full rounded-full border border-[#DCE7D7] bg-[#FAFCF8] pl-11 pr-4 text-sm text-[#253025] outline-none transition placeholder:text-[#98A397] focus:border-[#91B76F] focus:ring-4 focus:ring-[#B3D07E]/15" placeholder="Tìm kiếm tin nhắn..." /></label> : null}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
-          {conversations.map((item) => <button key={item.id} onClick={() => setActiveId(item.id)} className={`mb-1 flex w-full gap-3 rounded-2xl p-3 text-left ${item.id === activeId ? "bg-accentSoft" : "hover:bg-panel"}`}>
+        <div className="chat-inbox-list min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
+          {visibleConversations.map((item) => <button key={item.id} onClick={() => setActiveId(item.id)} className={`mb-1 flex w-full gap-3 rounded-2xl p-3.5 text-left transition ${item.id === activeId ? "bg-[#EEF6E9] shadow-[0_8px_18px_rgba(93,122,75,0.08)]" : "hover:bg-[#F7FAF4]"}`}>
             <Avatar value={item.counterpart} />
             <span className="min-w-0 flex-1"><span className="flex justify-between gap-2"><strong className="truncate">{item.counterpart?.name || "Hội thoại"}</strong>{item.unreadCount ? <em className="not-italic rounded-full bg-mintDeep px-2 text-xs font-black text-white">{item.unreadCount}</em> : null}</span><span className="mt-1 block truncate text-sm text-muted">{item.lastMessage?.preview || "Bắt đầu trò chuyện"}</span></span>
           </button>)}
-          {!conversations.length ? <p className="p-8 text-center text-sm text-muted">Chưa có cuộc trò chuyện nào.</p> : null}
+          {!visibleConversations.length ? <p className="p-8 text-center text-sm text-muted">{conversationSearch ? "Không tìm thấy cuộc trò chuyện." : "Chưa có cuộc trò chuyện nào."}</p> : null}
         </div>
       </aside>
-      <section className={`${!activeId ? "hidden lg:flex" : "flex"} min-h-0 flex-col overflow-hidden rounded-3xl border border-line bg-white shadow-glass`}>
+      <section className={`${!activeId ? "hidden lg:flex" : "flex"} relative min-h-0 flex-col overflow-hidden rounded-[24px] border ${actorType === "user" ? "border-[#D6E4CD] bg-white/85 shadow-[0_18px_44px_rgba(57,82,43,0.08)] backdrop-blur-sm" : "border-line bg-white shadow-glass"}`}>
         {activeId ? <>
-          <header className="flex items-center gap-3 border-b border-line p-4"><button className="rounded-full border border-line px-3 py-2 lg:hidden" onClick={() => setActiveId("")}>←</button><Avatar value={active?.counterpart} /><div><p className="font-black">{active?.counterpart?.name || "Hội thoại"}</p><p className="text-xs text-muted">Tin nhắn được lưu an toàn trên MIROIR</p></div></header>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-panel/40 p-4 sm:p-6">
+          <header className="flex items-center gap-3 border-b border-[#E3EDE0] bg-white/70 p-4 sm:px-6"><button className="rounded-full border border-line px-3 py-2 lg:hidden" onClick={() => setActiveId("")}>←</button><Avatar value={active?.counterpart} /><div className="min-w-0 flex-1"><p className="font-black text-[#182017]">{active?.counterpart?.name || "Hội thoại"}</p><p className="truncate text-xs text-[#71806F]">Tin nhắn được lưu an toàn trên MIROIR</p></div><button type="button" aria-label="Tìm trong cuộc trò chuyện" className="grid h-10 w-10 place-items-center rounded-full border border-[#E1EBDD] bg-white text-[#40503D] transition hover:bg-[#F2F7EE]"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="6" /><path strokeLinecap="round" d="m20 20-4-4" /></svg></button></header>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#FAFCF8]/65 p-4 sm:p-6">
             {nextBefore ? <div className="mb-4 text-center"><Button variant="secondary" onClick={async () => { const result = await listChatMessages(actorType, activeId, { before: nextBefore }); setMessages((current) => [...(result.messages || []), ...current]); setNextBefore(result.nextCursor); }}>Tải tin cũ hơn</Button></div> : null}
             {messages.map((message, index) => <div key={message.id}>{index === 0 || !sameDay(messages[index - 1].createdAt, message.createdAt) ? <p className="my-4 text-center text-xs font-bold text-muted">{new Date(message.createdAt).toLocaleDateString("vi-VN")}</p> : null}<MessageBubble message={message} mine={message.senderType === actorType} actorType={actorType} read={Boolean(message.senderType === actorType && counterpartReadAt && new Date(counterpartReadAt) >= new Date(message.createdAt))} onRetry={() => deliverInBackground(message._outbox, message.id)} onOpenImage={setLightboxUrl} /></div>)}
             <div ref={bottomRef} />
           </div>
-          <form className="border-t border-line p-4" onSubmit={send}>
+          <form className="chat-composer border-t border-[#E3EDE0] bg-white/75 p-4 sm:px-6" onSubmit={send}>
             {pendingContext ? <PendingContext context={pendingContext} onRemove={() => setPendingContext(null)} /> : null}
             {images.length ? <div className="mb-3 flex flex-wrap gap-3">{images.map((item, index) => <div className="group relative h-24 w-24 overflow-hidden rounded-2xl border border-line bg-panel" key={item.previewUrl}><button type="button" className="h-full w-full cursor-zoom-in" aria-label={`Xem ảnh ${index + 1}`} onClick={() => setLightboxUrl(item.previewUrl)}><img className="h-full w-full object-cover" src={item.previewUrl} alt={`Ảnh đã chọn ${index + 1}`} /></button><button type="button" aria-label={`Bỏ ảnh ${index + 1}`} className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/65 text-sm font-black text-white shadow" onClick={() => removeSelectedImage(index)}>×</button></div>)}</div> : null}
             {notice ? <p className="mb-3 text-sm font-bold text-red-600">{notice}</p> : null}
-            <div className="flex items-end gap-2"><label className="cursor-pointer rounded-full border border-line px-4 py-3 font-black">＋<input className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={chooseImages} /></label><textarea className="miroir-field min-h-12 flex-1 resize-none" maxLength={2000} placeholder="Nhập tin nhắn..." rows="1" value={text} onChange={(event) => setText(event.target.value)} /><Button type="submit">Gửi</Button></div>
+            <div className="flex items-end gap-3"><label className="grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl text-[#4F733C] transition hover:bg-[#EEF6E9]" aria-label="Đính kèm ảnh"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" /><path strokeLinecap="round" d="m21 15-5-5L5 21" /></svg><input className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple onChange={chooseImages} /></label><textarea className="min-h-12 flex-1 resize-none rounded-full border border-[#DDE8D8] bg-white px-5 py-3 text-sm text-[#253025] outline-none transition placeholder:text-[#9AA598] focus:border-[#91B76F] focus:ring-4 focus:ring-[#B3D07E]/15" maxLength={2000} placeholder="Nhập tin nhắn..." rows="1" value={text} onChange={(event) => setText(event.target.value)} /><button type="submit" aria-label="Gửi tin nhắn" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#91B76F] text-white shadow-[0_8px_18px_rgba(107,144,78,0.28)] transition hover:bg-[#6F8746]"><svg className="h-5 w-5 translate-x-px" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="m22 2-7 20-4-9-9-4z" /><path strokeLinecap="round" d="M22 2 11 13" /></svg></button></div>
           </form>
-        </> : <div className="m-auto text-center text-muted">Chọn một cuộc trò chuyện.</div>}
+        </> : <div className="m-auto max-w-md px-6 text-center"><div className="relative mx-auto mb-7 h-28 w-36"><span className="absolute right-1 top-5 h-[4.5rem] w-20 rounded-[28px] bg-[#DDEAD5]" /><span className="absolute left-0 top-0 grid h-20 w-24 place-items-center rounded-[26px] border border-[#E0EBDD] bg-white shadow-[0_14px_30px_rgba(77,106,62,0.12)]"><span className="flex gap-2"><i className="h-2.5 w-2.5 rounded-full bg-[#78A360]" /><i className="h-2.5 w-2.5 rounded-full bg-[#78A360]" /><i className="h-2.5 w-2.5 rounded-full bg-[#78A360]" /></span></span></div><h2 className="text-2xl font-black tracking-tight text-[#151A14]">Chọn một cuộc trò chuyện</h2><p className="mt-3 text-sm leading-relaxed text-[#748071]">Bắt đầu trò chuyện để được tư vấn, hỗ trợ về sản phẩm, đơn hàng hoặc phong cách thời trang.</p></div>}
       </section>
     </div>
   );
 
   const lightbox = lightboxUrl ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Xem ảnh" onClick={() => setLightboxUrl("")}><button type="button" className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-3xl text-white transition hover:bg-white/25" aria-label="Đóng ảnh" onClick={() => setLightboxUrl("")}>×</button><img className="max-h-[90dvh] max-w-[95vw] rounded-2xl object-contain shadow-2xl" src={lightboxUrl} alt="Ảnh phóng lớn" onClick={(event) => event.stopPropagation()} /></div> : null;
 
-  if (actorType === "user") return <div className="h-dvh overflow-hidden"><AppShell nav={<TopNav user={user} onLogout={() => { setUserToken(""); window.location.href = "/"; }} />}>{content}</AppShell>{lightbox}</div>;
+  if (actorType === "user") return <div className="h-dvh overflow-hidden bg-[#FBFCF9]"><AppShell nav={<TopNav user={user} onLogout={() => { setUserToken(""); window.location.href = "/"; }} />}><div className="min-h-[calc(100dvh-5rem)] bg-[url('/chat-editorial-background.png')] bg-cover bg-center bg-no-repeat">{content}</div></AppShell>{lightbox}</div>;
   return <div className="h-dvh overflow-hidden bg-white text-ink"><div className="h-full lg:grid lg:grid-cols-[236px_minmax(0,1fr)]"><ShopChatSidebar shop={shop} onLogout={() => { setShopToken(""); window.location.href = "/"; }} /><main className="min-h-0 min-w-0 overflow-hidden bg-[#F6F8F3]">{content}</main></div>{lightbox}</div>;
 }
 
@@ -265,7 +280,7 @@ function ShopChatSidebar({ shop, onLogout }) {
   </aside>;
 }
 
-function Avatar({ value }) { return <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-accentSoft font-black text-mintDeep">{value?.logoUrl ? <img className="h-full w-full object-cover" src={value.logoUrl} alt="" /> : (value?.name || "?").slice(0, 1).toUpperCase()}</span>; }
+function Avatar({ value }) { return <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#D9E6D3] bg-[#F1F7EC] font-black text-mintDeep">{value?.logoUrl ? <img className="h-full w-full object-cover" src={value.logoUrl} alt="" /> : (value?.name || "?").slice(0, 1).toUpperCase()}</span>; }
 
 function PendingContext({ context, onRemove }) { return <div className="mb-3 flex items-center justify-between rounded-2xl border border-mintDeep bg-accentSoft p-3"><div><p className="text-xs font-black uppercase text-mintDeep">Đính kèm {context.type === "order" ? "đơn hàng" : "sản phẩm"}</p><p className="text-sm font-bold">Thông tin sẽ được lấy trực tiếp từ hệ thống khi gửi.</p></div><button type="button" onClick={onRemove}>×</button></div>; }
 

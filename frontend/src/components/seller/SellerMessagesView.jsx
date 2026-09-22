@@ -330,25 +330,19 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
       {/* 3. Right Customer Context Side Panel (Desktop only) */}
       {activeConvo && (
         <div className="hidden xl:flex w-72 border-l border-[#E2EBD5] bg-[#F9FAF4] flex-col p-5 space-y-5 shrink-0">
-          <div className="space-y-3">
-            <h5 className="font-bold text-xs text-[#1F241D]">Hồ sơ phong cách (Fit & Style)</h5>
-            <div className="neu-inset p-3 rounded-xl text-xs space-y-1.5 text-[#6E756B]">
-              <div className="flex justify-between">
-                <span>Dáng người:</span>
-                <span className="font-bold text-[#1F241D]">Quả lê (Pear)</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tone da:</span>
-                <span className="font-bold text-[#1F241D]">Ấm (Warm)</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Phong cách:</span>
-                <span className="font-bold text-[#6F8746]">Công sở / Hiện đại</span>
-              </div>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h5 className="font-bold text-xs text-[#1F241D]">Hồ sơ phong cách</h5>
+              <span className="rounded-full bg-[#EEF5E9] px-2 py-1 text-[9px] font-black uppercase tracking-wide text-[#5D7D45]">Fit & Style</span>
             </div>
-          </div>
+            <div className="overflow-hidden rounded-2xl border border-[#DDE7D9] bg-white/85 p-4 text-xs shadow-[0_8px_20px_rgba(92,118,76,0.07)]">
+              <div className="grid grid-cols-[82px_minmax(0,1fr)] gap-3 border-b border-[#EDF2E9] py-2 first:pt-0"><span className="text-[#748072]">Dáng người</span><span className="text-right font-bold leading-snug text-[#1F241D]">Quả lê (Pear)</span></div>
+              <div className="grid grid-cols-[82px_minmax(0,1fr)] gap-3 border-b border-[#EDF2E9] py-2"><span className="text-[#748072]">Tone da</span><span className="text-right font-bold leading-snug text-[#1F241D]">Ấm (Warm)</span></div>
+              <div className="grid grid-cols-[82px_minmax(0,1fr)] gap-3 pt-2"><span className="text-[#748072]">Phong cách</span><span className="text-right font-bold leading-snug text-[#5D7D45]">Công sở / Hiện đại</span></div>
+            </div>
+          </section>
 
-          <div className="neu-inset p-3.5 rounded-2xl space-y-2">
+          <div className="rounded-2xl border border-[#E0EADF] bg-[#F7FAF4] p-4 space-y-2 shadow-[0_6px_16px_rgba(92,118,76,0.05)]">
             <span className="text-[11px] font-bold uppercase text-[#6E756B]">Mẹo chốt đơn</span>
             <p className="text-xs text-[#1F241D] leading-relaxed">
               Khách hàng này rất chuộng dáng quần ống suông và tone màu Be/Trắng. Bạn có thể gợi ý các mẫu blazer kết hợp cùng nhé!

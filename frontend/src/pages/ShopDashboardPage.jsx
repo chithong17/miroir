@@ -61,6 +61,10 @@ import {
   TrendingUp,
   BarChart3,
   FileDown,
+  Check,
+  Copy,
+  MessageSquare,
+  X,
 } from "lucide-react";
 
 const fieldClass =
@@ -3043,7 +3047,7 @@ function ShopOrderModal({ onChanged, onClose, order }) {
       onMouseDown={onClose}
     >
       <div
-        className="neu-card max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-[#FFFFFF] p-6 sm:p-8 border border-[#E2EBD5]"
+        className="shop-order-modal neu-card max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[18px] bg-[#FFFFFF] p-6 sm:p-8 border border-[#E2EBD5]"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#E2EBD5] pb-5">

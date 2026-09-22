@@ -225,8 +225,8 @@ function UserAppPage({ initialView = "products" }) {
               {/* Marketplace Hero */}
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-2">
                 <div>
-                  <h1 className="text-4xl md:text-[3.5rem] leading-[1.1] font-display font-bold text-[#91B76F] mb-4">Marketplace</h1>
-                  <p className="text-sm md:text-base text-gray-600 max-w-lg">Khám phá hàng ngàn sản phẩm từ các thương hiệu và nhà thiết kế.<br/>Tạo nên phong cách của riêng bạn trong thế giới MIROIR.</p>
+                  <h1 className="text-4xl md:text-[3.5rem] leading-[1.1] font-display font-bold text-[#91B76F] mb-4">{t("marketplace.title")}</h1>
+                  <p className="whitespace-pre-line text-sm md:text-base text-gray-600 max-w-lg">{t("marketplace.description")}</p>
                 </div>
                 <div 
                   className="flex p-1.5"
@@ -239,8 +239,8 @@ function UserAppPage({ initialView = "products" }) {
                     boxShadow: "0 4px 20px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
                   }}
                 >
-                  <button onClick={() => setView('products')} className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${view === 'products' ? 'bg-[#91B76F] text-white shadow-md' : 'text-gray-500 hover:text-[#101512] bg-transparent'}`}>Sản phẩm</button>
-                  <button onClick={() => setView('outfits')} className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${view === 'outfits' ? 'bg-[#91B76F] text-white shadow-md' : 'text-gray-500 hover:text-[#101512] bg-transparent'}`}>Outfit</button>
+                  <button onClick={() => setView('products')} className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${view === 'products' ? 'bg-[#91B76F] text-white shadow-md' : 'text-gray-500 hover:text-[#101512] bg-transparent'}`}>{t("marketplace.products")}</button>
+                  <button onClick={() => setView('outfits')} className={`px-8 py-3 rounded-full text-sm font-bold transition-all ${view === 'outfits' ? 'bg-[#91B76F] text-white shadow-md' : 'text-gray-500 hover:text-[#101512] bg-transparent'}`}>{t("marketplace.outfits")}</button>
                 </div>
               </div>
 
@@ -263,14 +263,14 @@ function UserAppPage({ initialView = "products" }) {
                       boxShadow: "0 4px 20px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
                     }}
                   >
-                     <p className="text-sm font-semibold text-[#253029] ml-3">Kết quả tìm kiếm</p>
+                     <p className="text-sm font-semibold text-[#253029] ml-3">{t("marketplace.searchResults")}</p>
                      <div className="flex items-center gap-4">
-                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">Sắp xếp:</span>
+                       <span className="text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:block">{t("marketplace.sort")}</span>
                        <div className="flex gap-1.5">
-                         <button className="px-5 py-2.5 text-xs font-bold rounded-full bg-[#91B76F] text-white shadow-sm transition-all hover:bg-[#A8C98B]">Liên quan</button>
-                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden sm:block">Mới nhất</button>
-                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden md:block">Bán chạy</button>
-                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden md:block">Giá: Thấp → Cao</button>
+                         <button className="px-5 py-2.5 text-xs font-bold rounded-full bg-[#91B76F] text-white shadow-sm transition-all hover:bg-[#A8C98B]">{t("marketplace.relevant")}</button>
+                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden sm:block">{t("marketplace.newest")}</button>
+                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden md:block">{t("marketplace.bestSelling")}</button>
+                         <button className="px-5 py-2.5 text-xs font-bold rounded-full text-[#253029] bg-transparent hover:bg-white/60 transition-all hidden md:block">{t("marketplace.priceLowToHigh")}</button>
                        </div>
                        
                        <div className="hidden lg:flex gap-1 bg-white/70 p-1 rounded-full border border-white ml-2">
@@ -322,6 +322,14 @@ function UserAppPage({ initialView = "products" }) {
 function CatalogFilters({ applyFilters, filters, setFilters }) {
   const { t } = useLanguage();
   const update = (field) => (event) => setFilters((previous) => ({ ...previous, [field]: event.target.value }));
+  const categories = [
+    { value: "Áo", labelKey: "marketplace.category.shirt" },
+    { value: "Quần", labelKey: "marketplace.category.pants" },
+    { value: "Váy / Đầm", labelKey: "marketplace.category.dress" },
+    { value: "Áo khoác", labelKey: "marketplace.category.jacket" },
+    { value: "Phụ kiện", labelKey: "marketplace.category.accessory" },
+    { value: "Giày dép", labelKey: "marketplace.category.shoes" },
+  ];
   
   return (
     <div 
@@ -347,26 +355,26 @@ function CatalogFilters({ applyFilters, filters, setFilters }) {
       <div className="relative z-10 flex items-center justify-between mb-8">
         <h2 className="text-xl font-extrabold text-[#101512] flex items-center gap-2">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-          Bộ lọc tìm kiếm
+          {t("marketplace.filters")}
         </h2>
-        <button className="text-sm font-semibold text-gray-500 hover:text-[#101512] transition-colors" onClick={() => setFilters({search: "", category: "", gender: "", minPrice: "", maxPrice: "", page: 1})}>Đặt lại</button>
+        <button className="text-sm font-semibold text-gray-500 hover:text-[#101512] transition-colors" onClick={() => setFilters({search: "", category: "", gender: "", minPrice: "", maxPrice: "", page: 1})}>{t("marketplace.reset")}</button>
       </div>
 
       <div className="relative z-10 grid gap-8">
         <div className="relative">
           <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input type="text" placeholder="Tìm kiếm sản phẩm..." value={filters.search} onChange={update("search")} className="w-full bg-white/70 border border-white/80 rounded-full py-3.5 pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#91B76F]/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] transition-all placeholder:text-gray-400" />
+          <input type="text" placeholder={t("marketplace.searchPlaceholder")} value={filters.search} onChange={update("search")} className="w-full bg-white/70 border border-white/80 rounded-full py-3.5 pl-11 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#91B76F]/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] transition-all placeholder:text-gray-400" />
         </div>
 
         <div>
           <h3 className="text-sm font-bold text-[#101512] mb-4 flex justify-between items-center">
-            Danh mục <span className="text-gray-400">˅</span>
+            {t("marketplace.category")} <span className="text-gray-400">˅</span>
           </h3>
           <div className="grid gap-3">
-            {["Áo", "Quần", "Váy / Đầm", "Áo khoác", "Phụ kiện", "Giày dép"].map(cat => (
-              <label key={cat} className="flex items-center gap-3 cursor-pointer group">
-                <input type="checkbox" className="w-5 h-5 rounded-[6px] border-gray-300 text-[#91B76F] focus:ring-[#91B76F] transition-colors" checked={filters.category === cat} onChange={() => setFilters(prev => ({...prev, category: filters.category === cat ? "" : cat}))} />
-                <span className="text-sm font-medium text-gray-600 group-hover:text-[#101512] transition-colors">{cat}</span>
+            {categories.map((category) => (
+              <label key={category.value} className="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" className="w-5 h-5 rounded-[6px] border-gray-300 text-[#91B76F] focus:ring-[#91B76F] transition-colors" checked={filters.category === category.value} onChange={() => setFilters(prev => ({...prev, category: filters.category === category.value ? "" : category.value}))} />
+                <span className="text-sm font-medium text-gray-600 group-hover:text-[#101512] transition-colors">{t(category.labelKey)}</span>
               </label>
             ))}
           </div>
@@ -374,18 +382,18 @@ function CatalogFilters({ applyFilters, filters, setFilters }) {
 
         <div>
           <h3 className="text-sm font-bold text-[#101512] mb-4 flex justify-between items-center">
-            Giới tính <span className="text-gray-400">˅</span>
+            {t("marketplace.gender")} <span className="text-gray-400">˅</span>
           </h3>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setFilters(prev => ({...prev, gender: ""}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${!filters.gender ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>Tất cả</button>
-            <button onClick={() => setFilters(prev => ({...prev, gender: "female"}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filters.gender === 'female' ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>Nữ</button>
-            <button onClick={() => setFilters(prev => ({...prev, gender: "male"}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filters.gender === 'male' ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>Nam</button>
+            <button onClick={() => setFilters(prev => ({...prev, gender: ""}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${!filters.gender ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>{t("marketplace.all")}</button>
+            <button onClick={() => setFilters(prev => ({...prev, gender: "female"}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filters.gender === 'female' ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>{t("marketplace.female")}</button>
+            <button onClick={() => setFilters(prev => ({...prev, gender: "male"}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filters.gender === 'male' ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>{t("marketplace.male")}</button>
             <button onClick={() => setFilters(prev => ({...prev, gender: "unisex"}))} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors ${filters.gender === 'unisex' ? 'bg-[#91B76F] text-white shadow-sm' : 'bg-white/60 text-gray-600 hover:bg-white border border-white'}`}>Unisex</button>
           </div>
         </div>
 
         <div>
-          <h3 className="text-sm font-bold text-[#101512] mb-4">Khoảng giá</h3>
+          <h3 className="text-sm font-bold text-[#101512] mb-4">{t("marketplace.priceRange")}</h3>
           <div className="px-2">
             <div className="h-1.5 w-full bg-black/5 rounded-full relative mb-4 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">
               <div className="absolute left-[10%] right-[30%] h-full bg-[#91B76F] rounded-full"></div>

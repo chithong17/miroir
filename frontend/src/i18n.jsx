@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 const LANGUAGE_KEY = "miroir_language";
 const VI_DEFAULT_MIGRATION_KEY = "miroir_language_vi_default_v1";
 
-const translations = {
+export const translations = {
   en: {
     "nav.marketplace": "Marketplace",
     "nav.stylist": "Stylist",
@@ -232,6 +232,7 @@ const translations = {
     "common.draft": "Draft",
     "common.trash": "Trash",
     "common.actions": "Actions",
+    "common.details": "Details",
     "common.stock": "Stock",
     "common.allStatus": "All status",
     "common.published": "Published",
@@ -481,6 +482,52 @@ const translations = {
     "hero.footer.copyright": "© 2026 MIROIR ATELIER INC. ALL RIGHTS RESERVED.",
     "hero.footer.slogan": "FIT YOUR SHAPE. FREE YOUR STYLE.",
     "hero.footer.backToTop": "BACK TO TOP",
+    "orders.status.pending_confirmation": "Awaiting confirmation",
+    "orders.status.confirmed": "Confirmed",
+    "orders.status.preparing": "Preparing order",
+    "orders.status.shipping": "Out for delivery",
+    "orders.status.delivered": "Delivered",
+    "orders.status.cancel_requested": "Cancellation requested",
+    "orders.status.cancelled": "Cancelled",
+    "orders.status.expired": "Expired",
+    "payments.status.cod_pending": "Cash on delivery — unpaid",
+    "payments.status.awaiting_transfer": "Awaiting bank transfer",
+    "payments.status.pending_verification": "Awaiting payment verification",
+    "payments.status.paid": "Paid",
+    "payments.status.refund_pending": "Refund pending",
+    "payments.status.refunded": "Refunded",
+    "seller.orders.segment.all": "All",
+    "seller.orders.segment.payment": "Awaiting payment",
+    "seller.orders.segment.transport": "Processing",
+    "seller.orders.segment.delivery": "Out for delivery",
+    "seller.orders.segment.completed": "Completed",
+    "seller.orders.segment.cancelled": "Cancelled",
+    "seller.orders.segment.returns": "Returns & refunds",
+    "marketplace.title": "Marketplace",
+    "marketplace.description": "Explore thousands of products from fashion brands and designers.\nCreate your own style in the MIROIR world.",
+    "marketplace.products": "Products",
+    "marketplace.outfits": "Outfits",
+    "marketplace.searchResults": "Search results",
+    "marketplace.sort": "Sort:",
+    "marketplace.relevant": "Relevant",
+    "marketplace.newest": "Newest",
+    "marketplace.bestSelling": "Best selling",
+    "marketplace.priceLowToHigh": "Price: Low to high",
+    "marketplace.filters": "Search filters",
+    "marketplace.reset": "Reset",
+    "marketplace.searchPlaceholder": "Search products...",
+    "marketplace.category": "Category",
+    "marketplace.gender": "Gender",
+    "marketplace.all": "All",
+    "marketplace.female": "Women",
+    "marketplace.male": "Men",
+    "marketplace.priceRange": "Price range",
+    "marketplace.category.shirt": "Tops",
+    "marketplace.category.pants": "Pants",
+    "marketplace.category.dress": "Dresses & skirts",
+    "marketplace.category.jacket": "Outerwear",
+    "marketplace.category.accessory": "Accessories",
+    "marketplace.category.shoes": "Shoes",
   },
   vi: {
     "nav.marketplace": "Chợ thời trang",
@@ -707,6 +754,7 @@ const translations = {
     "common.draft": "Bản nháp",
     "common.trash": "Thùng rác",
     "common.actions": "Thao tác",
+    "common.details": "Chi tiết",
     "common.stock": "Tồn kho",
     "common.allStatus": "Tất cả trạng thái",
     "common.published": "Đã xuất bản",
@@ -956,6 +1004,52 @@ const translations = {
     "hero.footer.copyright": "© 2026 MIROIR ATELIER INC. BẢN QUYỀN ĐÃ ĐƯỢC BẢO LƯU.",
     "hero.footer.slogan": "FIT YOUR BUSINESS, FREE YOUR MIND.",
     "hero.footer.backToTop": "VỀ ĐẦU TRANG",
+    "orders.status.pending_confirmation": "Chờ xác nhận",
+    "orders.status.confirmed": "Đã xác nhận",
+    "orders.status.preparing": "Đang chuẩn bị",
+    "orders.status.shipping": "Đang giao hàng",
+    "orders.status.delivered": "Đã giao hàng",
+    "orders.status.cancel_requested": "Yêu cầu hủy",
+    "orders.status.cancelled": "Đã hủy",
+    "orders.status.expired": "Hết hạn",
+    "payments.status.cod_pending": "Tiền mặt — chưa thu",
+    "payments.status.awaiting_transfer": "Chờ chuyển khoản",
+    "payments.status.pending_verification": "Chờ đối soát thanh toán",
+    "payments.status.paid": "Đã thanh toán",
+    "payments.status.refund_pending": "Chờ hoàn tiền",
+    "payments.status.refunded": "Đã hoàn tiền",
+    "seller.orders.segment.all": "Tất cả",
+    "seller.orders.segment.payment": "Chờ thanh toán",
+    "seller.orders.segment.transport": "Đang xử lý",
+    "seller.orders.segment.delivery": "Đang giao hàng",
+    "seller.orders.segment.completed": "Hoàn thành",
+    "seller.orders.segment.cancelled": "Đã hủy",
+    "seller.orders.segment.returns": "Trả hàng & hoàn tiền",
+    "marketplace.title": "Marketplace",
+    "marketplace.description": "Khám phá hàng ngàn sản phẩm từ các thương hiệu và nhà thiết kế.\nTạo nên phong cách của riêng bạn trong thế giới MIROIR.",
+    "marketplace.products": "Sản phẩm",
+    "marketplace.outfits": "Outfit",
+    "marketplace.searchResults": "Kết quả tìm kiếm",
+    "marketplace.sort": "Sắp xếp:",
+    "marketplace.relevant": "Liên quan",
+    "marketplace.newest": "Mới nhất",
+    "marketplace.bestSelling": "Bán chạy",
+    "marketplace.priceLowToHigh": "Giá: Thấp → Cao",
+    "marketplace.filters": "Bộ lọc tìm kiếm",
+    "marketplace.reset": "Đặt lại",
+    "marketplace.searchPlaceholder": "Tìm kiếm sản phẩm...",
+    "marketplace.category": "Danh mục",
+    "marketplace.gender": "Giới tính",
+    "marketplace.all": "Tất cả",
+    "marketplace.female": "Nữ",
+    "marketplace.male": "Nam",
+    "marketplace.priceRange": "Khoảng giá",
+    "marketplace.category.shirt": "Áo",
+    "marketplace.category.pants": "Quần",
+    "marketplace.category.dress": "Váy / Đầm",
+    "marketplace.category.jacket": "Áo khoác",
+    "marketplace.category.accessory": "Phụ kiện",
+    "marketplace.category.shoes": "Giày dép",
   },
 };
 
@@ -963,6 +1057,20 @@ const LanguageContext = createContext(null);
 
 const format = (template, values = {}) =>
   String(template).replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
+
+const missingTranslationKeys = Object.keys(translations.en).filter(
+  (key) => !(key in translations.vi),
+);
+const extraTranslationKeys = Object.keys(translations.vi).filter(
+  (key) => !(key in translations.en),
+);
+
+if (import.meta.env.DEV && (missingTranslationKeys.length || extraTranslationKeys.length)) {
+  console.warn("[i18n] Translation catalog is out of sync.", {
+    missingVietnamese: missingTranslationKeys,
+    missingEnglish: extraTranslationKeys,
+  });
+}
 
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(() => {
@@ -981,8 +1089,21 @@ export function LanguageProvider({ children }) {
   const value = useMemo(() => {
     const setLanguage = (nextLanguage) => setLanguageState(nextLanguage === "vi" ? "vi" : "en");
     const toggleLanguage = () => setLanguageState((previous) => (previous === "en" ? "vi" : "en"));
-    const t = (key, values) => format(translations[language]?.[key] || translations.en[key] || key, values);
-    return { language, setLanguage, toggleLanguage, t };
+    const locale = language === "vi" ? "vi-VN" : "en-US";
+    const t = (key, values) => {
+      const translation = translations[language]?.[key];
+      if (translation) return format(translation, values);
+      if (import.meta.env.DEV) console.warn(`[i18n] Missing ${language} translation: ${key}`);
+      return format(key, values);
+    };
+    const formatCurrency = (value, currency = "VND") => new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(Number(value || 0));
+    const formatDate = (value, options = {}) => new Intl.DateTimeFormat(locale, options).format(new Date(value));
+    const formatNumber = (value, options = {}) => new Intl.NumberFormat(locale, options).format(Number(value || 0));
+    return { language, locale, setLanguage, toggleLanguage, t, formatCurrency, formatDate, formatNumber };
   }, [language]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

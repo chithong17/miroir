@@ -301,7 +301,7 @@ export default function SellerShell({
 
               {/* Notification Dropdown */}
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-3 w-80 sm:w-96 neu-card p-4 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="shop-notification-popover absolute right-0 mt-3 w-80 sm:w-96 neu-card p-4 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center justify-between border-b border-[#E2EBD5] pb-3 mb-3">
                     <span className="font-black text-sm text-[#1F2A2A]">
                       Thông báo ({unreadNotifs.length} mới)

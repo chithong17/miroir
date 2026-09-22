@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useLanguage } from "../../i18n.jsx";
 import {
   ShoppingBag,
   Search,
@@ -36,6 +37,16 @@ const ORDER_SEGMENTS = [
   { id: "returns", label: "Trả hàng / Hoàn tiền" },
 ];
 
+const ORDER_SEGMENT_KEYS = {
+  all: "seller.orders.segment.all",
+  payment: "seller.orders.segment.payment",
+  transport: "seller.orders.segment.transport",
+  delivery: "seller.orders.segment.delivery",
+  completed: "seller.orders.segment.completed",
+  cancelled: "seller.orders.segment.cancelled",
+  returns: "seller.orders.segment.returns",
+};
+
 const ORDER_STATUS_LABELS = {
   pending_confirmation: "Chờ xác nhận",
   confirmed: "Đã xác nhận",
@@ -56,6 +67,26 @@ const PAYMENT_STATUS_LABELS = {
   refunded: "Đã hoàn tiền",
 };
 
+const ORDER_STATUS_KEYS = {
+  pending_confirmation: "orders.status.pending_confirmation",
+  confirmed: "orders.status.confirmed",
+  preparing: "orders.status.preparing",
+  shipping: "orders.status.shipping",
+  delivered: "orders.status.delivered",
+  cancel_requested: "orders.status.cancel_requested",
+  cancelled: "orders.status.cancelled",
+  expired: "orders.status.expired",
+};
+
+const PAYMENT_STATUS_KEYS = {
+  cod_pending: "payments.status.cod_pending",
+  awaiting_transfer: "payments.status.awaiting_transfer",
+  pending_verification: "payments.status.pending_verification",
+  paid: "payments.status.paid",
+  refund_pending: "payments.status.refund_pending",
+  refunded: "payments.status.refunded",
+};
+
 export default function SellerOrdersView({
   orders = [],
   returns = [],
@@ -67,10 +98,13 @@ export default function SellerOrdersView({
   onStartChat,
   formatMoney,
 }) {
+  const { t } = useLanguage();
   const [activeSegment, setActiveSegment] = useState("all");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
+  const orderStatusLabel = (status) => t(ORDER_STATUS_KEYS[status] || status);
+  const paymentStatusLabel = (status) => t(PAYMENT_STATUS_KEYS[status] || status);
 
   const returnOrderIds = useMemo(
     () => new Set((returns || []).map((item) => item.orderId)),
@@ -172,6 +206,7 @@ export default function SellerOrdersView({
       <NeuTabs
         tabs={ORDER_SEGMENTS.map((s) => ({
           ...s,
+          label: t(ORDER_SEGMENT_KEYS[s.id]),
           count: segmentCounts[s.id] || 0,
         }))}
         activeTab={activeSegment}
@@ -196,9 +231,9 @@ export default function SellerOrdersView({
             className="neu-input px-3.5 py-2 text-xs font-semibold"
           >
             <option value="">Tất cả trạng thái đơn</option>
-            {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
+            {Object.keys(ORDER_STATUS_KEYS).map((key) => (
+              <option key={key} value={key}>
+                {orderStatusLabel(key)}
               </option>
             ))}
           </select>
@@ -209,9 +244,9 @@ export default function SellerOrdersView({
             className="neu-input px-3.5 py-2 text-xs font-semibold"
           >
             <option value="">Tất cả thanh toán</option>
-            {Object.entries(PAYMENT_STATUS_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
+            {Object.keys(PAYMENT_STATUS_KEYS).map((key) => (
+              <option key={key} value={key}>
+                {paymentStatusLabel(key)}
               </option>
             ))}
           </select>
@@ -285,7 +320,7 @@ export default function SellerOrdersView({
                               : "neutral"
                           }
                         >
-                          {ORDER_STATUS_LABELS[order.orderStatus] || order.orderStatus}
+                          {orderStatusLabel(order.orderStatus)}
                         </NeuBadge>
                       </td>
 
@@ -303,7 +338,7 @@ export default function SellerOrdersView({
                         >
                           {isReturn
                             ? "Trả hàng / Hoàn tiền"
-                            : PAYMENT_STATUS_LABELS[order.paymentStatus] || order.paymentStatus}
+                            : paymentStatusLabel(order.paymentStatus)}
                         </NeuBadge>
                       </td>
 

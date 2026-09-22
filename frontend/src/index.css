@@ -529,6 +529,203 @@
   background: transparent;
 }
 
+/* Customer chat: stronger hierarchy for inbox entries and composer controls. */
+.chat-inbox-list > button {
+  min-height: 78px;
+  margin-bottom: 8px;
+  padding: 13px 14px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+}
+
+.chat-inbox-list > button:hover {
+  border-color: #e1ecdb;
+  box-shadow: 0 8px 20px rgba(78, 107, 62, 0.06);
+}
+
+.chat-inbox-list > button > span:first-child {
+  width: 54px !important;
+  height: 54px !important;
+  border-radius: 20px !important;
+  border-color: #d9e7d3 !important;
+  box-shadow: 0 4px 12px rgba(87, 114, 67, 0.08);
+}
+
+.chat-composer > div:last-child {
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-composer > div:last-child > label {
+  width: 48px !important;
+  height: 48px !important;
+  border: 1px solid #d9e7d3;
+  border-radius: 16px !important;
+  background: #f7fbf4;
+  box-shadow: 0 3px 10px rgba(91, 118, 71, 0.08);
+}
+
+.chat-composer > div:last-child > label:hover {
+  border-color: #a9c995;
+  background: #edf7e7;
+  transform: translateY(-1px);
+}
+
+.chat-composer textarea {
+  min-height: 48px !important;
+  padding: 13px 20px !important;
+  border-color: #d7e5d1 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.chat-composer button[type="submit"] {
+  width: 48px !important;
+  height: 48px !important;
+  box-shadow: 0 10px 22px rgba(107, 144, 78, 0.32) !important;
+}
+
+/* Customer notification menu. */
+.notification-popover {
+  padding-top: 58px !important;
+}
+
+.notification-popover::before {
+  content: "Thông báo";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  height: 50px;
+  padding: 0 16px 0 50px;
+  border-bottom: 1px solid #e3ede0;
+  background: rgba(255, 255, 255, 0.82);
+  color: #182017;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.notification-popover::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: 17px;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #b7d49e;
+  border-radius: 50%;
+  background: #eff8e9;
+  box-shadow: inset 0 0 0 5px #f8fcf5;
+}
+
+.notification-popover > button {
+  position: relative;
+  min-height: 68px;
+  margin-bottom: 5px;
+  padding: 12px 14px 12px 42px !important;
+  border: 1px solid transparent;
+  border-radius: 15px !important;
+  color: #43513f;
+  font-weight: 500;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.notification-popover > button::before {
+  content: "";
+  position: absolute;
+  top: 19px;
+  left: 14px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c4d6ba;
+}
+
+.notification-popover > button:hover {
+  border-color: #dbe9d4;
+  background: #f7fbf4 !important;
+  transform: translateX(-2px);
+}
+
+.notification-popover > button:not(.text-muted)::before {
+  background: #76a55b;
+  box-shadow: 0 0 0 4px #e5f1dd;
+}
+
+.notification-popover > button > span:first-child {
+  overflow: hidden;
+  display: block;
+  color: #1f2a1d;
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-popover > button > span:last-child {
+  display: -webkit-box !important;
+  overflow: hidden;
+  margin-top: 4px !important;
+  color: #778276;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Shop order detail: compact card corners; action buttons remain pill-shaped. */
+.shop-order-modal {
+  border-radius: 18px !important;
+}
+
+.shop-order-modal .neu-card-sm {
+  border-radius: 15px !important;
+}
+
+.shop-order-modal .neu-inset,
+.shop-order-modal [class~="rounded-2xl"] {
+  border-radius: 12px !important;
+}
+
+.shop-order-modal [class~="rounded-3xl"] {
+  border-radius: 16px !important;
+}
+
+/* Seller notification menu: dense list rows instead of oversized capsules. */
+.shop-notification-popover {
+  border-radius: 14px !important;
+  border-color: #dce7d7 !important;
+}
+
+.shop-notification-popover .space-y-2 > div {
+  border: 1px solid #e0e9dc;
+  border-radius: 10px !important;
+  padding: 11px 12px !important;
+}
+
+.shop-notification-popover .space-y-2 > div:hover {
+  border-color: #bcd3ad;
+  background: #f6faf3 !important;
+}
+
+.shop-notification-popover .space-y-2 > div:not(.bg-white\/40) {
+  background: #f0f7eb !important;
+}
+
+.shop-notification-popover .space-y-2 {
+  padding-right: 4px;
+}
+
+.shop-notification-popover .space-y-2::-webkit-scrollbar {
+  width: 6px;
+}
+
+.shop-notification-popover .space-y-2::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: #b8c9b1;
+}
+
 
 
 
