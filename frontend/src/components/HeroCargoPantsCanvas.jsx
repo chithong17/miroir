@@ -61,6 +61,7 @@ export default function HeroCargoPantsCanvas() {
     let originalModelSize = null;
     let originalModelCenter = null;
     let frameId = 0;
+    let isInViewport = true;
     let disposed = false;
     let currentYaw = DEFAULT_YAW;
     let targetYaw = DEFAULT_YAW;
@@ -195,16 +196,49 @@ export default function HeroCargoPantsCanvas() {
     interactionSurface.addEventListener("pointercancel", finishDrag);
 
     const animate = () => {
-      frameId = requestAnimationFrame(animate);
+      frameId = 0;
+      if (disposed || !isInViewport || document.hidden) return;
+
       currentYaw += (targetYaw - currentYaw) * 0.09;
       pivot.rotation.set(0, currentYaw, 0);
       renderer.render(scene, camera);
+      frameId = requestAnimationFrame(animate);
     };
-    animate();
+
+    const startRendering = () => {
+      if (!frameId && !disposed && isInViewport && !document.hidden) {
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+
+    const stopRendering = () => {
+      if (!frameId) return;
+      cancelAnimationFrame(frameId);
+      frameId = 0;
+    };
+
+    const intersectionObserver = new IntersectionObserver(
+      ([entry]) => {
+        isInViewport = entry.isIntersecting;
+        if (isInViewport) startRendering();
+        else stopRendering();
+      },
+      { threshold: 0 }
+    );
+    intersectionObserver.observe(container);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopRendering();
+      else startRendering();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    startRendering();
 
     return () => {
       disposed = true;
-      cancelAnimationFrame(frameId);
+      stopRendering();
+      intersectionObserver.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       resizeObserver.disconnect();
       window.removeEventListener("pointermove", handleWindowPointerMove);
       interactionSurface.removeEventListener("pointerdown", handlePointerDown);

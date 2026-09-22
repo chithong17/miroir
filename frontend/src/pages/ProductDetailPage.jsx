@@ -4,7 +4,7 @@ import {
   listCatalogProducts,
   submitProductFeedback,
 } from "../api/catalogApi.js";
-import { getUserMe, saveUserProfile, setUserToken } from "../api/userApi.js";
+import { getUserMe, getUserToken, saveUserProfile, setUserToken } from "../api/userApi.js";
 import { getFitRecommendation, trackFitEvent } from "../api/fitApi.js";
 import { beginCustomerChat } from "../api/chatApi.js";
 import FitSilhouette, {
@@ -41,12 +41,12 @@ export default function ProductDetailPage({ productId }) {
   const [fitEditVersion, setFitEditVersion] = useState(0);
 
   useEffect(() => {
+    if (!getUserToken()) return;
     getUserMe()
       .then((result) => setUser(result.user))
       .catch(() => {
         setUserToken("");
-        sessionStorage.setItem("miroir_after_login", window.location.pathname);
-        window.location.href = "/login";
+        setUser(null);
       });
   }, []);
 
@@ -121,7 +121,7 @@ export default function ProductDetailPage({ productId }) {
       >
         <div className="section-shell relative z-10">
           <nav className="mb-5 flex flex-wrap items-center gap-2 text-sm font-semibold text-muted">
-          <a className="hover:text-ink" href="/app">
+          <a className="hover:text-ink" href="/products">
             Marketplace
           </a>
           <span>/</span>

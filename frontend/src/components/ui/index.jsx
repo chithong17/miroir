@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { LanguageToggle, useLanguage } from "../../i18n.jsx";
+import { useLanguage } from "../../i18n.jsx";
 import {
   addCartItem,
   getCart,
@@ -36,7 +36,7 @@ export function AppShell({ children, nav, sidebar }) {
 }
 
 export function TopNav({ user, onLogout, compact = false }) {
-  const { t } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const pathname =
     typeof window === "undefined" ? "" : window.location.pathname;
   const [notifications, setNotifications] = useState([]);
@@ -111,72 +111,73 @@ export function TopNav({ user, onLogout, compact = false }) {
   };
   const navItems = [
     {
-      href: "/app",
-      label: t("nav.marketplace"),
-      active: pathname === "/app" || pathname === "/app/products",
+      href: "/",
+      label: language === "vi" ? "Trang chủ" : "Home",
+      active: pathname === "/" || pathname === "/hero2",
     },
     {
-      href: "/app/stylist",
-      label: t("nav.stylist"),
-      active: pathname === "/app/stylist",
+      href: "/products",
+      label: language === "vi" ? "Sản phẩm" : "Products",
+      active: pathname === "/products" || pathname.startsWith("/products/") || pathname === "/app" || pathname === "/app/products",
     },
     {
-      href: "/app/try-on",
-      label: t("nav.tryOn"),
-      active: pathname === "/app/try-on",
+      href: "/try-on",
+      label: language === "vi" ? "Thử đồ" : "Try On",
+      active: pathname === "/try-on" || pathname === "/app/try-on",
+    },
+    {
+      href: "/stylist",
+      label: "Stylist AI",
+      active: pathname === "/stylist" || pathname === "/app/stylist",
     },
   ];
 
   return (
-    <nav className="sticky top-4 z-40 mx-auto max-w-[1500px] px-3 sm:px-4 md:px-8 xl:px-12">
-      <div 
-        className="flex items-center justify-between gap-3 px-6 py-3 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.8)]"
-        style={{
-          background: "rgba(255, 255, 255, 0.45)",
-          backdropFilter: "blur(24px) saturate(130%)",
-          WebkitBackdropFilter: "blur(24px) saturate(130%)",
-          border: "1px solid rgba(255, 255, 255, 0.7)",
-          borderRadius: "999px"
-        }}
-      >
+    <nav className="sticky top-0 z-40 flex h-[76px] w-full shrink-0 items-center bg-transparent px-6 pb-2 pt-3 transition-all duration-300 sm:px-10 lg:px-16">
+      <div className="flex w-full items-center justify-between gap-3">
         <a
-          href={user ? "/app" : "/"}
-          className="flex items-center gap-2 font-display text-xl font-extrabold tracking-widest text-[#101512] sm:text-xl uppercase"
+          href="/"
+          className="group flex items-center gap-2.5 rounded-full border border-white/45 bg-white/20 px-3.5 py-1.5 font-display text-[#161616] shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:bg-white/35"
         >
           <img 
             src="/logo-web.png" 
             alt="Miroir" 
-            className="w-8 h-8 rounded-xl object-cover bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]" 
+            className="h-7 w-7 rounded-full border border-white/50 bg-white/40 object-cover shadow-xs transition-transform duration-300 group-hover:scale-105" 
           />
-          MIROIR
+          <span className="pr-1.5 text-base font-black uppercase tracking-[0.24em] sm:text-[17px]">MIROIR</span>
         </a>
-        <div className="hidden items-center gap-6 text-sm font-semibold md:flex">
+        <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 rounded-full border border-white/45 bg-white/20 px-6 py-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md md:flex lg:gap-8">
           {navItems.map((item) => (
             <a
               key={item.href}
-              className={`relative px-1 py-1.5 transition-colors ${
+              className={`relative py-0.5 text-[13px] font-medium tracking-wide transition-colors lg:text-[13.5px] ${
                 item.active
-                  ? "text-[#91B76F]"
-                  : "text-[#253029] hover:text-[#91B76F]"
+                  ? "font-bold text-[#111111]"
+                  : "text-[#3D4B3B] hover:text-[#111111]"
               }`}
               href={item.href}
             >
               {item.label}
               {item.active && (
-                <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-[#91B76F] rounded-t-sm"></span>
+                <span className="absolute bottom-[-2px] left-1/2 h-[2.5px] w-5 -translate-x-1/2 rounded-full bg-[#B3D07E]" />
               )}
             </a>
           ))}
         </div>
-        <div className="flex min-w-0 items-center gap-3 text-sm font-semibold sm:gap-4">
-          <button aria-label="Tìm kiếm" className="flex h-10 w-10 items-center justify-center rounded-full border border-[#91B76F]/20 bg-white transition hover:bg-[#F1F5F0] text-[#101512]">
-            <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <div className="flex items-center gap-2 rounded-full border border-white/45 bg-white/20 p-1.5 pl-2.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md">
+          <button aria-label="Tìm kiếm" className="flex h-8 w-8 items-center justify-center rounded-full text-[#2D3A2B] transition-colors hover:bg-white/30 hover:text-[#111111]">
+            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
           </button>
-          <div className="hidden sm:block">
-            <LanguageToggle />
-          </div>
+          <button
+            type="button"
+            onClick={() => setLanguage(language === "vi" ? "en" : "vi")}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/30 px-2.5 py-1 font-display text-[11px] font-bold uppercase tracking-[0.12em] text-[#2C382A] shadow-xs backdrop-blur-sm transition-colors hover:bg-white/50"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-[#B3D07E]" />
+            {language === "vi" ? "VI" : "EN"}
+          </button>
           {user ? (
             <>
               <a
@@ -454,21 +455,18 @@ export function TopNav({ user, onLogout, compact = false }) {
               </details>
             </>
           ) : (
-            <>
-              <a href="/login" className="soft-button !px-4 !py-2.5 sm:!px-6">
-                {t("nav.login")}
-              </a>
-              <a
-                href="/register"
-                className="dark-button !px-4 !py-2.5 sm:!px-6"
-              >
-                {t("nav.register")}
-              </a>
-            </>
+            <a
+              href="/login"
+              style={{ color: "#FFFFFF" }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-[#B3D07E] px-4 py-1.5 text-xs font-bold tracking-wide !text-white shadow-[0_4px_14px_rgba(179,208,126,0.35)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.22)] backdrop-blur-sm transition-all hover:scale-[1.03] hover:bg-[#A3C46C] sm:text-[12.5px]"
+            >
+              <span className="!text-white">{language === "vi" ? "Bắt đầu" : "Get Started"}</span>
+              <span className="text-sm leading-none !text-white">→</span>
+            </a>
           )}
         </div>
       </div>
-      <div className="mt-2 flex gap-2 overflow-x-auto rounded-[22px] border border-white/80 bg-white/75 p-1.5 shadow-glow backdrop-blur-xl md:hidden">
+      <div className="absolute left-6 right-6 top-full mt-1 flex gap-2 overflow-x-auto rounded-[22px] border border-white/80 bg-white/75 p-1.5 shadow-glow backdrop-blur-xl md:hidden">
         {navItems.map((item) => (
           <a
             key={item.href}
@@ -1142,7 +1140,7 @@ export function ProductCard({
   showPurchaseActions = false,
 }) {
   const { t } = useLanguage();
-  const productHref = `/app/products/${encodeURIComponent(product?.id || "")}`;
+  const productHref = `/products/${encodeURIComponent(product?.id || "")}`;
   const openDetail = () => {
     if (onDetail) onDetail(product);
     else window.location.href = productHref;

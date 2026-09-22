@@ -34,11 +34,6 @@ function App() {
       return null;
     }
 
-    if (getUserToken()) {
-      window.location.replace("/app");
-      return null;
-    }
-
     return <HeroPage2 />;
   }
 
@@ -110,8 +105,15 @@ function App() {
   }
 
   if (pathname === "/stylist") {
-    window.location.replace("/app/stylist");
-    return null;
+    return <UserAppPage initialView="stylist" />;
+  }
+
+  if (pathname === "/products") {
+    return <UserAppPage initialView="products" />;
+  }
+
+  if (pathname.startsWith("/products/")) {
+    return <ProductDetailPage productId={decodeURIComponent(pathname.split("/").pop())} />;
   }
 
   if (pathname === "/onboarding/profile") {

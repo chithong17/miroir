@@ -115,7 +115,7 @@ export default function TryOnStudioPage() {
       
       const related = await listCatalogProducts({ category: response.product.category, shopId: response.product.shopId, limit: 11 });
       setRelatedProducts((related.products || []).filter((item) => item.id !== productId));
-      window.history.replaceState(null, "", `/app/try-on?productId=${productId}`);
+      window.history.replaceState(null, "", `/try-on?productId=${productId}`);
     } catch (e) {
       console.error(e);
     }
@@ -204,7 +204,7 @@ export default function TryOnStudioPage() {
   return (
     <AppShell nav={<TopNav user={user} onLogout={logout} />}>
       <main 
-        className="min-h-[calc(100vh-80px)] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 relative overflow-x-hidden flex flex-col"
+        className="relative -mt-[76px] flex min-h-screen flex-col overflow-x-hidden px-4 pb-6 pt-[100px] sm:px-6 sm:pb-8 sm:pt-[108px] lg:px-8"
         style={{
           backgroundImage: "url('/liquid-bg-clean.png')",
           backgroundSize: "cover",

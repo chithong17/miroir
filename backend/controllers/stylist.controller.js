@@ -136,7 +136,9 @@ const buildFallbackRecommendation = ({ body, context }) => {
 
 export const recommendOutfit = async (req, res, next) => {
   try {
-    const body = req.user ? { ...(req.body || {}), userId: req.user.id } : req.body;
+    const body = req.user
+      ? { ...(req.body || {}), userId: req.user.id }
+      : { ...(req.body || {}), userId: "" };
     const validationError = validateRecommendationRequest(body);
 
     if (validationError) {

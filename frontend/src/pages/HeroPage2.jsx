@@ -41,11 +41,9 @@ export default function HeroPage2() {
 
   const navLinks = [
     { labelEn: "Home", labelVi: "Trang chủ", href: "/", active: true },
-    { labelEn: "Features", labelVi: "Tính năng", href: "#features" },
-    { labelEn: "Gallery", labelVi: "Bộ sưu tập", href: "#gallery" },
-    { labelEn: "Atelier", labelVi: "Xưởng 3D", href: "/try-on" },
-    { labelEn: "Pricing", labelVi: "Bảng giá", href: "#pricing" },
-    { labelEn: "About", labelVi: "Giới thiệu", href: "#about" },
+    { labelEn: "Products", labelVi: "Sản phẩm", href: "/products" },
+    { labelEn: "Try On", labelVi: "Thử đồ", href: "/try-on" },
+    { labelEn: "AI Stylist", labelVi: "Stylist AI", href: "/stylist" },
   ];
 
   return (
@@ -85,16 +83,18 @@ export default function HeroPage2() {
           href="/hero2"
           className="flex items-center gap-2.5 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/45 px-3.5 py-1.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] transition-all duration-300 group hover:scale-[1.02]"
         >
-          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-white/40 backdrop-blur-sm shadow-xs border border-white/50 transition-transform duration-300 group-hover:scale-105">
-            <MiroirMonogram className="w-4.5 h-4.5 text-[#1A1A1A]" />
-          </div>
+          <img
+            src="/logo-web.png"
+            alt="Miroir"
+            className="h-7 w-7 rounded-full border border-white/50 bg-white/40 object-cover shadow-xs transition-transform duration-300 group-hover:scale-105"
+          />
           <span className="font-display text-base sm:text-[17px] font-black uppercase tracking-[0.24em] text-[#161616] pr-1.5">
             MIROIR
           </span>
         </a>
 
         {/* CỤM 2: FLOATING GLASS NAVIGATION TABS PILL (ULTRA TRANSPARENT) */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8 rounded-full bg-white/20 backdrop-blur-md border border-white/45 px-6 py-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)]">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 rounded-full border border-white/45 bg-white/20 px-6 py-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md md:flex lg:gap-8">
           {navLinks.map((item) => (
             <a
               key={item.labelEn}

@@ -7,6 +7,7 @@ import {
 import { getStylistRecommendation } from "../api/stylistApi.js";
 import {
   getUserMe,
+  getUserToken,
   listUserFavoriteProducts,
   saveUserProfile,
   setUserToken,
@@ -49,6 +50,13 @@ function UserAppPage({ initialView = "products" }) {
   const [profilePhotoNotice, setProfilePhotoNotice] = useState("");
 
   useEffect(() => {
+    if (!getUserToken()) {
+      if (!["products", "stylist"].includes(initialView)) {
+        sessionStorage.setItem("miroir_after_login", window.location.href);
+        window.location.href = "/login";
+      }
+      return;
+    }
     getUserMe()
       .then((response) => {
         setUser(response.user);
@@ -57,7 +65,7 @@ function UserAppPage({ initialView = "products" }) {
       })
       .catch(() => {
         setUserToken("");
-        window.location.href = "/login";
+        setUser(null);
       });
   }, []);
 
@@ -94,12 +102,12 @@ function UserAppPage({ initialView = "products" }) {
 
   const goToTryOn = (product) => {
     if (!product?.id) return;
-    window.location.href = `/app/try-on?productId=${encodeURIComponent(product.id)}`;
+    window.location.href = `/try-on?productId=${encodeURIComponent(product.id)}`;
   };
 
   const openProduct = (product) => {
     if (!product?.id) return;
-    window.location.href = `/app/products/${encodeURIComponent(product.id)}`;
+    window.location.href = `/products/${encodeURIComponent(product.id)}`;
   };
 
   const sendProductFeedback = async (product, payload) => {
@@ -143,6 +151,11 @@ function UserAppPage({ initialView = "products" }) {
 
   const toggleFavorite = async (product) => {
     if (!product?.id) return;
+    if (!user) {
+      sessionStorage.setItem("miroir_after_login", window.location.href);
+      window.location.href = "/login";
+      return;
+    }
     try {
       const response = await toggleUserFavoriteProduct(product.id);
       const nextIds = response.favoriteProductIds || [];
@@ -196,7 +209,7 @@ function UserAppPage({ initialView = "products" }) {
   return (
     <AppShell nav={<TopNav user={user} onLogout={onLogout} />}>
       <main 
-        className="min-h-screen py-8 px-4 sm:px-8 xl:px-12 relative"
+        className="relative -mt-[76px] min-h-screen px-4 pb-8 pt-[108px] sm:px-8 xl:px-12"
         style={{
           backgroundImage: "url('/liquid-bg-clean.png')",
           backgroundSize: "cover",
