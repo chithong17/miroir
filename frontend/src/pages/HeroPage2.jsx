@@ -153,16 +153,10 @@ export default function HeroPage2() {
         {/* ============================================================ */}
         <div className="relative z-10 w-full lg:w-[48%] xl:w-[44%] flex flex-col justify-between px-6 py-6 sm:px-10 sm:py-8 lg:pl-16 lg:pr-4 xl:pl-20 bg-transparent transition-all duration-300">
           
-          {/* Top Metadata Index */}
+          {/* Top Editorial Kicker / Slogan */}
           <div className="space-y-1">
-            <p className="font-display text-[11px] sm:text-xs font-extrabold uppercase tracking-[0.24em] text-[#788874]">
-              01 / 04
-            </p>
-            <p className="font-display text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.22em] text-[#556651]">
-              YOUR STYLE
-            </p>
-            <p className="font-display text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#869682]">
-              A CLOSER YOU
+            <p className="font-display text-[11px] sm:text-xs font-extrabold uppercase tracking-[0.22em] text-[#6A7B66]">
+              FIT YOUR BUSINESS, FREE YOUR MIND
             </p>
           </div>
 
@@ -177,18 +171,17 @@ export default function HeroPage2() {
             {/* Subtitle */}
             <div className="space-y-0.5">
               <p className="font-sans text-base sm:text-lg lg:text-[18px] font-semibold text-[#252525] leading-snug">
-                {isVi ? "Xưởng may đo 3D của riêng bạn." : "Your personal 3D atelier."}
-              </p>
-              <p className="font-sans text-sm sm:text-base lg:text-[16px] font-medium text-[#485445] leading-snug">
-                {isVi ? "Thử đồ. Định hình phong cách. Là chính mình." : "Try. Style. Be You."}
+                {isVi
+                  ? "Hệ điều hành dành riêng cho shop thời trang."
+                  : "The dedicated operating system for fashion businesses."}
               </p>
             </div>
 
             {/* Editorial Body Paragraph */}
             <p className="font-sans text-xs sm:text-sm lg:text-[13.5px] text-[#556652] leading-relaxed">
               {isVi
-                ? "Trực quan hóa trang phục trên bản sao 3D chân thực của chính bạn, tự do thử nghiệm và khám phá phong cách hoàn mỹ nhất — trước khi khoác lên ngoài đời thực."
-                : "Visualize outfits on your 3D self, experiment freely, and discover a style that truly fits — before you wear it in real life."}
+                ? "MIROIR là nền tảng Vertical SaaS dành cho ngành thời trang, giúp các shop quản lý vận hành đa kênh và đưa ra quyết định hiệu quả dựa trên dữ liệu."
+                : "MIROIR is a Vertical SaaS platform for fashion businesses, helping shops manage omnichannel operations and make smarter, data-driven decisions."}
             </p>
 
             {/* Action Bar (Pill CTA + Watch Demo Button) */}
@@ -216,41 +209,55 @@ export default function HeroPage2() {
               </button>
             </div>
 
-            {/* Social Proof (Overlapping Avatars) */}
+            {/* Social Proof (Fashion Atelier Icons) */}
             <div className="flex items-center gap-3 pt-2">
-              <div className="flex -space-x-2.5">
-                {[
-                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80",
-                  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
-                  "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80",
-                  "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=120&q=80",
-                ].map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt="Creator"
-                    className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-xs"
-                  />
-                ))}
+              <div className="flex -space-x-2 items-center">
+                {/* Storefront Icon */}
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#EBF3DF] text-[#48632E] border-2 border-white shadow-xs" title="Fashion Boutique">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                </span>
+                {/* Hanger Icon */}
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F3F7EB] text-[#557538] border-2 border-white shadow-xs" title="Curated Wardrobe">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 4a3 3 0 0 1 3 3c0 1.3-.8 2.4-2 2.8V11l8 5.5a1 1 0 0 1-.6 1.8H3.6a1 1 0 0 1-.6-1.8L11 11V9.8C9.8 9.4 9 8.3 9 7a3 3 0 0 1 3-3z" />
+                  </svg>
+                </span>
+                {/* Apparel Icon */}
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E2ECDA] text-[#3D5A27] border-2 border-white shadow-xs" title="Atelier Apparel">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
+                  </svg>
+                </span>
+                {/* Shopping Bag Icon */}
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#DCE7D2] text-[#344F21] border-2 border-white shadow-xs" title="Retail & Omnichannel">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
+                  </svg>
+                </span>
               </div>
               <p className="text-[11.5px] sm:text-xs text-[#52604F] font-medium">
                 {isVi ? (
                   <>
-                    Cùng hơn <strong className="font-bold text-[#1F2B1C]">10.000+ nhà sáng tạo</strong> nâng tầm phong cách
+                    Được hơn <strong className="font-bold text-[#1F2B1C]">20+ shop thời trang</strong> tin dùng
                   </>
                 ) : (
                   <>
-                    Join <strong className="font-bold text-[#1F2B1C]">10K+ creators</strong> exploring their style
+                    Trusted by <strong className="font-bold text-[#1F2B1C]">20+ fashion brands</strong> & boutiques
                   </>
                 )}
               </p>
             </div>
           </div>
 
-          {/* Bottom Handwritten Signature */}
+          {/* Bottom Editorial Motto */}
           <div className="pt-2">
-            <p className="font-handwriting text-xl sm:text-2xl text-[#6D7D68] italic select-none">
-              “ {isVi ? "Phong cách khởi nguồn từ chính bạn." : "Style lives in you."} ”
+            <p className="font-editorial-quote italic text-lg sm:text-xl text-[#5F725A] select-none tracking-wide">
+              “ Fashion moves fast, you move smarter. ”
             </p>
           </div>
         </div>
