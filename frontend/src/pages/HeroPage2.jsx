@@ -215,49 +215,7 @@ export default function HeroPage2() {
               </button>
             </div>
 
-            {/* Social Proof (Fashion Atelier Icons) */}
-            <div className="flex items-center gap-3 pt-2">
-              <div className="flex -space-x-2 items-center">
-                {/* Storefront Icon */}
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#EBF3DF] text-[#48632E] border-2 border-white shadow-xs" title="Fashion Boutique">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                  </svg>
-                </span>
-                {/* Hanger Icon */}
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F3F7EB] text-[#557538] border-2 border-white shadow-xs" title="Curated Wardrobe">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 4a3 3 0 0 1 3 3c0 1.3-.8 2.4-2 2.8V11l8 5.5a1 1 0 0 1-.6 1.8H3.6a1 1 0 0 1-.6-1.8L11 11V9.8C9.8 9.4 9 8.3 9 7a3 3 0 0 1 3-3z" />
-                  </svg>
-                </span>
-                {/* Apparel Icon */}
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E2ECDA] text-[#3D5A27] border-2 border-white shadow-xs" title="Atelier Apparel">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z" />
-                  </svg>
-                </span>
-                {/* Shopping Bag Icon */}
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#DCE7D2] text-[#344F21] border-2 border-white shadow-xs" title="Retail & Omnichannel">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <path d="M16 10a4 4 0 0 1-8 0" />
-                  </svg>
-                </span>
-              </div>
-              <p className="text-[11.5px] sm:text-xs text-[#52604F] font-medium">
-                {isVi ? (
-                  <>
-                    Được hơn <strong className="font-bold text-[#1F2B1C]">20+ shop thời trang</strong> tin dùng
-                  </>
-                ) : (
-                  <>
-                    Trusted by <strong className="font-bold text-[#1F2B1C]">20+ fashion brands</strong> & boutiques
-                  </>
-                )}
-              </p>
-            </div>
+
           </div>
 
           {/* Bottom Editorial Motto */}

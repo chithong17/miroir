@@ -111,118 +111,94 @@ export default function HeroStorySection() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[45vh] bg-gradient-to-t from-[#BDD99A]/40 to-transparent" />
 
         {/* ============================================================ */}
-        {/* EDITORIAL TEXT CLUSTERS ("Organized Chaos")                   */}
+        {/* STRUCTURED LAYOUT (Based on Mockup)                          */}
         {/* ============================================================ */}
-
-        {/* 1. Top-Left Technical Spec Tag */}
         <div
-          style={getTextTransform(0.04, 0.28, -1, -0.8, -2)}
-          className="absolute left-6 top-8 z-10 max-w-[240px] sm:left-12 sm:top-14 lg:left-20 lg:top-16"
+          className="absolute inset-0 z-10 mx-auto max-w-[1500px] px-6 sm:px-12 lg:px-20 py-16 flex flex-col justify-between pointer-events-none"
+          style={{
+            opacity: Math.max(0, 1 - progress * 4),
+          }}
         >
-          <div className="rounded-[22px] border border-white/90 bg-white/80 p-4 shadow-glass backdrop-blur-md">
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.25em] text-[#4B6B2B]">
-              <span className="h-2 w-2 rounded-full bg-[#4B6B2B] animate-pulse" />
-              <span>{t("hero.story.precisionFit")}</span>
+          {/* Top Section */}
+          <div className="flex justify-between items-start w-full pointer-events-auto relative z-10">
+            {/* Left Sidebar */}
+            <div className="hidden lg:flex flex-col gap-12 border-l border-[#4B6B2B]/20 pl-8 ml-2 mt-8 max-w-[320px]">
+              {/* Item 01 */}
+              <div className="relative">
+                <div className="absolute -left-[37px] top-1.5 h-2 w-2 rounded-full bg-[#4B6B2B]"></div>
+                <div className="absolute -left-[70px] top-0 text-sm font-black text-[#4B6B2B]">01</div>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-ink">{t("hero.story.precisionFit")}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-neutral-600">{t("hero.story.precisionDesc")}</p>
+              </div>
+              {/* Item 02 */}
+              <div className="relative">
+                <div className="absolute -left-[37px] top-1.5 h-2 w-2 rounded-full bg-[#4B6B2B]"></div>
+                <div className="absolute -left-[70px] top-0 text-sm font-black text-[#4B6B2B]">02</div>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-ink">{t("hero.story.bodyAware")}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-neutral-600">{t("hero.story.bodyAwareDesc")}</p>
+              </div>
+              {/* Item 03 */}
+              <div className="relative">
+                <div className="absolute -left-[37px] top-1.5 h-2 w-2 rounded-full bg-[#4B6B2B]"></div>
+                <div className="absolute -left-[70px] top-0 text-sm font-black text-[#4B6B2B]">03</div>
+                <h3 className="text-sm font-black uppercase tracking-[0.2em] text-ink">{t("hero.story.digitalAtelier")}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-neutral-600">{t("hero.story.digitalAtelierDesc")}</p>
+              </div>
             </div>
-            <p className="mt-2 text-xs sm:text-sm font-semibold leading-relaxed text-neutral-800">
-              {t("hero.story.precisionDesc")}
-            </p>
-          </div>
-        </div>
 
-        {/* 2. Top-Right Big Editorial Headline */}
-        <div
-          style={getTextTransform(0.07, 0.32, 1, -0.6, 1.5)}
-          className="absolute right-6 top-8 z-10 text-right sm:right-12 sm:top-14 lg:right-20 lg:top-16"
-        >
-          <div className="rounded-[22px] border border-white/90 bg-white/80 px-6 py-4 shadow-glass backdrop-blur-md">
-            <h2 className="font-display text-lg sm:text-2xl lg:text-3xl font-black uppercase tracking-tight text-ink">
-              {t("hero.story.proportions")}
-              <br />
-              <span className="text-[#487023] font-black">{t("hero.story.proportionsSub")}</span>
-            </h2>
-          </div>
-        </div>
+            {/* Right Sidebar */}
+            <div className="flex flex-col lg:items-start max-w-[480px] lg:mt-4">
+              <div className="hidden lg:flex items-center gap-6 mb-16">
+                <span className="text-xs font-black uppercase tracking-[0.3em] text-ink">MIROIR</span>
+                <div className="w-12 h-[1px] bg-ink/30"></div>
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-neutral-500 text-left">
+                  VIRTUAL TRY-ON<br/>
+                  FOR A BRIGHTER YOU
+                </span>
+              </div>
 
-        {/* 3. Mid-Left Body-Aware Styling */}
-        <div
-          style={getTextTransform(0.10, 0.38, -1.2, 0.2, -1)}
-          className="absolute left-6 top-[36%] z-10 hidden max-w-[260px] sm:block sm:left-10 lg:left-16"
-        >
-          <div className="rounded-[22px] border border-white/90 bg-white/80 p-4 shadow-glass backdrop-blur-md">
-            <p className="text-xs sm:text-sm font-black uppercase tracking-[0.22em] text-ink">
-              {t("hero.story.bodyAware")}
-            </p>
-            <p className="mt-1.5 text-xs sm:text-sm font-semibold leading-relaxed text-neutral-800">
-              {t("hero.story.bodyAwareDesc")}
-            </p>
-            <div className="mt-2.5 h-[2.5px] w-14 rounded-full bg-[#679137]" />
-          </div>
-        </div>
+              <h2 className="font-display text-3xl sm:text-4xl lg:text-[46px] font-black uppercase tracking-tighter text-ink leading-[1.05] mb-6 drop-shadow-sm">
+                {t("hero.story.proportions")}
+                <br />
+                <span className="text-[#4B6B2B] font-black">{t("hero.story.proportionsSub")}</span>
+              </h2>
 
-        {/* 4. Mid-Right Silhouette Badge Chip */}
-        <div
-          style={getTextTransform(0.14, 0.42, 1.2, -0.2, 2.5)}
-          className="absolute right-6 top-[34%] z-10 flex flex-col items-end sm:right-10 lg:right-16"
-        >
-          <div className="rounded-full border border-white/90 bg-white/90 px-4 py-2 shadow-glass backdrop-blur-md">
-            <span className="text-xs font-mono font-black uppercase tracking-[0.22em] text-[#3F601F]">
-              {t("hero.story.accuracy")}
-            </span>
-          </div>
-          <span className="mt-2 rounded-full border border-white/80 bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-neutral-800 shadow-sm backdrop-blur-sm">
-            {t("hero.story.silhouetteArchive")}
-          </span>
-        </div>
+              <p className="text-base sm:text-lg text-ink font-medium leading-relaxed max-w-[400px]">
+                {t("hero.story.quote")}
+              </p>
 
-        {/* 5. Bottom-Left Quotation & Manifesto */}
-        <div
-          style={getTextTransform(0.18, 0.48, -0.8, 1, 1)}
-          className="absolute bottom-10 left-6 z-10 max-w-[280px] sm:bottom-14 sm:left-12 lg:bottom-16 lg:left-20"
-        >
-          <div className="rounded-[24px] border border-white/95 bg-white/92 p-5 shadow-glass backdrop-blur-lg">
-            <p className="font-serif italic text-sm sm:text-base font-semibold leading-relaxed text-ink">
-              {t("hero.story.quote")}
-            </p>
-            <div className="mt-2.5 text-[10px] sm:text-xs font-black uppercase tracking-[0.25em] text-[#3F601F]">
-              {t("hero.story.quoteSource")}
+              <div className="w-8 h-[1px] bg-ink/30 my-8"></div>
+
+              <div className="flex items-start gap-3 w-full max-w-[320px]">
+                <svg className="w-5 h-5 mt-0.5 text-[#4B6B2B] shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-black tracking-widest text-ink uppercase">QUY NHƠN, VIỆT NAM</p>
+                  <p className="text-[10px] font-bold tracking-[0.2em] text-neutral-500 mt-1 uppercase">NƠI PHONG CÁCH GẶP GỠ CÔNG NGHỆ</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 6. Bottom-Right Digital Atelier Card */}
-        <div
-          style={getTextTransform(0.22, 0.52, 0.8, 1, -1.5)}
-          className="absolute bottom-10 right-6 z-10 max-w-[260px] text-right sm:bottom-14 sm:right-12 lg:bottom-16 lg:right-20"
-        >
-          <div className="rounded-[24px] border border-white/95 bg-white/92 p-5 text-left shadow-glass backdrop-blur-lg">
-            <div className="text-xs sm:text-sm font-black uppercase tracking-[0.22em] text-ink">
-              {t("hero.story.digitalAtelier")}
+          {/* Bottom Section */}
+          <div className="hidden lg:flex justify-between items-end w-full pb-8 pointer-events-auto relative z-10">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-4">
+                <span className="text-xs font-black uppercase tracking-[0.3em] text-ink">MIROIR</span>
+                <span className="text-xs font-bold text-ink">//</span>
+                <span className="text-xs font-black tracking-widest text-ink">2026</span>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">THỜI TRANG GẦN HƠN VỚI BẠN</span>
             </div>
-            <p className="mt-2 text-xs sm:text-sm font-semibold leading-relaxed text-neutral-800">
-              {t("hero.story.digitalAtelierDesc")}
-            </p>
+
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-[1px] bg-ink/30"></div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500">
+                FASHION × TECHNOLOGY × A BETTER YOU
+              </span>
+            </div>
           </div>
-        </div>
-
-        {/* 7. Far-Left Vertical Micro-Label */}
-        <div
-          style={getTextTransform(0.15, 0.45, -1, 0, -90)}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10 hidden md:block"
-        >
-          <span className="rounded-full border border-white/90 bg-white/90 px-3.5 py-1 text-[10px] font-mono font-black uppercase tracking-[0.3em] text-[#3F601F] shadow-sm">
-            {t("hero.story.virtualTryOnTag")}
-          </span>
-        </div>
-
-        {/* 8. Far-Right Minimalist Spec Label */}
-        <div
-          style={getTextTransform(0.19, 0.49, 1, 0, 90)}
-          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 z-10 hidden md:block"
-        >
-          <span className="rounded-full border border-white/90 bg-white/90 px-3.5 py-1 text-[10px] font-mono font-black uppercase tracking-[0.3em] text-[#3F601F] shadow-sm">
-            LAT 45.4642° N // MILANO
-          </span>
         </div>
 
         {/* ============================================================ */}
