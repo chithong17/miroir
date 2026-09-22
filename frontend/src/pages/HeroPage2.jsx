@@ -3,6 +3,8 @@ import { useLanguage } from "../i18n.jsx";
 import HeroStorySection from "../components/HeroStorySection.jsx";
 import HeroDiscoverySection from "../components/HeroDiscoverySection.jsx";
 import HeroEditorialFooter from "../components/HeroEditorialFooter.jsx";
+import HeroCargoPantsCanvas from "../components/HeroCargoPantsCanvas.jsx";
+import heroStageBackground from "../assets/hero2-stage-no-model.png";
 
 // Miroir Signature Arch Monogram (Icon Mark)
 function MiroirMonogram({ className = "w-6 h-6 text-[#1A1A1A]" }) {
@@ -58,16 +60,20 @@ export default function HeroPage2() {
       {/* sky, concrete arch, and scenery flow behind the glass header */}
       {/* ============================================================ */}
       <div className="absolute inset-0 z-0 select-none overflow-hidden">
-        <picture>
-          <source srcSet="/hero/hero2_stage_bg_4k.webp?v=2" type="image/webp" />
-          <img
-            src="/hero/hero2_stage_bg_4k.jpg?v=2"
-            alt="Miroir 3D Atelier Lake Scene with Mannequin, Outfit Preview & Floating Rail"
-            className="h-full w-full object-cover object-[center_top] lg:object-[center_center]"
-            draggable={false}
-          />
-        </picture>
+        <img
+          src={heroStageBackground}
+          alt="Miroir 3D Atelier Lake Scene, Outfit Preview & Floating Rail"
+          className="h-full w-full object-cover object-[center_top] lg:object-[center_center]"
+          draggable={false}
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = "/hero/hero2_stage_bg_4k.jpg?v=2";
+          }}
+        />
       </div>
+
+      {/* Interactive garment: follows the pointer and supports unrestricted horizontal drag rotation. */}
+      <HeroCargoPantsCanvas />
 
       {/* ============================================================ */}
       {/* 1. TOP EDITORIAL NAVIGATION (3 SEPARATE FLOATING GLASS PILLS) */}
