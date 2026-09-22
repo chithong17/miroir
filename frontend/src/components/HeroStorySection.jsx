@@ -21,30 +21,33 @@ export default function HeroStorySection() {
   }, []);
 
   useEffect(() => {
-    let animId;
+    let ticking = false;
 
     const handleScroll = () => {
       if (!sectionRef.current) return;
       const rect = sectionRef.current.getBoundingClientRect();
       const totalScrollable = rect.height - window.innerHeight;
 
-      if (totalScrollable <= 0) return;
-
-      // Scroll progress starts when section top arrives at viewport top (rect.top <= 0)
-      const currentScroll = -rect.top;
-      const rawProgress = Math.min(1, Math.max(0, currentScroll / totalScrollable));
-      setProgress(rawProgress);
+      if (totalScrollable > 0) {
+        const currentScroll = -rect.top;
+        const rawProgress = Math.min(1, Math.max(0, currentScroll / totalScrollable));
+        setProgress((prev) => (prev === rawProgress ? prev : rawProgress));
+      }
+      ticking = false;
     };
 
-    const onScrollTick = () => {
-      handleScroll();
-      animId = requestAnimationFrame(onScrollTick);
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(handleScroll);
+        ticking = true;
+      }
     };
 
-    animId = requestAnimationFrame(onScrollTick);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    handleScroll();
 
     return () => {
-      if (animId) cancelAnimationFrame(animId);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -227,14 +230,14 @@ export default function HeroStorySection() {
         {/* Expands symmetrically in all 4 directions from (50%, 50%)    */}
         {/* ============================================================ */}
         <div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex items-center justify-center pointer-events-none will-change-[width,height]"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex items-center justify-center pointer-events-none"
           style={{
             width: `${Math.round(currentWidth)}px`,
             height: `${Math.round(currentHeight)}px`,
           }}
         >
           <div
-            className={`relative h-full w-full overflow-hidden transition-all duration-300 ${easedExp > 0.88
+            className={`relative h-full w-full overflow-hidden transition-[border-radius,box-shadow,border] duration-300 ${easedExp > 0.88
               ? "rounded-none border-0 shadow-none"
               : "rounded-[28px] sm:rounded-[36px] border-2 border-white shadow-[0_25px_75px_-12px_rgba(47,56,40,0.35)]"
               }`}
@@ -246,14 +249,7 @@ export default function HeroStorySection() {
               draggable={false}
             />
 
-            {/* Subtle inner vignette that fades as the image expands */}
-            <div
-              className="pointer-events-none absolute inset-0 transition-opacity duration-300"
-              style={{
-                background: "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.25) 100%)",
-                opacity: Math.max(0, 1 - easedExp * 1.2),
-              }}
-            />
+            {/* Removed vignette to keep image perfectly crisp and bright */}
 
             {/* 9:16 Portrait badge on initial small card */}
             <div

@@ -9,8 +9,7 @@ const ROW1_ITEMS = [
     codeKey: "hero.discovery.item1.code",
     descKey: "hero.discovery.item1.desc",
     specsKey: "hero.discovery.item1.specs",
-    imageUrl:
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "/discover-1.png",
     aspect: "aspect-[4/5]",
   },
   {
@@ -20,8 +19,7 @@ const ROW1_ITEMS = [
     codeKey: "hero.discovery.item2.code",
     descKey: "hero.discovery.item2.desc",
     specsKey: "hero.discovery.item2.specs",
-    imageUrl:
-      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "/discover-2.png",
     aspect: "aspect-[4/5]",
   },
   {
@@ -31,8 +29,7 @@ const ROW1_ITEMS = [
     codeKey: "hero.discovery.item3.code",
     descKey: "hero.discovery.item3.desc",
     specsKey: "hero.discovery.item3.specs",
-    imageUrl:
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "/discover-3.jpg",
     aspect: "aspect-[4/5]",
   },
 ];
@@ -45,8 +42,7 @@ const ROW2_ITEMS = [
     codeKey: "hero.discovery.item4.code",
     descKey: "hero.discovery.item4.desc",
     specsKey: "hero.discovery.item4.specs",
-    imageUrl:
-      "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=900&q=85",
+    imageUrl: "/discover-4.png",
     aspect: "aspect-[16/10]",
   },
   {
@@ -56,8 +52,7 @@ const ROW2_ITEMS = [
     codeKey: "hero.discovery.item5.code",
     descKey: "hero.discovery.item5.desc",
     specsKey: "hero.discovery.item5.specs",
-    imageUrl:
-      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1200&q=85",
+    imageUrl: "/discover-5.jpg",
     aspect: "aspect-[16/10]",
   },
 ];
