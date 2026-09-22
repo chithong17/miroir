@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { useLanguage } from "../i18n.jsx";
+import HeroStorySection from "../components/HeroStorySection.jsx";
+import HeroDiscoverySection from "../components/HeroDiscoverySection.jsx";
+import HeroEditorialFooter from "../components/HeroEditorialFooter.jsx";
 
 // Miroir Signature Arch Monogram (Icon Mark)
 function MiroirMonogram({ className = "w-6 h-6 text-[#1A1A1A]" }) {
@@ -35,7 +38,7 @@ export default function HeroPage2() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const navLinks = [
-    { labelEn: "Home", labelVi: "Trang chủ", href: "/hero2", active: true },
+    { labelEn: "Home", labelVi: "Trang chủ", href: "/", active: true },
     { labelEn: "Features", labelVi: "Tính năng", href: "#features" },
     { labelEn: "Gallery", labelVi: "Bộ sưu tập", href: "#gallery" },
     { labelEn: "Atelier", labelVi: "Xưởng 3D", href: "/try-on" },
@@ -44,7 +47,11 @@ export default function HeroPage2() {
   ];
 
   return (
-    <div className="relative flex flex-col h-[100dvh] max-h-[100dvh] w-full bg-[#FAFBF7] text-[#161616] selection:bg-[#D7E5CF] selection:text-[#23351F] font-sans antialiased overflow-hidden">
+    <div className="relative w-full bg-[#FFFFFF] text-ink selection:bg-mintSoft selection:text-ink font-sans antialiased">
+      {/* ============================================================ */}
+      {/* SECTION 1: TOP 100dvh EDITORIAL LANDING PAGE HERO            */}
+      {/* ============================================================ */}
+      <section className="relative flex flex-col h-[100dvh] min-h-[100dvh] w-full bg-[#FAFBF7] text-[#161616] overflow-hidden">
       {/* ============================================================ */}
       {/* 0. FULLSCREEN SCENIC ARTWORK BACKDROP                        */}
       {/* Spans the entire screen (100% width and height) so that the  */}
@@ -52,9 +59,9 @@ export default function HeroPage2() {
       {/* ============================================================ */}
       <div className="absolute inset-0 z-0 select-none overflow-hidden">
         <picture>
-          <source srcSet="/hero/hero2_stage_bg_4k.webp" type="image/webp" />
+          <source srcSet="/hero/hero2_stage_bg_4k.webp?v=2" type="image/webp" />
           <img
-            src="/hero/hero2_stage_bg_4k.jpg"
+            src="/hero/hero2_stage_bg_4k.jpg?v=2"
             alt="Miroir 3D Atelier Lake Scene with Mannequin, Outfit Preview & Floating Rail"
             className="h-full w-full object-cover object-[center_top] lg:object-[center_center]"
             draggable={false}
@@ -94,7 +101,7 @@ export default function HeroPage2() {
             >
               {isVi ? item.labelVi : item.labelEn}
               {item.active && (
-                <span className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-[#6B8E5F]" />
+                <span className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-[#B3D07E]" />
               )}
             </a>
           ))}
@@ -120,17 +127,18 @@ export default function HeroPage2() {
             onClick={() => setLanguage(language === "vi" ? "en" : "vi")}
             className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/30 hover:bg-white/50 backdrop-blur-sm px-2.5 py-1 font-display text-[11px] font-bold uppercase tracking-[0.12em] text-[#2C382A] shadow-xs transition-colors"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-[#6B8E5F]" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#B3D07E]" />
             {language === "vi" ? "VI" : "EN"}
           </button>
 
           {/* Get Started Button */}
           <a
             href="/login"
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#6B8E5F]/85 hover:bg-[#58794C] backdrop-blur-sm text-white px-4 py-1.5 text-xs sm:text-[12.5px] font-bold tracking-wide border border-white/30 shadow-[0_4px_14px_rgba(107,142,95,0.3)] transition-all hover:scale-[1.03]"
+            style={{ color: "#FFFFFF" }}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] backdrop-blur-sm !text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.22)] px-4 py-1.5 text-xs sm:text-[12.5px] font-bold tracking-wide border border-white/40 shadow-[0_4px_14px_rgba(179,208,126,0.35)] transition-all hover:scale-[1.03]"
           >
-            <span>{isVi ? "Bắt đầu" : "Get Started"}</span>
-            <span className="text-sm leading-none">→</span>
+            <span className="!text-white">{isVi ? "Bắt đầu" : "Get Started"}</span>
+            <span className="text-sm leading-none !text-white">→</span>
           </a>
         </div>
       </header>
@@ -163,7 +171,7 @@ export default function HeroPage2() {
             {/* Massive Heading */}
             <h1 className="font-display text-4xl sm:text-5xl lg:text-[54px] xl:text-[62px] font-black uppercase tracking-[-0.03em] leading-[0.98]">
               <span className="block text-[#161616]">DISCOVER</span>
-              <span className="block text-[#688A58]">MIROIR.</span>
+              <span className="block text-[#B3D07E]">MIROIR.</span>
             </h1>
 
             {/* Subtitle */}
@@ -186,17 +194,18 @@ export default function HeroPage2() {
             {/* Action Bar (Pill CTA + Watch Demo Button) */}
             <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 pt-1">
               <a
-                href="/try-on"
-                className="inline-flex items-center gap-2 rounded-full bg-[#688A58] hover:bg-[#567547] text-white px-6 py-3 sm:px-7 sm:py-3.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_10px_25px_rgba(104,138,88,0.38)] hover:shadow-[0_14px_32px_rgba(104,138,88,0.48)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.99]"
+                href="/login"
+                style={{ color: "#FFFFFF" }}
+                className="group inline-flex items-center gap-2 rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] !text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.22)] px-6 py-3 sm:px-7 sm:py-3.5 text-xs sm:text-sm font-extrabold tracking-wide shadow-[0_10px_25px_rgba(179,208,126,0.45)] hover:shadow-[0_14px_32px_rgba(179,208,126,0.6)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.99]"
               >
-                <span>{isVi ? "Bắt đầu thử đồ" : "Start Styling"}</span>
-                <span className="text-base transition-transform duration-300 group-hover:translate-x-1">→</span>
+                <span className="!text-white font-extrabold">{isVi ? "Bắt đầu ngay" : "Start Now"}</span>
+                <span className="text-base !text-white transition-transform duration-300 group-hover:translate-x-1 font-bold">→</span>
               </a>
 
               <button
                 type="button"
                 onClick={() => setShowDemoModal(true)}
-                className="group inline-flex items-center gap-3 text-xs sm:text-sm font-bold text-[#1C2A1B] hover:text-[#567547] transition-colors py-2 px-1"
+                className="group inline-flex items-center gap-3 text-xs sm:text-sm font-bold text-[#1C2A1B] hover:text-[#527433] transition-colors py-2 px-1"
               >
                 <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-[#DCE4D6] shadow-[0_3px_12px_rgba(0,0,0,0.06)] group-hover:scale-105 group-hover:shadow-[0_6px_18px_rgba(0,0,0,0.1)] transition-all duration-300">
                   <svg className="w-3.5 h-3.5 text-[#2C3E28] translate-x-0.5 fill-current" viewBox="0 0 24 24">
@@ -256,6 +265,22 @@ export default function HeroPage2() {
           />
         </div>
       </main>
+      </section>
+
+      {/* ============================================================ */}
+      {/* SECTION 2: CINEMATIC SCROLL-DRIVEN STORYTELLING SECTION     */}
+      {/* ============================================================ */}
+      <HeroStorySection />
+
+      {/* ============================================================ */}
+      {/* SECTION 3: MIROIR DISCOVERY (EDITORIAL FASHION ARCHIVE)      */}
+      {/* ============================================================ */}
+      <HeroDiscoverySection />
+
+      {/* ============================================================ */}
+      {/* SECTION 4: LUXURY EDITORIAL FOOTER                           */}
+      {/* ============================================================ */}
+      <HeroEditorialFooter />
 
       {/* ============================================================ */}
       {/* 3. INTERACTIVE "WATCH DEMO" VIDEO MODAL                      */}
@@ -290,14 +315,17 @@ export default function HeroPage2() {
             {/* Video / Interactive Stage Preview */}
             <div className="relative mt-4 aspect-video w-full rounded-2xl overflow-hidden bg-neutral-900 shadow-inner">
               <img
-                src="/hero/hero2_stage_bg_2x.jpg"
+                src="/hero/hero2_stage_bg_4k.webp?v=2"
                 alt="Demo Preview"
                 className="w-full h-full object-cover opacity-85"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 text-white">
-                <div className="inline-flex items-center gap-2 rounded-full bg-[#688A58]/90 backdrop-blur-md px-3 py-1 text-xs font-bold uppercase tracking-wider mb-2 w-max">
+                <div
+                  style={{ color: "#FFFFFF" }}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#B3D07E] !text-white px-3 py-1 text-xs font-bold uppercase tracking-wider mb-2 w-max shadow-sm"
+                >
                   <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                  3D AI Fitting Engine v2.4
+                  <span className="!text-white">3D AI Fitting Engine v2.4</span>
                 </div>
                 <h4 className="text-xl font-bold">
                   {isVi ? "Thử đồ số hóa chỉ trong 3 bước đơn giản" : "Digital Virtual Try-On in 3 Simple Steps"}
@@ -318,7 +346,7 @@ export default function HeroPage2() {
                 { step: "03", titleEn: "Real-time Drape", titleVi: "Xem độ rũ vải", descEn: "Walk, turn, inspect every angle", descVi: "Xoay 360 độ kiểm tra từng góc nhìn" },
               ].map((item) => (
                 <div key={item.step} className="rounded-xl bg-[#FBF9F5] p-3 border border-black/[0.04]">
-                  <span className="font-display text-xs font-black text-[#688A58]">{item.step}</span>
+                  <span className="font-display text-xs font-black text-[#8EA863]">{item.step}</span>
                   <p className="font-display text-xs font-bold text-[#1C2A1B] mt-0.5">{isVi ? item.titleVi : item.titleEn}</p>
                   <p className="text-[11px] text-[#697A63] mt-0.5">{isVi ? item.descVi : item.descEn}</p>
                 </div>
@@ -335,10 +363,11 @@ export default function HeroPage2() {
                 {isVi ? "Đóng" : "Close"}
               </button>
               <a
-                href="/try-on"
-                className="rounded-full bg-[#688A58] hover:bg-[#567547] text-white px-5 py-2.5 text-xs font-bold tracking-wide shadow-md transition-all hover:scale-[1.02]"
+                href="/login"
+                style={{ color: "#FFFFFF" }}
+                className="rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] !text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.22)] px-5 py-2.5 text-xs font-bold tracking-wide shadow-md transition-all hover:scale-[1.02]"
               >
-                {isVi ? "Mở Phòng Thử Đồ Ngay →" : "Launch 3D Studio Now →"}
+                <span className="!text-white">{isVi ? "Bắt đầu ngay →" : "Get Started Now →"}</span>
               </a>
             </div>
           </div>
@@ -352,7 +381,7 @@ export default function HeroPage2() {
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-[560px] rounded-[26px] bg-white p-5 shadow-2xl border border-white/90">
             <div className="flex items-center gap-3 border-b border-black/[0.08] pb-3">
-              <svg className="w-5 h-5 text-[#688A58]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-[#8EA863]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input

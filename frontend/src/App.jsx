@@ -23,11 +23,26 @@ function App() {
   const rawPathname = window.location.pathname;
   const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
 
-  if (pathname === "/hero2") {
+  if (pathname === "/" || pathname === "/hero2") {
+    if (getAdminToken()) {
+      window.location.replace("/admin/dashboard");
+      return null;
+    }
+
+    if (getShopToken()) {
+      window.location.replace("/shop/dashboard");
+      return null;
+    }
+
+    if (getUserToken()) {
+      window.location.replace("/app");
+      return null;
+    }
+
     return <HeroPage2 />;
   }
 
-  if (pathname === "/" || pathname === "/hero") {
+  if (pathname === "/hero") {
     if (getAdminToken()) {
       window.location.replace("/admin/dashboard");
       return null;

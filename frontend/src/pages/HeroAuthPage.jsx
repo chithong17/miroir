@@ -226,7 +226,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   onClick={() => setForm((prev) => ({ ...prev, role: "user" }))}
                   className={`flex-1 rounded-full py-1.5 font-display text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
                     form.role === "user"
-                      ? "bg-[#B3D07E] text-[#162912] shadow-xs"
+                      ? "bg-[#B3D07E] !text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)] shadow-xs"
                       : "text-[#5A6D58] hover:text-[#1C2A1B]"
                   }`}
                 >
@@ -237,7 +237,7 @@ export default function HeroAuthPage({ mode = "login" }) {
                   onClick={() => setForm((prev) => ({ ...prev, role: "shop" }))}
                   className={`flex-1 rounded-full py-1.5 font-display text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
                     form.role === "shop"
-                      ? "bg-[#B3D07E] text-[#162912] shadow-xs"
+                      ? "bg-[#B3D07E] !text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)] shadow-xs"
                       : "text-[#5A6D58] hover:text-[#1C2A1B]"
                   }`}
                 >
