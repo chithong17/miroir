@@ -6,6 +6,7 @@ import {
 } from "../services/groundingValidation.service.js";
 import { retrieveStylistContext } from "../services/retrieval.service.js";
 import { trackShopEvents } from "../services/shopAnalytics.service.js";
+import { buildCoherentFallbackOutfits } from "../services/outfitFallback.service.js";
 
 const validateRecommendationRequest = (body) => {
   if (!body || typeof body !== "object") {
@@ -87,33 +88,12 @@ const buildGenerationPayload = ({ body, memory, context }) => ({
 
 const buildFallbackRecommendation = ({ body, context }) => {
   const desiredOutfitCount = normalizeDesiredOutfitCount(body.desiredOutfitCount);
-  const products = context.products.slice(0, Math.max(desiredOutfitCount * 3, desiredOutfitCount));
   const prompt = body.prompt.trim();
-
-  const outfits = Array.from({ length: desiredOutfitCount }, (_, index) => {
-    const primary = products[index] || products[0];
-    const extras = products
-      .filter((product) => product.id !== primary?.id)
-      .slice(index, index + 2);
-    const items = [primary, ...extras]
-      .filter(Boolean)
-      .map((product) => ({
-        productId: product.id,
-        reason: `Phù hợp với yêu cầu “${prompt}” và đang có sẵn trong catalog: ${product.name}.`,
-      }));
-
-    return {
-      id: `fallback-outfit-${index + 1}`,
-      title:
-        index === 0 ? "Gợi ý phù hợp nhất" : `Gợi ý phối đồ ${index + 1}`,
-      score: Math.max(70, Math.round((primary?.rerankScore || 0.7) * 100)),
-      items,
-      whyItMatches:
-        `MIROIR chọn các sản phẩm phù hợp nhất với yêu cầu “${prompt}” từ catalog hiện có.`,
-      fitWarnings: [],
-      fashionTips: ["Hãy kiểm tra size và tồn kho trước khi thử đồ hoặc đặt mua."],
-    };
-  }).filter((outfit) => outfit.items.length);
+  const outfits = buildCoherentFallbackOutfits({
+    products: context.products,
+    prompt,
+    desiredOutfitCount,
+  });
 
   return {
     analysis: {
@@ -286,6 +266,7 @@ export const recommendOutfit = async (req, res, next) => {
       success: true,
       ...enrichedRecommendation,
       retrieval: {
+        mode: context.retrievalMode || "vector",
         productCount: context.products.length,
         outfitCount: context.outfits.length,
         fashionRuleCount: context.fashionRules.length,

@@ -147,11 +147,20 @@ export const runAiUpdateJob = async (jobId, shopId, productsToUpdate) => {
       );
     } catch (error) {
       failedCount += 1;
+      const rateLimited = error.code === "GEMINI_RATE_LIMITED";
       errors.push({
         productId: product.id,
         name: product.name,
-        message: error.message || "Failed to generate embedding",
+        message: rateLimited
+          ? "Gemini đang giới hạn lưu lượng. Các sản phẩm chưa xử lý vẫn được giữ ở trạng thái cần cập nhật AI; vui lòng thử lại sau."
+          : error.message || "Failed to generate embedding",
       });
+
+      if (rateLimited) {
+        // Avoid repeating the full retry window for every remaining product.
+        // They stay stale and can be picked up safely by a later update job.
+        failedCount += totalCount - processedCount - failedCount;
+      }
 
       await db.collection("ai_update_jobs").updateOne(
         { id: jobId },
@@ -163,6 +172,8 @@ export const runAiUpdateJob = async (jobId, shopId, productsToUpdate) => {
           },
         }
       );
+
+      if (rateLimited) break;
     }
   }
 

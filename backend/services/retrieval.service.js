@@ -66,6 +66,69 @@ const buildProductFilter = (request) => {
   return filter;
 };
 
+const normalizeSearchText = (value) =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const lexicalScore = (product, queryText) => {
+  const tokens = [...new Set(
+    normalizeSearchText(queryText)
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token.length > 1)
+  )];
+  if (!tokens.length) return 0.1;
+  const haystack = normalizeSearchText([
+    product.name,
+    product.category,
+    product.description,
+    product.material,
+    ...(product.colors || []),
+    ...(product.styleTags || []),
+    ...(product.occasionTags || product.occasions || []),
+  ].filter(Boolean).join(" "));
+  const matches = tokens.filter((token) => haystack.includes(token)).length;
+  return Math.min(0.75, 0.1 + (matches / tokens.length) * 0.65);
+};
+
+const catalogFallbackSearch = async ({ request, queryText, productFilter }) => {
+  const db = await getMongoDb();
+  const fallbackProductFilter = {
+    $and: [
+      ...(productFilter.$and || []),
+      { status: "published" },
+      { variants: { $elemMatch: { active: true, stockQuantity: { $gt: 0 } } } },
+    ],
+  };
+  const [products, outfits, fashionRules] = await Promise.all([
+    db.collection("products")
+      .find(fallbackProductFilter)
+      .project({ embedding: 0 })
+      .sort({ updatedAt: -1 })
+      .limit(120)
+      .toArray(),
+    db.collection("outfits")
+      .find(request.gender ? { gender: { $in: [request.gender, "unisex"] } } : {})
+      .project({ embedding: 0 })
+      .limit(5)
+      .toArray(),
+    db.collection("fashion_rules")
+      .find({})
+      .project({ embedding: 0 })
+      .limit(10)
+      .toArray(),
+  ]);
+  return {
+    rawProducts: products.map((product) => ({
+      ...product,
+      vectorScore: lexicalScore(product, queryText),
+    })),
+    outfits,
+    fashionRules,
+  };
+};
+
 const vectorSearch = async ({
   collectionName,
   indexName,
@@ -126,36 +189,54 @@ const scoreProduct = ({ product, request, memory, reviewSummary }) => {
 
 export const retrieveStylistContext = async ({ request, memory }) => {
   const queryText = buildStylistQueryText({ request, memory });
-  const queryVector = await generateEmbedding(queryText);
   const productFilter = buildProductFilter(request);
+  let rawProducts;
+  let outfits;
+  let fashionRules;
+  let retrievalMode = "vector";
 
-  const [rawProducts, outfits, fashionRules] = await Promise.all([
-    vectorSearch({
-      collectionName: "products",
-      indexName: process.env.MONGODB_PRODUCT_VECTOR_INDEX || "products_embedding_index",
-      queryVector,
-      filter: productFilter,
-      limit: 40,
-      numCandidates: 200,
-    }),
-    vectorSearch({
-      collectionName: "outfits",
-      indexName: process.env.MONGODB_OUTFIT_VECTOR_INDEX || "outfits_embedding_index",
-      queryVector,
-      filter: request.gender ? { gender: { $in: [request.gender, "unisex"] } } : undefined,
-      limit: 5,
-      numCandidates: 50,
-    }),
-    vectorSearch({
-      collectionName: "fashion_rules",
-      indexName:
-        process.env.MONGODB_FASHION_RULE_VECTOR_INDEX ||
-        "fashion_rules_embedding_index",
-      queryVector,
-      limit: 10,
-      numCandidates: 50,
-    }),
-  ]);
+  try {
+    const queryVector = await generateEmbedding(queryText);
+    [rawProducts, outfits, fashionRules] = await Promise.all([
+      vectorSearch({
+        collectionName: "products",
+        indexName: process.env.MONGODB_PRODUCT_VECTOR_INDEX || "products_embedding_index",
+        queryVector,
+        filter: productFilter,
+        limit: 40,
+        numCandidates: 200,
+      }),
+      vectorSearch({
+        collectionName: "outfits",
+        indexName: process.env.MONGODB_OUTFIT_VECTOR_INDEX || "outfits_embedding_index",
+        queryVector,
+        filter: request.gender ? { gender: { $in: [request.gender, "unisex"] } } : undefined,
+        limit: 5,
+        numCandidates: 50,
+      }),
+      vectorSearch({
+        collectionName: "fashion_rules",
+        indexName:
+          process.env.MONGODB_FASHION_RULE_VECTOR_INDEX ||
+          "fashion_rules_embedding_index",
+        queryVector,
+        limit: 10,
+        numCandidates: 50,
+      }),
+    ]);
+  } catch (error) {
+    if (!error.retryable && error.code !== "GEMINI_RATE_LIMITED") throw error;
+    retrievalMode = "catalog_fallback";
+    console.warn("Gemini embedding is temporarily unavailable; using catalog fallback.", {
+      code: error.code,
+      statusCode: error.statusCode,
+    });
+    ({ rawProducts, outfits, fashionRules } = await catalogFallbackSearch({
+      request,
+      queryText,
+      productFilter,
+    }));
+  }
 
   const activeShops = await getActiveShopsByIds([
     ...new Set(rawProducts.map((product) => product.shopId).filter(Boolean)),
@@ -197,6 +278,7 @@ export const retrieveStylistContext = async ({ request, memory }) => {
       fashionRules,
       reviewSummaries: [],
       queryText,
+      retrievalMode,
     };
   }
 
@@ -232,5 +314,6 @@ export const retrieveStylistContext = async ({ request, memory }) => {
       selectedProductIds.has(summary.productId)
     ),
     queryText,
+    retrievalMode,
   };
 };

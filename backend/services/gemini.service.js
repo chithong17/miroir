@@ -1,8 +1,99 @@
 import axios from "axios";
 
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
-const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 90000);
-const GEMINI_RETRY_COUNT = Number(process.env.GEMINI_RETRY_COUNT || 1);
+
+const envNumber = (name, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) => {
+  const value = Number(process.env[name]);
+  return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
+};
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+let embeddingRequestChain = Promise.resolve();
+let lastEmbeddingRequestAt = 0;
+
+const scheduleEmbeddingRequest = (request) => {
+  const run = async () => {
+    const minimumInterval = envNumber("GEMINI_EMBEDDING_MIN_INTERVAL_MS", 750, {
+      min: 0,
+      max: 10000,
+    });
+    const remaining = minimumInterval - (Date.now() - lastEmbeddingRequestAt);
+    if (remaining > 0) await wait(remaining);
+    lastEmbeddingRequestAt = Date.now();
+    return request();
+  };
+  const scheduled = embeddingRequestChain.then(run, run);
+  embeddingRequestChain = scheduled.catch(() => undefined);
+  return scheduled;
+};
+
+const parseRetryDuration = (value) => {
+  const raw = String(value || "").trim();
+  const seconds = raw.match(/^(\d+(?:\.\d+)?)s$/i);
+  if (seconds) return Math.ceil(Number(seconds[1]) * 1000);
+  return null;
+};
+
+const getServerRetryDelayMs = (error) => {
+  const retryAfter = error?.response?.headers?.["retry-after"];
+  if (retryAfter !== undefined) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds >= 0) return Math.ceil(seconds * 1000);
+    const date = Date.parse(String(retryAfter));
+    if (Number.isFinite(date)) return Math.max(0, date - Date.now());
+  }
+
+  const details = error?.response?.data?.error?.details;
+  const retryInfo = Array.isArray(details)
+    ? details.find((item) => String(item?.["@type"] || "").endsWith("google.rpc.RetryInfo"))
+    : null;
+  return parseRetryDuration(retryInfo?.retryDelay);
+};
+
+export const isTransientGeminiError = (error) => {
+  if (!axios.isAxiosError(error)) return Boolean(error?.retryable);
+  const status = error.response?.status;
+  return !status || [408, 429, 500, 502, 503, 504].includes(status);
+};
+
+export const getGeminiRetryDelayMs = (
+  error,
+  attempt,
+  {
+    baseDelayMs = envNumber("GEMINI_RETRY_BASE_DELAY_MS", 1000, { min: 100, max: 60000 }),
+    maxDelayMs = envNumber("GEMINI_RETRY_MAX_DELAY_MS", 30000, { min: 1000, max: 120000 }),
+    random = Math.random,
+  } = {}
+) => {
+  const exponential = baseDelayMs * (2 ** Math.max(0, attempt));
+  const jitter = Math.floor(exponential * 0.25 * random());
+  const serverDelay = getServerRetryDelayMs(error) || 0;
+  return Math.min(maxDelayMs, Math.max(serverDelay, exponential + jitter));
+};
+
+const toGeminiServiceError = (error, action, model) => {
+  const wrapped = new Error(getGeminiErrorMessage(error, action, model), { cause: error });
+  const status = Number(error?.response?.status || error?.statusCode);
+  wrapped.statusCode = status === 429 ? 503 : status || 502;
+  wrapped.code = status === 429 ? "GEMINI_RATE_LIMITED" : "GEMINI_REQUEST_FAILED";
+  wrapped.retryable = isTransientGeminiError(error);
+  wrapped.retryAfterMs = getServerRetryDelayMs(error) || undefined;
+  return wrapped;
+};
+
+const requestWithRetry = async ({ action, model, retryCount, request }) => {
+  let lastError;
+  for (let attempt = 0; attempt <= retryCount; attempt += 1) {
+    try {
+      return await request();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientGeminiError(error) || attempt >= retryCount) break;
+      await wait(getGeminiRetryDelayMs(error, attempt));
+    }
+  }
+  throw toGeminiServiceError(lastError, action, model);
+};
 
 const getGeminiErrorMessage = (error, action, model) => {
   if (!axios.isAxiosError(error)) {
@@ -37,10 +128,11 @@ export const generateEmbedding = async (text) => {
   const model = process.env.GEMINI_EMBEDDING_MODEL || "gemini-embedding-2";
   const url = `${GEMINI_BASE_URL}/models/${model}:embedContent?key=${apiKey}`;
 
-  let response;
-
-  try {
-    response = await axios.post(
+  const response = await requestWithRetry({
+    action: "embedding",
+    model,
+    retryCount: envNumber("GEMINI_EMBEDDING_RETRY_COUNT", 4, { min: 0, max: 8 }),
+    request: () => scheduleEmbeddingRequest(() => axios.post(
       url,
       {
         model: `models/${model}`,
@@ -48,11 +140,14 @@ export const generateEmbedding = async (text) => {
           parts: [{ text }],
         },
       },
-      { timeout: 30000 }
-    );
-  } catch (error) {
-    throw new Error(getGeminiErrorMessage(error, "embedding", model));
-  }
+      {
+        timeout: envNumber("GEMINI_EMBEDDING_TIMEOUT_MS", 30000, {
+          min: 1000,
+          max: 120000,
+        }),
+      }
+    )),
+  });
 
   const values = response.data?.embedding?.values;
 
@@ -70,23 +165,6 @@ const parseGeminiJson = (text) => {
   const jsonMatch = unfenced.match(/\{[\s\S]*\}/);
   const jsonText = jsonMatch ? jsonMatch[0] : unfenced;
   return JSON.parse(jsonText);
-};
-
-const isTransientGeminiError = (error) => {
-  if (!axios.isAxiosError(error)) {
-    return false;
-  }
-
-  const status = error.response?.status;
-  return (
-    !status ||
-    status === 408 ||
-    status === 429 ||
-    status === 500 ||
-    status === 502 ||
-    status === 503 ||
-    status === 504
-  );
 };
 
 const shouldOmitSamplingConfig = (model) => /^gemini-3/i.test(model);
@@ -183,7 +261,12 @@ const postGeminiGeneration = async ({ url, systemPrompt, payload, model }) =>
         },
       ],
     },
-    { timeout: GEMINI_TIMEOUT_MS }
+    {
+      timeout: envNumber("GEMINI_TIMEOUT_MS", 90000, {
+        min: 1000,
+        max: 180000,
+      }),
+    }
   );
 
 export const generateStylistRecommendation = async (payload) => {
@@ -200,6 +283,8 @@ Use outfit templates and fashion rules only as guidance.
 Use the user's prompt as the primary styling brief.
 Use body measurements, body shape, skin tone, style preferences, budget, occasion, customer feedback, user memory, and fit review summaries only when they are provided.
 Return up to desiredOutfitCount distinct complete outfits. Prefer variety across silhouettes, colors, and categories while staying faithful to the prompt.
+Every outfit must be structurally wearable: use either one dress/one-piece, or one top plus one bottom. An outerwear item, shoes, or accessories may be added, but outerwear alone is not a complete outfit.
+Do not put two tops or two bottoms in the same outfit. Do not repeat an identical product combination across outfits. If the catalog cannot support desiredOutfitCount complete distinct outfits, return fewer outfits instead of duplicates or incomplete combinations.
 Return JSON only using this schema:
 {
   "analysis": {
@@ -239,27 +324,17 @@ Return JSON only using this schema:
 }
 Set recommended_outfit to the first item in outfits for backward compatibility.`;
 
-  let response;
-
-  for (let attempt = 0; attempt <= GEMINI_RETRY_COUNT; attempt += 1) {
-    try {
-      response = await postGeminiGeneration({
+  const response = await requestWithRetry({
+    action: "generation",
+    model,
+    retryCount: envNumber("GEMINI_RETRY_COUNT", 1, { min: 0, max: 5 }),
+    request: () => postGeminiGeneration({
         url,
         systemPrompt,
         payload,
         model,
-      });
-      break;
-    } catch (error) {
-      if (attempt >= GEMINI_RETRY_COUNT || !isTransientGeminiError(error)) {
-        throw new Error(getGeminiErrorMessage(error, "generation", model));
-      }
-    }
-  }
-
-  if (!response) {
-    throw new Error(`Gemini generation failed for model "${model}": no response`);
-  }
+      }),
+  });
 
   try {
     const text =
