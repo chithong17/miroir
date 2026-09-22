@@ -85,7 +85,24 @@
 
   /* Inputs */
   .miroir-field {
-    @apply w-full rounded-[18px] border border-white/70 bg-white/85 px-4 py-3 text-sm text-ink outline-none transition-all duration-300 sm:rounded-[22px] sm:py-3.5;
+    @apply w-full rounded-[18px] px-4 py-3 text-sm text-ink outline-none transition-all duration-300 sm:rounded-[22px] sm:py-3.5;
+    /* Apple Liquid Glass Effect */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(247, 249, 245, 0.4) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 
+      0 4px 24px -6px rgba(0, 0, 0, 0.04),
+      inset 0 1px 1px rgba(255, 255, 255, 1),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.02);
+  }
+
+  .miroir-field:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(247, 249, 245, 0.6) 100%);
+    box-shadow: 
+      0 8px 32px -6px rgba(79, 115, 60, 0.08),
+      inset 0 1px 1px rgba(255, 255, 255, 1),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.02);
   }
 
   .miroir-field::placeholder {
@@ -93,8 +110,57 @@
   }
 
   .miroir-field:focus {
-    @apply border-mintDeep bg-white;
-    box-shadow: 0 0 0 4px rgba(148, 177, 111, 0.2);
+    @apply border-[#4F733C];
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(247, 249, 245, 0.8) 100%);
+    box-shadow: 
+      0 0 0 4px rgba(79, 115, 60, 0.15),
+      0 8px 32px -6px rgba(79, 115, 60, 0.1),
+      inset 0 1px 1px rgba(255, 255, 255, 1),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.02);
+  }
+
+  /* Checkout needs a stronger field edge on the very light editorial canvas. */
+  .checkout-recipient-card .miroir-field {
+    min-height: 56px;
+    background: #ffffff;
+    border: 1.5px solid #c9d7c4;
+    color: #253025;
+    box-shadow:
+      0 8px 20px -14px rgba(46, 74, 38, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  }
+
+  .checkout-recipient-card .miroir-field:hover {
+    background: #ffffff;
+    border-color: #8eac84;
+    box-shadow: 0 10px 22px -14px rgba(46, 74, 38, 0.3);
+  }
+
+  .checkout-recipient-card .miroir-field:focus {
+    background: #ffffff;
+    border-color: #4f733c;
+    box-shadow: 0 0 0 4px rgba(79, 115, 60, 0.14);
+  }
+
+  .checkout-recipient-card label > span {
+    color: #52604f;
+  }
+
+  .checkout-recipient-card .miroir-field::placeholder {
+    color: #899487;
+  }
+
+  .order-detail .miroir-card {
+    border: 1px solid rgba(224, 234, 218, 0.9);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 14px 36px -24px rgba(45, 70, 35, 0.25);
+    backdrop-filter: blur(12px);
+  }
+
+  .order-detail > aside > .miroir-card:last-child {
+    border-color: #d8e6d1;
+    box-shadow: 0 20px 44px -26px rgba(45, 80, 35, 0.3);
   }
 
   /* Tables */
