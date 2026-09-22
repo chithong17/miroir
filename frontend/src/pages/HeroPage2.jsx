@@ -44,48 +44,69 @@ export default function HeroPage2() {
   ];
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-[#FAFBF7] text-[#161616] selection:bg-[#D7E5CF] selection:text-[#23351F] font-sans antialiased overflow-x-hidden">
+    <div className="relative flex flex-col h-[100dvh] max-h-[100dvh] w-full bg-[#FAFBF7] text-[#161616] selection:bg-[#D7E5CF] selection:text-[#23351F] font-sans antialiased overflow-hidden">
       {/* ============================================================ */}
-      {/* 1. TOP EDITORIAL NAVIGATION HEADER                           */}
+      {/* 0. FULLSCREEN SCENIC ARTWORK BACKDROP                        */}
+      {/* Spans the entire screen (100% width and height) so that the  */}
+      {/* sky, concrete arch, and scenery flow behind the glass header */}
       {/* ============================================================ */}
-      <header className="relative z-30 flex h-[72px] w-full items-center justify-between px-6 sm:px-10 lg:px-16 shrink-0 bg-transparent">
-        {/* Brand Logo & Monogram */}
-        <a href="/hero2" className="flex items-center gap-3 group">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-black/[0.06] transition-transform duration-300 group-hover:scale-105">
-            <MiroirMonogram className="w-6 h-6 text-[#1A1A1A]" />
+      <div className="absolute inset-0 z-0 select-none overflow-hidden">
+        <picture>
+          <source srcSet="/hero/hero2_stage_bg_4k.webp" type="image/webp" />
+          <img
+            src="/hero/hero2_stage_bg_4k.jpg"
+            alt="Miroir 3D Atelier Lake Scene with Mannequin, Outfit Preview & Floating Rail"
+            className="h-full w-full object-cover object-[center_top] lg:object-[center_center]"
+            draggable={false}
+          />
+        </picture>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 1. TOP EDITORIAL NAVIGATION (3 SEPARATE FLOATING GLASS PILLS) */}
+      {/* ============================================================ */}
+      <header className="relative z-30 flex h-[76px] w-full items-center justify-between px-6 sm:px-10 lg:px-16 shrink-0 bg-transparent pt-3 pb-2 transition-all duration-300">
+        
+        {/* CỤM 1: FLOATING GLASS LOGO PILL (ULTRA TRANSPARENT) */}
+        <a
+          href="/hero2"
+          className="flex items-center gap-2.5 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/45 px-3.5 py-1.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] transition-all duration-300 group hover:scale-[1.02]"
+        >
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-white/40 backdrop-blur-sm shadow-xs border border-white/50 transition-transform duration-300 group-hover:scale-105">
+            <MiroirMonogram className="w-4.5 h-4.5 text-[#1A1A1A]" />
           </div>
-          <span className="font-display text-lg sm:text-xl font-black uppercase tracking-[0.24em] text-[#161616]">
+          <span className="font-display text-base sm:text-[17px] font-black uppercase tracking-[0.24em] text-[#161616] pr-1.5">
             MIROIR
           </span>
         </a>
 
-        {/* Center Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 lg:gap-10">
+        {/* CỤM 2: FLOATING GLASS NAVIGATION TABS PILL (ULTRA TRANSPARENT) */}
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8 rounded-full bg-white/20 backdrop-blur-md border border-white/45 px-6 py-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)]">
           {navLinks.map((item) => (
             <a
               key={item.labelEn}
               href={item.href}
-              className={`relative py-1 text-[13px] lg:text-[14px] font-medium tracking-wide transition-colors ${
+              className={`relative py-0.5 text-[13px] lg:text-[13.5px] font-medium tracking-wide transition-colors ${
                 item.active
-                  ? "font-semibold text-[#1A1A1A]"
-                  : "text-[#5C6659] hover:text-[#1A1A1A]"
+                  ? "font-bold text-[#111111]"
+                  : "text-[#3D4B3B] hover:text-[#111111]"
               }`}
             >
               {isVi ? item.labelVi : item.labelEn}
               {item.active && (
-                <span className="absolute bottom-[-3px] left-1/2 -translate-x-1/2 w-6 h-[2.5px] rounded-full bg-[#6B8E5F]" />
+                <span className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-[#6B8E5F]" />
               )}
             </a>
           ))}
         </nav>
 
-        {/* Right Navigation Actions */}
-        <div className="flex items-center gap-3">
+        {/* CỤM 3: FLOATING GLASS ACTIONS PILL (ULTRA TRANSPARENT) */}
+        <div className="flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-md border border-white/45 p-1.5 pl-2.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)]">
           {/* Quick Search Button */}
           <button
             type="button"
             onClick={() => setShowSearchModal(true)}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-white/80 hover:bg-white border border-black/[0.06] shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-[#3E4D3B] hover:text-[#1A1A1A] transition-all duration-200"
+            className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/30 text-[#2D3A2B] hover:text-[#111111] transition-colors"
             title={isVi ? "Tìm kiếm" : "Search"}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -97,7 +118,7 @@ export default function HeroPage2() {
           <button
             type="button"
             onClick={() => setLanguage(language === "vi" ? "en" : "vi")}
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.06] bg-white/80 px-3 py-1.5 font-display text-[11px] font-bold uppercase tracking-[0.14em] text-[#334230] shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:border-[#6B8E5F] hover:bg-white transition-all duration-200"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/30 hover:bg-white/50 backdrop-blur-sm px-2.5 py-1 font-display text-[11px] font-bold uppercase tracking-[0.12em] text-[#2C382A] shadow-xs transition-colors"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-[#6B8E5F]" />
             {language === "vi" ? "VI" : "EN"}
@@ -106,7 +127,7 @@ export default function HeroPage2() {
           {/* Get Started Button */}
           <a
             href="/login"
-            className="inline-flex items-center gap-2 rounded-full bg-[#E5F0DF] hover:bg-[#D7E6CF] text-[#2C4423] px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-[13px] font-bold tracking-wide border border-[#C5DCBA] shadow-[0_2px_10px_rgba(107,142,95,0.12)] transition-all duration-300 hover:scale-[1.03]"
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#6B8E5F]/85 hover:bg-[#58794C] backdrop-blur-sm text-white px-4 py-1.5 text-xs sm:text-[12.5px] font-bold tracking-wide border border-white/30 shadow-[0_4px_14px_rgba(107,142,95,0.3)] transition-all hover:scale-[1.03]"
           >
             <span>{isVi ? "Bắt đầu" : "Get Started"}</span>
             <span className="text-sm leading-none">→</span>
@@ -115,26 +136,9 @@ export default function HeroPage2() {
       </header>
 
       {/* ============================================================ */}
-      {/* 2. MAIN STAGE (FULL ARTWORK BACKDROP + EDITORIAL OVERLAY)     */}
+      {/* 2. MAIN STAGE (FULL VIEWPORT - HEADER HEIGHT)                */}
       {/* ============================================================ */}
-      <main className="relative z-10 flex w-full flex-1 lg:h-[calc(100dvh-72px)] lg:max-h-[calc(100dvh-72px)] lg:overflow-hidden">
-        
-        {/* ============================================================ */}
-        {/* COMPLETE SCENIC ARTWORK BACKDROP                             */}
-        {/* Contains the lake, arch, mannequin, floating Outfit Preview, */}
-        {/* vertical selector rail, and carved stone monolith as image!  */}
-        {/* ============================================================ */}
-        <div className="absolute inset-0 z-0 select-none overflow-hidden">
-          <picture>
-            <source srcSet="/hero/hero2_stage_bg_4k.webp" type="image/webp" />
-            <img
-              src="/hero/hero2_stage_bg_4k.jpg"
-              alt="Miroir 3D Atelier Lake Scene with Mannequin, Outfit Preview & Floating Rail"
-              className="h-full w-full object-cover object-[center_top] lg:object-[center_center]"
-              draggable={false}
-            />
-          </picture>
-        </div>
+      <main className="relative z-10 flex w-full flex-1 overflow-hidden">
 
         {/* ============================================================ */}
         {/* LEFT EDITORIAL CONTENT OVERLAY                               */}
