@@ -80,7 +80,7 @@ export default function HeroPage2() {
         
         {/* CỤM 1: FLOATING GLASS LOGO PILL (ULTRA TRANSPARENT) */}
         <a
-          href="/hero2"
+          href="/"
           className="flex items-center gap-2.5 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md border border-white/45 px-3.5 py-1.5 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] transition-all duration-300 group hover:scale-[1.02]"
         >
           <img

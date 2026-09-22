@@ -26,7 +26,8 @@ import {
 } from "../api/shopApi.js";
 import { formatMoney } from "../components/ui/index.jsx";
 
-const inputClass = "neu-input w-full text-sm font-medium text-[#1F241D]";
+const inputClass =
+  "w-full rounded-2xl border border-[#DCE4D6] bg-[#FAFBF7] px-4 py-2.5 text-sm font-medium text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#B3D07E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs";
 const emptyForm = {
   id: "",
   name: "",
@@ -310,14 +311,14 @@ export default function ShopProductWorkspacePage({ productId }) {
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <a
               href="/shop/dashboard?view=products"
-              className="neu-icon-btn text-[#6E756B] hover:text-[#1F241D]"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#DCE4D6] bg-white hover:bg-[#F3F7EB] text-[#4A5D48] hover:text-[#1C2A1B] shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:scale-105 transition-all duration-200"
               title="Quay lại danh sách"
             >
               <ArrowLeft className="h-4 w-4" />
             </a>
             <div className="flex items-center gap-2">
               <span className="font-display text-xl font-black tracking-wider text-[#1F2A2A]">MIROIR</span>
-              <span className="rounded-full bg-[#F1F5E8] px-2 py-0.5 text-[10px] font-black text-[#6F8746]">SELLER</span>
+              <span className="rounded-full bg-[#F1F5E8] px-2.5 py-0.5 text-[10px] font-black text-[#6F8746] border border-[#B3D07E]/30">SELLER</span>
             </div>
             <div className="hidden h-6 border-l border-[#E2EBD5] sm:block" />
             <div className="min-w-0">
@@ -340,7 +341,7 @@ export default function ShopProductWorkspacePage({ productId }) {
           <div className="flex items-center gap-2 sm:gap-3">
             <a
               href="/shop/dashboard?view=products"
-              className="neu-btn-raised text-xs !px-3.5 !py-2 text-[#6E756B] hover:text-[#1F241D]"
+              className="inline-flex items-center justify-center rounded-full border border-[#DCE4D6] bg-white hover:bg-[#F3F7EB] px-4 py-2 text-xs font-bold text-[#4A5D48] hover:text-[#1C2A1B] shadow-xs hover:shadow-sm transition-all duration-200"
             >
               Hủy
             </a>
@@ -348,15 +349,15 @@ export default function ShopProductWorkspacePage({ productId }) {
               type="button"
               disabled={status === "saving" || !hasActivePlan}
               onClick={() => document.getElementById("shop-product-form")?.requestSubmit()}
-              className="neu-btn-primary flex items-center gap-2 text-xs !px-4 !py-2"
+              className="inline-flex items-center gap-2 rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] active:scale-[0.99] text-white py-2 px-5 text-xs font-extrabold tracking-wide uppercase shadow-[0_6px_18px_rgba(179,208,126,0.45)] hover:shadow-[0_8px_24px_rgba(179,208,126,0.6)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none"
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-3.5 w-3.5" />
               {status === "saving" ? "Đang lưu..." : isNew ? "Tạo sản phẩm" : "Lưu thay đổi"}
             </button>
             <button
               type="button"
               onClick={logout}
-              className="neu-icon-btn text-[#8C9388] hover:text-red-600"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#DCE4D6] bg-white hover:bg-red-50 text-[#8C9388] hover:text-red-600 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:scale-105 transition-all duration-200"
               title="Đăng xuất"
             >
               <LogOut className="h-4 w-4" />
@@ -366,7 +367,7 @@ export default function ShopProductWorkspacePage({ productId }) {
       </header>
 
       {/* Main Grid Content */}
-      <main className="mx-auto grid max-w-[1600px] items-start gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:px-8">
+      <main className="mx-auto grid max-w-[1600px] items-start gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)] lg:px-8">
         {/* Left Sidebar: Product List */}
         <aside className="neu-card h-fit p-4 lg:sticky lg:top-20">
           <div className="flex items-center justify-between gap-3 border-b border-[#E1E7D8]/60 pb-3">
@@ -378,7 +379,7 @@ export default function ShopProductWorkspacePage({ productId }) {
             </div>
             <a
               href="/shop/products/new"
-              className="neu-icon-btn bg-[#6F8746] text-white hover:bg-[#2C6F6B]"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] text-white shadow-[0_4px_12px_rgba(179,208,126,0.4)] hover:scale-105 transition-all duration-200"
               title="Tạo mới"
             >
               <Plus className="h-4 w-4" />
@@ -386,9 +387,9 @@ export default function ShopProductWorkspacePage({ productId }) {
           </div>
 
           <div className="relative mt-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#8C9388]" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#8C9388]" />
             <input
-              className="neu-input !py-2 pl-9 text-xs"
+              className="w-full rounded-full border border-[#DCE4D6] bg-[#FAFBF7] py-2 pl-9 pr-4 text-xs font-medium text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#B3D07E] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
               placeholder="Tìm theo tên, mã..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -455,7 +456,7 @@ export default function ShopProductWorkspacePage({ productId }) {
           )}
 
           {/* Product Summary Banner */}
-          <section className="neu-card p-6 sm:p-7">
+          <section className="neu-card min-w-0 overflow-hidden p-6 sm:p-7">
             <div className="grid gap-6 sm:grid-cols-[140px_minmax(0,1fr)] items-center">
               <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-[#F1F5E8] neu-inset shadow-inner">
                 {form.imageUrl ? (
@@ -502,11 +503,11 @@ export default function ShopProductWorkspacePage({ productId }) {
           </section>
 
           {/* Form Fields Grid */}
-          <div className="mt-6 grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="mt-6 grid min-w-0 w-full items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             {/* Left Column: Details & Variants */}
-            <div className="grid min-w-0 gap-6">
+            <div className="grid min-w-0 w-full gap-6">
               {/* Basic Information */}
-              <section className="neu-card p-6 sm:p-7">
+              <section className="neu-card min-w-0 overflow-hidden p-6 sm:p-7">
                 <div className="mb-5">
                   <h2 className="text-base font-black text-[#1F241D]">Thông tin cơ bản</h2>
                   <p className="mt-0.5 text-xs text-[#8C9388]">
@@ -563,7 +564,7 @@ export default function ShopProductWorkspacePage({ productId }) {
               </section>
 
               {/* Fit Finder Configuration */}
-              <section className="neu-card p-6 sm:p-7">
+              <section className="neu-card min-w-0 overflow-hidden p-6 sm:p-7">
                 <div className="mb-5">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-[#6F8746]" />
@@ -594,9 +595,9 @@ export default function ShopProductWorkspacePage({ productId }) {
               </section>
 
               {/* Variants and SKU */}
-              <section className="neu-card p-6 sm:p-7">
+              <section className="neu-card min-w-0 overflow-hidden p-6 sm:p-7">
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="text-base font-black text-[#1F2A2A]">Biến thể, SKU & Tồn kho</h2>
                     <p className="mt-0.5 text-xs text-[#8C9B9A]">
                       Mỗi dòng là một phiên bản màu-size độc lập.
@@ -604,7 +605,7 @@ export default function ShopProductWorkspacePage({ productId }) {
                   </div>
                   <button
                     type="button"
-                    className="neu-btn-raised flex items-center gap-1.5 text-xs !px-3.5 !py-2 text-[#6F8746]"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#B3D07E] bg-[#F1F6E9] hover:bg-[#B3D07E] text-[#48632E] hover:text-white px-4 py-2 text-xs font-bold shadow-xs hover:shadow-sm transition-all duration-200 shrink-0"
                     onClick={addVariant}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -613,7 +614,7 @@ export default function ShopProductWorkspacePage({ productId }) {
                 </div>
 
                 {/* Matrix Generator */}
-                <div className="neu-inset p-4 sm:p-5 rounded-2xl mb-5">
+                <div className="neu-inset p-4 sm:p-5 rounded-2xl mb-5 min-w-0">
                   <div className="flex items-center gap-2">
                     <Layers className="h-4 w-4 text-[#6F8746]" />
                     <p className="text-xs font-black uppercase tracking-wider text-[#1F2A2A]">Tạo nhanh tổ hợp SKU</p>
@@ -621,22 +622,22 @@ export default function ShopProductWorkspacePage({ productId }) {
                   <p className="mt-1 text-xs text-[#6E756B]">
                     Nhập màu và size ngăn cách bởi dấu phẩy, hệ thống sẽ tự động ghép SKU ma trận.
                   </p>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+                  <div className="mt-3 flex flex-wrap sm:flex-nowrap items-center gap-3">
                     <input
-                      className="neu-input text-xs"
+                      className="flex-1 min-w-[130px] rounded-xl border border-[#DCE4D6] bg-white px-3.5 py-2 text-xs font-medium text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#B3D07E] focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                       placeholder="Màu: Trắng, Đen, Kem"
                       value={matrixColors}
                       onChange={(e) => setMatrixColors(e.target.value)}
                     />
                     <input
-                      className="neu-input text-xs"
+                      className="flex-1 min-w-[130px] rounded-xl border border-[#DCE4D6] bg-white px-3.5 py-2 text-xs font-medium text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#B3D07E] focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                       placeholder="Size: S, M, L, XL"
                       value={matrixSizes}
                       onChange={(e) => setMatrixSizes(e.target.value)}
                     />
                     <button
                       type="button"
-                      className="neu-btn-primary text-xs !px-4 whitespace-nowrap"
+                      className="inline-flex items-center justify-center rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] active:scale-[0.99] text-white px-5 py-2 text-xs font-extrabold tracking-wide uppercase shadow-[0_4px_14px_rgba(179,208,126,0.4)] hover:shadow-[0_6px_18px_rgba(179,208,126,0.55)] transition-all duration-200 shrink-0 whitespace-nowrap"
                       onClick={generateVariantMatrix}
                     >
                       Tạo tổ hợp
@@ -645,8 +646,8 @@ export default function ShopProductWorkspacePage({ productId }) {
                 </div>
 
                 {/* Variant Table */}
-                <div className="max-w-full overflow-x-auto rounded-2xl border border-[#E1E7D8]/60">
-                  <table className="w-full min-w-[700px] text-left text-xs">
+                <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-[#E1E7D8]/60">
+                  <table className="w-full min-w-[620px] text-left text-xs">
                     <thead>
                       <tr className="border-b border-[#E1E7D8]/60 bg-[#EEF3E7]/50 text-[#6E756B] uppercase font-black tracking-wider">
                         <th className="px-3 py-3">Màu sắc</th>
@@ -662,7 +663,7 @@ export default function ShopProductWorkspacePage({ productId }) {
                         <tr key={v.id || `var-${idx}`} className="hover:bg-white/50">
                           <td className="p-2">
                             <input
-                              className="neu-input !py-1.5 text-xs"
+                              className="w-full rounded-xl border border-[#DCE4D6] bg-white px-3 py-1.5 text-xs font-medium text-[#1C2A1B] transition-all duration-200 focus:border-[#B3D07E] focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                               placeholder="Mặc định"
                               value={v.color}
                               onChange={(e) => updateVariant(idx, "color", e.target.value)}
@@ -670,7 +671,7 @@ export default function ShopProductWorkspacePage({ productId }) {
                           </td>
                           <td className="p-2">
                             <input
-                              className="neu-input !py-1.5 text-xs"
+                              className="w-full rounded-xl border border-[#DCE4D6] bg-white px-3 py-1.5 text-xs font-medium text-[#1C2A1B] transition-all duration-200 focus:border-[#B3D07E] focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                               placeholder="Freesize"
                               value={v.size}
                               onChange={(e) => updateVariant(idx, "size", e.target.value)}
@@ -678,14 +679,14 @@ export default function ShopProductWorkspacePage({ productId }) {
                           </td>
                           <td className="p-2">
                             <input
-                              className="neu-input !py-1.5 font-mono text-xs uppercase"
+                              className="w-full rounded-xl border border-[#DCE4D6] bg-white px-3 py-1.5 font-mono text-xs uppercase text-[#1C2A1B] transition-all duration-200 focus:border-[#B3D07E] focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                               value={v.sku}
                               onChange={(e) => updateVariant(idx, "sku", e.target.value.toUpperCase())}
                             />
                           </td>
                           <td className="p-2">
                             <input
-                              className="neu-input !py-1.5 text-xs"
+                              className="w-full rounded-xl border border-[#DCE4D6] bg-white px-3 py-1.5 text-xs font-medium text-[#1C2A1B] transition-all duration-200 focus:border-[#B3D07E] focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                               min="0"
                               type="number"
                               value={v.stockQuantity}
@@ -704,7 +705,7 @@ export default function ShopProductWorkspacePage({ productId }) {
                             <button
                               type="button"
                               onClick={() => removeVariant(idx)}
-                              className="neu-icon-btn !h-8 !w-8 text-[#8C9388] hover:text-red-600"
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-white hover:bg-red-50 text-red-500 hover:text-red-700 shadow-xs transition-all duration-200 mx-auto"
                               title="Xóa biến thể"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -735,7 +736,7 @@ export default function ShopProductWorkspacePage({ productId }) {
                       >
                         <span className="font-mono text-[#6E756B]">{v.sku || `SKU #${idx + 1}`}</span>
                         <input
-                          className="neu-input !py-1.5 text-xs w-48"
+                          className="w-48 rounded-xl border border-[#DCE4D6] bg-white px-3 py-1.5 text-xs font-medium text-[#1C2A1B] transition-all duration-200 focus:border-[#B3D07E] focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                           type="number"
                           min="0"
                           placeholder="Chưa có giá vốn"
@@ -749,7 +750,7 @@ export default function ShopProductWorkspacePage({ productId }) {
               </section>
 
               {/* Tags Section */}
-              <section className="neu-card p-6 sm:p-7">
+              <section className="neu-card min-w-0 overflow-hidden p-6 sm:p-7">
                 <div className="mb-5">
                   <h2 className="text-base font-black text-[#1F241D]">Gắn thẻ phân loại (Tags)</h2>
                   <p className="mt-0.5 text-xs text-[#8C9388]">
@@ -780,9 +781,9 @@ export default function ShopProductWorkspacePage({ productId }) {
             </div>
 
             {/* Right Column: Image & Status */}
-            <div className="grid min-w-0 self-start gap-6 xl:sticky xl:top-20">
+            <div className="grid min-w-0 w-full xl:w-[320px] self-start gap-6 xl:sticky xl:top-20">
               {/* Product Image */}
-              <section className="neu-card p-6">
+              <section className="neu-card min-w-0 overflow-hidden p-5 sm:p-6">
                 <h2 className="text-sm font-black text-[#1F241D] uppercase tracking-wider mb-1">Ảnh sản phẩm</h2>
                 <p className="text-xs text-[#8C9388] mb-4">
                   Nên dùng ảnh chụp dọc với nền gọn gàng.
@@ -798,8 +799,8 @@ export default function ShopProductWorkspacePage({ productId }) {
                 </div>
 
                 <label className="mt-4 block">
-                  <span className="neu-btn-raised flex items-center justify-center gap-2 text-xs !py-2.5 cursor-pointer text-[#1F2A2A] hover:text-[#6F8746]">
-                    <UploadCloud className="h-4 w-4 text-[#6F8746]" />
+                  <span className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#B3D07E]/80 bg-white hover:bg-[#B3D07E] text-[#3D5A27] hover:text-white py-2.5 px-4 text-xs font-bold tracking-wide shadow-xs hover:shadow-sm transition-all duration-200 cursor-pointer group">
+                    <UploadCloud className="h-4 w-4 text-[#6F8746] group-hover:text-white transition-colors" />
                     {uploading ? "Đang tải lên..." : "Tải ảnh từ máy"}
                   </span>
                   <input
@@ -814,7 +815,7 @@ export default function ShopProductWorkspacePage({ productId }) {
                 <div className="mt-3">
                   <FormField label="Hoặc nhập đường dẫn URL">
                     <input
-                      className="neu-input !py-2 text-xs"
+                      className="w-full rounded-xl border border-[#DCE4D6] bg-white px-3.5 py-2 text-xs font-medium text-[#1C2A1B] placeholder-[#8A9B87] transition-all duration-200 focus:border-[#B3D07E] focus:outline-none focus:ring-2 focus:ring-[#B3D07E]/30 shadow-xs"
                       placeholder="https://..."
                       value={form.imageUrl}
                       onChange={updateField("imageUrl")}
@@ -824,12 +825,12 @@ export default function ShopProductWorkspacePage({ productId }) {
               </section>
 
               {/* Status Section */}
-              <section className="neu-card p-6">
+              <section className="neu-card min-w-0 overflow-hidden p-5 sm:p-6">
                 <h2 className="text-sm font-black text-[#1F2A2A] uppercase tracking-wider mb-1">Trạng thái mở bán</h2>
                 <p className="text-xs text-[#8C9B9A] mb-4">
                   Chỉ sản phẩm "Đang bán" và còn tồn kho mới hiển thị cho người mua.
                 </p>
-                <select className={inputClass} value={form.status} onChange={updateField("status")}>
+                <select className={`${inputClass} cursor-pointer`} value={form.status} onChange={updateField("status")}>
                   <option value="draft">Bản nháp (Draft)</option>
                   <option value="published">Đang bán (Published)</option>
                   <option value="archived">Tạm ẩn (Archived)</option>
@@ -850,7 +851,7 @@ export default function ShopProductWorkspacePage({ productId }) {
           </div>
 
           {/* Bottom Sticky Action Bar */}
-          <div className="neu-card mt-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl">
+          <div className="neu-card min-w-0 overflow-hidden mt-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl">
             <p className="text-xs text-[#8C9388]">
               {form.updatedAt
                 ? `Cập nhật lần cuối: ${new Date(form.updatedAt).toLocaleString("vi-VN")}`
@@ -859,14 +860,14 @@ export default function ShopProductWorkspacePage({ productId }) {
             <div className="flex items-center gap-3">
               <a
                 href="/shop/dashboard?view=products"
-                className="neu-btn-raised text-xs !px-4 !py-2.5 text-[#6E756B] hover:text-[#1F241D]"
+                className="inline-flex items-center justify-center rounded-full border border-[#DCE4D6] bg-white hover:bg-[#F3F7EB] px-5 py-2.5 text-xs font-bold text-[#4A5D48] hover:text-[#1C2A1B] shadow-xs hover:shadow-sm transition-all duration-200"
               >
                 Hủy
               </a>
               <button
                 type="submit"
                 disabled={status === "saving" || !hasActivePlan}
-                className="neu-btn-primary flex items-center gap-2 text-xs !px-5 !py-2.5"
+                className="inline-flex items-center gap-2 rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] active:scale-[0.99] text-white py-2.5 px-6 text-xs font-extrabold tracking-wide uppercase shadow-[0_6px_18px_rgba(179,208,126,0.45)] hover:shadow-[0_8px_24px_rgba(179,208,126,0.6)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.12)] transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none"
               >
                 <Save className="h-4 w-4" />
                 {status === "saving" ? "Đang lưu..." : isNew ? "Tạo sản phẩm" : "Lưu thay đổi"}
@@ -882,7 +883,7 @@ export default function ShopProductWorkspacePage({ productId }) {
 function FormField({ children, label, required, wide }) {
   return (
     <label className={`grid gap-1.5 ${wide ? "md:col-span-2" : ""}`}>
-      <span className="text-xs font-black uppercase tracking-wider text-[#6E756B]">
+      <span className="text-xs font-bold uppercase tracking-wider text-[#4A5D48] ml-0.5">
         {label}
         {required && <span className="text-red-500"> *</span>}
       </span>
