@@ -21,6 +21,15 @@ const CANNED_REPLIES = [
   "Bạn vui lòng cho shop xin số đo để shop tư vấn size chuẩn nhất nhé!",
 ];
 
+const getCustomer = (conversation) =>
+  conversation?.counterpart || conversation?.customer || conversation?.participant || null;
+
+const getCustomerName = (conversation) =>
+  getCustomer(conversation)?.name || "Khách hàng";
+
+const getLastMessagePreview = (conversation) =>
+  conversation?.lastMessage?.preview || conversation?.lastMessage?.text || "Chưa có tin nhắn";
+
 export default function SellerMessagesView({ shop, onNavigateOrder }) {
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState("");
@@ -91,7 +100,10 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
     setInputText("");
 
     try {
-      const res = await sendChatMessage("shop", activeId, { text: textToSend });
+      const res = await sendChatMessage("shop", activeId, {
+        text: textToSend,
+        clientMessageId: crypto.randomUUID(),
+      });
       if (res.message) {
         setMessages((prev) => [...prev, res.message]);
         setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
@@ -103,7 +115,7 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
   };
 
   const filteredConversations = conversations.filter((c) => {
-    const name = c.customer?.name || c.participant?.name || "Khách hàng";
+    const name = getCustomerName(c);
     const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
     const matchesUnread = filterUnread ? (c.unreadCount || 0) > 0 : true;
     return matchesSearch && matchesUnread;
@@ -145,8 +157,8 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
           ) : (
             filteredConversations.map((c) => {
               const isActive = c.id === activeId;
-              const customerName = c.customer?.name || c.participant?.name || "Khách hàng";
-              const lastMsg = c.lastMessage?.text || "Chưa có tin nhắn mới";
+              const customerName = getCustomerName(c);
+              const lastMsg = getLastMessagePreview(c);
 
               return (
                 <div
@@ -201,11 +213,11 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
             <div className="p-4 px-6 border-b border-[#E2EBD5] bg-white flex items-center justify-between shadow-xs">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-[#B3D07E]/40 to-[#6F8746]/30 border border-[#B3D07E]/60 flex items-center justify-center font-bold text-sm text-[#6F8746] shadow-sm">
-                  {(activeConvo.customer?.name || "K").charAt(0).toUpperCase()}
+                  {getCustomerName(activeConvo).charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <h4 className="font-black text-sm text-[#1F2A2A]">
-                    {activeConvo.customer?.name || activeConvo.participant?.name || "Khách hàng"}
+                    {getCustomerName(activeConvo)}
                   </h4>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="h-2 w-2 rounded-full bg-[#7EDC9A] shadow-sm" />

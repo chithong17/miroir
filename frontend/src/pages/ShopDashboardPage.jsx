@@ -3221,7 +3221,7 @@ function ShopOrderModal({ onChanged, onClose, order }) {
                   <div className="grid gap-2">
                     <label className="text-[11px] font-bold text-[#6E756B]">Tải ảnh chứng từ hoàn tiền:</label>
                     <input
-                      className="neu-input !py-2 text-xs"
+                      className="neu-input px-3 py-2 text-xs"
                       type="file"
                       accept="image/*"
                       onChange={(event) => setRefundProof(event.target.files?.[0] || null)}

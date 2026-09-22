@@ -276,13 +276,13 @@ export default function SellerShell({
             {/* Contextual Header Actions */}
             {headerActions && <div className="flex items-center gap-2">{headerActions}</div>}
 
-            {/* Quick Action Pill Button (+) as seen in reference image */}
+            {/* Quick Action Pill Button (+) - Miroir Mint */}
             <a
               href="/shop/products/new"
-              className="neu-icon-btn h-10 w-10 !bg-gradient-to-br from-[#8B7CFF] to-[#604CE8] text-white shadow-md hover:scale-105 transition"
+              className="h-10 w-10 rounded-full bg-[#B3D07E] hover:bg-[#A3C46C] text-white shadow-[0_4px_14px_rgba(179,208,126,0.4)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 border border-[#A3C46C]/40"
               title="Thêm sản phẩm mới"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-5 w-5 stroke-[2.5]" />
             </a>
 
             {/* Notification Bell */}
@@ -290,7 +290,7 @@ export default function SellerShell({
               <button
                 type="button"
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="neu-icon-btn h-10 w-10 relative text-[#6F8746]"
+                className="neu-icon-btn h-10 w-10 relative text-[#4A5D48] hover:text-[#1F2A2A] border border-[#DCE4D6] shadow-xs"
                 title="Thông báo"
               >
                 <Bell className="h-4 w-4" />
@@ -325,7 +325,7 @@ export default function SellerShell({
                         <div
                           key={n.id}
                           onClick={() => onReadNotification && onReadNotification(n)}
-                          className={`p-3 rounded-xl cursor-pointer text-xs transition ${
+                          className={`p-3 rounded-2xl cursor-pointer text-xs transition ${
                             n.readAt
                               ? "bg-white/40 text-[#6E7D7C]"
                               : "neu-inset text-[#1F2A2A] font-medium"
@@ -342,8 +342,8 @@ export default function SellerShell({
             </div>
 
             {/* User Profile Avatar Capsule */}
-            <div className="neu-card-sm px-3.5 py-1.5 flex items-center gap-2.5 shadow-sm">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B3D07E] to-[#6F8746] flex items-center justify-center font-black text-xs text-white shadow-sm">
+            <div className="rounded-full border border-[#DCE4D6] bg-white px-3.5 py-1.5 flex items-center gap-2.5 shadow-xs">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#B3D07E] to-[#6F8746] flex items-center justify-center font-black text-xs text-white shadow-xs">
                 {shop?.name ? shop.name.charAt(0).toUpperCase() : "S"}
               </div>
               <div className="hidden xl:block text-left">

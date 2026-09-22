@@ -122,12 +122,12 @@ export default function SellerProductsView({
           </div>
 
           {/* View Mode Toggle */}
-          <div className="neu-inset p-1 flex items-center rounded-2xl">
+          <div className="flex items-center rounded-full border border-[#DCE4D6] bg-[#FAFBF7] p-1 gap-1 shadow-xs">
             <button
               type="button"
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-xl transition ${
-                viewMode === "grid" ? "neu-btn-raised text-[#6F8746] shadow-sm" : "text-[#96A5A4]"
+              className={`p-1.5 rounded-full transition ${
+                viewMode === "grid" ? "bg-white border border-[#DCE4D6] text-[#35501E] shadow-xs" : "text-[#8A9B87] hover:text-[#1F2A2A]"
               }`}
               title="Xem dạng lưới"
             >
@@ -136,8 +136,8 @@ export default function SellerProductsView({
             <button
               type="button"
               onClick={() => setViewMode("table")}
-              className={`p-2 rounded-xl transition ${
-                viewMode === "table" ? "neu-btn-raised text-[#6F8746] shadow-sm" : "text-[#96A5A4]"
+              className={`p-1.5 rounded-full transition ${
+                viewMode === "table" ? "bg-white border border-[#DCE4D6] text-[#35501E] shadow-xs" : "text-[#8A9B87] hover:text-[#1F2A2A]"
               }`}
               title="Xem dạng danh sách"
             >
@@ -167,7 +167,7 @@ export default function SellerProductsView({
 
       {/* Bulk Action Bar (when products selected) */}
       {selectedIds.length > 0 && (
-        <div className="neu-card p-4 bg-[#F1F5E8] border border-[#B3D07E] flex items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-200">
+        <div className="neu-card p-4 bg-[#FAFBF7] border border-[#B3D07E] flex items-center justify-between gap-4 animate-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-2 text-sm font-bold text-[#1F2A2A]">
             <span>Đã chọn {selectedIds.length} sản phẩm</span>
           </div>
@@ -289,11 +289,11 @@ export default function SellerProductsView({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-4 pt-3 border-t border-[#E2EBD5] flex items-center justify-between gap-1.5">
+                <div className="mt-4 pt-3 border-t border-[#E2EBD5] flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => onEditProduct(product)}
-                    className="neu-btn-raised flex-1 py-1.5 text-xs text-[#1F2A2A] flex items-center justify-center gap-1"
+                    className="neu-btn-raised flex-1 py-1.5 text-xs text-[#1F2A2A] flex items-center justify-center gap-1.5 font-bold"
                   >
                     <Edit2 className="h-3.5 w-3.5 text-[#6F8746]" />
                     Sửa

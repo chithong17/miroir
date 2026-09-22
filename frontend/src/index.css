@@ -229,15 +229,15 @@
 /* 3D Neumorphic Surface Containers */
 .neu-card {
   background-color: #FFFFFF;
-  border: 1px solid rgba(226, 235, 213, 0.9);
-  box-shadow: 8px 14px 28px rgba(195, 208, 180, 0.35), -8px -8px 24px #FFFFFF, inset 0 1px 1.5px rgba(255, 255, 255, 0.95);
+  border: 1px solid #DCE4D6;
+  box-shadow: 0 4px 20px rgba(195, 208, 180, 0.22), 0 1px 3px rgba(0, 0, 0, 0.02);
   border-radius: 24px;
 }
 
 .neu-card-sm {
   background-color: #FFFFFF;
-  border: 1px solid rgba(226, 235, 213, 0.8);
-  box-shadow: 4px 8px 18px rgba(195, 208, 180, 0.28), -4px -4px 14px #FFFFFF, inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  border: 1px solid #DCE4D6;
+  box-shadow: 0 2px 12px rgba(195, 208, 180, 0.18);
   border-radius: 20px;
 }
 
@@ -264,12 +264,12 @@
 }
 
 .neu-card-hover {
-  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .neu-card-hover:hover {
-  transform: translateY(-3px);
-  box-shadow: 10px 18px 36px rgba(195, 208, 180, 0.42), -10px -10px 28px #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(195, 208, 180, 0.32);
 }
 
 /* Vivid 3D Hero Gradient Cards (Pastel Tone) */
@@ -315,23 +315,24 @@
 
 /* Inset / Pressed Controls */
 .neu-inset {
-  background-color: #F1F5E8;
-  border: 1px solid rgba(226, 235, 213, 0.9);
-  box-shadow: inset 3px 3px 6px rgba(195, 208, 180, 0.35), inset -3px -3px 6px #FFFFFF;
-  border-radius: 18px;
+  background-color: #FAFBF7;
+  border: 1px solid #DCE4D6;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  border-radius: 9999px;
 }
 
 .neu-inset-deep {
   background-color: #E8EFE0;
-  box-shadow: inset 4px 4px 8px rgba(195, 208, 180, 0.42), inset -3px -3px 6px rgba(255, 255, 255, 0.95);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
   border-radius: 9999px;
 }
 
 .neu-input {
-  background-color: #F1F5E8;
-  border: 1px solid rgba(222, 233, 208, 0.95);
-  box-shadow: inset 2.5px 2.5px 5px rgba(195, 208, 180, 0.35), inset -2.5px -2.5px 5px #FFFFFF;
+  background-color: #FAFBF7;
+  border: 1px solid #DCE4D6;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
   border-radius: 16px;
+  padding: 0.625rem 1rem;
   color: #1F2A2A;
   transition: all 0.2s ease;
 }
@@ -340,50 +341,53 @@
   outline: none;
   background-color: #FFFFFF;
   border-color: #B3D07E;
-  box-shadow: inset 1px 1px 3px rgba(195, 208, 180, 0.2), 0 0 0 3px rgba(179, 208, 126, 0.28);
+  box-shadow: 0 0 0 3px rgba(179, 208, 126, 0.3);
 }
 
-/* Interactive 3D Buttons */
+/* Interactive Pill Buttons synchronized with Miroir Editorial Theme */
 .neu-btn-raised {
   background-color: #FFFFFF;
-  border: 1px solid rgba(226, 235, 213, 0.9);
-  box-shadow: 4px 6px 14px rgba(195, 208, 180, 0.3), -4px -4px 12px #FFFFFF;
-  border-radius: 16px;
+  border: 1px solid #DCE4D6;
+  box-shadow: 0 2px 6px rgba(195, 208, 180, 0.2);
+  border-radius: 9999px;
   color: #1F2A2A;
-  font-weight: 600;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.neu-btn-raised:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 6px 10px 20px rgba(195, 208, 180, 0.42), -6px -6px 16px #FFFFFF;
-  color: #6F8746;
-}
-
-.neu-btn-raised:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: inset 2px 2px 5px rgba(195, 208, 180, 0.38), inset -2px -2px 5px #FFFFFF;
-}
-
-.neu-btn-primary {
-  background: linear-gradient(135deg, #B3D07E 0%, #6F8746 100%);
-  border: 1px solid rgba(111, 135, 70, 0.3);
-  box-shadow: 0 8px 20px rgba(111, 135, 70, 0.35), -2px -2px 8px rgba(255, 255, 255, 0.8), inset 0 1px 1.5px rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
-  color: #FFFFFF;
   font-weight: 700;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.neu-btn-raised:hover:not(:disabled) {
+  background-color: #F3F7EB;
+  border-color: #C8D8BE;
+  color: #35501E;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(195, 208, 180, 0.3);
+}
+
+.neu-btn-raised:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.neu-btn-primary {
+  background-color: #B3D07E;
+  border: 1px solid rgba(163, 196, 108, 0.6);
+  box-shadow: 0 6px 18px rgba(179, 208, 126, 0.45);
+  border-radius: 9999px;
+  color: #FFFFFF !important;
+  font-weight: 800;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .neu-btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(111, 135, 70, 0.45), -2px -2px 8px rgba(255, 255, 255, 0.9);
-  filter: brightness(1.05);
+  background-color: #A3C46C;
+  transform: translateY(-1.5px);
+  box-shadow: 0 10px 24px rgba(179, 208, 126, 0.55);
 }
 
 .neu-btn-primary:active:not(:disabled) {
+  background-color: #94B16F;
   transform: translateY(0);
-  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(179, 208, 126, 0.35);
 }
 
 .neu-icon-btn {
@@ -391,22 +395,24 @@
   align-items: center;
   justify-content: center;
   background-color: #FFFFFF;
-  border: 1px solid rgba(226, 235, 213, 0.9);
-  box-shadow: 4px 6px 14px rgba(195, 208, 180, 0.28), -4px -4px 12px #FFFFFF;
+  border: 1px solid #DCE4D6;
+  box-shadow: 0 2px 6px rgba(195, 208, 180, 0.18);
   border-radius: 9999px;
-  color: #6F8746;
+  color: #4A5D48;
   transition: all 0.2s ease;
 }
 
 .neu-icon-btn:hover:not(:disabled) {
-  transform: translateY(-1.5px);
-  box-shadow: 6px 8px 18px rgba(195, 208, 180, 0.38), -5px -5px 14px #FFFFFF;
+  background-color: #F3F7EB;
+  border-color: #C8D8BE;
   color: #1F2A2A;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(195, 208, 180, 0.25);
 }
 
 .neu-icon-btn:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: inset 2px 2px 4px rgba(195, 208, 180, 0.38), inset -2px -2px 4px #FFFFFF;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 /* 3D Floating Capsule Sidebar Items */
@@ -414,33 +420,33 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 12px;
-  border-radius: 14px;
+  padding: 8px 14px;
+  border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
-  color: #6E7D7C;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #556652;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .neu-nav-item:hover {
   color: #1F2A2A;
-  background-color: rgba(241, 245, 232, 0.85);
+  background-color: #F3F7EB;
   transform: translateX(2px);
 }
 
 .neu-nav-item-active {
-  background: linear-gradient(135deg, rgba(179, 208, 126, 0.24) 0%, rgba(241, 245, 232, 0.75) 100%);
-  color: #6F8746;
+  background: #EAF3DC;
+  color: #35501E;
   font-weight: 700;
-  border: 1px solid rgba(179, 208, 126, 0.5);
-  box-shadow: inset 2.5px 2.5px 6px rgba(195, 208, 180, 0.35), inset -2.5px -2.5px 6px #FFFFFF;
+  border: 1px solid #C5DC9E;
+  box-shadow: 0 2px 8px rgba(179, 208, 126, 0.22);
 }
 
 /* 3D Pill Sidebar Capsule */
 .neu-sidebar-capsule {
   background: #FFFFFF;
-  border: 1px solid rgba(226, 235, 213, 0.95);
-  box-shadow: 10px 18px 36px rgba(195, 208, 180, 0.38), -8px -8px 24px #FFFFFF;
+  border: 1px solid #DCE4D6;
+  box-shadow: 0 10px 32px rgba(195, 208, 180, 0.32);
   border-radius: 32px;
 }
 
