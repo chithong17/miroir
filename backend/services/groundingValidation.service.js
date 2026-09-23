@@ -54,6 +54,11 @@ export const enrichRecommendation = ({ recommendation, products, desiredOutfitCo
         sizes: product.sizes || [],
         imageUrl: product.imageUrl || product.image_url,
         availability: product.availability,
+        status: product.status,
+        shopId: product.shopId,
+        variants: (product.variants || [])
+          .filter((variant) => variant.active !== false && Number(variant.stockQuantity) > 0)
+          .map(({ costPrice: _costPrice, ...variant }) => variant),
         shop: product.shop,
       },
       reason: item.reason || "",
@@ -64,8 +69,9 @@ export const enrichRecommendation = ({ recommendation, products, desiredOutfitCo
     id: outfit.id || `outfit-${index + 1}`,
     title: outfit.title || `Outfit ${index + 1}`,
     score: outfit.score || 0,
-    items: (outfit.items || [])
+    items: [...new Map((outfit.items || [])
       .filter((item) => productById.has(item.productId))
+      .map((item) => [item.productId, item])).values()]
       .map(enrichItem),
     whyItMatches: outfit.whyItMatches || "",
     fitWarnings: Array.isArray(outfit.fitWarnings) ? outfit.fitWarnings : [],
@@ -75,7 +81,13 @@ export const enrichRecommendation = ({ recommendation, products, desiredOutfitCo
   const outfits = normalizeOutfits(recommendation)
     .slice(0, desiredOutfitCount)
     .map(enrichOutfit)
-    .filter((outfit) => outfit.items.length);
+    .filter((outfit) => outfit.items.length)
+    .filter((outfit, index, all) => {
+      const key = outfit.items.map((item) => item.product.id).sort().join("|");
+      return all.findIndex((candidate) =>
+        candidate.items.map((item) => item.product.id).sort().join("|") === key
+      ) === index;
+    });
 
   const firstOutfit = outfits[0] || {
     id: "outfit-1",
