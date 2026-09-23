@@ -30,14 +30,15 @@ const getCustomerName = (conversation) =>
 const getLastMessagePreview = (conversation) =>
   conversation?.lastMessage?.preview || conversation?.lastMessage?.text || "Chưa có tin nhắn";
 
-export default function SellerMessagesView({ shop, onNavigateOrder }) {
+export default function SellerMessagesView({ shop, onNavigateOrder, initialConversationId = "" }) {
   const [conversations, setConversations] = useState([]);
-  const [activeId, setActiveId] = useState("");
+  const [activeId, setActiveId] = useState(initialConversationId);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [search, setSearch] = useState("");
   const [filterUnread, setFilterUnread] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingContext, setPendingContext] = useState(null);
   const messagesEndRef = useRef(null);
 
   const activeConvo = conversations.find((c) => c.id === activeId);
@@ -47,7 +48,10 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
       const res = await listChatConversations("shop");
       const list = res.conversations || [];
       setConversations(list);
-      if (!activeId && list[0]) {
+      const requestedConversationExists = initialConversationId && list.some((item) => item.id === initialConversationId);
+      if (requestedConversationExists) {
+        setActiveId(initialConversationId);
+      } else if (!activeId && list[0]) {
         setActiveId(list[0].id);
       }
     } catch (err) {
@@ -78,7 +82,33 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
   }, []);
 
   useEffect(() => {
+    if (initialConversationId) setActiveId(initialConversationId);
+  }, [initialConversationId]);
+
+  useEffect(() => {
+    if (!activeId) return;
+    const url = new URL(window.location.href);
+    url.pathname = "/shop/dashboard";
+    url.searchParams.set("view", "messages");
+    url.searchParams.set("conversation", activeId);
+    window.history.replaceState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
+  }, [activeId]);
+
+  useEffect(() => {
     if (activeId) loadThread(activeId);
+  }, [activeId]);
+
+  useEffect(() => {
+    if (!activeId) {
+      setPendingContext(null);
+      return;
+    }
+    try {
+      const stored = sessionStorage.getItem(`miroir_shop_chat_context_${activeId}`);
+      setPendingContext(stored ? JSON.parse(stored) : null);
+    } catch {
+      setPendingContext(null);
+    }
   }, [activeId]);
 
   useEffect(() => {
@@ -95,19 +125,22 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
 
   const handleSend = async (e) => {
     if (e) e.preventDefault();
-    if (!inputText.trim() || !activeId) return;
+    if ((!inputText.trim() && !pendingContext) || !activeId) return;
     const textToSend = inputText.trim();
-    setInputText("");
 
     try {
       const res = await sendChatMessage("shop", activeId, {
         text: textToSend,
+        context: pendingContext,
         clientMessageId: crypto.randomUUID(),
       });
       if (res.message) {
-        setMessages((prev) => [...prev, res.message]);
+        setMessages((prev) => prev.some((item) => item.id === res.message.id) ? prev : [...prev, res.message]);
         setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
       }
+      setInputText("");
+      setPendingContext(null);
+      sessionStorage.removeItem(`miroir_shop_chat_context_${activeId}`);
       loadInbox();
     } catch (err) {
       console.error("Send message error:", err);
@@ -262,7 +295,14 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
                             : "neu-card text-[#1F2A2A] shadow-sm rounded-tl-none border border-[#E2EBD5]"
                         }`}
                       >
-                        {m.text}
+                        {m.context ? (
+                          <ChatContextCard
+                            context={m.context}
+                            isShop={isShop}
+                            onNavigateOrder={onNavigateOrder}
+                          />
+                        ) : null}
+                        {m.text ? <p className="whitespace-pre-wrap break-words">{m.text}</p> : null}
                       </div>
                       <span className="text-[10px] text-[#96A5A4] mt-1 px-1">
                         {m.createdAt
@@ -280,6 +320,31 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
             </div>
 
             {/* Canned Replies Shortcuts */}
+            {pendingContext ? (
+              <div className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-2xl border border-[#B3D07E] bg-[#F1F6E9] px-4 py-3 text-[#1F2A2A]">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-[#6F8746] shadow-sm">
+                    <ShoppingBag className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-[#6F8746]">Đính kèm đơn hàng</p>
+                    <p className="truncate text-xs font-semibold">Thông tin đơn sẽ xuất hiện trong tin nhắn sau khi gửi.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingContext(null);
+                    sessionStorage.removeItem(`miroir_shop_chat_context_${activeId}`);
+                  }}
+                  className="neu-icon-btn h-7 w-7 shrink-0 text-[#6E7D7C]"
+                  aria-label="Bỏ đính kèm đơn hàng"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : null}
+
             <div className="px-4 py-2 bg-white/60 border-t border-[#E2EBD5] flex items-center gap-2 overflow-x-auto">
               <span className="text-[11px] font-bold text-[#96A5A4] shrink-0">Gợi ý nhanh:</span>
               {CANNED_REPLIES.map((reply, i) => (
@@ -308,7 +373,7 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
               />
               <button
                 type="submit"
-                disabled={!inputText.trim()}
+                disabled={!inputText.trim() && !pendingContext}
                 className="neu-btn-primary px-5 py-2.5 flex items-center gap-2 text-xs"
               >
                 <Send className="h-4 w-4" />
@@ -351,5 +416,39 @@ export default function SellerMessagesView({ shop, onNavigateOrder }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ChatContextCard({ context, isShop, onNavigateOrder }) {
+  if (context.type !== "order") return null;
+
+  const content = (
+    <>
+      {context.imageUrl ? (
+        <img className="h-11 w-11 shrink-0 rounded-xl object-cover" src={context.imageUrl} alt="" />
+      ) : (
+        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${isShop ? "bg-white/15" : "bg-[#EEF5E7]"}`}>
+          <ShoppingBag className="h-4 w-4" />
+        </span>
+      )}
+      <span className="min-w-0 text-left">
+        <strong className="block truncate font-black">{context.orderCode || "Đơn hàng đính kèm"}</strong>
+        <span className={`block text-[11px] ${isShop ? "text-white/75" : "text-[#6E7D7C]"}`}>
+          {Number(context.itemCount || 0)} sản phẩm · {Number(context.total || 0).toLocaleString("vi-VN")} VND
+        </span>
+      </span>
+    </>
+  );
+
+  const className = `mb-2 flex w-full items-center gap-2.5 rounded-xl p-2.5 ${
+    isShop ? "bg-white/15 hover:bg-white/20" : "bg-[#F1F5E8] hover:bg-[#E8F0DC]"
+  } transition`;
+
+  return context.orderId && onNavigateOrder ? (
+    <button type="button" className={className} onClick={() => onNavigateOrder(context.orderId)}>
+      {content}
+    </button>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }

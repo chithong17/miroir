@@ -14,6 +14,7 @@ import {
   NeuModal,
   NeuBadge,
 } from "./NeuComponents.jsx";
+import { getProductStock } from "./productInventory.js";
 
 export default function SellerTrashView({
   products = [],
@@ -109,7 +110,7 @@ export default function SellerTrashView({
                     </td>
 
                     <td className="p-4 text-xs text-[#8C9B9A]">
-                      {p.stock ?? 0} chiếc
+                      {getProductStock(p)} chiếc
                     </td>
 
                     <td className="p-4">

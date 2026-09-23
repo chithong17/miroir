@@ -98,8 +98,10 @@ export default function ChatPage({ actorType, initialConversationId = "" }) {
       try { setPendingContext(JSON.parse(stored)); } catch { setPendingContext(null); }
     } else setPendingContext(null);
     loadThread(activeId).catch((error) => setNotice(error.response?.data?.message || "Không tải được tin nhắn."));
-    const base = actorType === "shop" ? "/shop/messages" : "/app/messages";
-    window.history.replaceState({}, "", `${base}/${encodeURIComponent(activeId)}`);
+    const target = actorType === "shop"
+      ? `/shop/dashboard?view=messages&conversation=${encodeURIComponent(activeId)}`
+      : `/app/messages/${encodeURIComponent(activeId)}`;
+    window.history.replaceState({}, "", target);
   }, [activeId, actorType, loadThread]);
 
   useEffect(() => {
@@ -261,7 +263,7 @@ export default function ChatPage({ actorType, initialConversationId = "" }) {
 function ShopChatSidebar({ shop, onLogout }) {
   const { language, toggleLanguage } = useLanguage();
   const links = [
-    { href: "/shop/messages", label: "Tin nhắn", active: true },
+    { href: "/shop/dashboard?view=messages", label: "Tin nhắn", active: true },
     { href: "/shop/dashboard?view=products", label: "Sản phẩm" },
     { href: "/shop/dashboard?view=orders", label: "Đơn hàng" },
     { href: "/shop/dashboard?view=analytics", label: "Phân tích" },

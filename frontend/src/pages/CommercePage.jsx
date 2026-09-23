@@ -39,6 +39,7 @@ import {
   formatMoney,
 } from "../components/ui/index.jsx";
 import { beginCustomerChat } from "../api/chatApi.js";
+import CancelOrderModal from "../components/CancelOrderModal.jsx";
 
 const blankAddress = {
   label: "Nhà riêng",
@@ -876,10 +877,26 @@ function CheckoutView() {
   const [provinces, setProvinces] = useState([]);
   const [wards, setWards] = useState([]);
 
+  const checkoutParams = useMemo(
+    () => new URLSearchParams(window.location.search),
+    [],
+  );
+  // `mode=buy-now` was briefly emitted by the product page. Keep accepting it
+  // so tabs opened before this fix still lead to the intended checkout.
   const isBuyNow =
-    new URLSearchParams(window.location.search).get("buy_now") === "1";
-  const buyNowItemsRaw = sessionStorage.getItem("miroir_buy_now");
-  const buyNowItems = buyNowItemsRaw ? JSON.parse(buyNowItemsRaw) : null;
+    checkoutParams.get("buy_now") === "1" ||
+    checkoutParams.get("mode") === "buy-now";
+  const buyNowItems = useMemo(() => {
+    if (!isBuyNow) return null;
+    try {
+      const parsed = JSON.parse(
+        sessionStorage.getItem("miroir_buy_now") || "null",
+      );
+      return Array.isArray(parsed) && parsed.length ? parsed : null;
+    } catch {
+      return null;
+    }
+  }, [isBuyNow]);
   const version = new URLSearchParams(window.location.search).get("version");
 
   useEffect(() => {
@@ -1585,6 +1602,7 @@ function OrderDetail({ orderId }) {
   const [returns, setReturns] = useState([]);
   const [notice, setNotice] = useState("");
   const [proof, setProof] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const load = () =>
     Promise.all([getMyOrder(orderId), listMyDisputes(), listMyReturns()])
       .then(([result, disputeResult, returnResult]) => {
@@ -1607,9 +1625,12 @@ function OrderDetail({ orderId }) {
     load();
   }, [orderId]);
   if (!order) return <Notice text={notice || "Đang tải đơn hàng..."} />;
-  const canCancel = !["delivered", "cancelled", "expired"].includes(
-    order.orderStatus,
-  );
+  const canCancel = ![
+    "delivered",
+    "cancelled",
+    "expired",
+    "cancel_requested",
+  ].includes(order.orderStatus);
   const canDispute =
     order.paymentStatus === "refunded" ||
     (order.paymentStatus === "refund_pending" &&
@@ -1838,18 +1859,15 @@ function OrderDetail({ orderId }) {
               <Button
                 variant="secondary"
                 className="mt-5 w-full"
-                onClick={async () => {
-                  const reason = window.prompt("Lý do hủy/yêu cầu hủy:") || "";
-                  try {
-                    await cancelMyOrder(order.id, reason);
-                    load();
-                  } catch (e) {
-                    setNotice(e.response?.data?.message);
-                  }
-                }}
+                onClick={() => setShowCancelModal(true)}
               >
                 Hủy / yêu cầu hủy
               </Button>
+            ) : null}
+            {order.orderStatus === "cancel_requested" ? (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-center text-xs font-bold text-amber-800">
+                Đã gửi yêu cầu hủy đơn · Chờ người bán xem xét
+              </div>
             ) : null}
             {canDispute ? (
               <Button
@@ -1874,6 +1892,19 @@ function OrderDetail({ orderId }) {
           </section>
         </aside>
       </div>
+      <CancelOrderModal
+        isOpen={showCancelModal}
+        order={order}
+        onClose={() => setShowCancelModal(false)}
+        onSuccess={() => {
+          setNotice(
+            order.orderStatus === "pending_confirmation"
+              ? "Đã hủy đơn hàng thành công."
+              : "Đã gửi yêu cầu hủy đơn đến người bán."
+          );
+          load();
+        }}
+      />
     </>
   );
 }

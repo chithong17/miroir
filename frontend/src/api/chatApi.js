@@ -63,5 +63,10 @@ export const beginShopOrderChat = async (orderId) => {
   const result = await openChatConversation("shop", { orderId });
   sessionStorage.setItem(`miroir_shop_chat_conversation_${result.conversation.id}`, JSON.stringify(result.conversation));
   sessionStorage.setItem(`miroir_shop_chat_context_${result.conversation.id}`, JSON.stringify({ type: "order", id: orderId }));
-  window.location.href = `/shop/messages/${encodeURIComponent(result.conversation.id)}`;
+  const params = new URLSearchParams({
+    view: "messages",
+    conversation: result.conversation.id,
+  });
+  window.location.href = `/shop/dashboard?${params.toString()}`;
+  return result;
 };

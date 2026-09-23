@@ -27,6 +27,7 @@ import {
   NeuModal,
   NeuTabs,
 } from "./NeuComponents.jsx";
+import { getProductStock, isProductOutOfStock } from "./productInventory.js";
 
 const STATUS_TABS = [
   { id: "all", label: "Tất cả" },
@@ -34,6 +35,26 @@ const STATUS_TABS = [
   { id: "draft", label: "Bản nháp" },
   { id: "out_of_stock", label: "Hết hàng" },
 ];
+
+const EMPTY_BULK_FORM = {
+  category: "",
+  price: "",
+  gender: "",
+  status: "",
+  colors: "",
+  sizes: "",
+  fitType: "",
+  styleTags: "",
+  occasionTags: "",
+  imageUrl: "",
+  description: "",
+};
+
+const splitList = (value) =>
+  String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 export default function SellerProductsView({
   products = [],
@@ -43,6 +64,7 @@ export default function SellerProductsView({
   onArchiveProduct,
   onDeleteProduct,
   onBulkEdit,
+  onBulkDelete,
   onNavigateImport,
   formatMoney,
 }) {
@@ -51,15 +73,20 @@ export default function SellerProductsView({
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
-  const [bulkStatus, setBulkStatus] = useState("published");
+  const [bulkForm, setBulkForm] = useState(EMPTY_BULK_FORM);
+  const [bulkError, setBulkError] = useState("");
+  const [isApplyingBulk, setIsApplyingBulk] = useState(false);
+  const listedProducts = products.filter(
+    (product) => !["archived", "trashed"].includes(product.status) && !product.isDeleted
+  );
 
   // Filtering
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = listedProducts.filter((p) => {
     const matchesStatus =
       activeStatus === "all"
         ? true
         : activeStatus === "out_of_stock"
-        ? p.availability === "out_of_stock" || Number(p.stock) === 0
+        ? isProductOutOfStock(p)
         : p.status === activeStatus;
 
     const matchesSearch =
@@ -83,12 +110,64 @@ export default function SellerProductsView({
     );
   };
 
-  const handleApplyBulk = () => {
-    if (onBulkEdit) {
-      onBulkEdit(selectedIds, { status: bulkStatus });
+  const openBulkModal = () => {
+    setBulkForm(EMPTY_BULK_FORM);
+    setBulkError("");
+    setIsBulkModalOpen(true);
+  };
+
+  const updateBulkField = (field) => (event) => {
+    setBulkForm((current) => ({ ...current, [field]: event.target.value }));
+  };
+
+  const handleApplyBulk = async (event) => {
+    event.preventDefault();
+    const payload = {};
+
+    ["category", "fitType", "imageUrl", "description"].forEach((field) => {
+      const value = bulkForm[field].trim();
+      if (value) payload[field] = value;
+    });
+    ["colors", "sizes", "styleTags", "occasionTags"].forEach((field) => {
+      const value = bulkForm[field].trim();
+      if (value) payload[field] = splitList(value);
+    });
+    if (bulkForm.price.trim()) {
+      const price = Number(bulkForm.price);
+      if (!Number.isFinite(price) || price < 0) {
+        setBulkError("Giá bán phải là một số không âm.");
+        return;
+      }
+      payload.price = price;
     }
+    ["gender", "status"].forEach((field) => {
+      if (bulkForm[field]) payload[field] = bulkForm[field];
+    });
+
+    if (!Object.keys(payload).length) {
+      setBulkError("Hãy nhập ít nhất một trường cần thay đổi.");
+      return;
+    }
+
+    setBulkError("");
+    setIsApplyingBulk(true);
+    const succeeded = await onBulkEdit?.(selectedIds, payload);
+    setIsApplyingBulk(false);
+    if (succeeded === false) return;
+
     setIsBulkModalOpen(false);
     setSelectedIds([]);
+  };
+
+  const handleDeleteProduct = async (product) => {
+    if (!window.confirm(`Đưa “${product.name}” vào thùng rác?`)) return;
+    await onDeleteProduct?.(product.id);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length || !window.confirm(`Đưa ${selectedIds.length} sản phẩm đã chọn vào thùng rác?`)) return;
+    const succeeded = await onBulkDelete?.(selectedIds);
+    if (succeeded !== false) setSelectedIds([]);
   };
 
   return (
@@ -101,10 +180,10 @@ export default function SellerProductsView({
               ...t,
               count:
                 t.id === "all"
-                  ? products.length
+                  ? listedProducts.length
                   : t.id === "out_of_stock"
-                  ? products.filter((p) => p.availability === "out_of_stock" || Number(p.stock) === 0).length
-                  : products.filter((p) => p.status === t.id).length,
+                  ? listedProducts.filter(isProductOutOfStock).length
+                  : listedProducts.filter((p) => p.status === t.id).length,
             }))}
             activeTab={activeStatus}
             onChange={setActiveStatus}
@@ -175,9 +254,17 @@ export default function SellerProductsView({
             <NeuButton
               variant="secondary"
               size="sm"
-              onClick={() => setIsBulkModalOpen(true)}
+              onClick={openBulkModal}
             >
-              Đổi trạng thái hàng loạt
+              Chỉnh sửa hàng loạt
+            </NeuButton>
+            <NeuButton
+              variant="danger"
+              size="sm"
+              icon={Trash2}
+              onClick={handleBulkDelete}
+            >
+              Xóa đã chọn
             </NeuButton>
             <NeuButton
               variant="ghost"
@@ -214,7 +301,8 @@ export default function SellerProductsView({
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProducts.map((product) => {
             const isSelected = selectedIds.includes(product.id);
-            const isOutOfStock = product.availability === "out_of_stock" || Number(product.stock) === 0;
+            const stock = getProductStock(product);
+            const isOutOfStock = stock === 0;
 
             return (
               <div
@@ -283,7 +371,7 @@ export default function SellerProductsView({
                       {formatMoney ? formatMoney(product.price) : `${Number(product.price || 0).toLocaleString()}đ`}
                     </span>
                     <span className="text-xs text-[#6E7D7C]">
-                      Kho: <strong>{product.stock ?? 0}</strong>
+                      Kho: <strong>{stock}</strong>
                     </span>
                   </div>
                 </div>
@@ -313,6 +401,14 @@ export default function SellerProductsView({
                     title="Lưu trữ / Đưa vào thùng rác"
                   >
                     <Archive className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteProduct(product)}
+                    className="neu-icon-btn h-8 w-8 text-red-500 hover:text-red-700"
+                    title="Đưa vào thùng rác"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -350,7 +446,8 @@ export default function SellerProductsView({
               <tbody className="divide-y divide-[#E2EBD5]">
                 {filteredProducts.map((p) => {
                   const isSelected = selectedIds.includes(p.id);
-                  const isOutOfStock = p.availability === "out_of_stock" || Number(p.stock) === 0;
+                  const stock = getProductStock(p);
+                  const isOutOfStock = stock === 0;
 
                   return (
                     <tr
@@ -391,7 +488,7 @@ export default function SellerProductsView({
                         {formatMoney ? formatMoney(p.price) : `${Number(p.price || 0).toLocaleString()}đ`}
                       </td>
                       <td className="p-4 text-xs font-semibold text-[#1F2A2A]">
-                        {p.stock ?? 0} chiếc
+                        {stock} chiếc
                       </td>
                       <td className="p-4">
                         <span className="inline-flex items-center gap-1 text-xs font-bold text-[#8B7CFF]">
@@ -430,6 +527,14 @@ export default function SellerProductsView({
                           >
                             <Archive className="h-3.5 w-3.5" />
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProduct(p)}
+                            className="neu-icon-btn h-8 w-8 text-red-500 hover:text-red-700"
+                            title="Đưa vào thùng rác"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -445,47 +550,49 @@ export default function SellerProductsView({
       <NeuModal
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
-        title="Cập nhật trạng thái hàng loạt"
-        subtitle={`Thay đổi trạng thái cho ${selectedIds.length} sản phẩm đã chọn.`}
+        title="Chỉnh sửa sản phẩm hàng loạt"
+        subtitle={`Các trường đã nhập sẽ được áp dụng cho ${selectedIds.length} sản phẩm; trường trống được giữ nguyên.`}
+        maxWidth="max-w-4xl"
       >
-        <div className="space-y-4">
-          <label className="text-xs font-bold uppercase tracking-wider text-[#6E7D7C]">
-            Chọn trạng thái mới
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setBulkStatus("published")}
-              className={`p-4 rounded-2xl text-center font-bold text-sm transition ${
-                bulkStatus === "published"
-                  ? "neu-btn-primary text-white"
-                  : "neu-btn-raised text-[#1F2A2A]"
-              }`}
-            >
-              Đang bán (Published)
-            </button>
-            <button
-              type="button"
-              onClick={() => setBulkStatus("draft")}
-              className={`p-4 rounded-2xl text-center font-bold text-sm transition ${
-                bulkStatus === "draft"
-                  ? "neu-btn-primary text-white"
-                  : "neu-btn-raised text-[#1F2A2A]"
-              }`}
-            >
-              Bản nháp (Draft)
-            </button>
+        <form className="space-y-5" onSubmit={handleApplyBulk}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <NeuInput label="Danh mục" value={bulkForm.category} onChange={updateBulkField("category")} placeholder="Giữ nguyên" />
+            <NeuInput label="Giá bán (VND)" type="number" min="0" value={bulkForm.price} onChange={updateBulkField("price")} placeholder="Giữ nguyên" />
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#6E7D7C]">Giới tính</label>
+              <select className="neu-input px-4 py-2.5 text-sm" value={bulkForm.gender} onChange={updateBulkField("gender")}>
+                <option value="">Giữ nguyên</option><option value="female">Nữ</option><option value="male">Nam</option><option value="unisex">Unisex</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#6E7D7C]">Trạng thái</label>
+              <select className="neu-input px-4 py-2.5 text-sm" value={bulkForm.status} onChange={updateBulkField("status")}>
+                <option value="">Giữ nguyên</option><option value="published">Đang bán</option><option value="draft">Bản nháp</option><option value="archived">Lưu trữ</option>
+              </select>
+            </div>
+            <NeuInput label="Màu sắc" value={bulkForm.colors} onChange={updateBulkField("colors")} placeholder="Trắng, Đen, Be" helper="Phân cách bằng dấu phẩy" />
+            <NeuInput label="Kích cỡ" value={bulkForm.sizes} onChange={updateBulkField("sizes")} placeholder="S, M, L" helper="Phân cách bằng dấu phẩy" />
+            <NeuInput label="Kiểu dáng" value={bulkForm.fitType} onChange={updateBulkField("fitType")} placeholder="Giữ nguyên" />
+            <NeuInput label="Tag phong cách" value={bulkForm.styleTags} onChange={updateBulkField("styleTags")} placeholder="casual, office" />
+            <NeuInput label="Tag dịp mặc" value={bulkForm.occasionTags} onChange={updateBulkField("occasionTags")} placeholder="work, party" />
+            <NeuInput label="URL ảnh" value={bulkForm.imageUrl} onChange={updateBulkField("imageUrl")} placeholder="https://..." />
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#6E7D7C]">Mô tả</label>
+              <textarea className="neu-input min-h-24 p-3 text-sm" value={bulkForm.description} onChange={updateBulkField("description")} placeholder="Giữ nguyên" />
+            </div>
           </div>
 
+          {bulkError ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{bulkError}</p> : null}
+
           <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-[#E2EBD5]">
-            <NeuButton variant="ghost" onClick={() => setIsBulkModalOpen(false)}>
+            <NeuButton variant="ghost" disabled={isApplyingBulk} onClick={() => setIsBulkModalOpen(false)}>
               Hủy
             </NeuButton>
-            <NeuButton variant="primary" onClick={handleApplyBulk}>
-              Áp dụng thay đổi
+            <NeuButton type="submit" variant="primary" disabled={isApplyingBulk}>
+              {isApplyingBulk ? "Đang áp dụng..." : "Áp dụng thay đổi"}
             </NeuButton>
           </div>
-        </div>
+        </form>
       </NeuModal>
     </div>
   );

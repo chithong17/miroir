@@ -191,7 +191,13 @@ function App() {
   }
 
   if (pathname === "/shop/messages" || pathname.startsWith("/shop/messages/")) {
-    return <ChatPage actorType="shop" initialConversationId={pathname.startsWith("/shop/messages/") ? decodeURIComponent(pathname.split("/").pop()) : ""} />;
+    const conversationId = pathname.startsWith("/shop/messages/")
+      ? decodeURIComponent(pathname.split("/").pop())
+      : "";
+    const params = new URLSearchParams({ view: "messages" });
+    if (conversationId) params.set("conversation", conversationId);
+    window.location.replace(`/shop/dashboard?${params.toString()}`);
+    return null;
   }
 
   if (pathname.startsWith("/shop/products/")) {
