@@ -3,6 +3,9 @@ import axios from "axios";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 90000);
 const GEMINI_RETRY_COUNT = Number(process.env.GEMINI_RETRY_COUNT || 1);
+const GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_TIMEOUT_MS = Number(process.env.GROQ_TIMEOUT_MS || 90000);
+const GROQ_RETRY_COUNT = Number(process.env.GROQ_RETRY_COUNT || 1);
 
 const getGeminiErrorMessage = (error, action, model) => {
   if (!axios.isAxiosError(error)) {
@@ -25,6 +28,18 @@ const getApiKey = () => {
 
   if (!apiKey) {
     const error = new Error("Gemini is not configured. Set GEMINI_API_KEY.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  return apiKey;
+};
+
+const getGroqApiKey = () => {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) {
+    const error = new Error("Groq is not configured. Set GROQ_API_KEY.");
     error.statusCode = 503;
     throw error;
   }
@@ -72,7 +87,7 @@ const parseGeminiJson = (text) => {
   return JSON.parse(jsonText);
 };
 
-const isTransientGeminiError = (error) => {
+const isTransientRequestError = (error) => {
   if (!axios.isAxiosError(error)) {
     return false;
   }
@@ -186,11 +201,42 @@ const postGeminiGeneration = async ({ url, systemPrompt, payload, model }) =>
     { timeout: GEMINI_TIMEOUT_MS }
   );
 
-export const generateStylistRecommendation = async (payload) => {
-  const apiKey = getApiKey();
-  const model = process.env.GEMINI_GENERATION_MODEL || "gemini-3.5-flash";
-  const url = `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`;
+const getGroqErrorMessage = (error, model) => {
+  if (!axios.isAxiosError(error)) return error.message;
 
+  const status = error.response?.status;
+  const apiMessage =
+    error.response?.data?.error?.message ||
+    error.response?.data?.message ||
+    error.message;
+
+  return `Groq generation failed for model "${model}"${
+    status ? ` with status ${status}` : ""
+  }: ${apiMessage}`;
+};
+
+const postGroqGeneration = async ({ apiKey, systemPrompt, payload, model }) =>
+  axios.post(
+    GROQ_CHAT_COMPLETIONS_URL,
+    {
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: JSON.stringify(payload) },
+      ],
+      temperature: 0.35,
+      response_format: { type: "json_object" },
+    },
+    {
+      timeout: GROQ_TIMEOUT_MS,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+export const generateStylistRecommendation = async (payload) => {
   const systemPrompt = `You are MIROIR AI Stylist.
 You are a professional fashion consultant.
 You MUST ONLY recommend products that appear in the provided retrievedProducts context.
@@ -239,6 +285,55 @@ Return JSON only using this schema:
 }
 Set recommended_outfit to the first item in outfits for backward compatibility.`;
 
+  // GROQ_API_KEY automatically enables Groq, while existing environments remain
+  // on Gemini until that key is configured. Set STYLIST_GENERATION_PROVIDER
+  // explicitly to "groq" or "gemini" when a fixed provider is preferred.
+  const provider = (
+    process.env.STYLIST_GENERATION_PROVIDER ||
+    (process.env.GROQ_API_KEY ? "groq" : "gemini")
+  ).toLowerCase();
+
+  if (provider === "groq") {
+    const apiKey = getGroqApiKey();
+    const model = process.env.GROQ_GENERATION_MODEL || "openai/gpt-oss-20b";
+    let response;
+
+    for (let attempt = 0; attempt <= GROQ_RETRY_COUNT; attempt += 1) {
+      try {
+        response = await postGroqGeneration({ apiKey, systemPrompt, payload, model });
+        break;
+      } catch (error) {
+        if (attempt >= GROQ_RETRY_COUNT || !isTransientRequestError(error)) {
+          throw new Error(getGroqErrorMessage(error, model));
+        }
+      }
+    }
+
+    if (!response) {
+      throw new Error(`Groq generation failed for model "${model}": no response`);
+    }
+
+    try {
+      const text = response.data?.choices?.[0]?.message?.content || "";
+      if (!text) throw new Error("Groq generation response was empty.");
+      return parseGeminiJson(text);
+    } catch (error) {
+      throw new Error(
+        `Groq generation returned invalid JSON for model "${model}": ${error.message}`
+      );
+    }
+  }
+
+  if (provider !== "gemini") {
+    throw new Error(
+      `Unsupported STYLIST_GENERATION_PROVIDER "${provider}". Use "groq" or "gemini".`
+    );
+  }
+
+  const apiKey = getApiKey();
+  const model = process.env.GEMINI_GENERATION_MODEL || "gemini-3.5-flash";
+  const url = `${GEMINI_BASE_URL}/models/${model}:generateContent?key=${apiKey}`;
+
   let response;
 
   for (let attempt = 0; attempt <= GEMINI_RETRY_COUNT; attempt += 1) {
@@ -251,7 +346,7 @@ Set recommended_outfit to the first item in outfits for backward compatibility.`
       });
       break;
     } catch (error) {
-      if (attempt >= GEMINI_RETRY_COUNT || !isTransientGeminiError(error)) {
+      if (attempt >= GEMINI_RETRY_COUNT || !isTransientRequestError(error)) {
         throw new Error(getGeminiErrorMessage(error, "generation", model));
       }
     }
