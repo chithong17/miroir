@@ -21,7 +21,8 @@ import { getUserToken } from "./api/userApi.js";
 
 function App() {
   const rawPathname = window.location.pathname;
-  const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
+  const pathname =
+    rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
 
   if (pathname === "/" || pathname === "/hero2") {
     if (getAdminToken()) {
@@ -118,7 +119,11 @@ function App() {
   }
 
   if (pathname.startsWith("/products/")) {
-    return <ProductDetailPage productId={decodeURIComponent(pathname.split("/").pop())} />;
+    return (
+      <ProductDetailPage
+        productId={decodeURIComponent(pathname.split("/").pop())}
+      />
+    );
   }
 
   if (pathname === "/onboarding/profile") {
@@ -138,7 +143,11 @@ function App() {
   }
 
   if (pathname.startsWith("/app/products/")) {
-    return <ProductDetailPage productId={decodeURIComponent(pathname.split("/").pop())} />;
+    return (
+      <ProductDetailPage
+        productId={decodeURIComponent(pathname.split("/").pop())}
+      />
+    );
   }
 
   if (pathname === "/app/outfits") {
@@ -166,11 +175,25 @@ function App() {
   if (pathname === "/app/addresses") return <CommercePage mode="addresses" />;
   if (pathname === "/app/orders") return <CommercePage mode="orders" />;
   if (pathname.startsWith("/app/orders/")) {
-    return <CommercePage mode="order" orderId={decodeURIComponent(pathname.split("/").pop())} />;
+    return (
+      <CommercePage
+        mode="order"
+        orderId={decodeURIComponent(pathname.split("/").pop())}
+      />
+    );
   }
 
   if (pathname === "/app/messages" || pathname.startsWith("/app/messages/")) {
-    return <ChatPage actorType="user" initialConversationId={pathname.startsWith("/app/messages/") ? decodeURIComponent(pathname.split("/").pop()) : ""} />;
+    return (
+      <ChatPage
+        actorType="user"
+        initialConversationId={
+          pathname.startsWith("/app/messages/")
+            ? decodeURIComponent(pathname.split("/").pop())
+            : ""
+        }
+      />
+    );
   }
 
   if (pathname.startsWith("/app/shops/")) {
@@ -191,11 +214,24 @@ function App() {
   }
 
   if (pathname === "/shop/messages" || pathname.startsWith("/shop/messages/")) {
-    return <ChatPage actorType="shop" initialConversationId={pathname.startsWith("/shop/messages/") ? decodeURIComponent(pathname.split("/").pop()) : ""} />;
+    return (
+      <ChatPage
+        actorType="shop"
+        initialConversationId={
+          pathname.startsWith("/shop/messages/")
+            ? decodeURIComponent(pathname.split("/").pop())
+            : ""
+        }
+      />
+    );
   }
 
   if (pathname.startsWith("/shop/products/")) {
-    return <ShopProductWorkspacePage productId={decodeURIComponent(pathname.split("/").pop())} />;
+    return (
+      <ShopProductWorkspacePage
+        productId={decodeURIComponent(pathname.split("/").pop())}
+      />
+    );
   }
 
   if (pathname === "/admin/login") {

@@ -68,6 +68,7 @@ export default function HeroCargoPantsCanvas() {
     let pointerRatio = 0;
     let interactionYaw = DEFAULT_YAW;
     let isDragging = false;
+    let lastInteractionTime = Date.now();
     let dragStartX = 0;
     let dragStartYaw = DEFAULT_YAW;
     pivot.rotation.y = DEFAULT_YAW;
@@ -161,11 +162,13 @@ export default function HeroCargoPantsCanvas() {
     );
 
     const handleWindowPointerMove = (event) => {
+      lastInteractionTime = Date.now();
       pointerRatio = THREE.MathUtils.clamp((event.clientX / window.innerWidth) * 2 - 1, -1, 1);
       if (!isDragging) targetYaw = interactionYaw + pointerRatio * 0.28;
     };
 
     const handlePointerDown = (event) => {
+      lastInteractionTime = Date.now();
       isDragging = true;
       dragStartX = event.clientX;
       dragStartYaw = interactionYaw;
@@ -174,6 +177,7 @@ export default function HeroCargoPantsCanvas() {
     };
 
     const handlePointerMove = (event) => {
+      lastInteractionTime = Date.now();
       if (!isDragging) return;
       interactionYaw = dragStartYaw + (event.clientX - dragStartX) * 0.012;
       targetYaw = interactionYaw;
@@ -199,7 +203,13 @@ export default function HeroCargoPantsCanvas() {
       frameId = 0;
       if (disposed || !isInViewport || document.hidden) return;
 
+      if (!isDragging && Date.now() - lastInteractionTime > 2000) {
+        interactionYaw += 0.002;
+        targetYaw = interactionYaw + pointerRatio * 0.28;
+      }
+
       currentYaw += (targetYaw - currentYaw) * 0.09;
+
       pivot.rotation.set(0, currentYaw, 0);
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
