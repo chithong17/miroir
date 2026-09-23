@@ -5,6 +5,8 @@ import { getActiveShopsByIds } from "./shop.service.js";
 import { isGrowthPlan, isSubscriptionActive } from "./subscription.service.js";
 
 const asArray = (value) => (Array.isArray(value) ? value : []);
+const allowZeroStockForStylistDemo =
+  String(process.env.STYLIST_DEMO_INCLUDE_ZERO_STOCK || "").toLowerCase() === "true";
 
 const intersects = (left = [], right = []) => {
   const normalized = new Set(asArray(left).map((item) => String(item).toLowerCase()));
@@ -98,7 +100,13 @@ const catalogFallbackSearch = async ({ request, queryText, productFilter }) => {
     $and: [
       ...(productFilter.$and || []),
       { status: "published" },
-      { variants: { $elemMatch: { active: true, stockQuantity: { $gt: 0 } } } },
+      {
+        variants: {
+          $elemMatch: allowZeroStockForStylistDemo
+            ? { active: true }
+            : { active: true, stockQuantity: { $gt: 0 } },
+        },
+      },
     ],
   };
   const [products, outfits, fashionRules] = await Promise.all([
@@ -251,7 +259,11 @@ export const retrieveStylistContext = async ({ request, memory }) => {
         product.status === "published" &&
         product.shopId &&
         activeShopById.has(product.shopId) &&
-        product.variants?.some((variant) => variant.active && variant.stockQuantity > 0)
+        product.variants?.some(
+          (variant) =>
+            variant.active &&
+            (allowZeroStockForStylistDemo || Number(variant.stockQuantity || 0) > 0)
+        )
     )
     .map((product) => {
       const shop = activeShopById.get(product.shopId);
