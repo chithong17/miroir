@@ -49,6 +49,7 @@ import SellerProfileView from "../components/seller/SellerProfileView.jsx";
 import SellerImportView from "../components/seller/SellerImportView.jsx";
 import SellerTrashView from "../components/seller/SellerTrashView.jsx";
 import { NeuModal, NeuButton, NeuInput } from "../components/seller/NeuComponents.jsx";
+import ShopOrderModal from "../components/seller/ShopOrderModal.jsx";
 import {
   Sparkles,
   Lightbulb,
@@ -168,6 +169,7 @@ const formatPercent = (value) => `${Math.round(Number(value || 0) * 100)}%`;
 
 function ShopDashboardPage() {
   const { t } = useLanguage();
+  const initialMessageConversationId = new URLSearchParams(window.location.search).get("conversation") || "";
   const [view, setView] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get("view");
     return ["overview", "messages", "products", "orders", "analytics", "insights", "billing", "trash", "shop", "import"].includes(requested)
@@ -949,10 +951,12 @@ function ShopDashboardPage() {
       {view === "messages" && (
         <SellerMessagesView
           shop={shop}
+          initialConversationId={initialMessageConversationId}
           onNavigateOrder={async (orderId) => {
             const ord = (await getShopOrder(orderId)).order;
             setSelectedOrder(ord);
             setView("orders");
+            window.history.replaceState({}, "", "/shop/dashboard?view=orders");
           }}
         />
       )}
@@ -994,10 +998,7 @@ function ShopDashboardPage() {
             const ord = (await getShopOrder(id)).order;
             setSelectedOrder(ord);
           }}
-          onStartChat={async (orderId) => {
-            await beginShopOrderChat(orderId);
-            setView("messages");
-          }}
+          onStartChat={beginShopOrderChat}
           formatMoney={formatMoney}
         />
       )}
@@ -1299,7 +1300,7 @@ function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onChecko
         </div>
 
         <nav className="flex gap-1 overflow-x-auto px-3 py-3 lg:grid lg:gap-1 lg:overflow-visible lg:py-4">
-          <a href="/shop/messages" className="group flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 lg:w-full"><ShopNavIcon name="messages" /><span className="whitespace-nowrap lg:min-w-0 lg:flex-1">{t("shopAdmin.messages")}</span>{chatUnreadCount ? <span className="rounded-full bg-[#86A95E] px-2 py-0.5 text-[11px] font-black text-white">{chatUnreadCount}</span> : null}</a>
+          <a href="/shop/dashboard?view=messages" className="group flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 lg:w-full"><ShopNavIcon name="messages" /><span className="whitespace-nowrap lg:min-w-0 lg:flex-1">{t("shopAdmin.messages")}</span>{chatUnreadCount ? <span className="rounded-full bg-[#86A95E] px-2 py-0.5 text-[11px] font-black text-white">{chatUnreadCount}</span> : null}</a>
           {primaryItems.map(renderItem)}
           <p className="mt-3 hidden px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400 lg:block">{t("shopAdmin.manage")}</p>
           {manageItems.map(renderItem)}
@@ -3000,252 +3001,7 @@ function ReturnManagement({ returns, reload }) {
   return <section className="rounded-xl border border-line bg-white p-4 shadow-sm"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-black">Trung tâm trả hàng</h2><p className="mt-1 text-sm text-muted">Mỗi yêu cầu chỉ hiển thị hành động cần làm tiếp theo.</p></div><span className="rounded-full bg-accentSoft px-3 py-1 text-sm font-bold text-mintDeep">{returns.length} yêu cầu</span></div>{notice ? <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{notice}</p> : null}<div className="mt-4 grid gap-3">{returns.map((item) => <article className="rounded-xl border border-line p-4" key={item.id}><div className="flex flex-wrap justify-between gap-2"><div><p className="font-mono font-black">{commerceCode(item.orderCode)}</p><p className="mt-1 text-sm font-bold text-mintDeep">{shopReturnStatus[item.status] || item.status}</p></div><p className="text-lg font-black">{formatMoney(item.refundAmount)}</p></div><p className="mt-3 text-sm font-semibold">{item.items.map((line) => `${line.name} × ${line.quantity}`).join(", ")}</p><p className="mt-1 text-sm text-muted">Khách ghi: {item.reason}</p>{item.shipment ? <p className="mt-2 rounded-lg bg-panel p-2 text-sm"><strong>Mã vận đơn:</strong> {item.shipment.trackingCode}</p> : null}{item.status === "requested" ? <div className="mt-4 flex flex-wrap gap-2"><button className={`${buttonBase} bg-mintDeep text-white`} onClick={() => chooseDecision(item, true)}>Duyệt yêu cầu</button><button className={`${buttonBase} border border-red-200 text-red-700`} onClick={() => chooseDecision(item, false)}>Từ chối</button></div> : null}{selectedId === item.id ? <div className="mt-4 grid gap-3 rounded-xl bg-panel p-3"><p className="font-bold">{decision.approved ? "Duyệt và gửi hướng dẫn trả hàng" : "Từ chối yêu cầu"}</p><textarea className={fieldClass} placeholder="Lý do xử lý *" value={decision.reason} onChange={(event) => setDecision({ ...decision, reason: event.target.value })} />{decision.approved ? <textarea className={fieldClass} placeholder="Địa chỉ hoặc hướng dẫn gửi trả *" value={decision.instructions} onChange={(event) => setDecision({ ...decision, instructions: event.target.value })} /> : null}<div className="flex gap-2"><button disabled={busy} className={`${buttonBase} bg-mintDeep text-white`} onClick={() => submitDecision(item)}>Xác nhận</button><button className={`${buttonBase} border border-line`} onClick={() => setSelectedId("")}>Hủy</button></div></div> : null}{item.status === "return_shipped" ? <div className="mt-4 rounded-xl bg-accentSoft p-3"><p className="text-sm">Kiểm tra hàng thực tế, sau đó xác nhận để tự cộng tồn kho và mở bước hoàn tiền.</p><button disabled={busy} className={`${buttonBase} mt-3 bg-mintDeep text-white`} onClick={() => receive(item)}>Đã nhận hàng trả</button></div> : null}{item.status === "refund_pending" ? <div className="mt-4 grid gap-2 rounded-xl bg-accentSoft p-3"><p className="text-sm">Chuyển {formatMoney(item.refundAmount)} vào tài khoản khách đã cung cấp, rồi tải biên lai.</p><input className={fieldClass} placeholder="Ghi chú chuyển tiền (tùy chọn)" value={notes[item.id] || ""} onChange={(event) => setNotes((current) => ({ ...current, [item.id]: event.target.value }))} /><input className={fieldClass} type="file" accept="image/*" onChange={(event) => setProofs((current) => ({ ...current, [item.id]: event.target.files?.[0] || null }))} /><button disabled={busy} className={`${buttonBase} bg-mintDeep text-white`} onClick={() => refund(item)}>Xác nhận đã hoàn tiền</button></div> : null}</article>)}</div></section>;
 }
 
-function ShopOrderModal({ onChanged, onClose, order }) {
-  const [notice, setNotice] = useState("");
-  const [refundProof, setRefundProof] = useState(null);
-  const [copied, setCopied] = useState(false);
-
-  const copyCode = () => {
-    navigator.clipboard.writeText(order.orderCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
-
-  const actStatus = async (status) => {
-    const reason = status === "cancelled" ? window.prompt("Lý do hủy đơn (bắt buộc):") : "";
-    if (status === "cancelled" && !reason) return;
-    try {
-      await updateShopOrderStatus(order.id, status, reason);
-      await onChanged();
-    } catch (e) {
-      setNotice(e.response?.data?.message || "Không cập nhật được trạng thái.");
-    }
-  };
-
-  const actPayment = async (action) => {
-    const reason = ["reject_transfer", "mark_refunded"].includes(action)
-      ? window.prompt(action === "reject_transfer" ? "Lý do từ chối:" : "Ghi chú hoàn tiền:")
-      : "";
-    try {
-      await updateShopOrderPayment(order.id, action, reason, action === "mark_refunded" ? refundProof : null);
-      await onChanged();
-    } catch (e) {
-      setNotice(e.response?.data?.message || "Không cập nhật được thanh toán.");
-    }
-  };
-
-  const nextStatuses = {
-    pending_confirmation: ["confirmed", "cancelled"],
-    confirmed: ["preparing", "cancelled"],
-    preparing: ["shipping", "cancelled"],
-    shipping: ["delivered", "cancelled"],
-  }[order.orderStatus] || [];
-
-  return (
-    <div
-      className="fixed inset-0 z-[120] grid place-items-center bg-[#1F241D]/35 p-4 backdrop-blur-md transition-all animate-fadeIn"
-      onMouseDown={onClose}
-    >
-      <div
-        className="shop-order-modal neu-card max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[18px] bg-[#FFFFFF] p-6 sm:p-8 border border-[#E2EBD5]"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#E2EBD5] pb-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase tracking-wider text-[#6F8746]">Chi tiết đơn hàng</span>
-              <span className="rounded-full bg-[#F1F5E8] px-2.5 py-0.5 text-[11px] font-bold text-[#6F8746]">
-                {commerceOrderLabels[order.orderStatus] || order.orderStatus}
-              </span>
-            </div>
-            <div className="mt-2 flex items-center gap-3">
-              <span className="font-mono text-2xl font-black text-[#1F2A2A] tracking-wider">
-                {commerceCode(order.orderCode)}
-              </span>
-              <button
-                type="button"
-                onClick={copyCode}
-                className="neu-card-sm flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#6E7D7C] hover:text-[#1F2A2A]"
-                title="Sao chép mã đơn"
-              >
-                {copied ? <Check className="h-3.5 w-3.5 text-[#6F8746]" /> : <Copy className="h-3.5 w-3.5" />}
-                {copied ? "Đã chép" : "Sao chép"}
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-[#8C9B9A]">
-              Thanh toán: <strong className="text-[#1F2A2A]">{commercePaymentLabels[order.paymentStatus] || order.paymentStatus}</strong>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="neu-btn-primary flex items-center gap-2 !px-4 !py-2.5 text-xs"
-              onClick={() => beginShopOrderChat(order.id)}
-            >
-              <MessageSquare className="h-4 w-4" />
-              Nhắn khách
-            </button>
-            <button
-              type="button"
-              className="neu-icon-btn text-[#8C9B9A] hover:text-[#1F2A2A]"
-              onClick={onClose}
-              title="Đóng"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
-        {notice ? (
-          <div className="mt-4 rounded-2xl bg-red-50/90 border border-red-200 p-3.5 text-xs font-bold text-red-700">
-            {notice}
-          </div>
-        ) : null}
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
-          <div className="grid gap-5">
-            <section className="neu-card-sm p-5">
-              <h3 className="text-sm font-black text-[#1F2A2A] uppercase tracking-wider mb-3">Người nhận & Địa chỉ</h3>
-              <div className="neu-inset p-4 rounded-2xl bg-white/70">
-                <p className="font-black text-[#1F2A2A] text-base">{order.recipient.name}</p>
-                <p className="mt-0.5 text-xs font-bold text-[#6F8746]">{order.recipient.phone}</p>
-                <p className="mt-2 text-xs text-[#6E7D7C] leading-relaxed">{order.recipient.fullAddress}</p>
-                {order.recipient.note ? (
-                  <p className="mt-2 text-xs font-medium text-[#8C9B9A] italic">Ghi chú: "{order.recipient.note}"</p>
-                ) : null}
-              </div>
-            </section>
-
-            <section className="neu-card-sm p-5">
-              <h3 className="text-sm font-black text-[#1F2A2A] uppercase tracking-wider mb-3">Sản phẩm trong đơn</h3>
-              <div className="divide-y divide-[#E2EBD5]">
-                {order.items.map((item) => (
-                  <div className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0" key={item.variantId}>
-                    <div className="min-w-0">
-                      <p className="font-bold text-[#1F2A2A] text-sm truncate">{item.name}</p>
-                      <p className="mt-0.5 text-xs text-[#8C9B9A]">
-                        SKU: <span className="font-mono text-[#6E7D7C]">{item.sku}</span> · {item.color || "Mặc định"} / {item.size || "Một cỡ"} · <strong className="text-[#1F2A2A]">x{item.quantity}</strong>
-                      </p>
-                    </div>
-                    <span className="font-black text-sm text-[#1F2A2A] shrink-0">
-                      {formatMoney(item.lineTotal)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {order.paymentProof?.imageUrl ? (
-              <section className="neu-card-sm p-5">
-                <h3 className="text-sm font-black text-[#1F241D] uppercase tracking-wider mb-3">Biên lai chuyển khoản</h3>
-                <div className="neu-inset rounded-2xl p-2 flex justify-center">
-                  <img className="max-h-72 rounded-xl object-contain shadow-sm" src={order.paymentProof.imageUrl} alt="Biên lai" />
-                </div>
-              </section>
-            ) : null}
-          </div>
-
-          <aside className="grid h-fit gap-5">
-            <section className="neu-inset p-5 rounded-3xl bg-[#EEF3E7]/70">
-              <p className="text-xs font-bold text-[#8C9388] uppercase tracking-wider">Tổng giá trị đơn</p>
-              <p className="mt-1 text-3xl font-black text-[#6F8746]">{formatMoney(order.total)}</p>
-
-              {order.paymentSnapshot ? (
-                <div className="mt-4 pt-3 border-t border-[#E1E7D8]/60 text-xs">
-                  <p className="font-bold text-[#6E756B]">{order.paymentSnapshot.bankName}</p>
-                  <p className="font-mono font-black text-sm text-[#1F241D]">{order.paymentSnapshot.accountNumber}</p>
-                  <p className="font-medium text-[#6E756B]">{order.paymentSnapshot.accountHolder}</p>
-                  <p className="mt-2 font-mono text-[11px] bg-white/70 p-2 rounded-xl text-[#6F8746]">
-                    Nội dung: {order.transferContent}
-                  </p>
-                </div>
-              ) : null}
-            </section>
-
-            <section className="neu-card-sm p-5">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#1F241D] mb-3">Cập nhật tiến độ</h3>
-              <div className="grid gap-2">
-                {nextStatuses.map((st) => (
-                  <button
-                    className={st === "cancelled" ? "neu-btn-raised text-red-600 hover:text-red-700 !py-2.5 text-xs" : "neu-btn-primary !py-2.5 text-xs"}
-                    key={st}
-                    onClick={() => actStatus(st)}
-                  >
-                    {commerceOrderLabels[st] || st}
-                  </button>
-                ))}
-                {order.orderStatus === "cancel_requested" ? (
-                  <>
-                    <button
-                      className="neu-btn-primary !py-2.5 text-xs"
-                      onClick={async () => {
-                        await decideShopCancellation(order.id, true, "Shop chấp nhận");
-                        onChanged();
-                      }}
-                    >
-                      Chấp nhận hủy
-                    </button>
-                    <button
-                      className="neu-btn-raised !py-2.5 text-xs"
-                      onClick={async () => {
-                        await decideShopCancellation(order.id, false, "Shop từ chối");
-                        onChanged();
-                      }}
-                    >
-                      Từ chối hủy
-                    </button>
-                  </>
-                ) : null}
-              </div>
-            </section>
-
-            <section className="neu-card-sm p-5">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#1F241D] mb-3">Đối soát thanh toán</h3>
-              <div className="grid gap-2.5">
-                {["cod_pending", "awaiting_transfer", "pending_verification"].includes(order.paymentStatus) ? (
-                  <button
-                    className="neu-btn-primary !py-2.5 text-xs"
-                    onClick={() => actPayment("confirm_paid")}
-                  >
-                    Xác nhận đã nhận tiền
-                  </button>
-                ) : null}
-
-                {order.paymentStatus === "pending_verification" ? (
-                  <button
-                    className="neu-btn-raised text-red-600 hover:text-red-700 !py-2.5 text-xs"
-                    onClick={() => actPayment("reject_transfer")}
-                  >
-                    Từ chối biên lai
-                  </button>
-                ) : null}
-
-                {order.paymentStatus === "refund_pending" ? (
-                  <div className="grid gap-2">
-                    <label className="text-[11px] font-bold text-[#6E756B]">Tải ảnh chứng từ hoàn tiền:</label>
-                    <input
-                      className="neu-input px-3 py-2 text-xs"
-                      type="file"
-                      accept="image/*"
-                      onChange={(event) => setRefundProof(event.target.files?.[0] || null)}
-                    />
-                    <button
-                      className="neu-btn-primary !py-2.5 text-xs"
-                      onClick={() => actPayment("mark_refunded")}
-                    >
-                      Đánh dấu đã hoàn tiền
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          </aside>
-        </div>
-      </div>
-    </div>
-  );
-}
+// ShopOrderModal is imported from ../components/seller/ShopOrderModal.jsx
 
 function Field({ children, label, wide = false }) {
   return (

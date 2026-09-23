@@ -860,7 +860,7 @@ export function ProductPurchaseActions({
         },
       ]),
     );
-    window.location.href = "/app/checkout?mode=buy-now";
+    window.location.href = "/app/checkout?buy_now=1";
   };
 
   if (!variants.length)
