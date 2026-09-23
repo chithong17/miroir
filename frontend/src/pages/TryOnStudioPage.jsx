@@ -219,22 +219,24 @@ export default function TryOnStudioPage() {
 
         <div className="relative z-10 max-w-[1600px] w-full mx-auto flex flex-col flex-1">
           
-          {/* HERO TITLE */}
-          <div className="text-center mb-6 sm:mb-8 shrink-0">
-            <p className="text-[11px] font-black text-[#91B76F] uppercase tracking-[0.25em] mb-2">Studio AI</p>
-            <h1 className="text-3xl md:text-5xl font-extrabold text-[#101512] tracking-tight font-display mb-2.5">
-              Thử đồ cùng AI
-            </h1>
-            <p className="text-[13px] md:text-[15px] text-gray-500 font-medium max-w-md mx-auto">
-              Tải ảnh, chọn sản phẩm và khám phá phong cách phù hợp nhất với bạn.
-            </p>
-          </div>
+
 
           {/* MAIN LAYOUT */}
-          <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 xl:gap-8 items-stretch justify-center flex-1 min-h-0">
+          <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 xl:gap-8 items-stretch justify-center flex-1 min-h-0 lg:mt-[100px]">
             
             {/* LEFT PALETTE (Floating Tools) */}
-            <aside className="w-full lg:w-[260px] xl:w-[280px] shrink-0 order-2 lg:order-1 flex flex-col gap-4">
+            <aside className="w-full lg:w-[260px] xl:w-[280px] shrink-0 order-2 lg:order-1 flex flex-col gap-4 relative">
+              
+              {/* HERO TITLE */}
+              <div className="text-left mb-2 sm:mb-4 shrink-0 px-2 lg:px-0 lg:absolute lg:bottom-full lg:left-0 lg:mb-8 lg:w-[380px]">
+                <p className="text-[11px] font-black text-[#91B76F] uppercase tracking-[0.25em] mb-2">Studio AI</p>
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-[#101512] tracking-tight font-display mb-2.5">
+                  Thử đồ cùng AI
+                </h1>
+                <p className="text-[13px] text-gray-500 font-medium">
+                  Tải ảnh, chọn sản phẩm và khám phá phong cách phù hợp nhất với bạn.
+                </p>
+              </div>
               <div className={glassPanelClass}>
                 <div className="absolute inset-[1px] rounded-[inherit] pointer-events-none bg-gradient-to-br from-white/60 to-transparent z-0" />
                 
@@ -280,25 +282,26 @@ export default function TryOnStudioPage() {
             </aside>
 
             {/* CENTER STAGE (Dominant Hero) */}
-            <div className="w-full lg:min-w-[500px] lg:max-w-[700px] lg:flex-1 shrink-0 order-1 lg:order-2 flex flex-col">
-              <div className="relative w-full aspect-[3/4] sm:aspect-[4/5] lg:aspect-auto lg:h-full lg:min-h-[640px] bg-white rounded-[32px] sm:rounded-[40px] shadow-[0_24px_80px_rgba(40,60,30,0.06)] border-[6px] sm:border-[8px] border-white/80 overflow-hidden flex flex-col group isolation-isolate">
-                
-                {/* State Toggle Pill */}
-                <div className="absolute top-5 sm:top-6 left-1/2 -translate-x-1/2 z-30 flex bg-white/90 backdrop-blur-md p-1.5 rounded-full border border-gray-100 shadow-sm transition-all duration-300 opacity-95 hover:opacity-100">
-                  <button 
-                    onClick={() => setPreviewState('original')} 
-                    className={`px-5 sm:px-6 py-1.5 sm:py-2 text-[12px] sm:text-[13px] font-bold rounded-full transition-all duration-300 ${previewState === 'original' ? 'bg-[#101512] text-white shadow-md' : 'text-gray-400 hover:text-[#101512]'}`}
-                  >
-                    Ảnh gốc
-                  </button>
-                  <button 
-                    onClick={() => setPreviewState('result')} 
-                    disabled={!resultUrl} 
-                    className={`px-5 sm:px-6 py-1.5 sm:py-2 text-[12px] sm:text-[13px] font-bold rounded-full transition-all duration-300 ${previewState === 'result' ? 'bg-[#91B76F] text-white shadow-md' : 'text-gray-400 hover:text-[#101512] disabled:opacity-40 disabled:cursor-not-allowed'}`}
-                  >
-                    Kết quả AI
-                  </button>
-                </div>
+            <div className="w-full lg:min-w-[400px] lg:max-w-[600px] lg:flex-1 shrink-0 order-1 lg:order-2 flex flex-col items-center justify-start lg:mt-0 relative">
+              
+              {/* State Toggle Pill */}
+              <div className="relative z-30 mb-4 sm:mb-6 flex bg-white/90 backdrop-blur-md p-1.5 rounded-full border border-gray-100 shadow-sm transition-all duration-300 mx-auto lg:absolute lg:bottom-full lg:left-1/2 lg:-translate-x-1/2 lg:mb-8">
+                <button 
+                  onClick={() => setPreviewState('original')} 
+                  className={`px-5 sm:px-6 py-1.5 sm:py-2 text-[12px] sm:text-[13px] font-bold rounded-full transition-all duration-300 ${previewState === 'original' ? 'bg-[#101512] text-white shadow-md' : 'text-gray-400 hover:text-[#101512]'}`}
+                >
+                  Ảnh gốc
+                </button>
+                <button 
+                  onClick={() => setPreviewState('result')} 
+                  disabled={!resultUrl} 
+                  className={`px-5 sm:px-6 py-1.5 sm:py-2 text-[12px] sm:text-[13px] font-bold rounded-full transition-all duration-300 ${previewState === 'result' ? 'bg-[#91B76F] text-white shadow-md' : 'text-gray-400 hover:text-[#101512] disabled:opacity-40 disabled:cursor-not-allowed'}`}
+                >
+                  Kết quả AI
+                </button>
+              </div>
+
+              <div className="relative w-full max-w-[500px] aspect-[3/4] sm:aspect-[4/5] max-h-[calc(100vh-280px)] bg-white rounded-[32px] sm:rounded-[40px] shadow-[0_24px_80px_rgba(40,60,30,0.06)] border-[4px] sm:border-[6px] border-white/80 overflow-hidden flex flex-col group isolation-isolate mx-auto">
 
                 {/* Main Render Area */}
                 <div className="w-full h-full relative bg-[#F8FAF7]">

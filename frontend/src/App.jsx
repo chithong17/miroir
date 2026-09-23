@@ -34,6 +34,11 @@ function App() {
       return null;
     }
 
+    if (getUserToken()) {
+      window.location.replace("/app");
+      return null;
+    }
+
     return <HeroPage2 />;
   }
 
