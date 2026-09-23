@@ -78,7 +78,6 @@ const buildGenerationPayload = ({ body, memory, context }) => ({
     rerankScore: product.rerankScore,
   })),
   reviewSummaries: context.reviewSummaries,
-  retrievedOutfits: context.outfits,
   retrievedFashionRules: context.fashionRules,
   outputRules: {
     allowedProductIds: context.products.slice(0, 18).map((product) => product.id),
