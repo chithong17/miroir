@@ -861,7 +861,7 @@ function AddressBook() {
           <h2 className="mb-4 text-xl font-black">
             {editingId ? "Sửa địa chỉ" : "Thêm địa chỉ"}
           </h2>
-          <AddressFields {...{ form, setForm, provinces, wards }} />
+          <AddressFields {...{ form, setForm, provinces, districts, wards }} />
           <Button className="mt-4 w-full" type="submit">
             Lưu địa chỉ
           </Button>
@@ -993,7 +993,7 @@ function CheckoutView() {
     } else if (!manual && selected) {
       const addr = addresses.find((a) => a.id === selected);
       if (addr) {
-        addressObj = { province: addr.province, district: addr.district, ward: addr.ward, address_detail: addr.addressLine };
+        addressObj = { province: addr.provinceName, district: addr.districtName, ward: addr.wardName, address_detail: addr.addressLine };
       }
     }
 
