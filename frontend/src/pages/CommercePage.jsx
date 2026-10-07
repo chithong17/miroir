@@ -693,7 +693,6 @@ function AddressFields({ form, setForm, provinces, districts, wards }) {
           </option>
         ))}
       </SelectField>
-      </SelectField>
       <SelectField
         label="Quận/Huyện"
         required
