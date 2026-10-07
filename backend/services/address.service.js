@@ -9,9 +9,9 @@ export const normalizeRecipient = (body = {}, { requireLabel = false } = {}) => 
   const phone = clean(body.phone);
   const addressLine = clean(body.addressLine);
   const label = clean(body.label) || "Khác";
-  if (!recipientName || !phone || !addressLine || !body.provinceCode || !body.wardCode) {
+  if (!recipientName || !phone || !addressLine || !body.provinceCode || !body.districtCode || !body.wardCode) {
     const error = new Error(
-      "recipientName, phone, provinceCode, wardCode and addressLine are required."
+      "recipientName, phone, provinceCode, districtCode, wardCode and addressLine are required."
     );
     error.statusCode = 400;
     throw error;
@@ -28,7 +28,7 @@ export const normalizeRecipient = (body = {}, { requireLabel = false } = {}) => 
     phone,
     ...location,
     addressLine,
-    fullAddress: `${addressLine}, ${location.wardName}, ${location.provinceName}`,
+    fullAddress: `${addressLine}, ${location.wardName}, ${location.districtName}, ${location.provinceName}`,
   };
 };
 

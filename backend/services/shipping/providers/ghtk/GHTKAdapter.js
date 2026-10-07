@@ -28,13 +28,14 @@ export class GHTKAdapter {
   async calculateFee(req, config) {
     try {
       // Mocking request parameters to GHTK format
+      const deliveryAddress = req.deliveryAddress || {};
       const params = {
         pick_province: req.pick_province || "Hà Nội",
         pick_district: req.pick_district || "Quận Đống Đa",
-        province: req.province || "Hồ Chí Minh",
-        district: req.district || "Quận 1",
-        weight: req.weight || 500, // gram
-        value: req.value || 0,
+        province: deliveryAddress.province || deliveryAddress.provinceName || "Hồ Chí Minh",
+        district: deliveryAddress.district || deliveryAddress.districtName || "Quận 1",
+        weight: req.itemsWeight || 500, // gram
+        value: req.itemsValue || 0,
         deliver_option: "none"
       };
 

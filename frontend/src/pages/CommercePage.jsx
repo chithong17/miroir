@@ -47,6 +47,7 @@ const blankAddress = {
   recipientName: "",
   phone: "",
   provinceCode: "",
+  districtCode: "",
   wardCode: "",
   addressLine: "",
   note: "",
@@ -656,12 +657,13 @@ function CartView() {
   );
 }
 
-function AddressFields({ form, setForm, provinces, wards }) {
+function AddressFields({ form, setForm, provinces, districts, wards }) {
   const change = (field) => (event) =>
     setForm((current) => ({
       ...current,
       [field]: event.target.value,
-      ...(field === "provinceCode" ? { wardCode: "" } : {}),
+      ...(field === "provinceCode" ? { districtCode: "", wardCode: "" } : {}),
+      ...(field === "districtCode" ? { wardCode: "" } : {}),
     }));
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -686,6 +688,20 @@ function AddressFields({ form, setForm, provinces, wards }) {
       >
         <option value="">Chọn tỉnh/thành</option>
         {provinces.map((item) => (
+          <option key={item.code} value={item.code}>
+            {item.name}
+          </option>
+        ))}
+      </SelectField>
+      </SelectField>
+      <SelectField
+        label="Quận/Huyện"
+        required
+        value={form.districtCode}
+        onChange={change("districtCode")}
+      >
+        <option value="">Chọn quận/huyện</option>
+        {districts.map((item) => (
           <option key={item.code} value={item.code}>
             {item.name}
           </option>
@@ -717,6 +733,7 @@ function AddressFields({ form, setForm, provinces, wards }) {
 
 function useLocations(form) {
   const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
   const [version, setVersion] = useState("");
   useEffect(() => {
@@ -727,10 +744,15 @@ function useLocations(form) {
   }, []);
   useEffect(() => {
     if (form.provinceCode)
-      listWards(form.provinceCode).then((result) => setWards(result.wards));
-    else setWards([]);
+      listDistricts(form.provinceCode).then((result) => setDistricts(result.districts));
+    else setDistricts([]);
   }, [form.provinceCode]);
-  return { provinces, wards, version };
+  useEffect(() => {
+    if (form.districtCode)
+      listWards(form.districtCode).then((result) => setWards(result.wards));
+    else setWards([]);
+  }, [form.districtCode]);
+  return { provinces, districts, wards, version };
 }
 
 function AddressBook() {
@@ -738,7 +760,7 @@ function AddressBook() {
   const [form, setForm] = useState(blankAddress);
   const [editingId, setEditingId] = useState("");
   const [notice, setNotice] = useState("");
-  const { provinces, wards, version } = useLocations(form);
+  const { provinces, districts, wards, version } = useLocations(form);
   const load = () =>
     listAddresses()
       .then((result) => setAddresses(result.addresses || []))
@@ -878,6 +900,7 @@ function CheckoutView() {
   const [busy, setBusy] = useState(false);
 
   const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
 
   const checkoutParams = useMemo(
@@ -909,11 +932,19 @@ function CheckoutView() {
   }, []);
   useEffect(() => {
     if (form.provinceCode)
-      listWards(form.provinceCode)
+      listDistricts(form.provinceCode)
+        .then((result) => setDistricts(result.districts))
+        .catch(() => {});
+    else setDistricts([]);
+  }, [form.provinceCode]);
+
+  useEffect(() => {
+    if (form.districtCode)
+      listWards(form.districtCode)
         .then((result) => setWards(result.wards))
         .catch(() => {});
     else setWards([]);
-  }, [form.provinceCode]);
+  }, [form.districtCode]);
 
   useEffect(() => {
     if (isBuyNow && !buyNowItems) {
@@ -955,14 +986,15 @@ function CheckoutView() {
     if (!cart?.groups) return;
     
     let addressObj = null;
-    if (manual && form.provinceCode && form.wardCode && form.addressLine) {
+    if (manual && form.provinceCode && form.districtCode && form.wardCode && form.addressLine) {
       const province = provinces.find((p) => p.code === form.provinceCode)?.name || "";
+      const district = districts.find((d) => d.code === form.districtCode)?.name || "";
       const ward = wards.find((w) => w.code === form.wardCode)?.name || "";
-      addressObj = { province, ward, address_detail: form.addressLine };
+      addressObj = { province, district, ward, address_detail: form.addressLine };
     } else if (!manual && selected) {
       const addr = addresses.find((a) => a.id === selected);
       if (addr) {
-        addressObj = { province: addr.province, ward: addr.ward, address_detail: addr.addressLine };
+        addressObj = { province: addr.province, district: addr.district, ward: addr.ward, address_detail: addr.addressLine };
       }
     }
 
@@ -971,12 +1003,14 @@ function CheckoutView() {
     cart.groups.forEach(async (group) => {
       if (!group.shop) return;
       try {
-        const rates = await calculateShippingRates({
+        const response = await calculateShippingRates({
           shopId: group.shop.id,
           deliveryAddress: addressObj,
           itemsValue: group.subtotal,
           itemsWeight: 1000 // default
         });
+        
+        const rates = response.data || [];
         
         if (rates && rates.length > 0) {
           setShippingRates((prev) => ({ ...prev, [group.shop.id]: rates }));
@@ -996,6 +1030,7 @@ function CheckoutView() {
         form.recipientName &&
         form.phone &&
         form.provinceCode &&
+        form.districtCode &&
         form.wardCode &&
         form.addressLine,
       )
@@ -1097,7 +1132,7 @@ function CheckoutView() {
 
             {manual ? (
               <div className="relative mt-6">
-                <AddressFields {...{ form, setForm, provinces, wards }} />
+                <AddressFields {...{ form, setForm, provinces, districts, wards }} />
                 <TextField
                   className="mt-4"
                   label="Ghi chú"

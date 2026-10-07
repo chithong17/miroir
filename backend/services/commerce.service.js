@@ -225,6 +225,7 @@ export const checkoutCart = async ({ userId, body }) => {
         recipient: {
           name: recipient.recipientName, phone: recipient.phone,
           provinceCode: recipient.provinceCode, provinceName: recipient.provinceName,
+          districtCode: recipient.districtCode, districtName: recipient.districtName,
           wardCode: recipient.wardCode, wardName: recipient.wardName,
           addressLine: recipient.addressLine, fullAddress: recipient.fullAddress,
           note: recipient.note || "", datasetVersion: recipient.datasetVersion,

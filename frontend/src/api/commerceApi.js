@@ -33,7 +33,8 @@ export const updateAddress = async (id, payload) => (await client.put(`/users/me
 export const setDefaultAddress = async (id) => (await client.patch(`/users/me/addresses/${encodeURIComponent(id)}/default`)).data;
 export const deleteAddress = async (id) => (await client.delete(`/users/me/addresses/${encodeURIComponent(id)}`)).data;
 export const listProvinces = async () => (await client.get("/locations/provinces")).data;
-export const listWards = async (provinceCode) => (await client.get(`/locations/provinces/${encodeURIComponent(provinceCode)}/wards`)).data;
+export const listDistricts = async (provinceCode) => (await client.get(`/locations/provinces/${encodeURIComponent(provinceCode)}/districts`)).data;
+export const listWards = async (districtCode) => (await client.get(`/locations/districts/${encodeURIComponent(districtCode)}/wards`)).data;
 
 export const listNotifications = async () => (await client.get("/notifications")).data;
 export const readNotification = async (id) => (await client.patch(`/notifications/${encodeURIComponent(id)}/read`)).data;
