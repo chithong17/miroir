@@ -48,5 +48,6 @@ export const ensureCommerceIndexes = async () => {
       { shopId: 1, "variants.sku": 1 },
       { unique: true, partialFilterExpression: { "variants.0": { $exists: true } } }
     ),
+    db.collection("shop_shipping_configs").createIndex({ shopId: 1, provider: 1 }, { unique: true }),
   ]);
 };

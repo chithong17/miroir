@@ -6,6 +6,7 @@ import {
   addToMyCart, cancelMyOrder, checkout, myCart, myOrder, myOrders, previewMyBuyNow,
   removeMyCartItem, reportMyTransfer, setMyCartAddress, submitMyFitFeedback, updateMyCartItem,
 } from "../controllers/commerce.controller.js";
+import { calculateShippingRatesForCheckout } from "../controllers/shipping.controller.js";
 
 const router = Router();
 router.use(requireUser);
@@ -14,6 +15,7 @@ router.post("/cart/items", addToMyCart);
 router.put("/cart/items/:productId/:variantId", updateMyCartItem);
 router.delete("/cart/items/:productId/:variantId", removeMyCartItem);
 router.patch("/cart/address", setMyCartAddress);
+router.post("/shipping-rates", calculateShippingRatesForCheckout);
 router.post("/buy-now/preview", previewMyBuyNow);
 router.post("/checkout", checkout);
 router.get("/me", myOrders);

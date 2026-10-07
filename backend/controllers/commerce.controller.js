@@ -5,6 +5,7 @@ import {
   previewBuyNow, removeCartItem, reportTransfer, selectCartAddress, updateCartItem,
   updateShopOrderStatus, updateShopPayment,
 } from "../services/commerce.service.js";
+import { createShippingOrder } from "../services/shipping/shipping.service.js";
 import { createFitFeedback } from "../services/fit.service.js";
 import { syncOrderCommission } from "../services/billing.service.js";
 
@@ -29,6 +30,31 @@ export const submitMyFitFeedback = async (req, res, next) => { try { res.status(
 
 export const shopOrders = async (req, res, next) => { try { res.json({ success: true, orders: await listShopOrders({ ownerId: req.owner.id, query: req.query }) }); } catch (e) { next(e); } };
 export const shopOrder = async (req, res, next) => { try { res.json({ success: true, order: await getShopOrder({ ownerId: req.owner.id, orderId: req.params.orderId }) }); } catch (e) { next(e); } };
-export const changeShopOrderStatus = async (req, res, next) => { try { const order = await updateShopOrderStatus({ ownerId: req.owner.id, orderId: req.params.orderId, status: req.body.status, reason: req.body.reason }); await syncOrderCommission(order.id).catch((error) => console.error("Commission sync deferred:", error)); res.json({ success: true, order }); } catch (e) { next(e); } };
+export const changeShopOrderStatus = async (req, res, next) => {
+  try {
+    const order = await updateShopOrderStatus({
+      ownerId: req.owner.id,
+      orderId: req.params.orderId,
+      status: req.body.status,
+      reason: req.body.reason
+    });
+    
+    // Tạo đơn giao hàng khi shop chuẩn bị hàng xong và chuyển sang "shipping"
+    if (req.body.status === "shipping" && order.shippingProvider) {
+      try {
+        const shippingResult = await createShippingOrder(order.shopId, order);
+        console.log("[Shipping] Order created on Provider:", shippingResult);
+        // Có thể mở rộng bằng cách update collection orders với trackingCode
+      } catch (err) {
+        console.error("[Shipping] Failed to create shipping order:", err.message);
+      }
+    }
+    
+    await syncOrderCommission(order.id).catch((error) => console.error("Commission sync deferred:", error));
+    res.json({ success: true, order });
+  } catch (e) {
+    next(e);
+  }
+};
 export const resolveShopCancellation = async (req, res, next) => { try { res.json({ success: true, order: await decideCancellation({ ownerId: req.owner.id, orderId: req.params.orderId, approved: req.body.approved === true, reason: req.body.reason }) }); } catch (e) { next(e); } };
 export const changeShopPayment = async (req, res, next) => { try { const order = await updateShopPayment({ ownerId: req.owner.id, orderId: req.params.orderId, action: req.body.action, reason: req.body.reason, proof: await proofFromFile(req.file) }); await syncOrderCommission(order.id).catch((error) => console.error("Commission sync deferred:", error)); res.json({ success: true, order }); } catch (e) { next(e); } };

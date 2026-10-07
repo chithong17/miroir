@@ -17,6 +17,7 @@ export const removeCartItem = async (productId, variantId) => (await client.dele
 export const selectCartAddress = async (addressId) => (await client.patch("/users/me/cart/address", { addressId })).data;
 export const previewBuyNow = async (items) => (await client.post("/orders/buy-now/preview", { items })).data;
 export const checkoutCart = async (payload) => (await client.post("/orders/checkout", payload)).data;
+export const calculateShippingRates = async (payload) => (await client.post("/orders/shipping-rates", payload)).data;
 export const listMyOrders = async (params) => (await client.get("/orders/me", { params })).data;
 export const getMyOrder = async (id) => (await client.get(`/orders/me/${encodeURIComponent(id)}`)).data;
 export const cancelMyOrder = async (id, reason) => (await client.post(`/orders/me/${encodeURIComponent(id)}/cancel`, { reason })).data;

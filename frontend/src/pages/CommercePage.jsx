@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   cancelMyOrder,
   checkoutCart,
+  calculateShippingRates,
   createAddress,
   deleteAddress,
   getCart,
@@ -871,6 +872,8 @@ function CheckoutView() {
   const [setAsDefault, setSetAsDefault] = useState(false);
   const [savedAddressNote, setSavedAddressNote] = useState("");
   const [methods, setMethods] = useState({});
+  const [shippingRates, setShippingRates] = useState({});
+  const [selectedShipping, setSelectedShipping] = useState({});
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -948,6 +951,46 @@ function CheckoutView() {
     if (selected) selectCartAddress(selected).catch(() => {});
   }, [selected]);
 
+  useEffect(() => {
+    if (!cart?.groups) return;
+    
+    let addressObj = null;
+    if (manual && form.provinceCode && form.wardCode && form.addressLine) {
+      const province = provinces.find((p) => p.code === form.provinceCode)?.name || "";
+      const ward = wards.find((w) => w.code === form.wardCode)?.name || "";
+      addressObj = { province, ward, address_detail: form.addressLine };
+    } else if (!manual && selected) {
+      const addr = addresses.find((a) => a.id === selected);
+      if (addr) {
+        addressObj = { province: addr.province, ward: addr.ward, address_detail: addr.addressLine };
+      }
+    }
+
+    if (!addressObj) return;
+
+    cart.groups.forEach(async (group) => {
+      if (!group.shop) return;
+      try {
+        const rates = await calculateShippingRates({
+          shopId: group.shop.id,
+          deliveryAddress: addressObj,
+          itemsValue: group.subtotal,
+          itemsWeight: 1000 // default
+        });
+        
+        if (rates && rates.length > 0) {
+          setShippingRates((prev) => ({ ...prev, [group.shop.id]: rates }));
+          setSelectedShipping((prev) => {
+            if (prev[group.shop.id]) return prev;
+            return { ...prev, [group.shop.id]: rates[0] };
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch shipping rates", error);
+      }
+    });
+  }, [cart, selected, manual, form, addresses, provinces, wards]);
+
   const recipientReady = manual
     ? Boolean(
         form.recipientName &&
@@ -965,6 +1008,7 @@ function CheckoutView() {
       const payload = {
         idempotencyKey: crypto.randomUUID(),
         paymentMethods: methods,
+        shippingMethods: selectedShipping,
         ...(buyNowItems ? { buyNowItems } : {}),
         ...(manual
           ? { recipient: form, saveAddress, setAsDefault }
@@ -1215,7 +1259,7 @@ function CheckoutView() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2">Phí giao hàng</span>
-                <span className="font-bold text-[#4F733C]">Theo shop</span>
+                <span className="font-bold text-[#4F733C]">{Object.keys(selectedShipping).length > 0 ? formatMoney(Object.values(selectedShipping).reduce((sum, rate) => sum + (rate?.fee || 0), 0)) : "Đang tính..."}</span>
               </div>
             </div>
 
@@ -1226,11 +1270,11 @@ function CheckoutView() {
                 Tổng cộng
               </span>
               <span className="text-[22px] sm:text-2xl font-black text-[#4F733C]">
-                {formatMoney(cart?.subtotal || 0)}
+                {formatMoney((cart?.subtotal || 0) + Object.values(selectedShipping).reduce((sum, rate) => sum + (rate?.fee || 0), 0))}
               </span>
             </div>
             <p className="mt-1 text-right text-[11px] font-semibold text-gray-400">
-              Chưa bao gồm phí vận chuyển
+              Đã bao gồm VAT và Phí vận chuyển
             </p>
 
             <button
@@ -1308,7 +1352,7 @@ function CheckoutView() {
   );
 }
 
-function CheckoutShopGroup({ group, method, onMethodChange }) {
+function CheckoutShopGroup({ group, method, onMethodChange, shippingRates, selectedShipping, onShippingChange }) {
   const itemCount = (group.items || []).reduce(
     (sum, item) => sum + Number(item.quantity || 0),
     0,
@@ -1409,6 +1453,44 @@ function CheckoutShopGroup({ group, method, onMethodChange }) {
           </div>
         ))}
       </div>
+
+      {shippingRates && shippingRates.length > 0 && (
+        <div className="mt-7 border-t border-[#EEF3E9] pt-6">
+          <p className="mb-4 text-sm font-black text-[#1E2B22] uppercase tracking-wider">
+            Đơn vị vận chuyển
+          </p>
+          <div className="grid gap-3">
+            {shippingRates.map((rate, idx) => {
+              const isSelected = selectedShipping?.service_id === rate.service_id;
+              return (
+                <label
+                  key={idx}
+                  className={`rounded-2xl border-2 p-4 cursor-pointer transition-all flex items-center justify-between ${isSelected ? "border-[#4F733C] bg-[#F6FAF2]" : "border-[#EDF2E8] bg-white hover:border-[#C9DAB9]"}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      className="hidden"
+                      checked={isSelected}
+                      onChange={() => onShippingChange(rate)}
+                    />
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "border-[#4F733C]" : "border-[#E1E8D8]"}`}>
+                      {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#4F733C]" />}
+                    </div>
+                    <div>
+                      <strong className="text-sm font-black text-[#1E2B22] block">{rate.provider} - {rate.service_name || "Giao hàng"}</strong>
+                      <span className="text-[12px] text-gray-500">Dự kiến: {rate.expected_delivery_time || "Vài ngày tới"}</span>
+                    </div>
+                  </div>
+                  <strong className="text-sm font-black text-[#4F733C]">
+                    {formatMoney(rate.fee || 0)}
+                  </strong>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-7 border-t border-[#EEF3E9] pt-6">
         <p className="mb-4 text-sm font-black text-[#1E2B22] uppercase tracking-wider">

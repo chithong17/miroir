@@ -13,6 +13,7 @@ import passwordResetRoutes from "./routes/passwordReset.routes.js";
 import shopAuthRoutes from "./routes/shopAuth.routes.js";
 import shopProductRoutes from "./routes/shopProduct.routes.js";
 import shopRoutes from "./routes/shop.routes.js";
+import shippingRoutes from "./routes/shipping.routes.js";
 import stylistRoutes from "./routes/stylist.routes.js";
 import tryOnRoutes from "./routes/tryon.routes.js";
 import userAuthRoutes from "./routes/userAuth.routes.js";
@@ -173,6 +174,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/auth", passwordResetRoutes);
 app.use("/api/shop-auth", shopAuthRoutes);
 app.use("/api/shops", shopRoutes);
+app.use("/api/shipping-configs", shippingRoutes);
 app.use("/api/shop-products", shopProductRoutes);
 
 app.use((err, _req, res, _next) => {

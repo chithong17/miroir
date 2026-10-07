@@ -48,6 +48,7 @@ import SellerBillingView from "../components/seller/SellerBillingView.jsx";
 import SellerProfileView from "../components/seller/SellerProfileView.jsx";
 import SellerImportView from "../components/seller/SellerImportView.jsx";
 import SellerTrashView from "../components/seller/SellerTrashView.jsx";
+import ShopShippingSettings from "../components/seller/ShopShippingSettings.jsx";
 import { NeuModal, NeuButton, NeuInput } from "../components/seller/NeuComponents.jsx";
 import ShopOrderModal from "../components/seller/ShopOrderModal.jsx";
 import {
@@ -172,7 +173,7 @@ function ShopDashboardPage() {
   const initialMessageConversationId = new URLSearchParams(window.location.search).get("conversation") || "";
   const [view, setView] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get("view");
-    return ["overview", "messages", "products", "orders", "analytics", "insights", "billing", "trash", "shop", "import"].includes(requested)
+    return ["overview", "messages", "products", "orders", "analytics", "insights", "billing", "trash", "shop", "import", "shipping"].includes(requested)
       ? requested
       : "overview";
   });
@@ -1059,6 +1060,8 @@ function ShopDashboardPage() {
         />
       )}
 
+      {view === "shipping" && <ShopShippingSettings />}
+      
       {view === "shop" && (
         <SellerProfileView
           shop={shop}
@@ -1250,6 +1253,7 @@ function DashboardSidebar({ chatUnreadCount, hasActiveShopPlan, logout, onChecko
   const manageItems = [
     ["billing", t("shopAdmin.billing"), "billing"],
     ["shop", t("shopAdmin.shopProfile"), "shop"],
+    ["shipping", "Vận chuyển", "truck"],
     ["import", t("shopAdmin.excelImport"), "import"],
     ["trash", t("shopAdmin.trash"), "trash"],
   ];
@@ -1337,6 +1341,7 @@ function ShopNavIcon({ active = false, name }) {
   if (name === "billing") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18M7 15h4" /></svg>;
   if (name === "customers") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 6.5a3 3 0 0 1 0 5.5M16 15a5 5 0 0 1 4.5 4" /></svg>;
   if (name === "shop") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M3 10h18l-2-6H5l-2 6ZM5 10v10h14V10M9 20v-6h6v6" /><path d="M3 10a3 3 0 0 0 5 2 3 3 0 0 0 4 0 3 3 0 0 0 4 0 3 3 0 0 0 5-2" /></svg>;
+  if (name === "truck") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M5 18H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11v11" /><path d="M14 9h4l4 4v5h-3" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>;
   if (name === "import") return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M12 3v12M8 11l4 4 4-4M5 20h14" /></svg>;
   return <svg viewBox="0 0 24 24" className={iconClass} {...common}><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6" /></svg>;
 }

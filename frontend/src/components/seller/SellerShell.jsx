@@ -21,6 +21,7 @@ import {
   HelpCircle,
   Sparkles,
   Plus,
+  Truck,
 } from "lucide-react";
 import { useLanguage } from "../../i18n.jsx";
 import { NeuSearch, NeuButton, NeuBadge } from "./NeuComponents.jsx";
@@ -34,6 +35,7 @@ export const SELLER_NAV_ITEMS = [
   { id: "insights", label: "Thấu hiểu khách hàng", icon: Sparkles },
   { id: "billing", label: "Gói & thanh toán", icon: CreditCard, dividerBefore: true },
   { id: "shop", label: "Hồ sơ Cửa hàng", icon: Store },
+  { id: "shipping", label: "Vận chuyển", icon: Truck },
   { id: "import", label: "Nhập Excel", icon: FileSpreadsheet },
   { id: "trash", label: "Thùng rác", icon: Trash2, dividerBefore: true },
 ];

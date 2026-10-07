@@ -235,7 +235,12 @@ export const checkoutCart = async ({ userId, body }) => {
           sku: item.variant.sku, color: item.variant.color, size: item.variant.size,
           unitPrice: item.product.price, quantity: item.quantity, lineTotal: item.lineTotal,
         })),
-        subtotal: group.subtotal, shippingFee: 0, total: group.subtotal,
+        subtotal: group.subtotal, 
+        shippingFee: (body.shippingMethods || {})[shop.id]?.fee || 0, 
+        shippingProvider: (body.shippingMethods || {})[shop.id]?.provider || null,
+        shippingServiceId: (body.shippingMethods || {})[shop.id]?.service_id || null,
+        shippingServiceName: (body.shippingMethods || {})[shop.id]?.service_name || null,
+        total: group.subtotal + ((body.shippingMethods || {})[shop.id]?.fee || 0),
         paymentMethod,
         paymentStatus: paymentMethod === "cash" ? "cod_pending" : "awaiting_transfer",
         paymentSnapshot: paymentMethod === "bank_transfer" ? {
