@@ -797,8 +797,11 @@ function ShopDashboardPage() {
     };
   }, [aiJob, loadDashboard]);
 
-  const importExcel = async (event) => {
-    const file = event.target.files?.[0];
+  const importExcel = async (fileOrEvent) => {
+    let file = fileOrEvent;
+    if (fileOrEvent && fileOrEvent.target && fileOrEvent.target.files) {
+      file = fileOrEvent.target.files[0];
+    }
     if (!file) return;
 
     if (!hasActiveShopPlan) {
