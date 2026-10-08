@@ -236,14 +236,10 @@ const validateRows = async ({ db, ownerId, rows }) => {
   const shops = await getOwnerShops({ db, ownerId });
   const errors = [];
   const normalizedRows = [];
-  const singleShop = shops.length === 1 ? shops[0] : null;
+  const singleShop = shops.length > 0 ? shops[0] : null;
 
   if (shops.length > 1) {
-    errors.push({
-      row: 0,
-      field: "shopSlug",
-      message: "This account has multiple shops from older data. Keep one shop before importing.",
-    });
+    console.warn(`User ${ownerId} has multiple shops. Defaulting to first shop: ${singleShop.id}`);
   }
 
   if (!shops.length) {
