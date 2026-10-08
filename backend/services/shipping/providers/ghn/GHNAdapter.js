@@ -123,10 +123,24 @@ export class GHNAdapter extends IShippingProvider {
       config
     );
 
+    // If the shop's database address is missing the ward, GHN will crash because the shop
+    // might not have a fallback address configured on the GHN portal either.
+    // So we pick the first available ward in that district to get an accurate fee estimate.
+    let finalFromWardCode = fromLoc.wardCode;
+    if (!finalFromWardCode && fromLoc.districtId) {
+      if (!cache.wards[fromLoc.districtId]) {
+        const res = await this.request("GET", "/shiip/public-api/master-data/ward", null, config, { district_id: fromLoc.districtId });
+        cache.wards[fromLoc.districtId] = res?.data || [];
+      }
+      if (cache.wards[fromLoc.districtId].length > 0) {
+        finalFromWardCode = cache.wards[fromLoc.districtId][0].WardCode;
+      }
+    }
+
     const payload = {
       shop_id: config.credentials.client_id ? Number(config.credentials.client_id) : undefined,
       from_district_id: fromLoc.districtId,
-      from_ward_code: fromLoc.wardCode,
+      from_ward_code: finalFromWardCode,
       service_type_id: 2, // Standard
       to_district_id: toLoc.districtId,
       to_ward_code: toLoc.wardCode,
