@@ -957,10 +957,13 @@ export default function ShopOrderModal({ onChanged, onClose, order }) {
               {SELLER_CANCEL_REASONS.map((r) => {
                 const sel = cancelReasonId === r.id;
                 return (
-                  <div
-                    key={r.id}
-                    onClick={() => setCancelReasonId(r.id)}
-                    className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer text-xs transition ${
+                    <div
+                      key={r.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCancelReasonId(r.id);
+                      }}
+                      className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer text-xs transition ${
                       sel
                         ? "border-[#597834] bg-[#F2F6ED] font-bold text-[#2A3B18]"
                         : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"

@@ -1969,7 +1969,20 @@ function OrderDetail({ orderId }) {
           ) : null}
           <section className="miroir-card">
             <h2 className="text-xl font-black">Tóm tắt thanh toán</h2>
-            <div className="mt-5 grid gap-3 rounded-2xl bg-[#F5F8F2] p-4 text-sm text-[#66705F]"><div className="flex items-center justify-between"><span>Tạm tính ({order.items.length} sản phẩm)</span><strong className="text-[#1E2B22]">{formatMoney(order.total)}</strong></div><div className="flex items-center justify-between"><span>Phí giao hàng</span><strong className="text-[#1E2B22]">—</strong></div></div>
+            <div className="mt-5 grid gap-3 rounded-2xl bg-[#F5F8F2] p-4 text-sm text-[#66705F]">
+              <div className="flex items-center justify-between">
+                <span>Tạm tính ({order.items.length} sản phẩm)</span>
+                <strong className="text-[#1E2B22]">
+                  {formatMoney(order.total - (order.shippingFee || 0))}
+                </strong>
+              </div>
+              {order.shippingFee ? (
+                <div className="flex items-center justify-between">
+                  <span>Phí giao hàng</span>
+                  <strong className="text-[#1E2B22]">{formatMoney(order.shippingFee)}</strong>
+                </div>
+              ) : null}
+            </div>
             <div className="my-5 border-t border-dashed border-[#D9E5D3]" />
             <div className="flex items-end justify-between gap-3"><p className="font-black">Tổng cộng</p><p className="text-3xl font-black tracking-tight text-[#4F733C]">{formatMoney(order.total)}</p></div>
             <p className="mt-1 text-right text-[11px] font-semibold text-gray-400">Đã bao gồm VAT (nếu có)</p>

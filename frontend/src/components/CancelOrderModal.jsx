@@ -184,7 +184,8 @@ export default function CancelOrderModal({
               return (
                 <div
                   key={reason.id}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (!submitting) {
                       setSelectedReasonId(reason.id);
                       if (errorMessage) setErrorMessage("");
