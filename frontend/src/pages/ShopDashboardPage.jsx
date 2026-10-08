@@ -3033,9 +3033,15 @@ function Notice({ message, type }) {
   const styles =
     type === "error"
       ? "border-red-200 bg-red-50 text-red-700"
-      : "border-slate-200 bg-white text-slate-600";
+      : "border-[#6F8746] bg-[#F1F5E8] text-[#3E4F23]";
 
-  return <div className={`mb-5 rounded-xl border p-3 text-sm ${styles}`}>{message}</div>;
+  return (
+    <div
+      className={`mb-6 rounded-2xl border-2 p-4 text-sm font-black shadow-md animate-in slide-in-from-top-2 duration-300 ${styles}`}
+    >
+      {message}
+    </div>
+  );
 }
 
 function Icon({ name }) {
