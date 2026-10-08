@@ -37,10 +37,16 @@ export class GHNAdapter extends IShippingProvider {
         params,
         timeout: 5000
       });
-      return response.data;
+      
+      const resBody = response.data;
+      if (resBody && resBody.code && resBody.code !== 200) {
+        throw new Error(`[GHN API Error] Code: ${resBody.code}, Message: ${resBody.message}`);
+      }
+      
+      return resBody;
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message;
-      throw new Error(`[GHN Error] ${errorMsg}`);
+      throw new Error(`[GHN Request Error] ${errorMsg}`);
     }
   }
 
@@ -50,6 +56,7 @@ export class GHNAdapter extends IShippingProvider {
     // 1. Province
     if (!cache.provinces) {
       const res = await this.request("GET", "/shiip/public-api/master-data/province", null, config);
+      if (!res || !res.data) throw new Error("GHN API returned empty province data");
       cache.provinces = res.data;
     }
     const tp = clean(provinceName);
@@ -59,6 +66,7 @@ export class GHNAdapter extends IShippingProvider {
     // 2. District
     if (!cache.districts[province.ProvinceID]) {
       const res = await this.request("GET", "/shiip/public-api/master-data/district", null, config, { province_id: province.ProvinceID });
+      if (!res || !res.data) throw new Error(`GHN API returned empty district data for province_id: ${province.ProvinceID}`);
       cache.districts[province.ProvinceID] = res.data;
     }
     const td = clean(districtName);
@@ -70,17 +78,21 @@ export class GHNAdapter extends IShippingProvider {
     if (wardName) {
       if (!cache.wards[district.DistrictID]) {
         const res = await this.request("GET", "/shiip/public-api/master-data/ward", null, config, { district_id: district.DistrictID });
+        if (!res || !res.data) throw new Error(`GHN API returned empty ward data for district_id: ${district.DistrictID}`);
         cache.wards[district.DistrictID] = res.data;
       }
       const tw = clean(wardName);
       const ward = cache.wards[district.DistrictID].find(w => clean(w.WardName) === tw || (w.NameExtension && w.NameExtension.some(ext => clean(ext) === tw)));
-      if (ward) wardCode = ward.WardCode;
+      if (!ward) throw new Error("Cannot map ward: " + wardName);
+      wardCode = ward.WardCode;
     }
 
+    console.log(`[GHN resolveLocation] ${provinceName} -> ${province.ProvinceID}, ${districtName} -> ${district.DistrictID}, ${wardName} -> ${wardCode}`);
     return { provinceId: province.ProvinceID, districtId: district.DistrictID, wardCode };
   }
 
   async calculateFee(req, config) {
+    console.log(`[GHN calculateFee] Initiating for GHN ShopId: ${config.credentials?.client_id || 'Not set'}`);
     const deliveryAddress = req.deliveryAddress || {};
     const pickupAddress = config.pickup_address || {};
 
@@ -108,13 +120,15 @@ export class GHNAdapter extends IShippingProvider {
       insurance_value: req.itemsValue || 0
     };
 
+    console.log(`[GHN calculateFee] Calling API /fee with from_district_id: ${payload.from_district_id}, to_district_id: ${payload.to_district_id}`);
     const res = await this.request("POST", "/shiip/public-api/v2/shipping-order/fee", payload, config);
+    console.log(`[GHN calculateFee] API Response total fee: ${res.data?.total}`);
     
     return {
       provider: "GHN",
       service_id: "GHN_STD",
       service_name: "Giao Hàng Nhanh",
-      fee: res.data.total,
+      fee: res.data?.total || 0,
       expected_delivery_time: "Dự kiến 2-3 ngày"
     };
   }

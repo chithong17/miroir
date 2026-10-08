@@ -42,7 +42,10 @@ export default function ShopShippingSettings() {
       if (ghn) {
         setGhnConfig({
           is_active: ghn.is_active,
-          credentials: { api_token: ghn.credentials?.api_token || "" }
+          credentials: { 
+            api_token: ghn.credentials?.api_token || "",
+            client_id: ghn.credentials?.client_id || ""
+          }
         });
       }
       const ghtk = data.data?.find((c) => c.provider === "GHTK");
@@ -71,7 +74,10 @@ export default function ShopShippingSettings() {
         {
           is_active: ghnConfig.is_active,
           environment: "SANDBOX",
-          credentials: { api_token: ghnConfig.credentials.api_token }
+          credentials: { 
+            api_token: ghnConfig.credentials.api_token,
+            client_id: ghnConfig.credentials.client_id
+          }
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -169,6 +175,21 @@ export default function ShopShippingSettings() {
                 })}
               />
               <p className="text-xs text-muted">Bảo mật: Token sẽ bị ẩn khi tải lại trang.</p>
+            </label>
+
+            <label className="grid gap-2 mt-2">
+              <span className={labelClass}>GHN Shop ID (Bắt buộc)</span>
+              <input
+                className={fieldClass}
+                type="text"
+                placeholder="Nhập Shop ID (ví dụ: 191312) từ dev.ghn.vn"
+                value={ghnConfig.credentials.client_id || ""}
+                onChange={(e) => setGhnConfig({
+                  ...ghnConfig,
+                  credentials: { ...ghnConfig.credentials, client_id: e.target.value }
+                })}
+              />
+              <p className="text-xs text-muted">Bắt buộc để tính phí và tạo đơn hàng trên GHN.</p>
             </label>
 
             {/* In a complete version, Address Selection would go here */}
