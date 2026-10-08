@@ -19,9 +19,9 @@ export const getMyShippingConfigs = async (req, res, next) => {
     // Mask the API tokens before sending to Frontend
     const maskedConfigs = configs.map(config => {
       const { credentials, ...rest } = config;
-      let maskedCredentials = {};
-      if (credentials?.api_token) {
-        maskedCredentials.api_token = "******" + credentials.api_token.slice(-4);
+      let maskedCredentials = { ...credentials };
+      if (maskedCredentials.api_token) {
+        maskedCredentials.api_token = "******" + maskedCredentials.api_token.slice(-4);
       }
       return {
         ...rest,
@@ -46,7 +46,9 @@ export const updateMyShippingConfig = async (req, res, next) => {
     const shopId = shop.id;
     const provider = req.params.provider.toUpperCase();
     
-    // In production, we should validate the req.body properly (e.g. using Joi/Zod)
+    const existingConfigs = await getShopShippingConfig(shopId);
+    const existingConfig = existingConfigs.find(c => c.provider === provider);
+
     const { is_active, credentials, shop_code, pickup_address, environment } = req.body;
 
     const configData = {
@@ -54,14 +56,19 @@ export const updateMyShippingConfig = async (req, res, next) => {
       environment: environment || "SANDBOX"
     };
 
-    if (credentials) configData.credentials = credentials;
     if (shop_code) configData.shop_code = shop_code;
     if (pickup_address) configData.pickup_address = pickup_address;
 
-    // Check if the user is sending a masked token, which means they didn't change it.
-    if (credentials && credentials.api_token && credentials.api_token.startsWith("******")) {
-      // Don't update the credentials if they are masked
-      delete configData.credentials;
+    if (credentials) {
+      configData.credentials = { ...(existingConfig?.credentials || {}) };
+      
+      if (credentials.client_id !== undefined) {
+        configData.credentials.client_id = credentials.client_id;
+      }
+      
+      if (credentials.api_token && !credentials.api_token.startsWith("******")) {
+        configData.credentials.api_token = credentials.api_token;
+      }
     }
 
     const updatedConfig = await updateShopShippingConfig(shopId, provider, configData);
