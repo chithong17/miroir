@@ -28,6 +28,8 @@ import notificationRoutes from "./routes/notification.routes.js";
 import shopNotificationRoutes from "./routes/shopNotification.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import shopChatRoutes from "./routes/shopChat.routes.js";
+import testGhnRoutes from "./routes/testGhn.routes.js";
+import debugRoutes from "./routes/debug.routes.js";
 import { configureCloudinary } from "./services/cloudinary.service.js";
 import { ensureCommerceIndexes } from "./services/commerceIndexes.service.js";
 import { expireCommerceOrders } from "./services/commerce.service.js";
@@ -176,6 +178,8 @@ app.use("/api/shop-auth", shopAuthRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/shipping-configs", shippingRoutes);
 app.use("/api/shop-products", shopProductRoutes);
+app.use("/api/debug", debugRoutes);
+app.use("/api/test-ghn", testGhnRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error("Unhandled server error:", err);
