@@ -63,11 +63,11 @@ export const updateMyShippingConfig = async (req, res, next) => {
       configData.credentials = { ...(existingConfig?.credentials || {}) };
       
       if (credentials.client_id !== undefined) {
-        configData.credentials.client_id = credentials.client_id;
+        configData.credentials.client_id = String(credentials.client_id).trim();
       }
       
       if (credentials.api_token && !credentials.api_token.startsWith("******")) {
-        configData.credentials.api_token = credentials.api_token;
+        configData.credentials.api_token = String(credentials.api_token).trim();
       }
     }
 
