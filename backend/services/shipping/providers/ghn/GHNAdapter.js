@@ -54,7 +54,14 @@ export class GHNAdapter extends IShippingProvider {
   }
 
   async resolveLocation(provinceName, districtName, wardName, config) {
-    const clean = (str) => str ? str.replace(/tỉnh|thành phố|tp\.|tp|quận|huyện|thị xã|phường|xã|thị trấn/gi, "").trim().toLowerCase() : "";
+    const clean = (str) => {
+      if (!str) return "";
+      let s = str.replace(/tỉnh|thành phố|tp\.|tp|quận|huyện|thị xã|phường|xã|thị trấn/gi, "").trim().toLowerCase();
+      s = s.replace(/òa/g, "oà").replace(/óa/g, "oá").replace(/ỏa/g, "oả").replace(/õa/g, "oã").replace(/ọa/g, "oạ");
+      s = s.replace(/òe/g, "oè").replace(/óe/g, "oé").replace(/ỏe/g, "oẻ").replace(/õe/g, "oẽ").replace(/ọe/g, "oẹ");
+      s = s.replace(/ùy/g, "uỳ").replace(/úy/g, "uý").replace(/ủy/g, "uỷ").replace(/ũy/g, "uỹ").replace(/ụy/g, "uỵ");
+      return s;
+    };
     
     // 1. Province
     if (!cache.provinces) {
