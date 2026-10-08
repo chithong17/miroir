@@ -31,7 +31,7 @@ export class GHNAdapter extends IShippingProvider {
         headers: {
           "Content-Type": "application/json",
           "Token": config.credentials.api_token,
-          ...(config.credentials.client_id ? { "ShopId": config.credentials.client_id } : {})
+          ...(config.credentials.client_id ? { "ShopId": Number(config.credentials.client_id) } : {})
         },
         data,
         params,
@@ -111,6 +111,7 @@ export class GHNAdapter extends IShippingProvider {
     );
 
     const payload = {
+      shop_id: config.credentials.client_id ? Number(config.credentials.client_id) : undefined,
       from_district_id: fromLoc.districtId,
       from_ward_code: fromLoc.wardCode,
       service_type_id: 2, // Standard
