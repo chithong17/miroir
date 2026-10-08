@@ -209,7 +209,7 @@ export default function SellerImportView({
             <div className="neu-inset p-4 rounded-2xl text-center bg-white/60">
               <span className="text-xs text-[#6E7D7C] font-medium">Nhập thành công</span>
               <p className="text-2xl font-black text-[#7EDC9A] mt-1">
-                {importResult.createdCount || importResult.importedCount || 0}
+                {importResult.successCount ?? importResult.createdCount ?? importResult.importedCount ?? 0}
               </p>
             </div>
             <div className="neu-inset p-4 rounded-2xl text-center bg-white/60">
