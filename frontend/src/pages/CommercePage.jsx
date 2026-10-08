@@ -1018,9 +1018,12 @@ function CheckoutView() {
             if (prev[group.shop.id]) return prev;
             return { ...prev, [group.shop.id]: rates[0] };
           });
+        } else {
+          setNotice("Không thể tính phí vận chuyển cho địa chỉ này (Có thể do lỗi cấu hình Shop).");
         }
       } catch (error) {
         console.error("Failed to fetch shipping rates", error);
+        setNotice(error.response?.data?.message || "Lỗi khi tính phí vận chuyển từ đối tác.");
       }
     });
   }, [cart, selected, manual, form, addresses, provinces, wards]);

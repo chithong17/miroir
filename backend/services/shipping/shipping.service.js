@@ -64,8 +64,14 @@ export const calculateShippingRates = async (shopId, rateRequestData) => {
   });
 
   const results = await Promise.all(promises);
-  // Loại bỏ các hãng bị lỗi
-  return results.filter(res => res !== null);
+  
+  const validResults = results.filter(res => res !== null);
+  
+  if (activeConfigs.length > 0 && validResults.length === 0) {
+    throw new Error("Không thể tính phí vận chuyển (Lỗi cấu hình shop hoặc sai token). Vui lòng báo shop.");
+  }
+
+  return validResults;
 };
 
 /**
