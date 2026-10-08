@@ -177,6 +177,8 @@ const applyVariantCosts = async ({ db, ownerId, rows }) => {
   for (const [index, row] of rows.entries()) {
     const rowNumber = index + 2;
     const productId = cleanString(row.productId);
+    if (productId.toLowerCase() === "paste an existing product id") continue;
+    
     const sku = cleanString(row.sku).toUpperCase();
     const costPrice = Number(row.costPrice);
     if (!productId || !sku || !Number.isSafeInteger(costPrice) || costPrice < 0) { errors.push({ row: rowNumber, field: "VariantCosts", message: "Valid productId, sku and non-negative integer costPrice are required." }); continue; }
@@ -198,6 +200,8 @@ const applyFitMeasurements = async ({ db, ownerId, rows }) => {
   for (const [index, row] of rows.entries()) {
     const rowNumber = index + 2;
     const productId = cleanString(row.productId);
+    if (productId.toLowerCase() === "paste an existing product id") continue;
+
     const sku = cleanString(row.sku);
     const fitCategory = cleanString(row.fitCategory);
     const fitIntent = cleanString(row.fitIntent) || "regular";
