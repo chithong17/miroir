@@ -70,7 +70,8 @@ export class GHNAdapter extends IShippingProvider {
       cache.provinces = res.data;
     }
     const tp = clean(provinceName);
-    const province = cache.provinces.find(p => clean(p.ProvinceName) === tp || (p.NameExtension && p.NameExtension.some(ext => clean(ext) === tp)));
+    const province = cache.provinces.find(p => clean(p.ProvinceName) === tp) 
+                  || cache.provinces.find(p => p.NameExtension && p.NameExtension.some(ext => clean(ext) === tp));
     if (!province) throw new Error("Cannot map province: " + provinceName);
 
     // 2. District
@@ -80,7 +81,8 @@ export class GHNAdapter extends IShippingProvider {
       cache.districts[province.ProvinceID] = res.data;
     }
     const td = clean(districtName);
-    const district = cache.districts[province.ProvinceID].find(d => clean(d.DistrictName) === td || (d.NameExtension && d.NameExtension.some(ext => clean(ext) === td)));
+    const district = cache.districts[province.ProvinceID].find(d => clean(d.DistrictName) === td) 
+                  || cache.districts[province.ProvinceID].find(d => d.NameExtension && d.NameExtension.some(ext => clean(ext) === td));
     if (!district) throw new Error("Cannot map district: " + districtName);
 
     // 3. Ward (Optional)
@@ -92,7 +94,8 @@ export class GHNAdapter extends IShippingProvider {
         cache.wards[district.DistrictID] = res.data;
       }
       const tw = clean(wardName);
-      const ward = cache.wards[district.DistrictID].find(w => clean(w.WardName) === tw || (w.NameExtension && w.NameExtension.some(ext => clean(ext) === tw)));
+      const ward = cache.wards[district.DistrictID].find(w => clean(w.WardName) === tw) 
+                || cache.wards[district.DistrictID].find(w => w.NameExtension && w.NameExtension.some(ext => clean(ext) === tw));
       if (!ward) throw new Error("Cannot map ward: " + wardName);
       wardCode = ward.WardCode;
     }
