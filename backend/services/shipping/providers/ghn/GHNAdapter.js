@@ -24,10 +24,13 @@ export class GHNAdapter extends IShippingProvider {
       throw new Error("GHN API Token is missing in shop config");
     }
 
+    const isConfigSandbox = config.environment === "SANDBOX" || this.isSandbox;
+    const dynamicBaseURL = isConfigSandbox ? "https://dev-online-gateway.ghn.vn" : "https://online-gateway.ghn.vn";
+
     try {
       const response = await axios({
         method,
-        url: `${this.baseURL}${endpoint}`,
+        url: `${dynamicBaseURL}${endpoint}`,
         headers: {
           "Content-Type": "application/json",
           "Token": config.credentials.api_token,
