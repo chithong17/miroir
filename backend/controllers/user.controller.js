@@ -3,6 +3,7 @@ import { toPublicProduct } from "../services/product.service.js";
 import {
   skipUserProfile,
   updateUserProfile,
+  deleteUserAccount,
 } from "../services/userAuth.service.js";
 
 export const saveMyProfile = async (req, res, next) => {
@@ -94,6 +95,16 @@ export const listFavoriteProducts = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deleteMyAccount = async (req, res, next) => {
+  try {
+    await deleteUserAccount(req.user.id);
+    return res.json({ success: true, message: "Account and personal data deleted successfully." });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 
 

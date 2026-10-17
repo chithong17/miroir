@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "MIROIR",
+    "slug": "miroir-mobile",
+    "scheme": "miroir",
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow MIROIR to access your photos so you can select garments and full-body model pictures for AI Virtual Try-On and avatar styling.",
+          "cameraPermission": "Allow MIROIR to take photos for your virtual try-on fitting and personalized style profile.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-font",
+      "./plugins/withShortCmakePaths"
+    ],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.miroir.mobile",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow MIROIR to access your photos so you can select garments and full-body model pictures for AI Virtual Try-On and avatar styling.",
+        "NSCameraUsageDescription": "Allow MIROIR to take photos for your virtual try-on fitting and personalized style profile."
+      }
+    },
+    "android": {
+      "package": "com.miroir.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFEFA",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

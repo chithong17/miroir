@@ -253,4 +253,16 @@ export const getUserFavoriteProducts = async (userId) => {
   return { products: products.filter((product) => visibleShopIds.has(product.shopId)), shops };
 };
 
+export const deleteUserAccount = async (userId) => {
+  const db = await getMongoDb();
+  await Promise.all([
+    db.collection("users").deleteOne({ id: userId }),
+    db.collection("addresses").deleteMany({ userId }),
+    db.collection("carts").deleteMany({ userId }),
+    db.collection("tryon_tasks").deleteMany({ userId }),
+  ]);
+  return { success: true };
+};
+
+
 

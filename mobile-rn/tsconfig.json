@@ -1,0 +1,30 @@
+{
+  "extends": "expo/tsconfig.base",
+  "include": [
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "index.ts",
+    "e2e/**/*.ts",
+    "playwright.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "android",
+    "ios",
+    ".qa",
+    "dist",
+    "dist-native",
+    "test-results",
+    "playwright-report"
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "types": [
+      "react",
+      "react-native",
+      "node"
+    ]
+  }
+}

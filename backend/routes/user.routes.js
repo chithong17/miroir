@@ -5,6 +5,7 @@ import {
   uploadMyProfilePhoto,
   toggleFavoriteProduct,
   listFavoriteProducts,
+  deleteMyAccount,
 } from "../controllers/user.controller.js";
 import {
   createMyAddress, defaultMyAddress, getMyAddresses, removeMyAddress, updateMyAddress,
@@ -31,5 +32,7 @@ router.post("/me/cart/items", addToMyCart);
 router.put("/me/cart/items/:productId/:variantId", updateMyCartItem);
 router.delete("/me/cart/items/:productId/:variantId", removeMyCartItem);
 router.patch("/me/cart/address", setMyCartAddress);
+router.delete("/me", deleteMyAccount);
+router.delete("/me/account", deleteMyAccount);
 
 export default router;
