@@ -44,6 +44,7 @@ export default function HeroPage2() {
     { labelEn: "Products", labelVi: "Sản phẩm", href: "/products" },
     { labelEn: "Try On", labelVi: "Thử đồ", href: "/try-on" },
     { labelEn: "AI Stylist", labelVi: "Stylist AI", href: "/stylist" },
+    { labelEn: "About", labelVi: "Giới thiệu", href: "/about" },
   ];
 
   return (

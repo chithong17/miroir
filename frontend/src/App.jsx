@@ -18,10 +18,16 @@ import HeroAuthPage from "./pages/HeroAuthPage.jsx";
 import CommercePage from "./pages/CommercePage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import { getUserToken } from "./api/userApi.js";
+import PublicInfoPage, { PUBLIC_INFO_PATHS } from "./pages/PublicInfoPage.jsx";
 
 function App() {
   const rawPathname = window.location.pathname;
   const pathname = rawPathname.length > 1 ? rawPathname.replace(/\/+$/, "") : rawPathname;
+
+  // Public information must stay accessible even with a saved login session.
+  if (PUBLIC_INFO_PATHS.includes(pathname)) {
+    return <PublicInfoPage path={pathname} />;
+  }
 
   if (pathname === "/" || pathname === "/hero2") {
     if (getAdminToken()) {

@@ -11,6 +11,15 @@ export default function HeroEditorialFooter() {
   return (
     <footer className="relative w-full border-t border-mintSoft/60 bg-[#F8FAF5] px-6 pt-24 pb-16 text-ink sm:px-12 sm:pt-32 sm:pb-20 lg:px-20 lg:pt-40 lg:pb-24 overflow-hidden">
       <div className="mx-auto max-w-[1600px]">
+        <nav aria-label="Chính sách và hỗ trợ" className="mb-12 flex flex-wrap gap-x-7 gap-y-4 border-b border-mintSoft/50 pb-8 text-xs text-muted">
+          <a href="/about">Về MIROIR</a>
+          <a href="/policies">Trung tâm chính sách</a>
+          <a href="/privacy">Bảo mật</a>
+          <a href="/ai-policy">Chính sách AI Try-on</a>
+          <a href="/terms">Điều khoản</a>
+          <a href="/delete-account">Xóa tài khoản</a>
+          <a href="/support">Liên hệ hỗ trợ</a>
+        </nav>
         {/* ============================================================ */}
         {/* TOP ROW: Brand Statement + Curated Navigation Columns        */}
         {/* ============================================================ */}

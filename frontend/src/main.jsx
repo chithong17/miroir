@@ -5,15 +5,19 @@ import { FloatingLanguageToggle, LanguageProvider } from "./i18n.jsx";
 import { TryOnProvider } from "./contexts/TryOnContext.jsx";
 import { TryOnStatusBubble } from "./components/ui/TryOnStatusBubble.jsx";
 import "./index.css";
+import PublicInfoPage, { PUBLIC_INFO_PATHS } from "./pages/PublicInfoPage.jsx";
+
+const publicPath = window.location.pathname.replace(/\/+$/, '') || '/';
+const isPublicInfo = PUBLIC_INFO_PATHS.includes(publicPath);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <LanguageProvider>
+    {isPublicInfo ? <PublicInfoPage path={publicPath}/> : <LanguageProvider>
       <TryOnProvider>
         <App />
         <TryOnStatusBubble />
         <FloatingLanguageToggle />
       </TryOnProvider>
-    </LanguageProvider>
+    </LanguageProvider>}
   </React.StrictMode>
 );
