@@ -206,6 +206,9 @@ export const listAdminShopOwners = async ({ status = "pending" } = {}) => {
       planCode: owner.subscription.planCode || null,
       expiresAt: owner.subscription.expiresAt || null,
       grantType: owner.subscription.grantType || null,
+      status: owner.subscription.status || null,
+      startsAt: owner.subscription.startsAt || null,
+      suspendedAt: owner.subscription.suspendedAt || null,
     } : null,
   }));
 };

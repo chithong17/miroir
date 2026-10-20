@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import AdminShell from "../components/admin/AdminShell.jsx";
+import AdminOverview, { AdminSubscriptions } from "../components/admin/AdminOverview.jsx";
+import "../components/admin/admin.css";
 import {
   approveShopOwner,
   archiveAdminProduct,
@@ -96,7 +99,10 @@ const productToForm = (product) => ({
 
 function AdminDashboardPage() {
   const [admin, setAdmin] = useState(null);
-  const [view, setView] = useState("shops");
+  const [view, setView] = useState("overview");
+  const [allShops, setAllShops] = useState([]);
+  const [allOwners, setAllOwners] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const [owners, setOwners] = useState([]);
   const [ownerStatus, setOwnerStatus] = useState("all");
   const [shops, setShops] = useState([]);
@@ -125,11 +131,7 @@ function AdminDashboardPage() {
   const [adminNotifications, setAdminNotifications] = useState([]);
   const [adminUnread, setAdminUnread] = useState(0);
 
-  const activeOwners = useMemo(
-    () => owners.filter((owner) => owner.status === "active"),
-    [owners]
-  );
-  const selectedShop = shops.find((shop) => shop.id === selectedShopId) || null;
+  const selectedShop = allShops.find((shop) => shop.id === selectedShopId) || null;
   const visibleProducts = useMemo(() => {
     if (view === "trash") return products.filter((product) => product.status === "trashed");
     return products.filter((product) => product.status !== "trashed");
@@ -144,16 +146,21 @@ function AdminDashboardPage() {
   };
 
   const loadOwners = async (status = ownerStatus) => {
-    const response = await listShopOwners({ status });
-    setOwners(response.owners || []);
+    const response = await listShopOwners({ status: "all" });
+    const nextOwners = response.owners || [];
+    setAllOwners(nextOwners);
+    setOwners(status === "all" ? nextOwners : nextOwners.filter((owner) => owner.status === status));
   };
 
   const loadShops = async () => {
-    const response = await listAdminShops({ status: shopStatus, search: shopSearch });
-    const nextShops = response.shops || [];
+    const response = await listAdminShops({ status: "all" });
+    const all = response.shops || [];
+    setAllShops(all);
+    const term = shopSearch.toLowerCase().trim();
+    const nextShops = all.filter((shop) => (shopStatus === "all" || shop.status === shopStatus) && `${shop.name} ${shop.slug} ${shop.description || ""}`.toLowerCase().includes(term));
     setShops(nextShops);
 
-    if (selectedShopId && !nextShops.some((shop) => shop.id === selectedShopId)) {
+    if (selectedShopId && !all.some((shop) => shop.id === selectedShopId)) {
       setSelectedShopId("");
       setProducts([]);
       setShopForm(shopDefaults);
@@ -192,9 +199,13 @@ function AdminDashboardPage() {
         const response = await getAdminMe();
         setAdmin(response.admin);
         await Promise.all([loadOwners("all"), loadShops(), loadPaymentPlans(), loadDisputes()]);
-      } catch (_error) {
-        setAdminToken("");
-        window.location.href = "/login";
+      } catch (error) {
+        if ([401, 403].includes(error.response?.status)) {
+          setAdminToken("");
+          window.location.href = "/login";
+        } else {
+          showNotice("Không tải được đầy đủ dữ liệu quản trị. Bấm Làm mới để thử lại.", "error");
+        }
       } finally {
         setLoading(false);
       }
@@ -215,8 +226,13 @@ function AdminDashboardPage() {
   }, [selectedShopId]);
 
   const refreshAll = async () => {
-    await Promise.all([loadOwners(ownerStatus), loadShops(), loadPaymentPlans(), loadDisputes()]);
-    if (selectedShopId) await loadProducts(selectedShopId);
+    setRefreshing(true);
+    try {
+      await Promise.all([loadOwners(ownerStatus), loadShops(), loadPaymentPlans(), loadDisputes()]);
+      if (selectedShopId) await loadProducts(selectedShopId);
+    } catch (error) {
+      showNotice(error.response?.data?.message || "Không thể cập nhật dữ liệu. Vui lòng thử lại.", "error");
+    } finally { setRefreshing(false); }
   };
 
   const updatePlanField = (planCode, field, value) => {
@@ -456,75 +472,13 @@ function AdminDashboardPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-sm text-muted">Loading admin dashboard...</div>;
+    return <div className="flex min-h-screen items-center justify-center bg-[#F9FAF4] text-sm text-[#6F8746]" role="status">Đang tải trung tâm quản trị...</div>;
   }
 
   return (
-    <main className="min-h-screen bg-white text-ink">
-      <div className="grid min-h-screen lg:grid-cols-[248px_1fr]">
-        <aside className="border-r border-line bg-white/80 px-4 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-tertiarySoft text-sm font-bold text-ink">
-              MA
-            </div>
-            <div>
-              <div className="font-extrabold">MIROIR Admin</div>
-              <p className="text-xs text-muted">{admin?.email}</p>
-            </div>
-          </div>
-
-          <nav className="mt-6 grid gap-1">
-            <NavButton active={view === "shops"} icon="shop" onClick={backToShops}>
-              Shops
-            </NavButton>
-            <NavButton active={view === "owners"} icon="users" onClick={() => setView("owners")}>
-              Shop Owners
-            </NavButton>
-            <NavButton active={view === "plans"} icon="payment" onClick={() => setView("plans")}>
-              Payment Plans
-            </NavButton>
-            <NavButton active={view === "disputes"} icon="users" onClick={() => setView("disputes")}>
-              Khiếu nại{adminUnread ? ` (${adminUnread})` : ""}
-            </NavButton>
-
-            {selectedShop ? (
-              <div className="mt-4 grid gap-1 border-t border-line pt-4">
-                <p className="px-3 text-xs font-semibold uppercase text-muted">
-                  {selectedShop.name}
-                </p>
-                <NavButton active={view === "products"} icon="package" onClick={() => setView("products")}>
-                  Products
-                </NavButton>
-                <NavButton active={view === "trash"} icon="trash" onClick={() => setView("trash")}>
-                  Trash
-                </NavButton>
-                <NavButton active={view === "profile"} icon="edit" onClick={() => setView("profile")}>
-                  Shop Profile
-                </NavButton>
-                <NavButton active={view === "excel"} icon="upload" onClick={() => setView("excel")}>
-                  Excel Import
-                </NavButton>
-              </div>
-            ) : null}
-          </nav>
-
-          <button
-            type="button"
-            onClick={logout}
-            className="mt-8 w-full rounded-md border border-line px-3 py-2 text-sm font-semibold text-ink hover:bg-white/80"
-          >
-            Logout
-          </button>
-        </aside>
-
-        <section className="p-5 lg:p-8">
-          <DashboardHeader
-            backToShops={backToShops}
-            refreshAll={refreshAll}
-            selectedShop={selectedShop}
-            view={view}
-          />
-
+    <AdminShell view={view} setView={setView} admin={admin} selectedShop={selectedShop}
+      pendingCount={allOwners.filter((owner) => owner.status === "pending").length}
+      unreadCount={adminUnread} logout={logout} refresh={refreshAll} refreshing={refreshing}>
           {notice.text ? (
             <div
               className={`mt-4 rounded-md border p-3 text-sm ${
@@ -537,6 +491,8 @@ function AdminDashboardPage() {
             </div>
           ) : null}
 
+          {view === "overview" && <AdminOverview shops={allShops} owners={allOwners} plans={paymentPlans} invoices={billingInvoices} setView={setView} openShop={openShop} />}
+          {view === "subscriptions" && <AdminSubscriptions shops={allShops} owners={allOwners} plans={paymentPlans} openShop={openShop} />}
           {view === "owners" ? (
             <OwnersView
               owners={owners}
@@ -631,7 +587,7 @@ function AdminDashboardPage() {
           {isShopModalOpen ? (
             <ShopModal onClose={() => setIsShopModalOpen(false)}>
               <ShopForm
-                activeOwners={activeOwners}
+                activeOwners={allOwners.filter((owner) => owner.status === "active")}
                 onClose={() => setIsShopModalOpen(false)}
                 saveShop={saveShop}
                 setShopForm={setShopForm}
@@ -642,61 +598,7 @@ function AdminDashboardPage() {
               />
             </ShopModal>
           ) : null}
-        </section>
-      </div>
-    </main>
-  );
-}
-
-function DashboardHeader({ backToShops, refreshAll, selectedShop, view }) {
-  const title = selectedShop
-    ? {
-        products: "Products",
-        trash: "Trash",
-        profile: "Shop Profile",
-        excel: "Excel Import",
-      }[view] || selectedShop.name
-    : view === "owners"
-      ? "Shop Owners"
-      : view === "plans"
-        ? "Payment Plans"
-      : view === "disputes"
-        ? "Khiếu nại hoàn tiền"
-      : "Shops";
-
-  return (
-    <header className="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          {selectedShop ? (
-            <button
-              type="button"
-              onClick={backToShops}
-              title="Back to shops"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-line bg-white/80 text-ink hover:bg-white/80"
-            >
-              <Icon name="back" />
-            </button>
-          ) : null}
-          <div>
-            <h1 className="text-2xl font-bold">{title}</h1>
-            <p className="text-sm text-muted">
-              {selectedShop
-                ? `${selectedShop.name} - ${selectedShop.owner?.email || "No owner assigned"}`
-                : "Select a shop before managing products, trash, profile, or Excel imports."}
-            </p>
-          </div>
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={refreshAll}
-        className={`${buttonClass} border border-line bg-white/80 text-ink hover:bg-white/80`}
-      >
-        <Icon name="refresh" />
-        Refresh
-      </button>
-    </header>
+    </AdminShell>
   );
 }
 
@@ -708,20 +610,20 @@ function OwnersView({ owners, ownerAction, ownerStatus, setOwnerStatus }) {
   return (
     <section className="mt-6 rounded-md border border-line bg-white/80">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
-        <h2 className="font-bold">Shop owner accounts</h2>
+        <h2 className="font-bold">Tài khoản chủ shop</h2>
         <select
           className={`${fieldClass} max-w-48`}
           value={ownerStatus}
           onChange={(event) => setOwnerStatus(event.target.value)}
         >
-          <option value="pending">Pending</option>
-          <option value="active">Active</option>
-          <option value="rejected">Rejected</option>
-          <option value="inactive">Inactive</option>
-          <option value="all">All</option>
+          <option value="pending">Chờ duyệt</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="rejected">Đã từ chối</option>
+          <option value="inactive">Ngừng hoạt động</option>
+          <option value="all">Tất cả tài khoản</option>
         </select>
       </div>
-      <Table headers={["Name", "Email", "Status", "Created", "Actions"]}>
+      <Table headers={["Họ tên", "Email", "Trạng thái", "Ngày đăng ký", "Thao tác"]}>
         {owners.map((owner) => (
           <tr key={owner.id} className="border-t border-line hover:bg-accentSoft/60">
             <td className="px-4 py-3 font-medium">{owner.name}</td>
@@ -862,32 +764,33 @@ function ShopsView({
       <div className="rounded-md border border-line bg-white/80">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4">
           <div>
-            <h2 className="font-bold">Shops</h2>
-            <p className="text-sm text-muted">{shops.length} shops loaded</p>
+            <h2 className="font-bold">Danh sách cửa hàng</h2>
+            <p className="text-sm text-muted">{shops.length} cửa hàng</p>
           </div>
           <button type="button" onClick={openNewShop} className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}>
             <Icon name="plus" />
-            New shop
+            Thêm cửa hàng
           </button>
         </div>
         <div className="grid gap-3 border-b border-line p-4 md:grid-cols-[1fr_160px_auto]">
           <input
             className={fieldClass}
-            placeholder="Search shops"
+            placeholder="Tìm theo tên cửa hàng, slug..."
+            aria-label="Tìm kiếm cửa hàng"
             value={shopSearch}
             onChange={(event) => setShopSearch(event.target.value)}
           />
-          <select className={fieldClass} value={shopStatus} onChange={(event) => setShopStatus(event.target.value)}>
-            <option value="all">All status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+          <select aria-label="Trạng thái cửa hàng" className={fieldClass} value={shopStatus} onChange={(event) => setShopStatus(event.target.value)}>
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Ngừng hoạt động</option>
           </select>
           <button type="button" onClick={reloadShops} className={`${buttonClass} bg-mintDeep text-white hover:bg-mint`}>
             <Icon name="search" />
-            Search
+            Tìm kiếm
           </button>
         </div>
-        <Table headers={["Shop", "Owner", "Status", "Products", "Actions"]}>
+        <Table headers={["Cửa hàng", "Chủ shop", "Trạng thái", "Sản phẩm", "Thao tác"]}>
           {shops.map((shop) => (
             <tr key={shop.id} className="border-t border-line hover:bg-accentSoft/60">
               <td className="px-4 py-3">
@@ -896,7 +799,7 @@ function ShopsView({
                   <p className="text-xs text-muted">{shop.slug}</p>
                 </button>
               </td>
-              <td className="px-4 py-3 text-sm text-muted">{shop.owner?.email || "No owner"}</td>
+              <td className="px-4 py-3 text-sm text-muted">{shop.owner?.email || "Chưa gán chủ shop"}</td>
               <td className="px-4 py-3">
                 <StatusBadge status={shop.status} />
               </td>
@@ -911,6 +814,7 @@ function ShopsView({
             </tr>
           ))}
         </Table>
+        {!shops.length && <p className="p-10 text-center text-sm text-muted">Không tìm thấy cửa hàng phù hợp.</p>}
       </div>
     </section>
   );
@@ -1269,21 +1173,6 @@ function ExcelView({ downloadProducts, importResult, products, selectedShop, upl
   );
 }
 
-function NavButton({ active, children, icon, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold ${
-        active ? "bg-mintDeep text-white" : "text-muted hover:bg-canvasDeep"
-      }`}
-    >
-      <Icon name={icon} />
-      {children}
-    </button>
-  );
-}
-
 function Field({ children, label }) {
   return (
     <label className="grid gap-1">
@@ -1298,7 +1187,7 @@ function Table({ children, headers }) {
     <div className="overflow-x-auto">
       <table className="min-w-full text-left text-sm">
         <thead>
-          <tr className="bg-white/80 text-xs uppercase text-muted">
+          <tr className="text-xs uppercase text-muted">
             {headers.map((header) => (
               <th key={header} className="px-4 py-3 font-semibold">
                 {header}
@@ -1350,7 +1239,7 @@ function StatusBadge({ status }) {
 
   return (
     <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ring-1 ${tone}`}>
-      {status || "-"}
+      {({ active: "Hoạt động", pending: "Chờ duyệt", inactive: "Ngừng hoạt động", rejected: "Đã từ chối", published: "Đã xuất bản", draft: "Bản nháp", archived: "Đã lưu trữ", trashed: "Đã xóa" })[status] || status || "—"}
     </span>
   );
 }
@@ -1493,7 +1382,8 @@ function Icon({ name }) {
 
 const formatDate = (value) => {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(value));
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeZone: "Asia/Ho_Chi_Minh" }).format(date) : "—";
 };
 
 const formatMoney = (value) =>

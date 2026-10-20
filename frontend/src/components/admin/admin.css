@@ -1,0 +1,66 @@
+.admin-workspace {
+  --admin-border: #dce4d6;
+}
+
+.admin-workspace main section.rounded-md,
+.admin-workspace main article.rounded-md,
+.admin-workspace main div.rounded-md.border.bg-white,
+.admin-workspace main div.rounded-md.border.bg-white\/80 {
+  border-color: var(--admin-border);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(195, 208, 180, .16);
+}
+
+.admin-workspace main input:not([type="checkbox"]):not([type="file"]),
+.admin-workspace main select,
+.admin-workspace main textarea {
+  border-color: var(--admin-border);
+  border-radius: 12px;
+  background-color: #fff;
+}
+
+.admin-workspace main button.rounded-md {
+  border-radius: 12px;
+}
+
+.admin-workspace main .bg-mintDeep {
+  background-color: #6f8746;
+}
+
+.admin-workspace main .bg-mintDeep:hover {
+  background-color: #5c7436;
+}
+
+.admin-workspace main table thead {
+  background: #f1f5e8;
+  color: #6e7d7c;
+}
+
+.admin-workspace main table th {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-workspace main table td {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.admin-workspace :focus-visible {
+  outline: 2px solid #6f8746;
+  outline-offset: 3px;
+}
+
+.admin-workspace .neu-nav-item {
+  min-height: 42px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-workspace *, .admin-workspace *::before, .admin-workspace *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
