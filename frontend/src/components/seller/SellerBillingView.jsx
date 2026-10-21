@@ -29,7 +29,6 @@ export default function SellerBillingView({
   plans = [],
   invoices = [],
   onCheckout,
-  onTrial,
   onInvoicePay,
   status,
 }) {
@@ -218,15 +217,6 @@ export default function SellerBillingView({
                 </div>
 
                 <div className="pt-5 border-t border-[#E2EBD5] space-y-2.5">
-                  {plan.trialEnabled && subscription?.trialEligible && (
-                    <NeuButton
-                      variant="secondary"
-                      onClick={() => onTrial(plan.code)}
-                      className="w-full text-xs font-bold text-[#6F8746]"
-                    >
-                      Dùng thử miễn phí 1 tháng
-                    </NeuButton>
-                  )}
 
                   <NeuButton
                     variant={isCurrent ? "secondary" : "primary"}

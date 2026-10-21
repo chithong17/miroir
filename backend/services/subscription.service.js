@@ -42,7 +42,7 @@ export const listPaymentPlans = async () => {
       description: override.description || base.description,
       features: Array.isArray(override.features) ? override.features : base.features,
       amount: Number.isInteger(override.amount) && override.amount >= 0 ? override.amount : base.amount,
-      trialEnabled: override.trialEnabled === true,
+      trialEnabled: false, // Retired campaign; ignore historical DB overrides.
       defaultAmount: base.amount, defaultDurationDays: base.durationDays,
     };
   });
@@ -56,9 +56,10 @@ export const updatePaymentPlan = async ({ planCode, body }) => {
   const amount = Number(body.amount);
   if (!Number.isSafeInteger(amount) || amount < 0) { const error = new Error("amount must be a non-negative integer."); error.statusCode = 400; throw error; }
   if (body.trialEnabled !== undefined && typeof body.trialEnabled !== "boolean") { const error = new Error("trialEnabled must be a boolean."); error.statusCode = 400; throw error; }
+  if (body.trialEnabled === true) { const error = new Error("Chương trình dùng thử đã kết thúc và không thể bật lại."); error.statusCode = 400; throw error; }
   const patch = {
     code: base.code, accountType: base.accountType, amount,
-    ...(body.trialEnabled !== undefined ? { trialEnabled: body.trialEnabled } : {}),
+    trialEnabled: false,
     name: String(body.name || base.name).trim(),
     description: String(body.description || base.description).trim(),
     features: Array.isArray(body.features) ? body.features.map((item) => String(item).trim()).filter(Boolean) : base.features,

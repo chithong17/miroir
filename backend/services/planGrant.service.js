@@ -9,16 +9,17 @@ const reject = (message, statusCode = 409) => {
   throw error;
 };
 
-export const isTrialEligible = (owner) => !owner.trialUsedAt && !owner.subscription?.planCode;
+// The introductory shop trial campaign has ended. Historical grants stay intact.
+export const isTrialEligible = () => false;
 
 export const grantShopPlan = async ({ ownerId, planCode, grantType, grantedBy = null }) => {
   if (!["trial", "admin_grant"].includes(grantType)) reject("Invalid grant type.", 400);
+  if (grantType === "trial") reject("Chương trình dùng thử đã kết thúc. Vui lòng chọn gói trả phí để tiếp tục.", 410);
   const db = await getMongoDb();
   let owner = await db.collection("shop_owners").findOne({ id: ownerId });
   if (!owner || owner.status !== "active") reject("An active shop owner is required.", 404);
   const plan = await getPaymentPlan(planCode);
   if (!plan) reject("Plan not found.", 404);
-  if (grantType === "trial" && (!plan.trialEnabled || !isTrialEligible(owner))) reject("Free trial is unavailable for this account or plan.");
   owner = await ensureLegacyCycle(owner);
   const pending = await db.collection("payment_orders").findOne({ accountId: owner.id, status: "pending" });
   if (pending) reject("Complete or cancel the existing checkout before activating another plan.");

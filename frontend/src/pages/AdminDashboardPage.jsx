@@ -250,7 +250,6 @@ function AdminDashboardPage() {
         name: plan.name,
         description: plan.description,
         amount: Number(plan.amount),
-        trialEnabled: Boolean(plan.trialEnabled),
         features: Array.isArray(plan.features)
           ? plan.features
           : String(plan.features || "")
@@ -714,10 +713,6 @@ function PaymentPlansView({
                 onChange={(event) => updatePlanField(plan.code, "amount", event.target.value)}
               />
             </Field>
-            <label className="flex items-center gap-2 text-sm md:col-span-2">
-              <input type="checkbox" checked={Boolean(plan.trialEnabled)} onChange={(event) => updatePlanField(plan.code, "trialEnabled", event.target.checked)} />
-              Cho phép chủ shop mới dùng thử gói này miễn phí 1 tháng (mỗi tài khoản một lần)
-            </label>
             <Field label="Description">
               <input
                 className={fieldClass}

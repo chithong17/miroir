@@ -45,8 +45,8 @@ test("free grants replace the current period and retain paid time as credit", as
   assert.equal(quote.proratedCredit, quote.remainingCredit);
 });
 
-test("trial is available only before the first activated plan", () => {
-  assert.equal(isTrialEligible({}), true);
+test("retired trial campaign is unavailable even before the first activated plan", () => {
+  assert.equal(isTrialEligible({}), false);
   assert.equal(isTrialEligible({ trialUsedAt: new Date() }), false);
   assert.equal(isTrialEligible({ subscription: { planCode: "STARTER_A", status: "inactive" } }), false);
 });

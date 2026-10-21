@@ -4,7 +4,6 @@ import ReactMarkdown from "react-markdown";
 import {
   archiveProduct,
   createShopPayment,
-  claimShopTrial,
   createProduct,
   createShop,
   deleteProduct,
@@ -839,16 +838,6 @@ function ShopDashboardPage() {
       setPaymentStatus(error.response?.data?.message || t("shopAdmin.paymentCreateError"));
     }
   };
-  const startShopTrial = async (planCode) => {
-    try {
-      setPaymentStatus("Đang kích hoạt dùng thử...");
-      await claimShopTrial(planCode);
-      await loadDashboard();
-      setPaymentStatus("Đã kích hoạt dùng thử miễn phí 1 tháng.");
-    } catch (error) {
-      setPaymentStatus(error.response?.data?.message || "Không kích hoạt được dùng thử.");
-    }
-  };
 
   const pageMeta = {
     overview: {
@@ -1057,7 +1046,6 @@ function ShopDashboardPage() {
           plans={paymentPlans}
           invoices={billingInvoices}
           onCheckout={(code) => startShopCheckout(code)}
-          onTrial={startShopTrial}
           onInvoicePay={(id) => startShopCheckout(null, id)}
           status={paymentStatus}
         />

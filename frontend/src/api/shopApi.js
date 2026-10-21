@@ -152,8 +152,6 @@ export const createShopPayment = async (planCode, invoiceId = null) => {
   });
   return response.data;
 };
-export const claimShopTrial = async (planCode) =>
-  (await shopClient.post("/payments/trial", { planCode })).data;
 
 export const getShopPlanQuote = async (planCode) => (await shopClient.get(`/payments/quote/${encodeURIComponent(planCode)}`)).data;
 export const listShopInvoices = async () => (await shopClient.get("/payments/invoices")).data;

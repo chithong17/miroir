@@ -4,7 +4,7 @@ import { getShopPlanQuote } from "../api/shopApi.js";
 const money = (value) => `${Number(value || 0).toLocaleString("vi-VN")}đ`;
 const date = (value) => value ? new Date(value).toLocaleDateString("vi-VN") : "—";
 
-export default function ShopBillingView({ subscription, plans, invoices, onCheckout, onTrial, onInvoicePay, status }) {
+export default function ShopBillingView({ subscription, plans, invoices, onCheckout, onInvoicePay, status }) {
   const [quote, setQuote] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState("");
@@ -42,7 +42,6 @@ export default function ShopBillingView({ subscription, plans, invoices, onCheck
           <p className="text-sm">Try-On: {plan.tryOnQuota} lượt/kỳ</p>
           <p className="text-sm">Vượt quota: {money(plan.overagePrice)}/ảnh</p>
           <ul className="my-4 list-disc space-y-1 pl-5 text-sm text-slate-600">{plan.features?.map((feature) => <li key={feature}>{feature}</li>)}</ul>
-          {plan.trialEnabled && subscription?.trialEligible ? <><button className="mb-2 rounded-xl border border-[#668443] px-4 py-2.5 font-bold text-[#49652D]" type="button" onClick={() => onTrial(plan.code)}>Dùng thử miễn phí 1 tháng</button><p className="mb-2 text-xs text-slate-500">Phí vượt quota và hoa hồng vẫn áp dụng.</p></> : null}
           <button className="mt-auto rounded-xl bg-[#668443] px-4 py-2.5 font-bold text-white disabled:opacity-50" type="button" disabled={Boolean(loading) || (subscription?.pendingRenewal && subscription.pendingRenewal.planCode === plan.code)} onClick={() => choose(plan.code)}>{loading === plan.code ? "Đang tính..." : subscription?.pendingRenewal?.planCode === plan.code ? "Đã mua kỳ sau" : subscription?.planCode === plan.code ? "Gia hạn" : "Chọn gói"}</button>
         </article>;
       })}

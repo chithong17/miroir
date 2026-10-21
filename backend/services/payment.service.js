@@ -352,7 +352,7 @@ export const getPaymentProfile = async (account) => {
     accountType: "shop_owner",
     subscription: owner.subscription,
     usage,
-  }), trialEligible: !owner.trialUsedAt && !owner.subscription?.planCode };
+  }), trialEligible: false };
 };
 
 export const getCheckoutPlanForAccountType = (accountType) =>
