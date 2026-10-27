@@ -3,6 +3,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { getMongoDb } from "./mongo.service.js";
 import { buildSubscriptionSummary, getPremiumShopIds } from "./subscription.service.js";
+import { withProductSoldCounts } from "./productSales.service.js";
 
 import { createWelcomeOffer } from "./welcomeOffer.service.js";
 
@@ -254,7 +255,7 @@ export const getUserFavoriteProducts = async (userId) => {
   // Note: we can import toPublicProduct and withShopInfo from catalog.service.js but since we only have toPublicProduct in product.service.js, we should probably do a quick mapping or let the controller handle it.
   // We need to return them in a format similar to listCatalogProducts.
   // I'll return the raw products and shops, and the controller will format them.
-  return { products: products.filter((product) => visibleShopIds.has(product.shopId)), shops };
+  return { products: await withProductSoldCounts(db, products.filter((product) => visibleShopIds.has(product.shopId))), shops };
 };
 
 export const deleteUserAccount = async (userId) => {

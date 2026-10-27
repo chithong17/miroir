@@ -1,6 +1,7 @@
 import { getMongoDb } from "./mongo.service.js";
 import { toPublicProduct } from "./product.service.js";
 import { getPremiumShopIds } from "./subscription.service.js";
+import { withProductSoldCounts } from "./productSales.service.js";
 
 const cleanString = (value) => String(value || "").trim();
 
@@ -80,7 +81,7 @@ export const listCatalogProducts = async (query = {}) => {
   ]);
 
   return {
-    products: withShopInfo(products, activeShops),
+    products: withShopInfo(await withProductSoldCounts(db, products), activeShops),
     pagination: { page, limit, total, totalPages: Math.max(Math.ceil(total / limit), 1) },
   };
 };
@@ -120,7 +121,7 @@ export const listCatalogOutfits = async (query = {}) => {
   const shops = shopIds.length
     ? await db.collection("shops").find({ id: { $in: shopIds }, status: "active" }).toArray()
     : [];
-  const sellableProducts = products.filter((product) => activePaidShopIds.has(product.shopId));
+  const sellableProducts = await withProductSoldCounts(db, products.filter((product) => activePaidShopIds.has(product.shopId)));
   const productById = new Map(withShopInfo(sellableProducts, shops).map((product) => [product.id, product]));
 
   return {
@@ -181,5 +182,5 @@ export const getCatalogProduct = async (productId) => {
     error.statusCode = 404;
     throw error;
   }
-  return { product, shop };
+  return { product: (await withProductSoldCounts(db, [product]))[0], shop };
 };
