@@ -62,7 +62,7 @@ export default function SellerOverviewView({
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* Top Hero Row: Blue Card + Donut Statistics + Coral Card (from Reference Image) */}
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {/* 1. Total Revenue Card (Vibrant Blue 3D Card) */}
         <NeuStatCard
           variant="blue"
@@ -102,9 +102,9 @@ export default function SellerOverviewView({
       </div>
 
       {/* Middle Row: Analytics Curvy Chart + Recent Sales (from Reference Image) */}
-      <div className="grid gap-6 lg:grid-cols-12 items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
         {/* Left: 8 Cols - Curvy Line Chart */}
-        <div className="lg:col-span-8">
+        <div className="min-w-0 lg:col-span-8">
           <NeuCurveChart
             title="Biểu đồ phân tích doanh thu"
             timeframe="Tuần này"
@@ -113,7 +113,7 @@ export default function SellerOverviewView({
         </div>
 
         {/* Right: 4 Cols - Recent Sales with Colorful Icon Badges */}
-        <div className="lg:col-span-4">
+        <div className="min-w-0 lg:col-span-4">
           <NeuCard className="flex flex-col justify-between">
             <div className="flex items-center justify-between border-b border-[#E2EBD5]/80 pb-4 mb-3">
               <div>
@@ -192,7 +192,7 @@ export default function SellerOverviewView({
       </div>
 
       {/* Bottom Row of 3 Cards: Total Profit + New Orders + Tasks/Quota Completed */}
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {/* 1. Total Profit with Green Bar Chart */}
         <NeuStatCard
           variant="white"
@@ -285,7 +285,7 @@ export default function SellerOverviewView({
           </span>
         </div>
 
-        <div className="grid gap-3.5 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
           <div
             onClick={() => onNavigate("orders")}
             className="neu-inset p-4 rounded-2xl cursor-pointer hover:bg-white transition shadow-sm border border-[#FFB45E]/30"
@@ -337,7 +337,7 @@ export default function SellerOverviewView({
       </NeuCard>
 
       {/* Snapshot Tables: Recent Orders & Top Products */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Orders */}
         <NeuCard className="flex flex-col">
           <div className="flex items-center justify-between border-b border-[#E2EBD5] pb-4 mb-4">
@@ -363,10 +363,10 @@ export default function SellerOverviewView({
                 <div
                   key={order.id}
                   onClick={() => onSelectOrder && onSelectOrder(order.id)}
-                  className="neu-inset p-3.5 rounded-2xl flex items-center justify-between gap-3 cursor-pointer hover:bg-white transition shadow-sm"
+                  className="neu-inset p-3.5 rounded-2xl flex flex-col items-stretch sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-white transition shadow-sm"
                 >
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono font-black text-xs text-[#6F8746]">
                         #{order.orderCode?.slice(-8) || order.id.slice(-6)}
                       </span>

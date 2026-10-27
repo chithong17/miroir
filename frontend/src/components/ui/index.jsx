@@ -134,8 +134,8 @@ export function TopNav({ user, onLogout, compact = false }) {
   ];
 
   return (
-    <nav className="sticky top-0 z-40 flex h-[76px] w-full shrink-0 items-center bg-transparent px-6 pb-2 pt-3 transition-all duration-300 sm:px-10 lg:px-16">
-      <div className="flex w-full items-center justify-between gap-3">
+    <nav className="sticky top-0 z-40 flex h-auto w-full shrink-0 flex-col items-center gap-2 bg-transparent px-4 pb-2 pt-3 xl:h-[76px] xl:flex-row xl:gap-0 transition-all duration-300 sm:px-10 lg:px-16">
+      <div className="flex w-full flex-col items-center justify-between gap-2 sm:flex-row xl:gap-3">
         <a
           href="/"
           className="group flex items-center gap-2.5 rounded-full border border-white/45 bg-white/20 px-3.5 py-1.5 font-display text-[#161616] shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:bg-white/35"
@@ -147,7 +147,7 @@ export function TopNav({ user, onLogout, compact = false }) {
           />
           <span className="pr-1.5 text-base font-black uppercase tracking-[0.24em] sm:text-[17px]">MIROIR</span>
         </a>
-        <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 rounded-full border border-white/45 bg-white/20 px-6 py-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md md:flex lg:gap-8">
+        <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-6 rounded-full border border-white/45 bg-white/20 px-6 py-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.06),inset_0_1px_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md xl:flex lg:gap-8">
           {navItems.map((item) => (
             <a
               key={item.href}
@@ -247,7 +247,7 @@ export function TopNav({ user, onLogout, compact = false }) {
                     </span>
                   ) : null}
                 </summary>
-                <div className="absolute right-0 top-full mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-2xl">
+                <div className="absolute right-0 top-full mt-2 max-sm:fixed max-sm:inset-x-4 max-sm:top-auto max-sm:w-auto w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-2xl">
                   <div className="flex items-center justify-between border-b border-line px-4 py-3">
                     <p className="font-black text-ink">Giỏ hàng</p>
                     <span className="text-xs font-bold text-muted">
@@ -376,7 +376,7 @@ export function TopNav({ user, onLogout, compact = false }) {
                     </span>
                   ) : null}
                 </summary>
-                <div className="notification-popover absolute right-0 top-full mt-3 max-h-[30rem] w-[23rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[22px] border border-[#DDE9D8] bg-white/95 p-2 shadow-[0_22px_55px_rgba(44,67,38,0.16)] backdrop-blur-xl">
+                <div className="notification-popover absolute right-0 top-full mt-3 max-sm:fixed max-sm:inset-x-4 max-sm:top-auto max-sm:w-auto max-h-[30rem] w-[23rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[22px] border border-[#DDE9D8] bg-white/95 p-2 shadow-[0_22px_55px_rgba(44,67,38,0.16)] backdrop-blur-xl">
                   {notifications.slice(0, 12).map((item) => (
                     <button
                       key={item.id}
@@ -415,7 +415,7 @@ export function TopNav({ user, onLogout, compact = false }) {
                   <div className="flex flex-col items-end">
                     <div className="flex items-center gap-2">
                       {!compact ? (
-                        <span className="hidden text-sm text-muted group-hover:text-ink sm:inline font-bold transition-colors">
+                        <span className="hidden max-w-24 truncate text-sm text-muted group-hover:text-ink sm:inline xl:max-w-none font-bold transition-colors">
                           {user.name}
                         </span>
                       ) : null}
@@ -467,11 +467,11 @@ export function TopNav({ user, onLogout, compact = false }) {
           )}
         </div>
       </div>
-      <div className="absolute left-6 right-6 top-full mt-1 flex gap-2 overflow-x-auto rounded-[22px] border border-white/80 bg-white/75 p-1.5 shadow-glow backdrop-blur-xl md:hidden">
+      <div className="flex w-full gap-2 overflow-x-auto rounded-[22px] border border-white/80 bg-white/75 p-1.5 shadow-glow backdrop-blur-xl xl:hidden">
         {navItems.map((item) => (
           <a
             key={item.href}
-            className={`min-w-max flex-1 rounded-full px-4 py-2.5 text-center text-sm font-bold transition ${
+            className={`min-w-max flex-1 rounded-full px-3 py-2.5 text-center text-xs sm:text-sm font-bold transition ${
               item.active
                 ? "bg-mintDeep text-white"
                 : "text-muted hover:bg-white hover:text-ink"

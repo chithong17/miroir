@@ -274,11 +274,11 @@ export default function TryOnStudioPage() {
 
         <div className="relative z-10 max-w-[1600px] w-full mx-auto flex flex-col flex-1">
           {/* MAIN LAYOUT */}
-          <div className="flex flex-col lg:flex-row gap-5 lg:gap-6 xl:gap-8 items-stretch justify-center flex-1 min-h-0 lg:mt-[100px]">
+          <div className="flex flex-col xl:flex-row gap-5 lg:gap-6 xl:gap-8 items-stretch justify-center flex-1 min-h-0 xl:mt-[100px]">
             {/* LEFT PALETTE (Floating Tools) */}
-            <aside className="w-full lg:w-[260px] xl:w-[280px] shrink-0 order-2 lg:order-1 flex flex-col gap-4 relative">
+            <aside className="w-full xl:w-[280px] shrink-0 order-2 xl:order-1 flex flex-col gap-4 relative">
               {/* HERO TITLE */}
-              <div className="text-left mb-2 sm:mb-4 shrink-0 px-2 lg:px-0 lg:absolute lg:bottom-full lg:left-0 lg:mb-8 lg:w-[380px]">
+              <div className="text-left mb-2 sm:mb-4 shrink-0 px-2 lg:px-0 xl:absolute xl:bottom-full xl:left-0 xl:mb-8 xl:w-[380px]">
                 <p className="text-[11px] font-black text-[#91B76F] uppercase tracking-[0.25em] mb-2">
                   Studio AI
                 </p>
@@ -376,9 +376,9 @@ export default function TryOnStudioPage() {
             </aside>
 
             {/* CENTER STAGE (Dominant Hero) */}
-            <div className="w-full lg:min-w-[400px] lg:max-w-[600px] lg:flex-1 shrink-0 order-1 lg:order-2 flex flex-col items-center justify-start lg:mt-0 relative">
+            <div className="w-full xl:min-w-[400px] xl:max-w-[600px] xl:flex-1 shrink-0 order-1 xl:order-2 flex flex-col items-center justify-start lg:mt-0 relative">
               {/* State Toggle Pill */}
-              <div className="relative z-30 mb-4 sm:mb-6 flex bg-white/90 backdrop-blur-md p-1.5 rounded-full border border-gray-100 shadow-sm transition-all duration-300 mx-auto lg:absolute lg:bottom-full lg:left-1/2 lg:-translate-x-1/2 lg:mb-8">
+              <div className="relative z-30 mb-4 sm:mb-6 flex bg-white/90 backdrop-blur-md p-1.5 rounded-full border border-gray-100 shadow-sm transition-all duration-300 mx-auto xl:absolute xl:bottom-full xl:left-1/2 xl:-translate-x-1/2 xl:mb-8">
                 <button
                   onClick={() => setPreviewState("original")}
                   className={`px-5 sm:px-6 py-1.5 sm:py-2 text-[12px] sm:text-[13px] font-bold rounded-full transition-all duration-300 ${previewState === "original" ? "bg-[#101512] text-white shadow-md" : "text-gray-400 hover:text-[#101512]"}`}
@@ -549,7 +549,7 @@ export default function TryOnStudioPage() {
             </div>
 
             {/* RIGHT PALETTE (Floating Tools) */}
-            <aside className="w-full lg:w-[280px] xl:w-[320px] shrink-0 order-3 lg:order-3 flex flex-col gap-4">
+            <aside className="w-full xl:w-[320px] shrink-0 order-3 lg:order-3 flex flex-col gap-4">
               <div
                 className={
                   glassPanelClass +

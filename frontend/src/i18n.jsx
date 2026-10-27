@@ -1154,7 +1154,7 @@ export function FloatingLanguageToggle() {
   )
     return null;
   return (
-    <div className="fixed bottom-5 right-5 z-[70]">
+    <div className={`fixed bottom-5 right-5 z-[70] ${pathname.startsWith("/app/") || pathname === "/products" || pathname === "/try-on" ? "hidden xl:block" : ""}`}>
       <LanguageToggle />
     </div>
   );

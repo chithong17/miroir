@@ -173,7 +173,7 @@ export default function SellerProductsView({
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Filter and Action Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex min-w-0 flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <NeuTabs
             tabs={STATUS_TABS.map((t) => ({

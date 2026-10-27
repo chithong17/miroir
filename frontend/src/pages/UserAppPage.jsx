@@ -258,6 +258,14 @@ function UserAppPage({ initialView = "products" }) {
                 <aside className="hidden lg:block z-10 relative">
                   <CatalogFilters filters={filters} setFilters={setFilters} applyFilters={applyFilters} />
                 </aside>
+                <details className="min-w-0 rounded-2xl border border-white/80 bg-white/75 p-4 lg:hidden">
+                  <summary className="cursor-pointer font-bold text-[#253029]">
+                    {language === "vi" ? "Bộ lọc sản phẩm" : "Product filters"}
+                  </summary>
+                  <div className="mt-4">
+                    <CatalogFilters filters={filters} setFilters={setFilters} applyFilters={applyFilters} />
+                  </div>
+                </details>
                 
                 {/* Main Content */}
                 <div className="flex flex-col min-w-0">
