@@ -150,7 +150,7 @@ export const syncOrderCommission = async (orderId) => withMongoTransaction(async
   if (!order.commissionRateSnapshot) { await db.collection("orders").updateOne({ id: orderId }, { $unset: { billingSyncNeededAt: "" } }, { session }); return; }
   const returns = await db.collection("order_returns").find({ orderId, status: "refunded" }, { session }).toArray();
   const refunded = order.paymentStatus === "refunded" ? order.subtotal : returns.reduce((sum, item) => sum + (item.refundAmount || 0), 0);
-  const target = commissionTarget({ subtotal: order.subtotal, rate: order.commissionRateSnapshot, orderStatus: order.orderStatus, paymentStatus: order.paymentStatus, refundedAmount: refunded });
+  const target = commissionTarget({ subtotal: Math.max(0, order.subtotal - (order.discountAmount || 0)), rate: order.commissionRateSnapshot, orderStatus: order.orderStatus, paymentStatus: order.paymentStatus, refundedAmount: refunded });
   const previous = order.billingAccruedCommission || 0;
   if (target === previous) { await db.collection("orders").updateOne({ id: orderId }, { $unset: { billingSyncNeededAt: "" } }, { session }); return; }
   const revision = (order.billingCommissionRevision || 0) + 1;

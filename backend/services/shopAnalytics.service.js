@@ -277,7 +277,7 @@ export const buildShopDashboard = ({ shop, normalizedRange = "30d", analytics, o
   const finance = { eligibleRevenue: 0, knownCost: 0, grossProfit: null, marginRate: null, missingCostItems: 0 };
   for (const order of orders.filter((item) => item.orderStatus === "delivered" && ["paid", "refunded"].includes(item.paymentStatus))) {
     const refund = refundedByOrder.get(order.id);
-    finance.eligibleRevenue += Math.max(0, (order.subtotal || 0) - (order.paymentStatus === "refunded" ? order.subtotal : refund?.amount || 0));
+    finance.eligibleRevenue += Math.max(0, (order.subtotal || 0) - (order.discountAmount || 0) - (order.paymentStatus === "refunded" ? order.subtotal : refund?.amount || 0));
     if (order.paymentStatus === "refunded") continue;
     const snapshot = costByOrder.get(order.id);
     for (const item of order.items || []) {

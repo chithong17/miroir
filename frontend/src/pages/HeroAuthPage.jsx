@@ -1,3 +1,4 @@
+import { showWelcomeOffer } from "../components/showWelcomeOffer.js";
 import { useState } from "react";
 import { loginAdmin, setAdminToken } from "../api/adminApi.js";
 import { loginShopOwner, registerShopOwner, setShopToken } from "../api/shopApi.js";
@@ -99,6 +100,7 @@ export default function HeroAuthPage({ mode = "login" }) {
 
       const response = await registerUser(form);
       setUserToken(response.token);
+      await showWelcomeOffer(isVi);
       const returnTo = sessionStorage.getItem("miroir_after_login");
       sessionStorage.removeItem("miroir_after_login");
       window.location.href =

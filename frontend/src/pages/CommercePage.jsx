@@ -1301,6 +1301,12 @@ function CheckoutView() {
               </div>
             </div>
 
+            {cart?.discountAmount > 0 && (
+              <p className="mt-4 text-sm font-bold text-[#4F733C]">
+                Đặc quyền thành viên mới −40% / 1 món: −{formatMoney(cart.discountAmount)}
+                <span className="block text-xs font-normal">{cart.discount?.productName} · áp dụng cho 1 sản phẩm</span>
+              </p>
+            )}
             <div className="my-5 border-t border-dashed border-[#DCE8D3]"></div>
 
             <div className="flex items-center justify-between">
@@ -1308,7 +1314,7 @@ function CheckoutView() {
                 Tổng cộng
               </span>
               <span className="text-[22px] sm:text-2xl font-black text-[#4F733C]">
-                {formatMoney((cart?.subtotal || 0) + Object.values(selectedShipping).reduce((sum, rate) => sum + (rate?.fee || 0), 0))}
+                {formatMoney((cart?.total ?? cart?.subtotal ?? 0) + Object.values(selectedShipping).reduce((sum, rate) => sum + (rate?.fee || 0), 0))}
               </span>
             </div>
             <p className="mt-1 text-right text-[11px] font-semibold text-gray-400">
@@ -1973,9 +1979,15 @@ function OrderDetail({ orderId }) {
               <div className="flex items-center justify-between">
                 <span>Tạm tính ({order.items.length} sản phẩm)</span>
                 <strong className="text-[#1E2B22]">
-                  {formatMoney(order.total - (order.shippingFee || 0))}
+                  {formatMoney(order.subtotal ?? order.total - (order.shippingFee || 0))}
                 </strong>
               </div>
+              {order.discountAmount > 0 && (
+                <div className="flex items-center justify-between">
+                  <span>Đặc quyền thành viên mới (40% / 1 món)</span>
+                  <strong className="text-[#4F733C]">−{formatMoney(order.discountAmount)}</strong>
+                </div>
+              )}
               {order.shippingFee ? (
                 <div className="flex items-center justify-between">
                   <span>Phí giao hàng</span>

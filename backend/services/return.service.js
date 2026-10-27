@@ -2,6 +2,8 @@ import crypto from "node:crypto";
 import { getMongoDb, withMongoTransaction } from "./mongo.service.js";
 import { createNotification } from "./notification.service.js";
 
+import { returnDiscountAmount } from "./welcomeOffer.service.js";
+
 export const RETURN_STATUSES = ["requested", "approved", "rejected", "return_shipped", "received", "refund_pending", "refunded", "disputed"];
 const clean = (value) => String(value || "").trim();
 const fail = (message, statusCode = 400) => { const error = new Error(message); error.statusCode = statusCode; throw error; };
@@ -39,7 +41,7 @@ const validatedItems = async ({ db, order, requested, session }) => {
   return [...requestedByVariant].map(([variantId, quantity]) => {
     const source = order.items.find((item) => item.variantId === variantId);
     if (!source || quantity + (reserved.get(variantId) || 0) > source.quantity) fail("Return quantity exceeds the remaining quantity of an order item.", 409);
-    return { variantId, productId: source.productId, name: source.name, imageUrl: source.imageUrl || "", sku: source.sku, color: source.color || "", size: source.size || "", quantity, unitPrice: source.unitPrice, lineTotal: Number(source.unitPrice) * quantity };
+    return { variantId, productId: source.productId, name: source.name, imageUrl: source.imageUrl || "", sku: source.sku, color: source.color || "", size: source.size || "", quantity, unitPrice: source.unitPrice, lineTotal: Number(source.unitPrice) * quantity - returnDiscountAmount(order, source, quantity, reserved.get(variantId) || 0) };
   });
 };
 

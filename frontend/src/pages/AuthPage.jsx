@@ -1,3 +1,4 @@
+import { showWelcomeOffer } from "../components/showWelcomeOffer.js";
 import { useState } from "react";
 import { loginAdmin, setAdminToken } from "../api/adminApi.js";
 import { loginShopOwner, registerShopOwner, setShopToken } from "../api/shopApi.js";
@@ -7,7 +8,7 @@ import PasswordResetModal from "../components/PasswordResetModal.jsx";
 import { useLanguage } from "../i18n.jsx";
 
 function AuthPage({ mode = "login" }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isRegister = mode === "register";
   const [role, setRole] = useState("user");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -22,6 +23,7 @@ function AuthPage({ mode = "login" }) {
       if (!isRegister) { await loginAnyRole({ email: form.email, password: form.password }); return; }
       if (role === "shop") { const response = await registerShopOwner(form); setStatus("success"); setMessage(response.message || t("auth.pendingApproval")); return; }
       const response = await registerUser(form); setUserToken(response.token);
+      await showWelcomeOffer(language === "vi");
       const returnTo = sessionStorage.getItem("miroir_after_login"); sessionStorage.removeItem("miroir_after_login");
       window.location.href = response.user.profileCompleted || response.user.profileSkipped ? (returnTo || "/app") : "/onboarding/profile";
     } catch (error) { setStatus("error"); setMessage(error.response?.data?.message || t("auth.error")); }

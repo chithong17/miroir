@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import { getMongoDb } from "./mongo.service.js";
 import { buildSubscriptionSummary, getPremiumShopIds } from "./subscription.service.js";
 
+import { createWelcomeOffer } from "./welcomeOffer.service.js";
+
 const normalizeEmail = (email) => String(email || "").trim().toLowerCase();
 const cleanString = (value) => String(value || "").trim();
 
@@ -22,6 +24,7 @@ export const toPublicUser = (user) => ({
   name: user.name,
   status: user.status,
   profile: user.profile || {},
+  welcomeOffer: user.welcomeOffer || null,
   favoriteProductIds: user.favoriteProductIds || [],
   profileCompleted: Boolean(user.profileCompleted),
   profileSkipped: Boolean(user.profileSkipped),
@@ -78,6 +81,7 @@ export const registerUser = async ({ email, password, name }) => {
     name: cleanString(name),
     status: "active",
     profile: {},
+    welcomeOffer: createWelcomeOffer(now),
     profileCompleted: false,
     profileSkipped: false,
     createdAt: now,

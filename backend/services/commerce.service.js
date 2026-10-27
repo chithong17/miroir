@@ -4,6 +4,8 @@ import { getMongoDb, withMongoTransaction } from "./mongo.service.js";
 import { createNotification } from "./notification.service.js";
 import { getPremiumShopIds } from "./subscription.service.js";
 
+import { calculateWelcomeDiscount, claimWelcomeOffer, restoreWelcomeOffer } from "./welcomeOffer.service.js";
+
 export const ORDER_STATUSES = [
   "pending_confirmation", "confirmed", "preparing", "shipping", "delivered",
   "cancel_requested", "cancelled", "expired",
@@ -88,10 +90,19 @@ const enrichCart = async ({ db, userId, session, itemsOverride = null, includeCo
     groups.get(key).subtotal += enriched.lineTotal;
   }
   const resultGroups = [...groups.values()];
+  const user = await db.collection("users").findOne({ id: userId }, { session });
+  const discount = calculateWelcomeDiscount(resultGroups, user?.welcomeOffer);
+  for (const group of resultGroups) {
+    group.discountAmount = discount?.shopId === group.shop?.id ? discount.amount : 0;
+    group.total = group.subtotal - group.discountAmount;
+  }
   return {
     id: cart.id, addressId: cart.addressId || null, groups: resultGroups,
     itemCount: cart.items.reduce((sum, item) => sum + item.quantity, 0),
     subtotal: resultGroups.reduce((sum, group) => sum + group.subtotal, 0),
+    discount,
+    discountAmount: discount?.amount || 0,
+    total: resultGroups.reduce((sum, group) => sum + group.total, 0),
     updatedAt: cart.updatedAt || null,
   };
 };
@@ -255,6 +266,12 @@ export const checkoutCart = async ({ userId, body }) => {
         paymentProof: null, refund: null, inventoryRestockedAt: null,
         createdAt: now, updatedAt: now,
       };
+      order.discount = cart.discount?.shopId === shop.id ? cart.discount : null;
+      order.discountAmount = order.discount?.amount || 0;
+      order.total -= order.discountAmount;
+      if (order.discount) {
+        await claimWelcomeOffer({ db, session, userId, orderId: order.id, now });
+      }
       await db.collection("orders").insertOne(order, { session });
       await db.collection("order_cost_snapshots").insertOne({ orderId: order.id, shopId: shop.id, items: group.items.map((item) => ({ variantId: item.variantId, productId: item.productId, quantity: item.quantity, costPrice: Number.isSafeInteger(item.variant.costPrice) ? item.variant.costPrice : null })), createdAt: now }, { session });
       await createNotification({ audienceType: "shop", audienceId: shop.ownerId, type: "order_created", title: "Đơn hàng mới", message: `${orderCode} vừa được tạo.`, orderId: order.id, db, session });
@@ -321,6 +338,7 @@ const restoreInventory = async ({ db, session, order }) => {
       { session }
     );
   }
+  await restoreWelcomeOffer({ db, session, order });
   return { ...order, inventoryRestockedAt: now };
 };
 
