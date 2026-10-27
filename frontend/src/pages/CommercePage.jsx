@@ -1302,10 +1302,35 @@ function CheckoutView() {
             </div>
 
             {cart?.discountAmount > 0 && (
-              <p className="mt-4 text-sm font-bold text-[#4F733C]">
-                Đặc quyền thành viên mới −40% / 1 món: −{formatMoney(cart.discountAmount)}
-                <span className="block text-xs font-normal">{cart.discount?.productName} · áp dụng cho 1 sản phẩm</span>
-              </p>
+              <section
+                aria-label="Ưu đãi thành viên mới"
+                className="mt-5 min-w-0 overflow-hidden rounded-2xl border border-[#DDE8D2] bg-gradient-to-br from-[#F6F9F1] to-[#EDF4E5] p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#61734F]">Quà chào mừng</p>
+                    <p className="mt-1 text-[13px] font-bold leading-5 text-[#283C24]">Đặc quyền thành viên mới</p>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-[#4F733C] px-2.5 py-1.5 text-sm font-black leading-5 text-white">−40%</span>
+                </div>
+
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-[#61734F]">Bạn tiết kiệm được</p>
+                  <p className="mt-1 whitespace-nowrap text-2xl font-black leading-tight tracking-tight text-[#355527] tabular-nums">−{formatMoney(cart.discountAmount)}</p>
+                </div>
+
+                <div className="mt-4 flex items-start gap-2 border-t border-[#D9E5CF] pt-3">
+                  <svg aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-[#4F733C]" viewBox="0 0 20 20" fill="none">
+                    <path d="m5 10 3 3 7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <div className="min-w-0 text-xs leading-5">
+                    <p className="font-semibold text-[#355527]">Đã áp dụng cho 1 sản phẩm</p>
+                    {cart.discount?.productName && (
+                      <p className="mt-0.5 break-words text-[#61734F] [overflow-wrap:anywhere]">{cart.discount.productName}</p>
+                    )}
+                  </div>
+                </div>
+              </section>
             )}
             <div className="my-5 border-t border-dashed border-[#DCE8D3]"></div>
 
