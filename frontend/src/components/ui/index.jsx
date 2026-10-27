@@ -12,6 +12,7 @@ import {
 import { getUserToken } from "../../api/userApi.js";
 import { listChatConversations } from "../../api/chatApi.js";
 import { connectChatSocket } from "../../api/chatSocket.js";
+import { getProductSoldCount } from "../../lib/productSales.js";
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -1212,7 +1213,7 @@ export function ProductCard({
               {formatMoney(product?.price)}
             </p>
             <span className="mt-1.5 inline-flex rounded-full bg-[#F1F5E8] px-2 py-1 text-[11px] font-semibold leading-none text-[#5C783F]">
-              {t("product.sold", { count: Math.max(0, Number(product?.soldCount) || 0) })}
+              {t("product.sold", { count: getProductSoldCount(product) })}
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">

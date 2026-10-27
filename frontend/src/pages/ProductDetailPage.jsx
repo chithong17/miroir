@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getProductSoldCount } from "../lib/productSales.js";
 import {
   getCatalogProduct,
   listCatalogProducts,
@@ -178,7 +179,7 @@ export default function ProductDetailPage({ productId }) {
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-mintDeep">{product.category || "Sản phẩm"}</p>
                 <h1 className="mt-2 font-display text-2xl font-black leading-tight text-ink sm:text-3xl md:text-4xl">{product.name}</h1>
                 <p className="mt-2 text-2xl font-black text-mintDeep">{formatMoney(product.price)}</p>
-                <p className="mt-2 text-sm text-muted">Đã bán {Math.max(0, Number(product.soldCount) || 0)}</p>
+                <p className="mt-2 text-sm text-muted">Đã bán {getProductSoldCount(product)}</p>
                 <p className="mt-4 text-sm leading-6 text-muted">{product.description || "Shop chưa cung cấp mô tả cho sản phẩm này."}</p>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
