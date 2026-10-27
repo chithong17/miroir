@@ -3,6 +3,9 @@ export const createWelcomeOffer = (now = new Date()) => ({
   status: "available", percent: 40, grantedAt: now, redeemedOrderId: null,
 });
 
+export const welcomeDiscountForShop = (discount, shopId) =>
+  discount && shopId && discount.shopId === shopId ? discount.amount : 0;
+
 export const calculateWelcomeDiscount = (groups, offer) => {
   if (offer?.status !== "available") return null;
   let selected = null;

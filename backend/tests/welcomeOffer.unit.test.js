@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calculateWelcomeDiscount, claimWelcomeOffer, createWelcomeOffer, restoreWelcomeOffer, returnDiscountAmount } from "../services/welcomeOffer.service.js";
+import { calculateWelcomeDiscount, claimWelcomeOffer, createWelcomeOffer, restoreWelcomeOffer, returnDiscountAmount, welcomeDiscountForShop } from "../services/welcomeOffer.service.js";
+
+test("cart tolerates missing shops and absent welcome discounts", () => {
+  assert.equal(welcomeDiscountForShop(null, undefined), 0);
+  assert.equal(welcomeDiscountForShop(null, "shop"), 0);
+  assert.equal(welcomeDiscountForShop(undefined, undefined), 0);
+  assert.equal(welcomeDiscountForShop({ shopId: "a", amount: 40000 }, undefined), 0);
+  assert.equal(welcomeDiscountForShop({ shopId: "a", amount: 40000 }, "b"), 0);
+  assert.equal(welcomeDiscountForShop({ shopId: "a", amount: 40000 }, "a"), 40000);
+});
 import { toPublicUser } from "../services/userAuth.service.js";
 
 const item = (price, quantity = 1, available = true) => ({

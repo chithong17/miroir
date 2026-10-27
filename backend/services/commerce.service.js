@@ -5,7 +5,7 @@ import { getMongoDb, withMongoTransaction } from "./mongo.service.js";
 import { createNotification } from "./notification.service.js";
 import { getPremiumShopIds } from "./subscription.service.js";
 
-import { calculateWelcomeDiscount, claimWelcomeOffer, restoreWelcomeOffer } from "./welcomeOffer.service.js";
+import { calculateWelcomeDiscount, claimWelcomeOffer, restoreWelcomeOffer, welcomeDiscountForShop } from "./welcomeOffer.service.js";
 
 export const ORDER_STATUSES = [
   "pending_confirmation", "confirmed", "preparing", "shipping", "delivered",
@@ -94,7 +94,7 @@ const enrichCart = async ({ db, userId, session, itemsOverride = null, includeCo
   const user = await db.collection("users").findOne({ id: userId }, { session });
   const discount = calculateWelcomeDiscount(resultGroups, user?.welcomeOffer);
   for (const group of resultGroups) {
-    group.discountAmount = discount?.shopId === group.shop?.id ? discount.amount : 0;
+    group.discountAmount = welcomeDiscountForShop(discount, group.shop?.id);
     group.total = group.subtotal - group.discountAmount;
   }
   return {
