@@ -2,6 +2,7 @@ import { useState } from "react";
 import { LayoutDashboard, Store, Users, CreditCard, ShieldCheck, Bell, LogOut, Menu, X, Package, Trash2, FileSpreadsheet, Settings, RefreshCw, ArrowLeft, Layers } from "lucide-react";
 
 const navigation = [
+  ["customers", "Kh\u00e1ch h\u00e0ng", Users],
   ["overview", "Tổng quan", LayoutDashboard], ["shops", "Quản lý cửa hàng", Store],
   ["owners", "Tài khoản chủ shop", Users], ["subscriptions", "Shop đăng ký gói", Layers],
   ["plans", "Gói & thanh toán", CreditCard], ["disputes", "Khiếu nại & thông báo", Bell],

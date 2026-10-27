@@ -1,6 +1,6 @@
 import { getMongoDb } from "../mongo.service.js";
 import { ShippingProviderFactory } from "./ShippingProviderFactory.js";
-import { ObjectId } from "mongodb";
+import { activeCarrierConfigs, defaultShippingRate } from "./defaultShipping.js";
 
 /**
  * Service to manage Shipping Configurations and interact with Providers
@@ -9,9 +9,9 @@ import { ObjectId } from "mongodb";
 /**
  * Lấy cấu hình vận chuyển của một Shop
  */
-export const getShopShippingConfig = async (shopId) => {
-  const db = await getMongoDb();
-  return db.collection("shop_shipping_configs").find({ shopId }).toArray();
+export const getShopShippingConfig = async (shopId, { db: suppliedDb, session } = {}) => {
+  const db = suppliedDb || await getMongoDb();
+  return db.collection("shop_shipping_configs").find({ shopId }, { session }).toArray();
 };
 
 /**
@@ -44,12 +44,12 @@ export const updateShopShippingConfig = async (shopId, provider, configData) => 
 /**
  * Gọi nhiều hãng vận chuyển để tính phí giao hàng (dùng lúc Checkout)
  */
-export const calculateShippingRates = async (shopId, rateRequestData) => {
-  const configs = await getShopShippingConfig(shopId);
-  const activeConfigs = configs.filter(c => c.is_active);
+export const calculateShippingRates = async (shopId, rateRequestData, options = {}) => {
+  const configs = await getShopShippingConfig(shopId, options);
+  const activeConfigs = activeCarrierConfigs(configs);
 
   if (activeConfigs.length === 0) {
-    return []; // Shop hasn't enabled any shipping provider
+    return [defaultShippingRate(rateRequestData.itemsValue ?? 0)];
   }
 
   // Gọi song song tất cả các hãng đang được bật
@@ -78,6 +78,9 @@ export const calculateShippingRates = async (shopId, rateRequestData) => {
  * Tạo vận đơn trên hãng vận chuyển khi Shop xác nhận giao hàng
  */
 export const createShippingOrder = async (shopId, orderData) => {
+  if (orderData.shippingProvider === "DEFAULT") {
+    return { provider: "DEFAULT", managedByShop: true };
+  }
   const configs = await getShopShippingConfig(shopId);
   const provider = orderData.shippingProvider;
   

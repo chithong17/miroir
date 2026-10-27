@@ -5,6 +5,10 @@ export const ensureCommerceIndexes = async () => {
   // The former unique index prevented two independent return disputes on one order.
   await db.collection("order_disputes").dropIndex("orderId_1_type_1").catch(() => {});
   await Promise.all([
+    db.collection("users").createIndex({ id: 1 }),
+    db.collection("users").createIndex({ createdAt: -1, id: 1 }),
+    db.collection("shop_events").createIndex({ createdAt: -1, eventType: 1, userId: 1 }),
+    db.collection("orders").createIndex({ createdAt: -1, userId: 1 }),
     db.collection("user_addresses").createIndex({ id: 1 }, { unique: true }),
     db.collection("user_addresses").createIndex({ userId: 1, isDefault: 1 }),
     db.collection("user_addresses").createIndex({ userId: 1 }, { unique: true, partialFilterExpression: { isDefault: true } }),

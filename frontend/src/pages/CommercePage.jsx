@@ -1013,7 +1013,7 @@ function CheckoutView() {
     Promise.all(groups.map(async (group) => {
       try {
         const response = await calculateShippingRates({ shopId: group.shop.id,
-          deliveryAddress: addressObj, itemsValue: group.subtotal, itemsWeight: 1000 });
+          deliveryAddress: addressObj, itemsValue: group.total ?? group.subtotal, itemsWeight: 1000 });
         const rates = (Array.isArray(response.data) ? response.data : [])
           .filter((rate) => Number.isFinite(Number(rate.fee)) && Number(rate.fee) >= 0)
           .map((rate) => ({ ...rate, fee: Number(rate.fee) }));
@@ -1547,9 +1547,9 @@ function CheckoutShopGroup({ group, method, onMethodChange, shippingRates, selec
               return (
                 <label
                   key={idx}
-                  className={`rounded-2xl border-2 p-4 cursor-pointer transition-all flex items-center justify-between ${isSelected ? "border-[#4F733C] bg-[#F6FAF2]" : "border-[#EDF2E8] bg-white hover:border-[#C9DAB9]"}`}
+                  className={`rounded-2xl border-2 p-4 cursor-pointer transition-all flex flex-wrap items-center justify-between gap-3 ${isSelected ? "border-[#4F733C] bg-[#F6FAF2]" : "border-[#EDF2E8] bg-white hover:border-[#C9DAB9]"}`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
                     <input
                       type="radio"
                       className="hidden"
@@ -1559,13 +1559,14 @@ function CheckoutShopGroup({ group, method, onMethodChange, shippingRates, selec
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? "border-[#4F733C]" : "border-[#E1E8D8]"}`}>
                       {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#4F733C]" />}
                     </div>
-                    <div>
-                      <strong className="text-sm font-black text-[#1E2B22] block">{rate.provider} - {rate.service_name || "Giao hàng"}</strong>
+                    <div className="min-w-0">
+                      <strong className="text-sm font-black text-[#1E2B22] block">{rate.provider === "DEFAULT" ? rate.service_name : `${rate.provider} - ${rate.service_name || "Giao hàng"}`}</strong>
                       <span className="text-[12px] text-gray-500">Dự kiến: {rate.expected_delivery_time || "Vài ngày tới"}</span>
+                      {rate.description && <span className="block text-xs leading-5 text-[#4F733C]">{rate.description}</span>}
                     </div>
                   </div>
                   <strong className="text-sm font-black text-[#4F733C]">
-                    {formatMoney(rate.fee || 0)}
+                    {rate.fee === 0 ? "Miễn phí" : formatMoney(rate.fee)}
                   </strong>
                 </label>
               );

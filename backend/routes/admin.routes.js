@@ -20,6 +20,7 @@ import {
   grantPaymentPlan,
   updateShop,
   adminBillingInvoices,
+  customerAnalytics,
 } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middlewares/adminAuth.middleware.js";
 import { uploadProductImportFile } from "../middlewares/upload.middleware.js";
@@ -31,6 +32,8 @@ import { adminNotifications, readAdminNotification } from "../controllers/notifi
 const router = Router();
 
 router.use(requireAdmin);
+
+router.get("/customers/analytics", customerAnalytics);
 
 router.get("/payment-plans", listPaymentPlans);
 router.get("/billing-invoices", adminBillingInvoices);

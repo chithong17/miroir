@@ -1,3 +1,4 @@
+import { resolveCheckoutShipping } from "./shipping/defaultShipping.js";
 import crypto from "node:crypto";
 import { resolveCheckoutRecipient } from "./address.service.js";
 import { getMongoDb, withMongoTransaction } from "./mongo.service.js";
@@ -225,6 +226,10 @@ export const checkoutCart = async ({ userId, body }) => {
         );
         if (!stock.modifiedCount) fail(`Stock changed for ${item.product?.name || item.productId}. No order was created.`, 409);
       }
+      const shipping = await resolveCheckoutShipping({
+        db, session, shopId: shop.id, itemsValue: group.total,
+        selected: (body.shippingMethods || {})[shop.id],
+      });
       const orderCode = await createUniqueOrderCode(db, session);
       const order = {
         id: crypto.randomUUID(), orderCode, transferContent: orderCode,
@@ -248,11 +253,11 @@ export const checkoutCart = async ({ userId, body }) => {
           unitPrice: item.product.price, quantity: item.quantity, lineTotal: item.lineTotal,
         })),
         subtotal: group.subtotal, 
-        shippingFee: (body.shippingMethods || {})[shop.id]?.fee || 0, 
-        shippingProvider: (body.shippingMethods || {})[shop.id]?.provider || null,
-        shippingServiceId: (body.shippingMethods || {})[shop.id]?.service_id || null,
-        shippingServiceName: (body.shippingMethods || {})[shop.id]?.service_name || null,
-        total: group.subtotal + ((body.shippingMethods || {})[shop.id]?.fee || 0),
+        shippingFee: shipping.fee,
+        shippingProvider: shipping.provider,
+        shippingServiceId: shipping.service_id || null,
+        shippingServiceName: shipping.service_name || null,
+        total: group.subtotal + shipping.fee,
         paymentMethod,
         paymentStatus: paymentMethod === "cash" ? "cod_pending" : "awaiting_transfer",
         paymentSnapshot: paymentMethod === "bank_transfer" ? {

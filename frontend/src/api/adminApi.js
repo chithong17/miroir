@@ -144,3 +144,5 @@ export const updateAdminDispute = async (id, payload) => (await adminClient.patc
 export const decideAdminReturn = async (id, payload) => (await adminClient.patch(`/admin/returns/${encodeURIComponent(id)}/decision`, payload)).data;
 export const listAdminNotifications = async () => (await adminClient.get("/admin/notifications")).data;
 export const readAdminNotification = async (id) => (await adminClient.patch(`/admin/notifications/${encodeURIComponent(id)}/read`)).data;
+
+export const getAdminCustomerAnalytics = async (params = {}) => (await adminClient.get("/admin/customers/analytics", { params })).data;

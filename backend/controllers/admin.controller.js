@@ -16,6 +16,12 @@ import {
 } from "../services/admin.service.js";
 import { listAdminInvoices } from "../services/billing.service.js";
 import { grantShopPlan } from "../services/planGrant.service.js";
+import { getCustomerAnalytics } from "../services/customerAnalytics.service.js";
+
+export const customerAnalytics = async (req, res, next) => {
+  try { res.json({ success: true, analytics: await getCustomerAnalytics({ query: req.query || {} }) }); }
+  catch (error) { next(error); }
+};
 
 export const adminBillingInvoices = async (_req, res, next) => {
   try { res.json({ success: true, invoices: await listAdminInvoices() }); }

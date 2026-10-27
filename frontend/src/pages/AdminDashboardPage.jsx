@@ -1,3 +1,4 @@
+import AdminCustomers from "../components/admin/AdminCustomers.jsx";
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "../components/admin/AdminShell.jsx";
 import AdminOverview, { AdminSubscriptions } from "../components/admin/AdminOverview.jsx";
@@ -490,6 +491,7 @@ function AdminDashboardPage() {
             </div>
           ) : null}
 
+          {view === "customers" && <AdminCustomers refreshing={refreshing} />}
           {view === "overview" && <AdminOverview shops={allShops} owners={allOwners} plans={paymentPlans} invoices={billingInvoices} setView={setView} openShop={openShop} />}
           {view === "subscriptions" && <AdminSubscriptions shops={allShops} owners={allOwners} plans={paymentPlans} openShop={openShop} />}
           {view === "owners" ? (
