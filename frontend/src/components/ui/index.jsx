@@ -1208,14 +1208,9 @@ export function ProductCard({
         ) : null}
         
         <div className="mt-3 flex items-center justify-between">
-          <div className="shrink-0">
-            <p className="text-[15px] font-black text-[#101512]">
-              {formatMoney(product?.price)}
-            </p>
-            <span className="mt-1.5 inline-flex rounded-full bg-[#F1F5E8] px-2 py-1 text-[11px] font-semibold leading-none text-[#5C783F]">
-              {t("product.sold", { count: getProductSoldCount(product) })}
-            </span>
-          </div>
+          <p className="shrink-0 text-[15px] font-black text-[#101512]">
+            {formatMoney(product?.price)}
+          </p>
           <div className="flex shrink-0 items-center gap-1.5">
             <button 
               className="inline-flex h-8 min-w-[62px] shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-gray-200 px-2.5 text-[11px] font-bold leading-none text-gray-500 transition-colors hover:border-[#91B76F] hover:text-[#91B76F]"
@@ -1234,6 +1229,10 @@ export function ProductCard({
           </div>
         </div>
         
+        <p className="mt-2 text-xs font-normal text-gray-500">
+          {t("product.sold", { count: getProductSoldCount(product) })}
+        </p>
+
         {showPurchaseActions ? (
           <div className="mt-4 border-t border-gray-100 pt-3">
              <ProductPurchaseActions compact product={product} />
