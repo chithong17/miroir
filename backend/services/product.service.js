@@ -97,6 +97,7 @@ export const toPublicProduct = (product, { includeCost = false } = {}) => ({
   sizes: product.sizes || [],
   variants: (product.variants || []).map((variant) => includeCost ? variant : Object.fromEntries(Object.entries(variant).filter(([key]) => key !== "costPrice"))),
   price: product.price,
+  soldCount: Math.max(0, Number(product.soldCount) || 0),
   gender: product.gender,
   availability: product.availability,
   imageUrl: product.imageUrl || "",
