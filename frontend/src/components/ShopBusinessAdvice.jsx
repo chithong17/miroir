@@ -115,26 +115,6 @@ export default function ShopBusinessAdvice({ advice, status, error, onRetry }) {
         </div>
       ) : advice ? (
         <div className="pt-6">
-          {/* Mock Data Banner */}
-          {advice.dataQuality?.containsMockData && (
-            <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50/90 to-[#FFFDF5] px-4 py-3 text-xs text-amber-900 shadow-2xs">
-              <div className="h-6 w-6 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
-                <AlertCircle className="h-3.5 w-3.5" />
-              </div>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="font-extrabold uppercase tracking-wide text-[10px] bg-amber-200/60 text-amber-900 px-2 py-0.5 rounded-md">
-                  Dữ liệu mô phỏng
-                </span>
-                <span className="font-medium text-amber-950">
-                  Kỳ này có <strong className="font-bold">{advice.dataQuality.mockOrderCount}</strong> đơn mẫu
-                  {advice.dataQuality.realOrderCount
-                    ? ` và ${advice.dataQuality.realOrderCount} đơn khác`
-                    : ""}
-                  . Dùng để minh họa cách phân tích số liệu thực tế.
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Headline & Summary Banner */}
           <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-[#F4F7EE]/70 border border-[#E2EBD5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
