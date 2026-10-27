@@ -102,7 +102,7 @@ export default function HeroAuthPage({ mode = "login" }) {
       setUserToken(response.token);
       queueWelcomeOffer(response.user.id);
       sessionStorage.removeItem("miroir_after_login");
-      window.location.href = "/products";
+      window.location.href = "/onboarding/profile";
     } catch (error) {
       setStatus("error");
       const errorMsg =

@@ -39,7 +39,7 @@ function ProfileOnboardingPage() {
     setStatus("loading");
     try {
       await saveUserProfile(form);
-      window.location.href = "/app";
+      window.location.href = "/products";
     } catch (error) {
       setStatus("error");
       setMessage(error.response?.data?.message || t("onboarding.saveError"));
@@ -48,7 +48,7 @@ function ProfileOnboardingPage() {
 
   const skip = async () => {
     await skipUserProfile();
-    window.location.href = "/app";
+    window.location.href = "/products";
   };
 
   const uploadPhoto = async (event) => {
