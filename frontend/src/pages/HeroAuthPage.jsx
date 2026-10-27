@@ -1,4 +1,4 @@
-import { showWelcomeOffer } from "../components/showWelcomeOffer.js";
+import { queueWelcomeOffer } from "../components/showWelcomeOffer.js";
 import { useState } from "react";
 import { loginAdmin, setAdminToken } from "../api/adminApi.js";
 import { loginShopOwner, registerShopOwner, setShopToken } from "../api/shopApi.js";
@@ -100,13 +100,9 @@ export default function HeroAuthPage({ mode = "login" }) {
 
       const response = await registerUser(form);
       setUserToken(response.token);
-      await showWelcomeOffer(isVi);
-      const returnTo = sessionStorage.getItem("miroir_after_login");
+      queueWelcomeOffer(response.user.id);
       sessionStorage.removeItem("miroir_after_login");
-      window.location.href =
-        response.user.profileCompleted || response.user.profileSkipped
-          ? returnTo || "/app"
-          : "/onboarding/profile";
+      window.location.href = "/products";
     } catch (error) {
       setStatus("error");
       const errorMsg =

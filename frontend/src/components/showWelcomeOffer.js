@@ -1,3 +1,15 @@
+const PENDING_WELCOME_KEY = "miroir_pending_welcome_offer";
+
+export const queueWelcomeOffer = (userId) => {
+  sessionStorage.setItem(PENDING_WELCOME_KEY, userId);
+};
+
+export const showPendingWelcomeOffer = (userId, isVi) => {
+  if (!userId || sessionStorage.getItem(PENDING_WELCOME_KEY) !== userId) return;
+  sessionStorage.removeItem(PENDING_WELCOME_KEY);
+  return showWelcomeOffer(isVi);
+};
+
 // Native modal dialog supplies focus trapping, Escape handling and focus restoration.
 export const showWelcomeOffer = (isVi = true) => new Promise((resolve) => {
   const dialog = document.createElement("dialog");

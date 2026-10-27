@@ -1,3 +1,4 @@
+import { showPendingWelcomeOffer } from "../components/showWelcomeOffer.js";
 import { useEffect, useMemo, useState } from "react";
 import {
   listCatalogOutfits,
@@ -31,10 +32,11 @@ import {
 import { useLanguage } from "../i18n.jsx";
 
 function UserAppPage({ initialView = "products" }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [user, setUser] = useState(null);
   const [view, setView] = useState(initialView);
   const [products, setProducts] = useState([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [outfits, setOutfits] = useState([]);
   const [favoriteProducts, setFavoriteProducts] = useState([]);
   const [favoriteProductIds, setFavoriteProductIds] = useState([]);
@@ -75,9 +77,16 @@ function UserAppPage({ initialView = "products" }) {
     if (view === "favorites") loadFavorites();
   }, [view, filters.page]);
 
+  useEffect(() => {
+    if (view === "products" && productsLoaded && user) {
+      showPendingWelcomeOffer(user.id, language === "vi");
+    }
+  }, [view, productsLoaded, user, language]);
+
   const loadProducts = async (currentFilters = filters) => {
     const response = await listCatalogProducts(compact(currentFilters));
     setProducts(response.products || []);
+    setProductsLoaded(true);
     setPagination(response.pagination || { page: 1, totalPages: 1, total: 0 });
   };
 
