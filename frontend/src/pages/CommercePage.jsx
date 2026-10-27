@@ -896,6 +896,8 @@ function CheckoutView() {
   const [methods, setMethods] = useState({});
   const [shippingRates, setShippingRates] = useState({});
   const [selectedShipping, setSelectedShipping] = useState({});
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingError, setShippingError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -983,6 +985,11 @@ function CheckoutView() {
   }, [selected]);
 
   useEffect(() => {
+    let cancelled = false;
+    setShippingRates({});
+    setSelectedShipping({});
+    setShippingLoading(false);
+    setShippingError("");
     if (!cart?.groups) return;
     
     let addressObj = null;
@@ -1000,33 +1007,34 @@ function CheckoutView() {
 
     if (!addressObj) return;
 
-    cart.groups.forEach(async (group) => {
-      if (!group.shop) return;
+    const groups = cart.groups.filter((group) => group.shop);
+    if (!groups.length) return;
+    setShippingLoading(true);
+    Promise.all(groups.map(async (group) => {
       try {
-        const response = await calculateShippingRates({
-          shopId: group.shop.id,
-          deliveryAddress: addressObj,
-          itemsValue: group.subtotal,
-          itemsWeight: 1000 // default
-        });
-        
-        const rates = response.data || [];
-        
-        if (rates && rates.length > 0) {
-          setShippingRates((prev) => ({ ...prev, [group.shop.id]: rates }));
-          setSelectedShipping((prev) => {
-            if (prev[group.shop.id]) return prev;
-            return { ...prev, [group.shop.id]: rates[0] };
-          });
-        } else {
-          setNotice("Không thể tính phí vận chuyển cho địa chỉ này (Có thể do lỗi cấu hình Shop).");
-        }
+        const response = await calculateShippingRates({ shopId: group.shop.id,
+          deliveryAddress: addressObj, itemsValue: group.subtotal, itemsWeight: 1000 });
+        const rates = (Array.isArray(response.data) ? response.data : [])
+          .filter((rate) => Number.isFinite(Number(rate.fee)) && Number(rate.fee) >= 0)
+          .map((rate) => ({ ...rate, fee: Number(rate.fee) }));
+        return { shopId: group.shop.id, rates };
       } catch (error) {
-        console.error("Failed to fetch shipping rates", error);
-        setNotice(error.response?.data?.message || "Lỗi khi tính phí vận chuyển từ đối tác.");
+        return { shopId: group.shop.id, rates: [], error: error.response?.data?.message };
       }
+    })).then((results) => {
+      if (cancelled) return;
+      setShippingRates(Object.fromEntries(results.map((result) => [result.shopId, result.rates])));
+      setSelectedShipping(Object.fromEntries(results.filter((result) => result.rates.length)
+        .map((result) => [result.shopId, result.rates[0]])));
+      const failed = results.find((result) => !result.rates.length);
+      if (failed) setShippingError(failed.error || "Không thể tính phí giao hàng. Vui lòng kiểm tra hoặc chọn địa chỉ khác.");
+      setShippingLoading(false);
     });
-  }, [cart, selected, manual, form, addresses, provinces, wards]);
+    return () => { cancelled = true; };
+  }, [cart, selected, manual, form.provinceCode, form.districtCode, form.wardCode, form.addressLine, addresses, provinces, districts, wards]);
+
+  const shippingReady = !shippingLoading && !shippingError && Boolean(cart?.groups?.length) &&
+    cart.groups.every((group) => group.shop && selectedShipping[group.shop.id]);
 
   const recipientReady = manual
     ? Boolean(
@@ -1040,6 +1048,7 @@ function CheckoutView() {
     : Boolean(selected);
 
   const submit = async () => {
+    if (!recipientReady || !shippingReady) return;
     setBusy(true);
     setNotice("");
     try {
@@ -1260,6 +1269,9 @@ function CheckoutView() {
               group={group}
               key={group.shop?.id || "unavailable"}
               method={methods[group.shop?.id]}
+              shippingRates={shippingRates[group.shop?.id]}
+              selectedShipping={selectedShipping[group.shop?.id]}
+              onShippingChange={(rate) => setSelectedShipping((current) => ({ ...current, [group.shop.id]: rate }))}
               onMethodChange={(method) => {
                 if (group.shop?.id)
                   setMethods((current) => ({
@@ -1297,7 +1309,7 @@ function CheckoutView() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2">Phí giao hàng</span>
-                <span className="font-bold text-[#4F733C]">{Object.keys(selectedShipping).length > 0 ? formatMoney(Object.values(selectedShipping).reduce((sum, rate) => sum + (rate?.fee || 0), 0)) : "Đang tính..."}</span>
+                <span className="font-bold text-[#4F733C]">{shippingLoading ? "Đang tính..." : shippingReady ? formatMoney(Object.values(selectedShipping).reduce((sum, rate) => sum + (rate?.fee || 0), 0)) : "Chưa có phí"}</span>
               </div>
             </div>
 
@@ -1347,7 +1359,7 @@ function CheckoutView() {
             </p>
 
             <button
-              disabled={busy || !cart?.itemCount || !recipientReady}
+              disabled={busy || !cart?.itemCount || !recipientReady || !shippingReady}
               onClick={submit}
               className="mt-7 flex w-full items-center justify-between rounded-2xl bg-[#5A7C46] p-2 pl-6 text-white shadow-[0_12px_24px_rgba(79,115,60,0.24)] transition-all hover:-translate-y-0.5 hover:bg-[#4F733C] disabled:cursor-not-allowed disabled:bg-[#E1E8D8]"
             >
@@ -1371,6 +1383,7 @@ function CheckoutView() {
               </div>
             </button>
 
+            {shippingError && <p role="alert" className="mt-4 text-sm text-red-600">{shippingError}</p>}
             {!recipientReady && (
               <p className="mt-4 text-center text-[12px] font-bold text-red-500">
                 Vui lòng hoàn tất thông tin người nhận.
