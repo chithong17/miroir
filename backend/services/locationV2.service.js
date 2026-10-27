@@ -81,7 +81,10 @@ export const normalizeCarrierAddress = (address) => {
   }
   const normalized = resolveV2Location(address);
   if (!normalized.carrierAddress) {
-    fail("Vui lòng chọn khu vực giao hàng trước sáp nhập để hãng vận chuyển tính phí chính xác.");
+    const error = new Error("Vui lòng xác nhận khu vực giao hàng để hãng vận chuyển tính đúng phí.");
+    error.statusCode = 400;
+    error.code = "DELIVERY_AREA_REQUIRED";
+    throw error;
   }
   return { ...address, ...normalized.carrierAddress, addressVersion: "legacy", administrativeAddress: normalized };
 };

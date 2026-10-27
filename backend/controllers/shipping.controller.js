@@ -118,6 +118,9 @@ export const calculateShippingRatesForCheckout = async (req, res, next) => {
 
     res.json({ success: true, data: rates });
   } catch (error) {
+    if (error.code === "DELIVERY_AREA_REQUIRED") {
+      return res.status(400).json({ success: false, code: error.code, message: error.message });
+    }
     next(error);
   }
 };

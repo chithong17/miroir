@@ -658,7 +658,7 @@ function CartView() {
   );
 }
 
-function AddressFields({ form, setForm }) {
+function AddressFields({ form, setForm, requireCarrier = false }) {
   const change = (field) => (event) =>
     setForm((current) => ({
       ...current,
@@ -681,7 +681,7 @@ function AddressFields({ form, setForm }) {
         value={form.phone}
         onChange={change("phone")}
       />
-      <AddressLocationFields form={form} setForm={setForm} />
+      <AddressLocationFields form={form} setForm={setForm} requireCarrier={requireCarrier} />
       <TextField
         label="Địa chỉ chi tiết"
         wide
@@ -727,7 +727,7 @@ function AddressBook() {
       <PageHeader
         eyebrow="Tài khoản"
         title="Sổ địa chỉ"
-        description={`Danh mục hành chính sau sáp nhập 2025. Bạn có thể lưu nhiều người nhận.`}
+        description="Lưu và quản lý địa chỉ của người nhận hàng."
       />
       {notice ? <Notice text={notice} /> : null}
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_420px]">
@@ -748,7 +748,7 @@ function AddressBook() {
                     {item.recipientName} · {item.phone}
                   </p>
                   <p className="text-sm text-muted">{item.fullAddress}</p>
-                  {item.requiresAddressConfirmation && <p className="mt-2 text-xs text-amber-800">Cần cập nhật phường/xã sau sáp nhập trước khi đặt hàng.</p>}
+                  {item.requiresAddressConfirmation && <p className="mt-2 text-xs text-amber-800">Vui lòng kiểm tra lại tỉnh/thành và phường/xã trước khi đặt hàng.</p>}
                 </div>
               </div>
               <div className="mt-4 flex gap-2">
@@ -833,6 +833,7 @@ function CheckoutView() {
   const [shippingLoading, setShippingLoading] = useState(false);
   const [shippingError, setShippingError] = useState("");
   const [savedCarrierArea, setSavedCarrierArea] = useState("");
+  const [carrierAreaRequired, setCarrierAreaRequired] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -927,13 +928,14 @@ function CheckoutView() {
           .map((rate) => ({ ...rate, fee: Number(rate.fee) }));
         return { shopId: group.shop.id, rates };
       } catch (error) {
-        return { shopId: group.shop.id, rates: [], error: error.response?.data?.message };
+        return { shopId: group.shop.id, rates: [], error: error.response?.data?.message, areaRequired: error.response?.data?.code === "DELIVERY_AREA_REQUIRED" };
       }
     })).then((results) => {
       if (cancelled) return;
       setShippingRates(Object.fromEntries(results.map((result) => [result.shopId, result.rates])));
       setSelectedShipping(Object.fromEntries(results.filter((result) => result.rates.length)
         .map((result) => [result.shopId, result.rates[0]])));
+      setCarrierAreaRequired(results.some((result) => result.areaRequired));
       const failed = results.find((result) => !result.rates.length);
       if (failed) setShippingError(failed.error || "Không thể tính phí giao hàng. Vui lòng kiểm tra hoặc chọn địa chỉ khác.");
       setShippingLoading(false);
@@ -1052,9 +1054,9 @@ function CheckoutView() {
             </div>
 
             {!manual && addresses.find((item) => item.id === selected)?.requiresAddressConfirmation && (
-              <p role="alert" className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Địa chỉ cũ cần xác nhận sau sáp nhập. <a href="/app/addresses" className="font-bold underline">Cập nhật trong sổ địa chỉ</a> hoặc nhập địa chỉ mới.</p>
+              <p role="alert" className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Vui lòng kiểm tra lại địa chỉ nhận hàng. <a href="/app/addresses" className="font-bold underline">Cập nhật trong sổ địa chỉ</a> hoặc nhập địa chỉ khác.</p>
             )}
-            {!manual && addresses.find((item) => item.id === selected)?.addressVersion === "v2" && (
+            {!manual && carrierAreaRequired && addresses.find((item) => item.id === selected)?.addressVersion === "v2" && (
               <div className="mt-4"><DeliveryAreaField
                 provinceCode={addresses.find((item) => item.id === selected)?.provinceCode}
                 wardCode={addresses.find((item) => item.id === selected)?.wardCode}
@@ -1064,7 +1066,7 @@ function CheckoutView() {
             )}
             {manual ? (
               <div className="relative mt-6">
-                <AddressFields {...{ form, setForm }} />
+                <AddressFields {...{ form, setForm }} requireCarrier={carrierAreaRequired} />
                 <TextField
                   className="mt-4"
                   label="Ghi chú"

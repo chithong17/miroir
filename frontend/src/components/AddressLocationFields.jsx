@@ -21,12 +21,12 @@ export function DeliveryAreaField({ provinceCode, wardCode, value = "", onChange
   if (!provinceCode || !wardCode) return null;
   return <div className="sm:col-span-2">
     {loading ? <p role="status" className="text-xs text-muted">Đang tải khu vực giao hàng…</p> : error ? <p role="alert" className="text-sm text-red-600">{error} <button type="button" onClick={() => setRetry((value) => value + 1)} className="underline">Thử lại</button></p> : areas.length > 1 ? <>
-      <SelectField label="Khu vực giao hàng (địa chỉ cũ)" value={value} required={required} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Chọn khu vực cũ tương ứng với số nhà của bạn</option>
+      <SelectField label="Xác nhận khu vực giao hàng" value={value} required={required} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Chọn khu vực tương ứng với nơi nhận hàng</option>
         {areas.map((area) => <option key={area.wardCode} value={area.wardCode}>{area.label}</option>)}
       </SelectField>
-      <p className="mt-2 text-xs leading-5 text-muted">Chỉ dùng để GHN/GHTK xác định đúng tuyến giao hàng. Địa chỉ hiển thị vẫn theo tỉnh và phường/xã mới. Shop giao mặc định không bắt buộc mục này.</p>
-    </> : !areas.length && <p className="text-xs text-muted">Chưa có đối chiếu khu vực cũ cho phường/xã này. Vẫn dùng được với shop giao hàng mặc định.</p>}
+      <p className="mt-2 text-xs leading-5 text-muted">Hãng vận chuyển cần xác nhận thêm khu vực để tính đúng phí giao hàng.</p>
+    </> : !areas.length && <p className="text-xs text-muted">Hãng vận chuyển chưa xác định được tuyến giao hàng tại khu vực này.</p>}
   </div>;
 }
 
@@ -58,7 +58,7 @@ export default function AddressLocationFields({ form, setForm, requireCarrier = 
     districtCode: "", districtName: "",
   }));
   return <>
-    <SelectField label="Tỉnh/Thành phố (sau sáp nhập)" required value={form.provinceCode || ""} onChange={(event) => change("provinceCode", event.target.value)}>
+    <SelectField label="Tỉnh/Thành phố" required value={form.provinceCode || ""} onChange={(event) => change("provinceCode", event.target.value)}>
       <option value="">Chọn tỉnh/thành phố</option>
       {provinces.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
     </SelectField>
@@ -67,6 +67,6 @@ export default function AddressLocationFields({ form, setForm, requireCarrier = 
       {wards.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
     </SelectField>
     {error && <p role="alert" className="text-sm text-red-600 sm:col-span-2">{error} <button type="button" onClick={() => setRetry((value) => value + 1)} className="underline">Thử lại</button></p>}
-    <DeliveryAreaField provinceCode={form.provinceCode} wardCode={form.wardCode} value={form.carrierLegacyWardCode} required={requireCarrier} onChange={(value) => setForm((current) => ({ ...current, carrierLegacyWardCode: value }))} />
+    {requireCarrier && <DeliveryAreaField provinceCode={form.provinceCode} wardCode={form.wardCode} value={form.carrierLegacyWardCode} required onChange={(value) => setForm((current) => ({ ...current, carrierLegacyWardCode: value }))} />}
   </>;
 }
