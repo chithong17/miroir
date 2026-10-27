@@ -73,7 +73,8 @@ export const listCatalogProducts = async (query = {}) => {
       .collection("products")
       .aggregate([
         { $match: filter },
-        { $sort: { updatedAt: -1 } },
+        { $addFields: { _catalogOrder: { $toHashedIndexKey: "$id" } } },
+        { $sort: { _catalogOrder: 1, _id: 1 } },
         { $skip: skip },
         { $limit: limit },
       ])
@@ -82,7 +83,7 @@ export const listCatalogProducts = async (query = {}) => {
 
   return {
     products: withShopInfo(await withProductSoldCounts(db, products), activeShops),
-    pagination: { page, limit, total, totalPages: Math.max(Math.ceil(total / limit), 1) },
+    pagination: { page, limit, total, totalPages: Math.max(Math.ceil(total / limit), 1), order: "mixed" },
   };
 };
 
