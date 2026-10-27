@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { getMongoDb } from "./mongo.service.js";
 import { resolveLocation } from "./location.service.js";
+import { resolveV2Location, migrateAddressView } from "./locationV2.service.js";
 
 const clean = (value) => String(value || "").trim();
 
@@ -9,9 +10,11 @@ export const normalizeRecipient = (body = {}, { requireLabel = false } = {}) => 
   const phone = clean(body.phone);
   const addressLine = clean(body.addressLine);
   const label = clean(body.label) || "Khác";
-  if (!recipientName || !phone || !addressLine || !body.provinceCode || !body.districtCode || !body.wardCode) {
+  if (!recipientName || !phone || !addressLine || !body.provinceCode || (body.addressVersion !== "v2" && !body.districtCode) || !body.wardCode) {
     const error = new Error(
-      "recipientName, phone, provinceCode, districtCode, wardCode and addressLine are required."
+      body.addressVersion === "v2"
+        ? "Vui lòng nhập người nhận, số điện thoại, tỉnh/thành, phường/xã và địa chỉ chi tiết."
+        : "recipientName, phone, provinceCode, districtCode, wardCode and addressLine are required."
     );
     error.statusCode = 400;
     throw error;
@@ -21,14 +24,14 @@ export const normalizeRecipient = (body = {}, { requireLabel = false } = {}) => 
     error.statusCode = 400;
     throw error;
   }
-  const location = resolveLocation(body);
+  const location = body.addressVersion === "v2" ? resolveV2Location(body) : resolveLocation(body);
   return {
     label,
     recipientName,
     phone,
     ...location,
     addressLine,
-    fullAddress: `${addressLine}, ${location.wardName}, ${location.districtName}, ${location.provinceName}`,
+    fullAddress: [addressLine, location.wardName, location.districtName, location.provinceName].filter(Boolean).join(", "),
   };
 };
 
@@ -45,9 +48,10 @@ const setOnlyDefault = async ({ db, userId, addressId, session }) => {
   );
 };
 
-export const listAddresses = async (userId) => {
+export const listAddresses = async (userId, { addressVersion } = {}) => {
   const db = await getMongoDb();
-  return db.collection("user_addresses").find({ userId }).sort({ isDefault: -1, createdAt: -1 }).toArray();
+  const rows = await db.collection("user_addresses").find({ userId }).sort({ isDefault: -1, createdAt: -1 }).toArray();
+  return addressVersion === "v2" ? rows.map(migrateAddressView) : rows;
 };
 
 export const createAddress = async ({ userId, body, db: suppliedDb, session }) => {
@@ -79,7 +83,13 @@ export const updateAddress = async ({ userId, addressId, body }) => {
     const error = new Error("Address was not found."); error.statusCode = 404; throw error;
   }
   const normalized = normalizeRecipient({ ...current, ...body }, { requireLabel: true });
-  const patch = { ...normalized, updatedAt: new Date() };
+  const patch = { ...normalized, updatedAt: new Date(),
+    ...(current.addressVersion !== "v2" && normalized.addressVersion === "v2" ? { legacyAddress: current.legacyAddress || {
+      provinceCode: current.provinceCode, provinceName: current.provinceName, districtCode: current.districtCode,
+      districtName: current.districtName, wardCode: current.wardCode, wardName: current.wardName,
+      datasetVersion: current.datasetVersion, fullAddress: current.fullAddress,
+    } } : {}),
+  };
   await db.collection("user_addresses").updateOne({ id: addressId, userId }, { $set: patch });
   if (body.isDefault === true) await setOnlyDefault({ db, userId, addressId });
   return db.collection("user_addresses").findOne({ id: addressId, userId });
@@ -113,7 +123,14 @@ export const resolveCheckoutRecipient = async ({ db, session, userId, body }) =>
   if (body.addressId) {
     const address = await db.collection("user_addresses").findOne({ id: body.addressId, userId }, { session });
     if (!address) { const error = new Error("Address was not found."); error.statusCode = 404; throw error; }
-    return { ...address, note: clean(body.note) };
+    let resolved = body.addressVersion === "v2" ? migrateAddressView(address) : address;
+    if (body.addressVersion === "v2" && resolved.requiresAddressConfirmation) {
+      const error = new Error("Vui lòng cập nhật địa chỉ theo danh mục sau sáp nhập trước khi đặt hàng."); error.statusCode = 409; throw error;
+    }
+    if (resolved.addressVersion === "v2") {
+      resolved = { ...resolved, ...resolveV2Location({ ...resolved, carrierLegacyWardCode: body.carrierLegacyWardCode || resolved.carrierLegacyWardCode }) };
+    }
+    return { ...resolved, note: clean(body.note) };
   }
   const normalized = normalizeRecipient(body.recipient || {});
   if (body.saveAddress) {

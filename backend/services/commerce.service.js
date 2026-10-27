@@ -227,7 +227,7 @@ export const checkoutCart = async ({ userId, body }) => {
         if (!stock.modifiedCount) fail(`Stock changed for ${item.product?.name || item.productId}. No order was created.`, 409);
       }
       const shipping = await resolveCheckoutShipping({
-        db, session, shopId: shop.id, itemsValue: group.total,
+        db, session, shopId: shop.id, itemsValue: group.total, recipient,
         selected: (body.shippingMethods || {})[shop.id],
       });
       const orderCode = await createUniqueOrderCode(db, session);
@@ -245,6 +245,9 @@ export const checkoutCart = async ({ userId, body }) => {
           wardCode: recipient.wardCode, wardName: recipient.wardName,
           addressLine: recipient.addressLine, fullAddress: recipient.fullAddress,
           note: recipient.note || "", datasetVersion: recipient.datasetVersion,
+          addressVersion: recipient.addressVersion || "legacy",
+          carrierLegacyWardCode: recipient.carrierLegacyWardCode || "",
+          carrierAddress: recipient.carrierAddress || null,
         },
         items: group.items.map((item) => ({
           productId: item.productId, variantId: item.variantId,

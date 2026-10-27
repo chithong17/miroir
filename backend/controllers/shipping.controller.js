@@ -1,5 +1,6 @@
 import { getShopShippingConfig, updateShopShippingConfig, calculateShippingRates } from "../services/shipping/shipping.service.js";
 import { getSingleOwnerShop } from "../services/shop.service.js";
+import { resolveV2Location, migrateAddressView, normalizeCarrierAddress } from "../services/locationV2.service.js";
 
 /**
  * Controller handling shop shipping settings
@@ -23,8 +24,13 @@ export const getMyShippingConfigs = async (req, res, next) => {
       if (maskedCredentials.api_token) {
         maskedCredentials.api_token = "******" + maskedCredentials.api_token.slice(-4);
       }
+      const pickup = config.pickup_address;
+      const migrated = req.query.addressVersion === "v2" && pickup && pickup.addressVersion !== "v2"
+        ? migrateAddressView({ ...pickup, provinceCode: pickup.provinceCode || pickup.province_code, districtCode: pickup.districtCode || pickup.district_code, wardCode: pickup.wardCode || pickup.ward_code, addressLine: pickup.address_detail })
+        : pickup;
       return {
         ...rest,
+        ...(migrated ? { pickup_address: migrated } : {}),
         credentials: maskedCredentials
       };
     });
@@ -57,7 +63,20 @@ export const updateMyShippingConfig = async (req, res, next) => {
     };
 
     if (shop_code) configData.shop_code = shop_code;
-    if (pickup_address) configData.pickup_address = pickup_address;
+    if (pickup_address?.addressVersion === "v2") {
+      const location = resolveV2Location(pickup_address);
+      if (!String(pickup_address.address_detail || "").trim() || !String(pickup_address.phone || "").trim()) {
+        const error = new Error("Vui lòng nhập địa chỉ chi tiết và số điện thoại lấy hàng."); error.statusCode = 400; throw error;
+      }
+      normalizeCarrierAddress(location);
+      configData.pickup_address = { ...location, address_detail: String(pickup_address.address_detail).trim(), phone: String(pickup_address.phone).trim(), contact_name: String(pickup_address.contact_name || shop.name).trim() };
+      if (existingConfig?.pickup_address && existingConfig.pickup_address.addressVersion !== "v2") {
+        configData.legacy_pickup_address = existingConfig.legacy_pickup_address || existingConfig.pickup_address;
+      }
+    } else if (pickup_address) configData.pickup_address = pickup_address;
+    if (configData.is_active && !configData.pickup_address && !existingConfig?.pickup_address) {
+      const error = new Error("Vui lòng nhập địa chỉ lấy hàng trước khi bật vận chuyển."); error.statusCode = 400; throw error;
+    }
 
     if (credentials) {
       configData.credentials = { ...(existingConfig?.credentials || {}) };

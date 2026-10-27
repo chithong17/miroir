@@ -1,6 +1,7 @@
 import { getMongoDb } from "../mongo.service.js";
 import { ShippingProviderFactory } from "./ShippingProviderFactory.js";
 import { activeCarrierConfigs, defaultShippingRate } from "./defaultShipping.js";
+import { normalizeCarrierAddress } from "../locationV2.service.js";
 
 /**
  * Service to manage Shipping Configurations and interact with Providers
@@ -51,24 +52,42 @@ export const calculateShippingRates = async (shopId, rateRequestData, options = 
   if (activeConfigs.length === 0) {
     return [defaultShippingRate(rateRequestData.itemsValue ?? 0)];
   }
+  const sourceAddress = rateRequestData.deliveryAddress || {};
+  const deliveryAddress = normalizeCarrierAddress({
+    ...sourceAddress,
+    provinceName: sourceAddress.provinceName || sourceAddress.province,
+    districtName: sourceAddress.districtName || sourceAddress.district,
+    wardName: sourceAddress.wardName || sourceAddress.ward,
+    addressLine: sourceAddress.addressLine || sourceAddress.address_detail,
+  });
 
   // Gọi song song tất cả các hãng đang được bật
   const promises = activeConfigs.map(async (config) => {
     try {
+      const rawPickup = config.pickup_address || {};
+      const pickup = normalizeCarrierAddress({ ...rawPickup,
+        provinceName: rawPickup.provinceName || rawPickup.province_name,
+        districtName: rawPickup.districtName || rawPickup.district_name,
+        wardName: rawPickup.wardName || rawPickup.ward_name,
+      });
+      const providerConfig = { ...config, pickup_address: { ...rawPickup, ...pickup,
+        province_name: pickup.provinceName, district_name: pickup.districtName, ward_name: pickup.wardName } };
       const adapter = ShippingProviderFactory.getProvider(config.provider);
-      return await adapter.calculateFee(rateRequestData, config);
+      return await adapter.calculateFee({ ...rateRequestData, deliveryAddress }, providerConfig);
     } catch (error) {
       console.error(`[ShippingRates] Error from ${config.provider}:`, error.message);
-      return null;
+      return { error: `${config.provider}: ${error.message}` };
     }
   });
 
   const results = await Promise.all(promises);
   
-  const validResults = results.filter(res => res !== null);
+  const validResults = results.filter(res => res && !res.error && Number.isSafeInteger(res.fee) && res.fee >= 0);
   
   if (activeConfigs.length > 0 && validResults.length === 0) {
-    throw new Error("Không thể tính phí vận chuyển (Lỗi cấu hình shop hoặc sai token). Vui lòng báo shop.");
+    const error = new Error("Không thể tính phí vận chuyển. Shop cần kiểm tra địa chỉ lấy hàng, danh mục địa bàn hoặc cấu hình hãng vận chuyển.");
+    error.statusCode = 409;
+    throw error;
   }
 
   return validResults;
@@ -94,5 +113,13 @@ export const createShippingOrder = async (shopId, orderData) => {
   }
 
   const adapter = ShippingProviderFactory.getProvider(provider);
-  return await adapter.createOrder(orderData, config);
+  const rawPickup = config.pickup_address || {};
+  const pickup = normalizeCarrierAddress({ ...rawPickup,
+    provinceName: rawPickup.provinceName || rawPickup.province_name,
+    districtName: rawPickup.districtName || rawPickup.district_name,
+    wardName: rawPickup.wardName || rawPickup.ward_name,
+  });
+  return await adapter.createOrder({ ...orderData, recipient: normalizeCarrierAddress(orderData.recipient) }, {
+    ...config, pickup_address: { ...rawPickup, ...pickup, province_name: pickup.provinceName, district_name: pickup.districtName, ward_name: pickup.wardName },
+  });
 };

@@ -1,3 +1,4 @@
+import AddressLocationFields, { DeliveryAreaField } from "../components/AddressLocationFields.jsx";
 import { useEffect, useMemo, useState } from "react";
 import {
   cancelMyOrder,
@@ -9,9 +10,6 @@ import {
   getMyOrder,
   listAddresses,
   listMyOrders,
-  listProvinces,
-  listDistricts,
-  listWards,
   removeCartItem,
   previewBuyNow,
   reportMyTransfer,
@@ -44,6 +42,8 @@ import { beginCustomerChat } from "../api/chatApi.js";
 import CancelOrderModal from "../components/CancelOrderModal.jsx";
 
 const blankAddress = {
+  addressVersion: "v2",
+  carrierLegacyWardCode: "",
   label: "Nhà riêng",
   recipientName: "",
   phone: "",
@@ -658,7 +658,7 @@ function CartView() {
   );
 }
 
-function AddressFields({ form, setForm, provinces, districts, wards }) {
+function AddressFields({ form, setForm }) {
   const change = (field) => (event) =>
     setForm((current) => ({
       ...current,
@@ -681,45 +681,7 @@ function AddressFields({ form, setForm, provinces, districts, wards }) {
         value={form.phone}
         onChange={change("phone")}
       />
-      <SelectField
-        label="Tỉnh/Thành phố"
-        required
-        value={form.provinceCode}
-        onChange={change("provinceCode")}
-      >
-        <option value="">Chọn tỉnh/thành</option>
-        {provinces.map((item) => (
-          <option key={item.code} value={item.code}>
-            {item.name}
-          </option>
-        ))}
-      </SelectField>
-      <SelectField
-        label="Quận/Huyện"
-        required
-        value={form.districtCode}
-        onChange={change("districtCode")}
-      >
-        <option value="">Chọn quận/huyện</option>
-        {districts.map((item) => (
-          <option key={item.code} value={item.code}>
-            {item.name}
-          </option>
-        ))}
-      </SelectField>
-      <SelectField
-        label="Xã/Phường"
-        required
-        value={form.wardCode}
-        onChange={change("wardCode")}
-      >
-        <option value="">Chọn xã/phường</option>
-        {wards.map((item) => (
-          <option key={item.code} value={item.code}>
-            {item.name}
-          </option>
-        ))}
-      </SelectField>
+      <AddressLocationFields form={form} setForm={setForm} />
       <TextField
         label="Địa chỉ chi tiết"
         wide
@@ -731,36 +693,11 @@ function AddressFields({ form, setForm, provinces, districts, wards }) {
   );
 }
 
-function useLocations(form) {
-  const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [wards, setWards] = useState([]);
-  const [version, setVersion] = useState("");
-  useEffect(() => {
-    listProvinces().then((result) => {
-      setProvinces(result.provinces);
-      setVersion(result.datasetVersion);
-    });
-  }, []);
-  useEffect(() => {
-    if (form.provinceCode)
-      listDistricts(form.provinceCode).then((result) => setDistricts(result.districts));
-    else setDistricts([]);
-  }, [form.provinceCode]);
-  useEffect(() => {
-    if (form.districtCode)
-      listWards(form.districtCode).then((result) => setWards(result.wards));
-    else setWards([]);
-  }, [form.districtCode]);
-  return { provinces, districts, wards, version };
-}
-
 function AddressBook() {
   const [addresses, setAddresses] = useState([]);
   const [form, setForm] = useState(blankAddress);
   const [editingId, setEditingId] = useState("");
   const [notice, setNotice] = useState("");
-  const { provinces, districts, wards, version } = useLocations(form);
   const load = () =>
     listAddresses()
       .then((result) => setAddresses(result.addresses || []))
@@ -790,7 +727,7 @@ function AddressBook() {
       <PageHeader
         eyebrow="Tài khoản"
         title="Sổ địa chỉ"
-        description={`Danh mục hành chính ${version || "đang tải"}. Bạn có thể lưu nhiều người nhận.`}
+        description={`Danh mục hành chính sau sáp nhập 2025. Bạn có thể lưu nhiều người nhận.`}
       />
       {notice ? <Notice text={notice} /> : null}
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_420px]">
@@ -811,6 +748,7 @@ function AddressBook() {
                     {item.recipientName} · {item.phone}
                   </p>
                   <p className="text-sm text-muted">{item.fullAddress}</p>
+                  {item.requiresAddressConfirmation && <p className="mt-2 text-xs text-amber-800">Cần cập nhật phường/xã sau sáp nhập trước khi đặt hàng.</p>}
                 </div>
               </div>
               <div className="mt-4 flex gap-2">
@@ -829,13 +767,9 @@ function AddressBook() {
                   variant="secondary"
                   onClick={() => {
                     setEditingId(item.id);
-                    setForm({
-                      label: item.label,
-                      recipientName: item.recipientName,
-                      phone: item.phone,
-                      provinceCode: item.provinceCode,
-                      wardCode: item.wardCode,
-                      addressLine: item.addressLine,
+                    setForm({ ...blankAddress, ...item,
+                      addressVersion: "v2",
+                      ...(item.requiresAddressConfirmation ? { provinceCode: "", wardCode: "", carrierLegacyWardCode: "" } : {}),
                     });
                   }}
                 >
@@ -862,7 +796,7 @@ function AddressBook() {
           <h2 className="mb-4 text-xl font-black">
             {editingId ? "Sửa địa chỉ" : "Thêm địa chỉ"}
           </h2>
-          <AddressFields {...{ form, setForm, provinces, districts, wards }} />
+          <AddressFields {...{ form, setForm }} />
           <Button className="mt-4 w-full" type="submit">
             Lưu địa chỉ
           </Button>
@@ -898,12 +832,10 @@ function CheckoutView() {
   const [selectedShipping, setSelectedShipping] = useState({});
   const [shippingLoading, setShippingLoading] = useState(false);
   const [shippingError, setShippingError] = useState("");
+  const [savedCarrierArea, setSavedCarrierArea] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [wards, setWards] = useState([]);
 
   const checkoutParams = useMemo(
     () => new URLSearchParams(window.location.search),
@@ -925,28 +857,6 @@ function CheckoutView() {
       return null;
     }
   }, [isBuyNow]);
-  const version = new URLSearchParams(window.location.search).get("version");
-
-  useEffect(() => {
-    listProvinces()
-      .then((result) => setProvinces(result.provinces))
-      .catch(() => {});
-  }, []);
-  useEffect(() => {
-    if (form.provinceCode)
-      listDistricts(form.provinceCode)
-        .then((result) => setDistricts(result.districts))
-        .catch(() => {});
-    else setDistricts([]);
-  }, [form.provinceCode]);
-
-  useEffect(() => {
-    if (form.districtCode)
-      listWards(form.districtCode)
-        .then((result) => setWards(result.wards))
-        .catch(() => {});
-    else setWards([]);
-  }, [form.districtCode]);
 
   useEffect(() => {
     if (isBuyNow && !buyNowItems) {
@@ -981,6 +891,7 @@ function CheckoutView() {
   }, []);
 
   useEffect(() => {
+    setSavedCarrierArea("");
     if (selected) selectCartAddress(selected).catch(() => {});
   }, [selected]);
 
@@ -993,15 +904,12 @@ function CheckoutView() {
     if (!cart?.groups) return;
     
     let addressObj = null;
-    if (manual && form.provinceCode && form.districtCode && form.wardCode && form.addressLine) {
-      const province = provinces.find((p) => p.code === form.provinceCode)?.name || "";
-      const district = districts.find((d) => d.code === form.districtCode)?.name || "";
-      const ward = wards.find((w) => w.code === form.wardCode)?.name || "";
-      addressObj = { province, district, ward, address_detail: form.addressLine };
+    if (manual && form.provinceCode && form.wardCode && form.addressLine) {
+      addressObj = { ...form, addressVersion: "v2" };
     } else if (!manual && selected) {
-      const addr = addresses.find((a) => a.id === selected);
-      if (addr) {
-        addressObj = { province: addr.provinceName, district: addr.districtName, ward: addr.wardName, address_detail: addr.addressLine };
+      const addr = addresses.find((item) => item.id === selected);
+      if (addr && !addr.requiresAddressConfirmation) {
+        addressObj = { ...addr, carrierLegacyWardCode: savedCarrierArea || addr.carrierLegacyWardCode };
       }
     }
 
@@ -1031,7 +939,7 @@ function CheckoutView() {
       setShippingLoading(false);
     });
     return () => { cancelled = true; };
-  }, [cart, selected, manual, form.provinceCode, form.districtCode, form.wardCode, form.addressLine, addresses, provinces, districts, wards]);
+  }, [cart, selected, manual, form.provinceCode, form.districtCode, form.wardCode, form.addressLine, form.carrierLegacyWardCode, addresses, savedCarrierArea]);
 
   const shippingReady = !shippingLoading && !shippingError && Boolean(cart?.groups?.length) &&
     cart.groups.every((group) => group.shop && selectedShipping[group.shop.id]);
@@ -1041,11 +949,10 @@ function CheckoutView() {
         form.recipientName &&
         form.phone &&
         form.provinceCode &&
-        form.districtCode &&
         form.wardCode &&
         form.addressLine,
       )
-    : Boolean(selected);
+    : Boolean(selected && !addresses.find((item) => item.id === selected)?.requiresAddressConfirmation);
 
   const submit = async () => {
     if (!recipientReady || !shippingReady) return;
@@ -1056,6 +963,8 @@ function CheckoutView() {
         idempotencyKey: crypto.randomUUID(),
         paymentMethods: methods,
         shippingMethods: selectedShipping,
+        addressVersion: "v2",
+        carrierLegacyWardCode: savedCarrierArea || addresses.find((item) => item.id === selected)?.carrierLegacyWardCode,
         ...(buyNowItems ? { buyNowItems } : {}),
         ...(manual
           ? { recipient: form, saveAddress, setAsDefault }
@@ -1142,9 +1051,20 @@ function CheckoutView() {
               )}
             </div>
 
+            {!manual && addresses.find((item) => item.id === selected)?.requiresAddressConfirmation && (
+              <p role="alert" className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Địa chỉ cũ cần xác nhận sau sáp nhập. <a href="/app/addresses" className="font-bold underline">Cập nhật trong sổ địa chỉ</a> hoặc nhập địa chỉ mới.</p>
+            )}
+            {!manual && addresses.find((item) => item.id === selected)?.addressVersion === "v2" && (
+              <div className="mt-4"><DeliveryAreaField
+                provinceCode={addresses.find((item) => item.id === selected)?.provinceCode}
+                wardCode={addresses.find((item) => item.id === selected)?.wardCode}
+                value={savedCarrierArea || addresses.find((item) => item.id === selected)?.carrierLegacyWardCode}
+                onChange={setSavedCarrierArea}
+              /></div>
+            )}
             {manual ? (
               <div className="relative mt-6">
-                <AddressFields {...{ form, setForm, provinces, districts, wards }} />
+                <AddressFields {...{ form, setForm }} />
                 <TextField
                   className="mt-4"
                   label="Ghi chú"

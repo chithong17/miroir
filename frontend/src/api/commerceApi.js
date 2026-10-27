@@ -27,7 +27,7 @@ export const reportMyTransfer = async (id, image) => {
   return (await client.post(`/orders/me/${encodeURIComponent(id)}/transfer-reported`, form, { headers: { "Content-Type": "multipart/form-data" } })).data;
 };
 
-export const listAddresses = async () => (await client.get("/users/me/addresses")).data;
+export const listAddresses = async () => (await client.get("/users/me/addresses", { params: { addressVersion: "v2" } })).data;
 export const createAddress = async (payload) => (await client.post("/users/me/addresses", payload)).data;
 export const updateAddress = async (id, payload) => (await client.put(`/users/me/addresses/${encodeURIComponent(id)}`, payload)).data;
 export const setDefaultAddress = async (id) => (await client.patch(`/users/me/addresses/${encodeURIComponent(id)}/default`)).data;
@@ -89,3 +89,7 @@ export const listShopReturns = async (params) => (await shopClient.get("/shop-or
 export const decideShopReturn = async (id, approved, reason, instructions = "") => (await shopClient.patch(`/shop-orders/returns/${encodeURIComponent(id)}/decision`, { approved, reason, instructions })).data;
 export const receiveShopReturn = async (id) => (await shopClient.patch(`/shop-orders/returns/${encodeURIComponent(id)}/received`)).data;
 export const refundShopReturn = async (id, note, image) => { const form = new FormData(); if (note) form.append("note", note); if (image) form.append("images", image); return (await shopClient.patch(`/shop-orders/returns/${encodeURIComponent(id)}/refund`, form, { headers: { "Content-Type": "multipart/form-data" } })).data; };
+
+export const listV2Provinces = async () => (await client.get("/locations/v2/provinces")).data;
+export const listV2Wards = async (code) => (await client.get(`/locations/v2/provinces/${encodeURIComponent(code)}/wards`)).data;
+export const listDeliveryAreas = async (province, ward) => (await client.get(`/locations/v2/provinces/${encodeURIComponent(province)}/wards/${encodeURIComponent(ward)}/delivery-areas`)).data;

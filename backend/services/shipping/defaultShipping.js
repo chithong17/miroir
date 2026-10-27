@@ -18,7 +18,7 @@ export const defaultShippingRate = (itemsValue) => {
 };
 
 // Enforce the shop's default policy from server-side prices, never the client fee.
-export const resolveCheckoutShipping = async ({ db, session, shopId, itemsValue, selected }) => {
+export const resolveCheckoutShipping = async ({ db, session, shopId, itemsValue, selected, recipient }) => {
   const configs = await db.collection("shop_shipping_configs").find({ shopId }, { session }).toArray();
   const active = activeCarrierConfigs(configs);
   if (!active.length) return defaultShippingRate(itemsValue);
@@ -27,6 +27,15 @@ export const resolveCheckoutShipping = async ({ db, session, shopId, itemsValue,
     const error = new Error("Phương thức giao hàng đã thay đổi. Vui lòng tải lại trang và chọn phí giao hàng.");
     error.statusCode = 409;
     throw error;
+  }
+  if (recipient) {
+    const { calculateShippingRates } = await import("./shipping.service.js");
+    const rates = await calculateShippingRates(shopId, { deliveryAddress: recipient, itemsValue, itemsWeight: 1000 }, { db, session });
+    const confirmed = rates.find((rate) => rate.provider === selected.provider && rate.service_id === selected.service_id);
+    if (!confirmed || Number(confirmed.fee) !== selected.fee) {
+      const error = new Error("Phí giao hàng đã thay đổi. Vui lòng tải lại trang để cập nhật."); error.statusCode = 409; throw error;
+    }
+    return confirmed;
   }
   return { ...selected, fee: Number(selected.fee) };
 };

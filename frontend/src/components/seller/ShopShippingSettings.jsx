@@ -1,3 +1,4 @@
+import PickupAddressFields from "./PickupAddressFields.jsx";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
@@ -33,7 +34,7 @@ export default function ShopShippingSettings() {
       setLoading(true);
       const token = localStorage.getItem("miroir_shop_owner_token");
       const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-      const { data } = await axios.get(`${API_BASE}/shipping-configs/me`, {
+      const { data } = await axios.get(`${API_BASE}/shipping-configs/me?addressVersion=v2`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setConfigs(data.data || []);
@@ -42,6 +43,7 @@ export default function ShopShippingSettings() {
       if (ghn) {
         setGhnConfig({
           is_active: ghn.is_active,
+          pickup_address: ghn.pickup_address?.addressVersion === "v2" ? ghn.pickup_address : undefined,
           credentials: { 
             api_token: ghn.credentials?.api_token || "",
             client_id: ghn.credentials?.client_id || ""
@@ -52,6 +54,7 @@ export default function ShopShippingSettings() {
       if (ghtk) {
         setGhtkConfig({
           is_active: ghtk.is_active,
+          pickup_address: ghtk.pickup_address?.addressVersion === "v2" ? ghtk.pickup_address : undefined,
           credentials: { api_token: ghtk.credentials?.api_token || "" }
         });
       }
@@ -73,6 +76,7 @@ export default function ShopShippingSettings() {
         `${API_BASE}/shipping-configs/me/GHN`,
         {
           is_active: ghnConfig.is_active,
+          pickup_address: ghnConfig.pickup_address,
           environment: "SANDBOX",
           credentials: { 
             api_token: ghnConfig.credentials.api_token,
@@ -85,7 +89,7 @@ export default function ShopShippingSettings() {
       fetchConfigs(); // Refresh to mask token again
     } catch (error) {
       console.error(error);
-      setNotice("Đã có lỗi xảy ra khi lưu cấu hình.");
+      setNotice(error.response?.data?.message || "Không lưu được cấu hình.");
     } finally {
       setSaving(false);
     }
@@ -101,6 +105,7 @@ export default function ShopShippingSettings() {
         `${API_BASE}/shipping-configs/me/GHTK`,
         {
           is_active: ghtkConfig.is_active,
+          pickup_address: ghtkConfig.pickup_address,
           environment: "SANDBOX",
           credentials: { api_token: ghtkConfig.credentials.api_token }
         },
@@ -110,7 +115,7 @@ export default function ShopShippingSettings() {
       fetchConfigs(); // Refresh to mask token again
     } catch (error) {
       console.error(error);
-      setNotice("Đã có lỗi xảy ra khi lưu cấu hình.");
+      setNotice(error.response?.data?.message || "Không lưu được cấu hình.");
     } finally {
       setSaving(false);
     }
@@ -192,7 +197,7 @@ export default function ShopShippingSettings() {
               <p className="text-xs text-muted">Bắt buộc để tính phí và tạo đơn hàng trên GHN.</p>
             </label>
 
-            {/* In a complete version, Address Selection would go here */}
+            <PickupAddressFields value={ghnConfig.pickup_address} onChange={(value) => setGhnConfig((current) => ({ ...current, pickup_address: value }))} />
             
             <div className="mt-2 flex justify-end">
               <button 
@@ -248,6 +253,7 @@ export default function ShopShippingSettings() {
               <p className="text-xs text-muted">Bảo mật: Token sẽ bị ẩn khi tải lại trang.</p>
             </label>
             
+            <PickupAddressFields value={ghtkConfig.pickup_address} onChange={(value) => setGhtkConfig((current) => ({ ...current, pickup_address: value }))} />
             <div className="mt-2 flex justify-end">
               <button 
                 className={`${buttonBase} bg-ink text-white hover:bg-ink/90`}

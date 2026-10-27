@@ -1,18 +1,13 @@
 import axios from "axios";
 import { IShippingProvider } from "../IShippingProvider.js";
 
-const cache = {
-  provinces: null,
-  districts: {},
-  wards: {}
-};
-
 /**
  * Adapter for Giao Hang Nhanh (GHN) API
  */
 export class GHNAdapter extends IShippingProvider {
   constructor() {
     super();
+    this.cache = { provinces: null, districts: {}, wards: {} };
     this.isSandbox = process.env.SHIPPING_ENVIRONMENT === "SANDBOX" || !process.env.SHIPPING_ENVIRONMENT;
     this.baseURL = this.isSandbox 
       ? "https://dev-online-gateway.ghn.vn"
@@ -24,7 +19,7 @@ export class GHNAdapter extends IShippingProvider {
       throw new Error("GHN API Token is missing in shop config");
     }
 
-    const isConfigSandbox = config.environment === "SANDBOX" || this.isSandbox;
+    const isConfigSandbox = config.environment ? config.environment === "SANDBOX" : this.isSandbox;
     const dynamicBaseURL = isConfigSandbox ? "https://dev-online-gateway.ghn.vn" : "https://online-gateway.ghn.vn";
 
     try {
@@ -64,39 +59,36 @@ export class GHNAdapter extends IShippingProvider {
     };
     
     // 1. Province
-    if (!cache.provinces) {
+    if (!this.cache.provinces) {
       const res = await this.request("GET", "/shiip/public-api/master-data/province", null, config);
       if (!res || !res.data) throw new Error("GHN API returned empty province data");
-      cache.provinces = res.data;
+      this.cache.provinces = res.data;
     }
-    const tp = clean(provinceName);
-    const province = cache.provinces.find(p => clean(p.ProvinceName) === tp) 
-                  || cache.provinces.find(p => p.NameExtension && p.NameExtension.some(ext => clean(ext) === tp));
-    if (!province) throw new Error("Cannot map province: " + provinceName);
+    if (!provinceName || !districtName || !wardName) throw new Error("Missing verified carrier locality.");
+    const unique = (items, name, field) => {
+      const matches = items.filter((item) => clean(item[field]) === clean(name) || item.NameExtension?.some((alias) => clean(alias) === clean(name)));
+      if (matches.length !== 1) throw new Error(`Carrier locality is missing or ambiguous: ${name}`);
+      return matches[0];
+    };
+    const province = unique(this.cache.provinces, provinceName, "ProvinceName");
 
     // 2. District
-    if (!cache.districts[province.ProvinceID]) {
+    if (!this.cache.districts[province.ProvinceID]) {
       const res = await this.request("GET", "/shiip/public-api/master-data/district", null, config, { province_id: province.ProvinceID });
       if (!res || !res.data) throw new Error(`GHN API returned empty district data for province_id: ${province.ProvinceID}`);
-      cache.districts[province.ProvinceID] = res.data;
+      this.cache.districts[province.ProvinceID] = res.data;
     }
-    const td = clean(districtName);
-    const district = cache.districts[province.ProvinceID].find(d => clean(d.DistrictName) === td) 
-                  || cache.districts[province.ProvinceID].find(d => d.NameExtension && d.NameExtension.some(ext => clean(ext) === td));
-    if (!district) throw new Error("Cannot map district: " + districtName);
+    const district = unique(this.cache.districts[province.ProvinceID], districtName, "DistrictName");
 
     // 3. Ward (Optional)
     let wardCode = null;
     if (wardName) {
-      if (!cache.wards[district.DistrictID]) {
+      if (!this.cache.wards[district.DistrictID]) {
         const res = await this.request("GET", "/shiip/public-api/master-data/ward", null, config, { district_id: district.DistrictID });
         if (!res || !res.data) throw new Error(`GHN API returned empty ward data for district_id: ${district.DistrictID}`);
-        cache.wards[district.DistrictID] = res.data;
+        this.cache.wards[district.DistrictID] = res.data;
       }
-      const tw = clean(wardName);
-      const ward = cache.wards[district.DistrictID].find(w => clean(w.WardName) === tw) 
-                || cache.wards[district.DistrictID].find(w => w.NameExtension && w.NameExtension.some(ext => clean(ext) === tw));
-      if (!ward) throw new Error("Cannot map ward: " + wardName);
+      const ward = unique(this.cache.wards[district.DistrictID], wardName, "WardName");
       wardCode = ward.WardCode;
     }
 
@@ -110,37 +102,24 @@ export class GHNAdapter extends IShippingProvider {
     const pickupAddress = config.pickup_address || {};
 
     const toLoc = await this.resolveLocation(
-      deliveryAddress.province || deliveryAddress.provinceName || "Hồ Chí Minh",
-      deliveryAddress.district || deliveryAddress.districtName || "Quận 1",
-      deliveryAddress.ward || deliveryAddress.wardName,
+      deliveryAddress.provinceName || deliveryAddress.province,
+      deliveryAddress.districtName || deliveryAddress.district,
+      deliveryAddress.wardName || deliveryAddress.ward,
       config
     );
 
     const fromLoc = await this.resolveLocation(
-      pickupAddress.province_name || "Hà Nội",
-      pickupAddress.district_name || "Quận Đống Đa",
+      pickupAddress.province_name,
+      pickupAddress.district_name,
       pickupAddress.ward_name,
       config
     );
 
-    // If the shop's database address is missing the ward, GHN will crash because the shop
-    // might not have a fallback address configured on the GHN portal either.
-    // So we pick the first available ward in that district to get an accurate fee estimate.
-    let finalFromWardCode = fromLoc.wardCode;
-    if (!finalFromWardCode && fromLoc.districtId) {
-      if (!cache.wards[fromLoc.districtId]) {
-        const res = await this.request("GET", "/shiip/public-api/master-data/ward", null, config, { district_id: fromLoc.districtId });
-        cache.wards[fromLoc.districtId] = res?.data || [];
-      }
-      if (cache.wards[fromLoc.districtId].length > 0) {
-        finalFromWardCode = cache.wards[fromLoc.districtId][0].WardCode;
-      }
-    }
-
+    if (!fromLoc.wardCode || !toLoc.wardCode) throw new Error("Missing verified shipping ward.");
     const payload = {
       shop_id: config.credentials.client_id ? Number(config.credentials.client_id) : undefined,
       from_district_id: fromLoc.districtId,
-      from_ward_code: finalFromWardCode,
+      from_ward_code: fromLoc.wardCode,
       service_type_id: 2, // Standard
       to_district_id: toLoc.districtId,
       to_ward_code: toLoc.wardCode,
@@ -156,7 +135,7 @@ export class GHNAdapter extends IShippingProvider {
       provider: "GHN",
       service_id: "GHN_STD",
       service_name: "Giao Hàng Nhanh",
-      fee: res.data?.total || 0,
+      fee: res.data?.total,
       expected_delivery_time: "Dự kiến 2-3 ngày"
     };
   }
@@ -164,7 +143,7 @@ export class GHNAdapter extends IShippingProvider {
   async createOrder(req, config) {
     const toLoc = await this.resolveLocation(
       req.recipient.provinceName,
-      req.recipient.districtName || req.recipient.provinceName,
+      req.recipient.districtName,
       req.recipient.wardName,
       config
     );
@@ -177,6 +156,16 @@ export class GHNAdapter extends IShippingProvider {
       to_name: req.recipient.name,
       to_phone: req.recipient.phone,
       to_address: req.recipient.addressLine,
+      to_province_name: req.recipient.provinceName,
+      to_district_name: req.recipient.districtName,
+      to_ward_name: req.recipient.wardName,
+      from_address: config.pickup_address.address_detail,
+      from_province_name: config.pickup_address.province_name,
+      from_district_name: config.pickup_address.district_name,
+      from_ward_name: config.pickup_address.ward_name,
+      from_phone: config.pickup_address.phone,
+      from_name: config.pickup_address.contact_name,
+      cod_amount: req.paymentMethod === "cash" ? req.total : 0,
       to_ward_code: toLoc.wardCode,
       to_district_id: toLoc.districtId,
       weight: 500, // gram
