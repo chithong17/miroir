@@ -6,10 +6,10 @@ const dateLabel = date => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
 export function InsightMetrics({ report }) {
   const i = report.insights;
   const items = [
-    { label: "Total Registered Users", value: number(i.registeredAtEnd), icon: Users, note: "Đến cuối kỳ" },
-    { label: "Active Users (MAU)", value: number(i.mau), icon: Activity, note: "30 ngày" },
-    { label: "New Users", value: number(report.summary.newInRange), icon: UserPlus, note: "Trong kỳ" },
-    { label: "Engagement Rate", value: `${number(i.engagementRate)}%`, icon: Activity, note: "MAU / Tổng tài khoản" },
+    { label: "Tổng khách hàng", value: number(i.registeredAtEnd), icon: Users, note: "Đến cuối kỳ" },
+    { label: "Hoạt động 30 ngày", value: number(i.mau), icon: Activity, note: "Khách hàng duy nhất" },
+    { label: "Khách hàng mới", value: number(report.summary.newInRange), icon: UserPlus, note: "Trong kỳ" },
+    { label: "Tỷ lệ hoạt động", value: `${number(i.engagementRate)}%`, icon: Activity, note: "Hoạt động / Tổng khách hàng" },
   ];
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{items.map(({ label, value, icon: Icon, note }, index) => <div key={label} className="min-w-0 rounded-3xl border border-[#E0E7D8] bg-white p-5 sm:p-6"><div className="flex items-center justify-between gap-2 text-sm font-semibold text-[#65745F]"><span>{label}</span><Icon size={18} className="shrink-0 text-[#8A9D7C]" /></div><p className={`mt-5 text-[42px] font-black leading-none tracking-tight tabular-nums ${index === 0 ? "text-[#527D3D]" : "text-[#23352B]"}`}>{value}</p><p className="mt-3 text-xs text-[#7B8777]">{note}</p></div>)}</div>;
 }
@@ -48,7 +48,7 @@ function ActiveChart({ report }) {
   const i = report.insights;
   const rows = [{ label: "DAU", value: i.dau, days: "1 ngày" }, { label: "WAU", value: i.wau, days: "7 ngày" }, { label: "MAU", value: i.mau, days: "30 ngày" }];
   const step = Math.max(1, Math.ceil(Math.max(0, ...rows.map(row => row.value)) / 4)), max = step * 4;
-  return <ChartCard number="02" title="Active Users" note="Người dùng duy nhất đến cuối kỳ. Các khoảng có thể chồng lấp, không cộng lại.">
+  return <ChartCard number="02" title="Active Users">
     <div className="mt-5 overflow-x-auto" tabIndex={0} aria-label="Biểu đồ DAU WAU MAU"><div className="min-w-[620px]"><svg viewBox="0 0 1000 300" className="w-full" role="img" aria-label={`DAU ${i.dau}, WAU ${i.wau}, MAU ${i.mau}`}>
       {[0, 1, 2, 3, 4].map(index => <g key={index}><line x1="62" x2="965" y1={238 - index * 50} y2={238 - index * 50} stroke="#E1E8DA" strokeDasharray="4 5" /><text x="48" y={243 - index * 50} textAnchor="end" fontSize="14" fill="#6D7C67">{number(index * step)}</text></g>)}
       {rows.map((row, index) => { const h = row.value / max * 200, x = 170 + index * 290; return <g key={row.label}><title>{row.label}: {row.value} · {row.days}</title><rect x={x} y={238 - h} height={h} width="150" rx="10" fill={index === 2 ? "#486C35" : "#91AD75"} /><text x={x + 75} y={226 - h} textAnchor="middle" fontSize="22" fontWeight="700" fill="#344B32">{number(row.value)}</text><text x={x + 75} y="266" textAnchor="middle" fontSize="18" fontWeight="700" fill="#344B32">{row.label}</text><text x={x + 75} y="289" textAnchor="middle" fontSize="12" fill="#7B8777">{row.days}</text></g>; })}
@@ -61,9 +61,9 @@ export function InsightCharts({ report, section }) {
   const growth = groupPoints(i.growth, "registered", true);
   const engagement = groupPoints(i.daily, "featureEvents", false);
   return <div className="space-y-5">
-    {section === "acquisition" && <ChartCard number="01" title="User Growth" subtitle={`Tài khoản tích lũy · ${weekly ? "Nhóm 7 ngày" : "Theo ngày"}`}><LineChart points={growth} label="Tổng tài khoản đăng ký tích lũy" /></ChartCard>}
+    {section === "acquisition" && <ChartCard number="01" title="User Growth"><LineChart points={growth} label="Biểu đồ tăng trưởng khách hàng" /></ChartCard>}
     {["acquisition", "engagement"].includes(section) && <ActiveChart report={report} />}
-    {["acquisition", "usage"].includes(section) && <ChartCard number="03" title="Engagement" subtitle={`Lượt sử dụng tính năng · ${weekly ? "Nhóm 7 ngày" : "Theo ngày"}`} note="Đếm sự kiện tính năng, không phải số phiên."><LineChart points={engagement} label="Sự kiện sử dụng tính năng trong kỳ" color="#A7824E" /></ChartCard>}
+    {["acquisition", "usage"].includes(section) && <ChartCard number="03" title="Engagement" subtitle={`Lượt sử dụng tính năng · ${weekly ? "Nhóm 7 ngày" : "Theo ngày"}`}><LineChart points={engagement} label="Sự kiện sử dụng tính năng trong kỳ" color="#A7824E" /></ChartCard>}
     {section === "engagement" && <ChartCard number="03" title="Hoạt động theo ngày" subtitle="Số người dùng duy nhất"><LineChart points={i.daily.map(row => ({ date: row.date, label: dateLabel(row.date), value: row.activeUsers }))} label="Người dùng hoạt động theo ngày" /></ChartCard>}
   </div>;
 }

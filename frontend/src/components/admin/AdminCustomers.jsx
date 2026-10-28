@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import CustomerReport, { reportSections } from "./CustomerReport.jsx";
 import CustomerPeriodSelect from "./CustomerPeriodSelect.jsx";
-import { Download, RefreshCw, Search } from "lucide-react";
+import { CalendarDays, Download, RefreshCw, Search } from "lucide-react";
 import { getAdminCustomerAnalytics } from "../../api/adminApi.js";
 import { NeuCard } from "../seller/NeuComponents.jsx";
 
 const number = (value) => new Intl.NumberFormat("vi-VN").format(value || 0);
 const date = (value) => value ? new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", dateStyle: "short", timeStyle: "short" }).format(new Date(value)) : "—";
-const periodDate = (value, year = false) => new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", ...(year ? { year: "numeric" } : {}) }).format(new Date(value)).replaceAll("-", "/");
+const reportPeriod = (start, end) => {
+  const format = value => new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
+  const from = format(start), to = format(end);
+  return `${from.slice(-4) === to.slice(-4) ? from.slice(0, 5) : from} – ${to}`;
+};
 const fieldClass = "min-h-11 rounded-xl border border-[#DCE4D6] bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#B3D07E]";
 const usageLabels = { product_view: "Lượt xem sản phẩm", tryon_started: "Lượt bắt đầu thử đồ", stylist_product_recommended: "Lượt sản phẩm được AI gợi ý", product_feedback: "Lượt phản hồi sản phẩm" };
 
@@ -57,8 +61,11 @@ export default function AdminCustomers({ refreshing = false }) {
   }, [range, month, search, status, page, revision, refreshing]);
 
   const renderReport = () => <div className="space-y-4">
-    <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#E3E9DB] pb-5">
-      <p className="text-sm font-medium text-[#7A8579]">{periodDate(report.start, periodDate(report.start, true).slice(-4) !== periodDate(report.end, true).slice(-4))} – {periodDate(report.end, true)}</p>
+    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E3E9DB] pb-5">
+      <div className="inline-flex max-w-full items-center gap-3 rounded-2xl border border-[#D3E2C4] bg-[#EDF4E5] px-4 py-3" role="group" aria-label="Kỳ thống kê">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#DDE8D2] bg-white text-[#618046]"><CalendarDays size={20} /></span>
+        <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#758C60]">Kỳ thống kê</p><p className="mt-1 text-base font-bold leading-tight tabular-nums text-[#344B32] sm:text-lg" aria-live="polite">{reportPeriod(report.start, report.end)}</p></div>
+      </div>
       <div className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-[#E3E9DB] bg-white p-1" aria-label="Nội dung báo cáo">{reportSections.map(item => <button key={item.id} type="button" aria-pressed={section === item.id} onClick={() => setSection(item.id)} className={`min-h-10 shrink-0 rounded-full px-4 text-xs font-semibold transition ${section === item.id ? "bg-[#344B32] text-white" : "text-[#7A8579] hover:bg-[#F1F5E9]"}`}>{item.label}</button>)}</div>
     </div>
     <CustomerReport report={report} section={section} registrationView={registrationView} onRegistrationViewChange={setRegistrationView} onMonthSelect={(value) => { setMonth(value); if (!value) setRange("90d"); }} />
