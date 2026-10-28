@@ -374,6 +374,21 @@ export const getTryOnTaskStatus = async (req, res, next) => {
       raw: rawTaskData,
     });
   } catch (error) {
+    if (error.code === "TRYON_ACCOUNT_CHANGED") {
+      return res.status(409).json({
+        success: false,
+        status: "failed",
+        errorMessage: error.message,
+        code: error.code,
+      });
+    }
+    if (error.statusCode === 503 || error.code === "PIAPI_UNAVAILABLE") {
+      return res.status(200).json({
+        success: true,
+        status: "pending",
+        message: "Dịch vụ AI đang kết nối, tiếp tục lấy kết quả...",
+      });
+    }
     next(error);
   }
 };

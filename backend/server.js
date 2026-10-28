@@ -1,7 +1,10 @@
+import dns from "node:dns";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import { createServer } from "node:http";
+
+dns.setDefaultResultOrder?.("ipv4first");
 import { Server as SocketServer } from "socket.io";
 import adminAuthRoutes from "./routes/adminAuth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";

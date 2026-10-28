@@ -32,7 +32,7 @@ export default function TryOnStudioPage() {
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
-  const [customTryOnType, setCustomTryOnType] = useState("dress");
+  const [customTryOnType, setCustomTryOnType] = useState("upper_lower");
   const [dressFile, setDressFile] = useState(null);
   const [upperFile, setUpperFile] = useState(null);
   const [lowerFile, setLowerFile] = useState(null);
@@ -648,16 +648,16 @@ export default function TryOnStudioPage() {
                           value={customTryOnType}
                           onChange={(e) => setCustomTryOnType(e.target.value)}
                         >
-                          <option value="dress">Váy / Đầm liền (1 mảnh)</option>
                           <option value="upper_lower">
-                            Áo & Quần (2 mảnh)
+                            Áo / Quần (Áo thun, polo, sơ mi, quần...)
                           </option>
+                          <option value="dress">Váy / Đầm liền thân (1 mảnh)</option>
                         </SelectField>
 
                         {customTryOnType === "dress" ? (
                           <div>
                             <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">
-                              Ảnh trang phục
+                              Ảnh váy / đầm liền
                             </p>
                             <div
                               onClick={() => dressInputRef.current?.click()}
@@ -700,91 +700,102 @@ export default function TryOnStudioPage() {
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">
-                                Áo
-                              </p>
-                              <div
-                                onClick={() => upperInputRef.current?.click()}
-                                className="block aspect-[3/4] rounded-[20px] border-2 border-dashed border-[#91B76F]/30 bg-white/50 hover:bg-white/80 transition-all cursor-pointer overflow-hidden relative shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] group"
-                              >
-                                {upperPreview ? (
-                                  <img
-                                    src={upperPreview}
-                                    className="w-full h-full object-cover"
+                          <div className="flex flex-col gap-2">
+                            <p className="text-[11px] text-gray-400 font-medium">
+                              💡 Bạn có thể tải chỉ riêng Áo, chỉ riêng Quần, hoặc cả 2 món.
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">
+                                  Áo
+                                </p>
+                                <div
+                                  onClick={() => upperInputRef.current?.click()}
+                                  className="block aspect-[3/4] rounded-[20px] border-2 border-dashed border-[#91B76F]/30 bg-white/50 hover:bg-white/80 transition-all cursor-pointer overflow-hidden relative shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] group"
+                                >
+                                  {upperPreview ? (
+                                    <img
+                                      src={upperPreview}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
+                                      <svg
+                                        className="w-5 h-5 text-[#91B76F] mb-1 transition-transform group-hover:-translate-y-1"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth="2"
+                                          d="M12 4v16m8-8H4"
+                                        />
+                                      </svg>
+                                      <span className="text-[10.5px] font-bold text-gray-400">
+                                        Tải ảnh áo
+                                      </span>
+                                    </div>
+                                  )}
+                                  <input
+                                    ref={upperInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      setGarmentFile("upper", e.target.files?.[0])
+                                    }
                                   />
-                                ) : (
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                                    <svg
-                                      className="w-5 h-5 text-[#91B76F] mb-1 transition-transform group-hover:-translate-y-1"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M12 4v16m8-8H4"
-                                      />
-                                    </svg>
-                                  </div>
-                                )}
-                                <input
-                                  ref={upperInputRef}
-                                  type="file"
-                                  className="hidden"
-                                  accept="image/*"
-                                  onChange={(e) =>
-                                    setGarmentFile("upper", e.target.files?.[0])
-                                  }
-                                />
+                                </div>
                               </div>
-                            </div>
-                            <div>
-                              <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">
-                                Quần / Váy
-                              </p>
-                              <div
-                                onClick={() => lowerInputRef.current?.click()}
-                                className="block aspect-[3/4] rounded-[20px] border-2 border-dashed border-[#91B76F]/30 bg-white/50 hover:bg-white/80 transition-all cursor-pointer overflow-hidden relative shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] group"
-                              >
-                                {lowerPreview ? (
-                                  <img
-                                    src={lowerPreview}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                                    <svg
-                                      className="w-5 h-5 text-[#91B76F] mb-1 transition-transform group-hover:-translate-y-1"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M12 4v16m8-8H4"
-                                      />
-                                    </svg>
-                                  </div>
-                                )}
-                                <input
-                                  ref={lowerInputRef}
-                                  type="file"
-                                  className="hidden"
-                                  accept="image/*"
-                                  onChange={(e) =>
+                              <div>
+                                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2">
+                                  Quần / Váy ngắn
+                                </p>
+                                <div
+                                  onClick={() => lowerInputRef.current?.click()}
+                                  className="block aspect-[3/4] rounded-[20px] border-2 border-dashed border-[#91B76F]/30 bg-white/50 hover:bg-white/80 transition-all cursor-pointer overflow-hidden relative shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] group"
+                                >
+                                  {lowerPreview ? (
+                                    <img
+                                      src={lowerPreview}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
+                                      <svg
+                                        className="w-5 h-5 text-[#91B76F] mb-1 transition-transform group-hover:-translate-y-1"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth="2"
+                                          d="M12 4v16m8-8H4"
+                                        />
+                                      </svg>
+                                      <span className="text-[10.5px] font-bold text-gray-400">
+                                        Tải quần (tùy chọn)
+                                      </span>
+                                    </div>
+                                  )}
+                                  <input
+                                    ref={lowerInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={(e) =>
                                     setGarmentFile("lower", e.target.files?.[0])
                                   }
                                 />
                               </div>
                             </div>
                           </div>
-                        )}
+                        </div>
+                      )}
                       </div>
                     )}
                   </div>
