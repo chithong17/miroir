@@ -78,7 +78,7 @@ function UserAppPage({ initialView = "products" }) {
   }, [view, filters.page]);
 
   useEffect(() => {
-    if (view === "products" && productsLoaded && (user?.profileCompleted || user?.profileSkipped)) {
+    if (view === "products" && productsLoaded && user?.id) {
       showPendingWelcomeOffer(user.id, language === "vi");
     }
   }, [view, productsLoaded, user, language]);
