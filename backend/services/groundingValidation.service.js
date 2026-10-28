@@ -49,6 +49,7 @@ export const enrichRecommendation = ({ recommendation, products, desiredOutfitCo
         id: product.id,
         name: product.name,
         category: product.category,
+        gender: product.gender,
         price: product.price,
         colors: product.colors || [],
         sizes: product.sizes || [],

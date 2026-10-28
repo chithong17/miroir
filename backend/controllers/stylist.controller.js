@@ -1,12 +1,12 @@
 import { getUserFashionMemory, recordFashionFeedback } from "../services/fashionMemory.service.js";
 import { generateStylistRecommendation } from "../services/gemini.service.js";
 import {
-  enrichRecommendation,
   findInvalidProductIds,
 } from "../services/groundingValidation.service.js";
 import { retrieveStylistContext } from "../services/retrieval.service.js";
 import { trackShopEvents } from "../services/shopAnalytics.service.js";
 import { buildCoherentFallbackOutfits } from "../services/outfitFallback.service.js";
+import { diversifyRecommendation } from "../services/stylistDiversity.service.js";
 
 const validateRecommendationRequest = (body) => {
   if (!body || typeof body !== "object") {
@@ -63,10 +63,11 @@ const buildGenerationPayload = ({ body, memory, context }) => ({
   },
   userMemory: memory || {},
   desiredOutfitCount: normalizeDesiredOutfitCount(body.desiredOutfitCount),
-  retrievedProducts: context.products.slice(0, 18).map((product) => ({
+  retrievedProducts: context.products.slice(0, 30).map((product) => ({
     id: product.id,
     name: product.name,
     category: product.category,
+    gender: product.gender,
     price: product.price,
     colors: product.colors || [],
     sizes: product.sizes || [],
@@ -80,7 +81,7 @@ const buildGenerationPayload = ({ body, memory, context }) => ({
   reviewSummaries: context.reviewSummaries,
   retrievedFashionRules: context.fashionRules,
   outputRules: {
-    allowedProductIds: context.products.slice(0, 18).map((product) => product.id),
+    allowedProductIds: context.products.slice(0, 30).map((product) => product.id),
     productDetailsMustComeFromBackend: true,
   },
 });
@@ -212,22 +213,13 @@ export const recommendOutfit = async (req, res, next) => {
       });
     }
 
-    let enrichedRecommendation = enrichRecommendation({
+    const enrichedRecommendation = diversifyRecommendation({
       recommendation,
       products: context.products,
-      desiredOutfitCount: normalizeDesiredOutfitCount(body.desiredOutfitCount),
+      prompt: body.prompt,
+      count: normalizeDesiredOutfitCount(body.desiredOutfitCount),
+      budget: body.budget,
     });
-
-    if (!enrichedRecommendation.outfits.length && context.products.length) {
-      enrichedRecommendation = enrichRecommendation({
-        recommendation: buildFallbackRecommendation({
-          body,
-          context,
-        }),
-        products: context.products,
-        desiredOutfitCount: normalizeDesiredOutfitCount(body.desiredOutfitCount),
-      });
-    }
 
     const trackedProducts = new Map();
     (enrichedRecommendation.outfits || []).forEach((outfit) => {
@@ -264,6 +256,7 @@ export const recommendOutfit = async (req, res, next) => {
     return res.json({
       success: true,
       ...enrichedRecommendation,
+      ...(!enrichedRecommendation.outfits.length ? { noMatch: true, message: "Chưa đủ sản phẩm phù hợp để tạo outfit hoàn chỉnh trong ngân sách đã chọn." } : {}),
       retrieval: {
         mode: context.retrievalMode || "vector",
         productCount: context.products.length,

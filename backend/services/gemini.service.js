@@ -344,7 +344,7 @@ Never recommend products outside the retrieved context.
 Use fashion rules only as guidance.
 Create every recommendation from retrievedProducts. Do not copy a saved outfit's ID, title, or exact product combination.
 When multiple suitable products exist, rotate tops, bottoms, dresses, and outerwear across recommendations for meaningful variety.
-Do not repeat an identical product combination. Reuse an item only when the retrieved catalog has no suitable alternative.
+Use each main garment (top, bottom, dress/one-piece) at most once across the returned outfits. Prefer different shops, colors and silhouettes when relevant. If the catalog is too small, return fewer outfits instead of recycling the same main garments in different pairs.
 Use the user's prompt as the primary styling brief.
 Use body measurements, body shape, skin tone, style preferences, budget, occasion, customer feedback, user memory, and fit review summaries only when they are provided.
 Return up to desiredOutfitCount distinct complete outfits. Prefer variety across silhouettes, colors, and categories while staying faithful to the prompt.

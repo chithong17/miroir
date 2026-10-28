@@ -1,7 +1,8 @@
 import { generateEmbedding } from "./gemini.service.js";
 import { getMongoDb } from "./mongo.service.js";
 import { getReviewSummariesByProductIds } from "./reviewSummary.service.js";
-import { getActiveShopsByIds } from "./shop.service.js";
+import { selectDiverseProducts } from "./stylistDiversity.service.js";
+import { classifyOutfitProduct } from "./outfitFallback.service.js";
 import { isGrowthPlan, isSubscriptionActive } from "./subscription.service.js";
 
 const asArray = (value) => (Array.isArray(value) ? value : []);
@@ -94,8 +95,7 @@ const lexicalScore = (product, queryText) => {
   return Math.min(0.75, 0.1 + (matches / tokens.length) * 0.65);
 };
 
-const catalogFallbackSearch = async ({ request, queryText, productFilter }) => {
-  const db = await getMongoDb();
+const catalogFallbackSearch = async ({ request, queryText, productFilter, db }) => {
   const fallbackProductFilter = {
     $and: [
       ...(productFilter.$and || []),
@@ -114,7 +114,7 @@ const catalogFallbackSearch = async ({ request, queryText, productFilter }) => {
       .find(fallbackProductFilter)
       .project({ embedding: 0 })
       .sort({ updatedAt: -1 })
-      .limit(120)
+      .limit(240)
       .toArray(),
     db.collection("outfits")
       .find(request.gender ? { gender: { $in: [request.gender, "unisex"] } } : {})
@@ -144,8 +144,9 @@ const vectorSearch = async ({
   filter,
   limit = 20,
   numCandidates = 100,
+  db,
+  postFilter,
 }) => {
-  const db = await getMongoDb();
 
   return db
     .collection(collectionName)
@@ -160,6 +161,7 @@ const vectorSearch = async ({
           ...(filter ? { filter } : {}),
         },
       },
+      ...(postFilter ? [{ $match: postFilter }] : []),
       {
         $addFields: {
           vectorScore: { $meta: "vectorSearchScore" },
@@ -195,24 +197,35 @@ const scoreProduct = ({ product, request, memory, reviewSummary }) => {
   return score;
 };
 
-export const retrieveStylistContext = async ({ request, memory }) => {
+export const retrieveStylistContext = async ({ request, memory, db: suppliedDb, embed = generateEmbedding, readReviews = getReviewSummariesByProductIds }) => {
+  const db = suppliedDb || await getMongoDb();
+  const owners = await db.collection("shop_owners").find({ status: "active" }).toArray();
+  const eligibleOwners = new Map(owners.filter(owner => isSubscriptionActive(owner.subscription) && !owner.subscription?.suspendedAt && isGrowthPlan(owner.subscription?.planCode)).map(owner => [owner.id, owner.subscription.planCode]));
+  const activeShops = await db.collection("shops").find({ status: "active", ownerId: { $in: [...eligibleOwners.keys()] } }).toArray();
+  const activeShopById = new Map(activeShops.filter(shop => eligibleOwners.has(shop.ownerId)).map(shop => [shop.id, { ...shop, planCode: eligibleOwners.get(shop.ownerId) }]));
+  const shopFilter = { shopId: { $in: [...activeShopById.keys()] } };
+  const sellable = { status: "published", variants: { $elemMatch: allowZeroStockForStylistDemo ? { active: true } : { active: true, stockQuantity: { $gt: 0 } } } };
   const queryText = buildStylistQueryText({ request, memory });
   const productFilter = buildProductFilter(request);
+  productFilter.$and.push(shopFilter);
+  if (!activeShopById.size) return { products: [], outfits: [], fashionRules: [], reviewSummaries: [], queryText, retrievalMode: "catalog_fallback" };
   let rawProducts;
   let outfits;
   let fashionRules;
   let retrievalMode = "vector";
 
   try {
-    const queryVector = await generateEmbedding(queryText);
+    const queryVector = await embed(queryText);
     [rawProducts, outfits, fashionRules] = await Promise.all([
       vectorSearch({
         collectionName: "products",
         indexName: process.env.MONGODB_PRODUCT_VECTOR_INDEX || "products_embedding_index",
         queryVector,
         filter: productFilter,
-        limit: 40,
-        numCandidates: 200,
+        limit: 120,
+        numCandidates: 600,
+        db,
+        postFilter: sellable,
       }),
       vectorSearch({
         collectionName: "outfits",
@@ -221,6 +234,7 @@ export const retrieveStylistContext = async ({ request, memory }) => {
         filter: request.gender ? { gender: { $in: [request.gender, "unisex"] } } : undefined,
         limit: 5,
         numCandidates: 50,
+        db,
       }),
       vectorSearch({
         collectionName: "fashion_rules",
@@ -230,12 +244,14 @@ export const retrieveStylistContext = async ({ request, memory }) => {
         queryVector,
         limit: 10,
         numCandidates: 50,
+        db,
       }),
     ]);
   } catch (error) {
-    if (!error.retryable && error.code !== "GEMINI_RATE_LIMITED") throw error;
+    const missingIndex = /index.*not found|not.*indexed.*filter|needs to be indexed|index.*not.*ready/i.test(error.message || "");
+    if (!error.retryable && error.code !== "GEMINI_RATE_LIMITED" && !missingIndex) throw error;
     retrievalMode = "catalog_fallback";
-    console.warn("Gemini embedding is temporarily unavailable; using catalog fallback.", {
+    console.warn("Stylist vector search unavailable; using eligible catalog fallback.", {
       code: error.code,
       statusCode: error.statusCode,
     });
@@ -243,16 +259,17 @@ export const retrieveStylistContext = async ({ request, memory }) => {
       request,
       queryText,
       productFilter,
+      db,
     }));
   }
 
-  const activeShops = await getActiveShopsByIds([
-    ...new Set(rawProducts.map((product) => product.shopId).filter(Boolean)),
-  ]);
-  const ownerIds = [...new Set(activeShops.map((shop) => shop.ownerId))];
-  const owners = await (await getMongoDb()).collection("shop_owners").find({ id: { $in: ownerIds } }).toArray();
-  const eligibleOwners = new Map(owners.filter((owner) => isSubscriptionActive(owner.subscription) && !owner.subscription?.suspendedAt && isGrowthPlan(owner.subscription?.planCode)).map((owner) => [owner.id, owner.subscription.planCode]));
-  const activeShopById = new Map(activeShops.filter((shop) => eligibleOwners.has(shop.ownerId)).map((shop) => [shop.id, { ...shop, planCode: eligibleOwners.get(shop.ownerId) }]));
+  const desired = Math.min(5, Math.max(1, Number(request.desiredOutfitCount) || 5));
+  const roles = new Set(rawProducts.map(classifyOutfitProduct));
+  if (retrievalMode === "vector" && (rawProducts.length < Math.max(12, desired * 4) || (!roles.has("one-piece") && !(roles.has("top") && roles.has("bottom"))))) {
+    const supplement = await catalogFallbackSearch({ request, queryText, productFilter, db });
+    rawProducts = [...new Map([...supplement.rawProducts, ...rawProducts].map(product => [product.id, product])).values()];
+    retrievalMode = "vector_catalog";
+  }
   const shopFilteredProducts = rawProducts
     .filter(
       (product) =>
@@ -294,13 +311,13 @@ export const retrieveStylistContext = async ({ request, memory }) => {
     };
   }
 
-  const reviewSummaries = await getReviewSummariesByProductIds(
+  const reviewSummaries = await readReviews(
     shopFilteredProducts.map((product) => product.id)
   );
   const reviewByProductId = new Map(
     reviewSummaries.map((summary) => [summary.productId, summary])
   );
-  const products = shopFilteredProducts
+  const rankedProducts = shopFilteredProducts
     .map((product) => {
       const pro = product.shop?.planCode === "PRO_INSIGHT";
       const styleMatch = intersects(product.styleTags, request.stylePreferences);
@@ -313,8 +330,8 @@ export const retrieveStylistContext = async ({ request, memory }) => {
         rerankScore: scoreProduct({ product, request, memory, reviewSummary: reviewByProductId.get(product.id) }) + bonus,
       };
     })
-    .sort((a, b) => b.rerankScore - a.rerankScore)
-    .slice(0, 30);
+    .sort((a, b) => b.rerankScore - a.rerankScore);
+  const products = selectDiverseProducts(rankedProducts, { limit: 30, coreTarget: desired });
 
   const selectedProductIds = new Set(products.map((product) => product.id));
 

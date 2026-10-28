@@ -2,12 +2,13 @@ const normalize = (value) =>
   String(value || "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d")
+    .replace(/[đĐ]/g, "d")
     .toLowerCase();
 
 export const classifyOutfitProduct = (product = {}) => {
   const text = normalize(`${product.category || ""} ${product.name || ""}`);
-  if (/\b(dress|dam|jumpsuit)\b/.test(text)) return "one-piece";
+  if (/\b(set|sets|bo|co-ord|coord)\b/.test(text) && /\b(ao|top|shirts?|blouse|camisole|croptop|tank)\b/.test(text) && /\b(quan|chan vay|skirt|pants?|shorts?|trousers?)\b/.test(text)) return "one-piece";
+  if (/\b(dress(?:es)?|dam|jumpsuits?)\b/.test(text)) return "one-piece";
   if (/\b(jacket|blazer|cardigan|coat|hoodie|ao khoac)\b/.test(text)) return "outerwear";
   if (/\b(pants?|trousers?|jeans?|shorts?|skirt|culottes?|quan|chan vay)\b/.test(text)) return "bottom";
   if (/\b(top|shirts?|t-shirt|tee|blouse|sweater|ao thun|ao so mi)\b/.test(text)) return "top";
@@ -15,6 +16,14 @@ export const classifyOutfitProduct = (product = {}) => {
   if (/\b(bag|belt|hat|scarf|jewelry|tui|that lung|mu|khan)\b/.test(text)) return "accessory";
   return "other";
 };
+
+const specificGender = product => {
+  const value = normalize(product.gender);
+  if (["male", "men", "nam"].includes(value)) return "male";
+  if (["female", "women", "nu"].includes(value)) return "female";
+  return "";
+};
+export const areOutfitGendersCompatible = products => new Set(products.map(specificGender).filter(Boolean)).size <= 1;
 
 const partyPrompt = (prompt) => /sinh nhat|du tiec|party|birthday|event/.test(normalize(prompt));
 const partyBottomRank = (product) => /skirt|chan vay/.test(normalize(`${product.category} ${product.name}`)) ? 0 : 1;
@@ -44,7 +53,11 @@ export const buildCoherentFallbackOutfits = ({
   const candidates = [];
   const seen = new Set();
   const addCandidate = (items, type) => {
-    const uniqueItems = [...new Map(items.filter(Boolean).map((item) => [item.id, item])).values()];
+    const cleanItems = items.filter(Boolean);
+    const main = cleanItems.filter(item => ["top", "bottom", "one-piece"].includes(classifyOutfitProduct(item)));
+    if (!areOutfitGendersCompatible(main)) return;
+    const compatibleItems = cleanItems.filter(item => areOutfitGendersCompatible([...main, item]));
+    const uniqueItems = [...new Map(compatibleItems.map((item) => [item.id, item])).values()];
     if (!uniqueItems.length) return;
     const key = signature(uniqueItems);
     if (seen.has(key)) return;

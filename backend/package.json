@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "embed:products": "node scripts/embedCollection.js products",
+    "index:stylist:dry": "node scripts/ensureStylistVectorIndex.js",
+    "index:stylist": "node scripts/ensureStylistVectorIndex.js --apply",
     "embed:outfits": "node scripts/embedCollection.js outfits",
     "embed:fashion-rules": "node scripts/embedCollection.js fashion_rules",
     "seed:admin": "node scripts/seedAdmin.js",
