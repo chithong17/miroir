@@ -55,20 +55,32 @@ const compactObject = (value) =>
     ),
   );
 
+const optimizeCloudinaryUrl = (url) => {
+  if (!url || typeof url !== "string") return url;
+  if (!url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) return url;
+  if (url.includes("/image/upload/c_") || url.includes("/image/upload/w_")) return url;
+  return url.replace("/image/upload/", "/image/upload/c_scale,w_1024/");
+};
+
 export const createPiApiTask = async ({ tryOnType, batchSize, imageUrls }, maxRetries = 1) => {
   const apiKey = getPiApiKey();
+
+  const model_input = optimizeCloudinaryUrl(imageUrls.model_input);
+  const dress_input = optimizeCloudinaryUrl(imageUrls.dress_input);
+  const upper_input = optimizeCloudinaryUrl(imageUrls.upper_input);
+  const lower_input = optimizeCloudinaryUrl(imageUrls.lower_input);
 
   const input =
     tryOnType === "dress"
       ? compactObject({
-          model_input: imageUrls.model_input,
-          dress_input: imageUrls.dress_input,
+          model_input,
+          dress_input,
           batch_size: Number(batchSize) || 1,
         })
       : compactObject({
-          model_input: imageUrls.model_input,
-          upper_input: imageUrls.upper_input,
-          lower_input: imageUrls.lower_input,
+          model_input,
+          upper_input,
+          lower_input,
           batch_size: Number(batchSize) || 1,
         });
 
