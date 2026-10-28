@@ -43,7 +43,7 @@ function fixture({ empty = false } = {}) {
     calls.push({ collection: name });
     assert(["users", "shop_events", "orders"].includes(name), "must never query shop_owners or admin_users");
     return {
-      countDocuments(filter) { calls.push({ countFilter: filter }); return Promise.resolve(totals[countIndex++]); },
+      countDocuments(filter) { calls.push({ countFilter: filter }); return Promise.resolve(totals[countIndex++] || 0); },
       aggregate(pipeline) {
         calls.push({ aggregate: name, pipeline });
         if (name !== "users") {

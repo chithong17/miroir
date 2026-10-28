@@ -1,4 +1,5 @@
 import { Activity, ArrowUpRight, CheckCircle2, Eye, Shirt, Sparkles, Users } from "lucide-react";
+import { InsightMetrics, InsightCharts } from "./CustomerInsights.jsx";
 
 const number = (value) => new Intl.NumberFormat("vi-VN").format(value || 0);
 const percent = (part, total) => total > 0 ? Math.round(part / total * 1000) / 10 : 0;
@@ -107,6 +108,13 @@ function UsageChart({ usage }) {
 export default function CustomerReport({ report, section = "acquisition", registrationView = "month", onRegistrationViewChange = () => {}, onMonthSelect = () => {} }) {
   const { summary: s, daily = [], usage = {} } = report;
   const noActivity = Math.max(0, s.total - s.activeInRange);
+  if (report.insights) return <div className="space-y-5">
+    <InsightMetrics report={report} />
+    <InsightCharts report={report} section={section} />
+    {section === "acquisition" && <details className="rounded-3xl border border-[#E0E7D8] bg-white p-5"><summary className="cursor-pointer text-sm font-bold text-[#526D38]">Chi tiết đăng ký theo tháng / ngày</summary><div className="mt-4"><RegistrationPanel report={report} view={registrationView} onViewChange={onRegistrationViewChange} onMonthSelect={onMonthSelect} /></div></details>}
+    {section === "usage" && <Panel eyebrow="Feature usage" title="Chi tiết lượt sử dụng tính năng"><UsageChart usage={usage} /></Panel>}
+    <p className="text-[11px] leading-5 text-[#7B8777]">Nguồn: bản ghi hệ thống MIROIR · Chỉ tài khoản khách hàng, không gồm chủ shop/admin · Bao gồm tài khoản thử nghiệm nếu có.</p>
+  </div>;
   return <div className="space-y-4">
     {section === "acquisition" && <>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">

@@ -1,4 +1,5 @@
 import { getMongoDb } from "./mongo.service.js";
+import { getCustomerInsights } from "./customerInsights.service.js";
 
 const DAY = 86400000;
 const OFFSET = 7 * 3600000;
@@ -77,12 +78,14 @@ export const getCustomerAnalytics = async ({ query = {}, now = new Date(), db: s
   const activeIds = new Set(activity.map((entry) => entry._id.userId));
   orders.forEach((entry) => activeIds.add(entry._id));
   const usage = Object.fromEntries(activityTypes.map((type) => [type, activity.filter((entry) => entry._id.type === type).reduce((sum, entry) => sum + entry.count, 0)]));
+  const registrationDays = fillCustomerDays(daily, window);
+  const insights = await getCustomerInsights({ db, window, daily: registrationDays, now });
   return {
     generatedAt: now, timezone: "Asia/Ho_Chi_Minh", range: window.month || `${window.days}d`, month: window.month || null, start: window.start, end: window.end,
     summary: { total, today, new7d, new30d, newInRange, completedProfiles, enabled, activeInRange: activeIds.size,
       activityRate: total ? Math.round(activeIds.size / total * 1000) / 10 : 0,
       orders: orders.reduce((sum, entry) => sum + entry.count, 0), payingCustomers: orders.filter((entry) => entry.paid > 0).length },
-    usage, daily: fillCustomerDays(daily, window), customers,
+    usage, daily: registrationDays, insights, customers,
     pagination: { page, limit, total: matching, totalPages: Math.max(1, Math.ceil(matching / limit)) },
   };
 };

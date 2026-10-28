@@ -14,12 +14,14 @@ function exportReport(report) {
   const rows = [
     ["Thống kê customer MIROIR", "Dữ liệu từ hệ thống, không gồm shop owner/admin"],
     ["Từ", date(report.start)], ["Đến", date(report.end)], ["Múi giờ", report.timezone],
+    ...(report.insights ? [["Tổng tài khoản đến cuối kỳ", report.insights.registeredAtEnd], ["DAU (ngày cuối kỳ)", report.insights.dau], ["WAU (7 ngày đến cuối kỳ)", report.insights.wau], ["MAU (30 ngày đến cuối kỳ)", report.insights.mau], ["Engagement Rate (MAU / tổng tài khoản đến cuối kỳ, %)", report.insights.engagementRate]] : []),
     ["Tổng customer hiện có", report.summary.total], ["Đăng ký mới trong kỳ", report.summary.newInRange],
     ["Customer có hoạt động trong kỳ", report.summary.activeInRange], ["Tỷ lệ hoạt động (%)", report.summary.activityRate],
     ["Hồ sơ hoàn tất (toàn bộ)", report.summary.completedProfiles], ["Đơn tạo trong kỳ", report.summary.orders],
     ["Customer có đơn đã thanh toán, không hủy/hết hạn (đơn tạo trong kỳ)", report.summary.payingCustomers],
     ...Object.entries(report.usage).map(([key, value]) => [usageLabels[key], value]),
     [], ["Ngày đăng ký (giờ Việt Nam)", "Customer mới"], ...report.daily.map((row) => [row.date, row.count]),
+    ...(report.insights ? [[], ["Ngày", "Tài khoản tích lũy"], ...report.insights.growth.map(row => [row.date, row.registered]), [], ["Ngày", "Người hoạt động duy nhất", "Sự kiện tính năng"], ...report.insights.daily.map(row => [row.date, row.activeUsers, row.featureEvents])] : []),
   ];
   const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(",")).join("\r\n");
   const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
@@ -30,7 +32,7 @@ function exportReport(report) {
 export default function AdminCustomers({ refreshing = false }) {
   const [presenting, setPresenting] = useState(false);
   const [section, setSection] = useState("acquisition");
-  const [range, setRange] = useState("90d");
+  const [range, setRange] = useState("30d");
   const [month, setMonth] = useState("");
   const [registrationView, setRegistrationView] = useState("month");
   const [search, setSearch] = useState("");
@@ -62,7 +64,7 @@ export default function AdminCustomers({ refreshing = false }) {
     const close = (event) => {
       if (event.key === "Escape") setPresenting(false);
       if (event.key === "Tab") {
-        const buttons = [...(document.getElementById("customer-report-dialog")?.querySelectorAll("button:not(:disabled), input:not(:disabled), select:not(:disabled)") || [])];
+        const buttons = [...(document.getElementById("customer-report-dialog")?.querySelectorAll("button:not(:disabled), input:not(:disabled), select:not(:disabled), summary, [tabindex='0']") || [])].filter(element => element.getClientRects().length > 0);
         const first = buttons[0], last = buttons.at(-1);
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
