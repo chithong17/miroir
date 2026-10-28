@@ -101,7 +101,7 @@ function UsageChart({ usage }) {
       <div className="mb-2 flex items-center justify-between gap-3 text-sm"><span className="flex min-w-0 items-center gap-2 font-medium text-[#526155]"><Icon size={15} className="shrink-0" />{label}</span><span className="shrink-0 text-right"><strong className="text-lg font-bold tabular-nums text-[#23352B]">{number(usage[key])}</strong><span className="ml-2 hidden text-[10px] text-[#7A8579] sm:inline">{unit}</span></span></div>
       <div className="h-2.5 overflow-hidden rounded-full bg-[#F0F3EB]" role="img" aria-label={`${label}: ${number(usage[key])} ${unit}`}><div className="h-full rounded-full" style={{ width: `${(usage[key] || 0) / max * 100}%`, background: color }} /></div>
     </div>)}
-    <p className="pt-1 text-[11px] leading-5 text-[#7A8579]">Các chỉ số có đơn vị khác nhau; không cộng thành số người dùng hoặc tỷ lệ chuyển đổi.</p>
+    <p className="pt-1 text-[11px] leading-5 text-[#7A8579]">Số lượt, không phải số người dùng.</p>
   </div>;
 }
 
@@ -113,7 +113,7 @@ export default function CustomerReport({ report, section = "acquisition", regist
     <InsightCharts report={report} section={section} />
     {section === "acquisition" && <details className="rounded-3xl border border-[#E0E7D8] bg-white p-5"><summary className="cursor-pointer text-sm font-bold text-[#526D38]">Chi tiết đăng ký theo tháng / ngày</summary><div className="mt-4"><RegistrationPanel report={report} view={registrationView} onViewChange={onRegistrationViewChange} onMonthSelect={onMonthSelect} /></div></details>}
     {section === "usage" && <Panel eyebrow="Feature usage" title="Chi tiết lượt sử dụng tính năng"><UsageChart usage={usage} /></Panel>}
-    <p className="text-[11px] leading-5 text-[#7B8777]">Nguồn: bản ghi hệ thống MIROIR · Chỉ tài khoản khách hàng, không gồm chủ shop/admin · Bao gồm tài khoản thử nghiệm nếu có.</p>
+    <p className="text-[11px] text-[#7B8777]">Nguồn: bản ghi hệ thống MIROIR.</p>
   </div>;
   return <div className="space-y-4">
     {section === "acquisition" && <>

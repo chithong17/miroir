@@ -7,6 +7,7 @@ import { NeuCard } from "../seller/NeuComponents.jsx";
 
 const number = (value) => new Intl.NumberFormat("vi-VN").format(value || 0);
 const date = (value) => value ? new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", dateStyle: "short", timeStyle: "short" }).format(new Date(value)) : "—";
+const periodDate = (value, year = false) => new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", ...(year ? { year: "numeric" } : {}) }).format(new Date(value)).replaceAll("-", "/");
 const fieldClass = "min-h-11 rounded-xl border border-[#DCE4D6] bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-[#B3D07E]";
 const usageLabels = { product_view: "Lượt xem sản phẩm", tryon_started: "Lượt bắt đầu thử đồ", stylist_product_recommended: "Lượt sản phẩm được AI gợi ý", product_feedback: "Lượt phản hồi sản phẩm" };
 
@@ -57,16 +58,15 @@ export default function AdminCustomers({ refreshing = false }) {
 
   const renderReport = () => <div className="space-y-4">
     <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#E3E9DB] pb-5">
-      <div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#81916E]">MIROIR · User acquisition & engagement</p><h2 className="mt-2 text-2xl font-bold tracking-tight text-[#23352B] sm:text-3xl">{section === "acquisition" ? "Quy mô khách hàng" : section === "engagement" ? "Khách hàng có hoạt động" : "Mức độ sử dụng sản phẩm"}</h2><p className="mt-2 text-xs leading-5 text-[#7A8579]">{date(report.start)} – {date(report.end)} · Giờ Việt Nam</p></div>
+      <p className="text-sm font-medium text-[#7A8579]">{periodDate(report.start, periodDate(report.start, true).slice(-4) !== periodDate(report.end, true).slice(-4))} – {periodDate(report.end, true)}</p>
       <div className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-[#E3E9DB] bg-white p-1" aria-label="Nội dung báo cáo">{reportSections.map(item => <button key={item.id} type="button" aria-pressed={section === item.id} onClick={() => setSection(item.id)} className={`min-h-10 shrink-0 rounded-full px-4 text-xs font-semibold transition ${section === item.id ? "bg-[#344B32] text-white" : "text-[#7A8579] hover:bg-[#F1F5E9]"}`}>{item.label}</button>)}</div>
     </div>
     <CustomerReport report={report} section={section} registrationView={registrationView} onRegistrationViewChange={setRegistrationView} onMonthSelect={(value) => { setMonth(value); if (!value) setRange("90d"); }} />
-    <p className="text-[10px] text-[#8A9485]">Cập nhật dữ liệu: {date(report.generatedAt)}</p>
   </div>;
 
   return <div className="space-y-6 py-5">
     <header className="flex flex-wrap items-start justify-between gap-4">
-      <div><p className="text-xs font-bold uppercase tracking-widest text-[#6F8746]">Customer analytics</p><h1 className="mt-2 text-2xl font-black">Khách hàng đăng ký & sử dụng</h1><p className="mt-2 max-w-2xl text-sm text-[#6E7D7C]">Chỉ thống kê tài khoản customer hiện có. Không cộng tài khoản chủ shop hoặc admin. Múi giờ Việt Nam.</p></div>
+      <h1 className="text-2xl font-bold text-[#23352B]">Thống kê khách hàng</h1>
       <div className="flex flex-wrap gap-2">
         <CustomerPeriodSelect range={range} month={month} onChange={value => { if (value !== "month") { setRange(value); setMonth(""); } }} />
         <button type="button" aria-label="Làm mới thống kê customer" disabled={loading || refreshing} onClick={() => setRevision((value) => value + 1)} className="neu-icon-btn h-11 w-11 disabled:opacity-50"><RefreshCw size={16} /></button>
