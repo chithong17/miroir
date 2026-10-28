@@ -22,6 +22,7 @@ import {
   adminBillingInvoices,
   customerAnalytics,
   simulateCustomerActivity,
+  simulateProductViewsController,
   revertCustomerActivity,
   deleteCustomers,
 } from "../controllers/admin.controller.js";
@@ -38,6 +39,7 @@ router.use(requireAdmin);
 
 router.get("/customers/analytics", customerAnalytics);
 router.post("/customers/simulate-activity", simulateCustomerActivity);
+router.post("/customers/simulate-views", simulateProductViewsController);
 router.post("/customers/revert-activity", revertCustomerActivity);
 router.delete("/customers/:id", deleteCustomers);
 router.post("/customers/delete", deleteCustomers);

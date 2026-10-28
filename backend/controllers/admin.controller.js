@@ -18,7 +18,7 @@ import { listAdminInvoices } from "../services/billing.service.js";
 import { grantShopPlan } from "../services/planGrant.service.js";
 import { getMongoDb } from "../services/mongo.service.js";
 import { getCustomerAnalytics } from "../services/customerAnalytics.service.js";
-import { simulateActiveCustomers, revertActiveCustomerSimulation } from "../services/customerSimulation.service.js";
+import { simulateActiveCustomers, revertActiveCustomerSimulation, simulateProductViews } from "../services/customerSimulation.service.js";
 
 export const customerAnalytics = async (req, res, next) => {
   try { res.json({ success: true, analytics: await getCustomerAnalytics({ query: req.query || {} }) }); }
@@ -29,6 +29,14 @@ export const simulateCustomerActivity = async (req, res, next) => {
   try {
     const targetMau = Number(req.body?.targetMau || req.query?.targetMau || 88);
     const result = await simulateActiveCustomers({ targetMau });
+    res.json({ success: true, ...result });
+  } catch (error) { next(error); }
+};
+
+export const simulateProductViewsController = async (req, res, next) => {
+  try {
+    const targetViews = Number(req.body?.targetViews || req.query?.targetViews || 146);
+    const result = await simulateProductViews({ targetViews });
     res.json({ success: true, ...result });
   } catch (error) { next(error); }
 };
