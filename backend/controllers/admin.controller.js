@@ -16,6 +16,7 @@ import {
 } from "../services/admin.service.js";
 import { listAdminInvoices } from "../services/billing.service.js";
 import { grantShopPlan } from "../services/planGrant.service.js";
+import { getMongoDb } from "../services/mongo.service.js";
 import { getCustomerAnalytics } from "../services/customerAnalytics.service.js";
 import { simulateActiveCustomers, revertActiveCustomerSimulation } from "../services/customerSimulation.service.js";
 
@@ -37,6 +38,51 @@ export const revertCustomerActivity = async (_req, res, next) => {
     const result = await revertActiveCustomerSimulation();
     res.json({ success: true, ...result });
   } catch (error) { next(error); }
+};
+
+export const deleteCustomers = async (req, res, next) => {
+  try {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids : req.body?.id ? [req.body.id] : req.params?.id ? [req.params.id] : [];
+    const emails = Array.isArray(req.body?.emails) ? req.body.emails : req.body?.email ? [req.body.email] : [];
+
+    if (!ids.length && !emails.length) {
+      return res.status(400).json({ success: false, message: "Cần cung cấp id hoặc email của customer để xóa." });
+    }
+
+    const db = await getMongoDb();
+    const filter = {
+      $or: [
+        ...(ids.length ? [{ id: { $in: ids } }] : []),
+        ...(emails.length ? [{ email: { $in: emails } }] : [])
+      ]
+    };
+
+    const targetUsers = await db.collection("users").find(filter).toArray();
+    const targetIds = targetUsers.map((u) => u.id);
+
+    if (!targetIds.length) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy customer phù hợp để xóa." });
+    }
+
+    const deleteResult = await db.collection("users").deleteMany({ id: { $in: targetIds } });
+    await Promise.all([
+      db.collection("shop_events").deleteMany({ userId: { $in: targetIds } }),
+      db.collection("user_addresses").deleteMany({ userId: { $in: targetIds } }),
+      db.collection("carts").deleteMany({ userId: { $in: targetIds } }),
+    ]);
+
+    const remainingTotal = await db.collection("users").countDocuments({});
+
+    return res.json({
+      success: true,
+      message: `Đã xóa thành công ${deleteResult.deletedCount} customer.`,
+      deletedCount: deleteResult.deletedCount,
+      deletedUsers: targetUsers.map((u) => ({ id: u.id, name: u.name, email: u.email })),
+      remainingTotal,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const adminBillingInvoices = async (_req, res, next) => {

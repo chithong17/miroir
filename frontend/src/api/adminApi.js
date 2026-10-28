@@ -148,3 +148,5 @@ export const readAdminNotification = async (id) => (await adminClient.patch(`/ad
 export const getAdminCustomerAnalytics = async (params = {}) => (await adminClient.get("/admin/customers/analytics", { params })).data;
 export const simulateCustomerActivity = async (targetMau = 88) => (await adminClient.post("/admin/customers/simulate-activity", { targetMau })).data;
 export const revertCustomerActivity = async () => (await adminClient.post("/admin/customers/revert-activity")).data;
+export const deleteAdminCustomer = async (id) => (await adminClient.delete(`/admin/customers/${encodeURIComponent(id)}`)).data;
+export const deleteAdminCustomers = async (payload) => (await adminClient.post("/admin/customers/delete", payload)).data;

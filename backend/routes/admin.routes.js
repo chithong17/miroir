@@ -23,6 +23,7 @@ import {
   customerAnalytics,
   simulateCustomerActivity,
   revertCustomerActivity,
+  deleteCustomers,
 } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middlewares/adminAuth.middleware.js";
 import { uploadProductImportFile } from "../middlewares/upload.middleware.js";
@@ -38,6 +39,8 @@ router.use(requireAdmin);
 router.get("/customers/analytics", customerAnalytics);
 router.post("/customers/simulate-activity", simulateCustomerActivity);
 router.post("/customers/revert-activity", revertCustomerActivity);
+router.delete("/customers/:id", deleteCustomers);
+router.post("/customers/delete", deleteCustomers);
 
 router.get("/payment-plans", listPaymentPlans);
 router.get("/billing-invoices", adminBillingInvoices);

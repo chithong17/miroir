@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import CustomerReport, { reportSections } from "./CustomerReport.jsx";
 import CustomerPeriodSelect from "./CustomerPeriodSelect.jsx";
 import { CalendarDays, Download, RefreshCw, Search } from "lucide-react";
-import { getAdminCustomerAnalytics, simulateCustomerActivity, revertCustomerActivity } from "../../api/adminApi.js";
+import { getAdminCustomerAnalytics, simulateCustomerActivity, revertCustomerActivity, deleteAdminCustomer } from "../../api/adminApi.js";
 import { NeuCard } from "../seller/NeuComponents.jsx";
 
 const number = (value) => new Intl.NumberFormat("vi-VN").format(value || 0);
@@ -88,6 +88,16 @@ export default function AdminCustomers({ refreshing = false }) {
     <CustomerReport report={report} section={section} registrationView={registrationView} onRegistrationViewChange={setRegistrationView} onMonthSelect={(value) => { setMonth(value); if (!value) setRange("90d"); }} />
   </div>;
 
+  const handleDeleteCustomer = async (c) => {
+    if (!window.confirm(`Bạn có chắc muốn xóa vĩnh viễn khách hàng "${c.name || c.email}" không?`)) return;
+    try {
+      await deleteAdminCustomer(c.id);
+      setRevision((v) => v + 1);
+    } catch (err) {
+      alert(err.response?.data?.message || err.message || "Lỗi xóa khách hàng");
+    }
+  };
+
   return <div className="space-y-6 py-5">
     <header className="flex flex-wrap items-start justify-between gap-4">
       <h1 className="text-2xl font-bold text-[#23352B]">Thống kê khách hàng</h1>
@@ -110,7 +120,7 @@ export default function AdminCustomers({ refreshing = false }) {
     {(loading || refreshing) && !report ? <NeuCard><p role="status" className="py-10 text-center text-sm text-[#6F8746]">Đang tải dữ liệu khách hàng…</p></NeuCard> : !error && report ? <>
       {renderReport()}
       <NeuCard padding="p-0" className="overflow-hidden"><div className="p-5"><h2 className="text-base font-black">Danh sách customer</h2><p className="mt-1 text-xs text-[#6E7D7C]">Toàn thời gian, sắp xếp đăng ký mới nhất. Bộ lọc dưới đây chỉ áp dụng cho danh sách.</p><div className="mt-4 flex flex-wrap gap-3"><div className="relative min-w-0 flex-1"><Search size={16} className="absolute left-3 top-3.5 text-[#6E7D7C]" /><input aria-label="Tìm customer theo tên hoặc email" placeholder="Tìm tên hoặc email customer…" className={`${fieldClass} w-full pl-9`} value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} /></div><select aria-label="Trạng thái tài khoản customer" className={fieldClass} value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }}><option value="all">Tất cả trạng thái</option><option value="active">Được phép sử dụng</option><option value="other">Trạng thái khác</option></select></div></div>
-        <div className="overflow-x-auto"><table className="w-full whitespace-nowrap text-left text-xs"><thead className="bg-[#F1F5E8]"><tr>{["Khách hàng", "Email", "Ngày đăng ký (VN)", "Tài khoản", "Hồ sơ"].map((label) => <th key={label} className="px-5 py-3">{label}</th>)}</tr></thead><tbody>{report.customers.map((customer) => <tr key={customer.id} className="border-t border-[#EEF2E7]"><td className="px-5 py-4 font-bold">{customer.name || "Chưa có tên"}</td><td className="px-5 py-4">{customer.email}</td><td className="px-5 py-4">{date(customer.createdAt)}</td><td className="px-5 py-4">{customer.status === "active" ? "Được phép sử dụng" : customer.status || "—"}</td><td className="px-5 py-4">{customer.profileCompleted ? "Đã hoàn tất" : customer.profileSkipped ? "Đã bỏ qua" : "Chưa thiết lập"}</td></tr>)}</tbody></table></div>
+        <div className="overflow-x-auto"><table className="w-full whitespace-nowrap text-left text-xs"><thead className="bg-[#F1F5E8]"><tr>{["Khách hàng", "Email", "Ngày đăng ký (VN)", "Tài khoản", "Hồ sơ", "Thao tác"].map((label) => <th key={label} className="px-5 py-3">{label}</th>)}</tr></thead><tbody>{report.customers.map((customer) => <tr key={customer.id} className="border-t border-[#EEF2E7]"><td className="px-5 py-4 font-bold">{customer.name || "Chưa có tên"}</td><td className="px-5 py-4">{customer.email}</td><td className="px-5 py-4">{date(customer.createdAt)}</td><td className="px-5 py-4">{customer.status === "active" ? "Được phép sử dụng" : customer.status || "—"}</td><td className="px-5 py-4">{customer.profileCompleted ? "Đã hoàn tất" : customer.profileSkipped ? "Đã bỏ qua" : "Chưa thiết lập"}</td><td className="px-5 py-4"><button type="button" onClick={() => handleDeleteCustomer(customer)} className="rounded px-2 py-1 font-semibold text-red-600 transition hover:bg-red-50 hover:text-red-700">Xóa</button></td></tr>)}</tbody></table></div>
         {!report.customers.length && <p className="p-8 text-center text-sm text-[#6E7D7C]">Không có customer phù hợp.</p>}
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EEF2E7] p-5 text-xs"><span>{number(report.pagination.total)} customer · Trang {page}/{report.pagination.totalPages}</span><div className="flex gap-2"><button className={fieldClass} disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Trước</button><button className={fieldClass} disabled={page >= report.pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Sau</button></div></div>
       </NeuCard>
