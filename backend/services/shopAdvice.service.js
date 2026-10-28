@@ -103,12 +103,13 @@ export const getGrowthAdvice = async (ownerId, range = "30d") => {
   catch (error) { if (error.code === 11000) return db.collection("shop_advice").findOne({ key }); throw error; }
 };
 
-export const getProStrategyReport = async ({ ownerId, cycleId }) => {
+export const getProStrategyReport = async ({ ownerId, cycleId }, { getDb = getMongoDb, getDashboard = getShopDashboard, getInsights = getShopInsights, generateReport = generate } = {}) => {
   if (!cycleId) { const error = new Error("Active billing cycle is required."); error.statusCode = 409; throw error; }
-  const db = await getMongoDb();
+  const db = await getDb();
   const previous = await db.collection("shop_strategy_reports").findOne({ ownerId, cycleId });
   if (previous && previous.structuredData) return previous;
-  const [dashboard, insights] = await Promise.all([getShopDashboard({ ownerId, range: "30d" }), getShopInsights({ ownerId, range: "30d" })]);
+  const [dashboard, insights] = await Promise.all([getDashboard({ ownerId, range: "30d" }), getInsights({ ownerId, range: "30d" })]);
+  const data = { summary: dashboard.summary, finance: dashboard.finance, inventoryHealth: dashboard.inventoryHealth, topProducts: dashboard.topProducts, insights: insights.enoughData ? insights.breakdowns : { enoughData: false, message: insights.message } };
   
   let structuredData = null;
   let textToSave = "";
@@ -151,8 +152,7 @@ export const getProStrategyReport = async ({ ownerId, cycleId }) => {
     };
     textToSave = structuredData.additionalAdvice;
   } else {
-    const data = { summary: dashboard.summary, finance: dashboard.finance, inventoryHealth: dashboard.inventoryHealth, topProducts: dashboard.topProducts, insights: insights.enoughData ? insights.breakdowns : { enoughData: false, message: insights.message } };
-    const rawAiResult = await generate({ data, strategic: true });
+    const rawAiResult = await generateReport({ data, strategic: true });
     textToSave = rawAiResult;
 
     try {

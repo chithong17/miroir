@@ -115,7 +115,9 @@ export default function TryOnStudioPage() {
       } else {
         setStatus("processing");
         setMessage(
-          "MIROIR is creating your virtual try-on in the background...",
+          currentTask.connectionInterrupted
+            ? "Kết nối tạm gián đoạn. Đang kiểm tra lại kết quả thử đồ..."
+            : "MIROIR đang tạo ảnh thử đồ của bạn...",
         );
         setPreviewState("original");
       }

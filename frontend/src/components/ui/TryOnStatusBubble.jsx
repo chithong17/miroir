@@ -81,7 +81,7 @@ export function TryOnStatusBubble() {
             currentTask.status === "completed" ? "text-white" : "text-ink"
           }`}
         >
-          {currentTask.status === "processing" && "Đang xử lý Try-On..."}
+          {currentTask.status === "processing" && (currentTask.connectionInterrupted ? "Đang kết nối lại..." : "Đang xử lý Try-On...")}
           {currentTask.status === "completed" && "Hoàn tất! Bấm để xem"}
           {currentTask.status === "failed" && "Tạo ảnh thất bại"}
         </span>

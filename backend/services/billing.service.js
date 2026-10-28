@@ -111,6 +111,30 @@ export const getOwnerBillingSummary = async (owner) => {
   return { owner: current, usage: { used: cycle?.usedTryOns || 0, quota: cycle?.tryOnQuota || 0, overage: Math.max(0, (cycle?.usedTryOns || 0) - (cycle?.tryOnQuota || 0)), estimatedFees: entries.reduce((sum, item) => sum + item.amount, 0), outstanding: invoices.reduce((sum, item) => sum + item.amount, 0) } };
 };
 
+export const reconcileTryOnTask = async ({ db, task, now }, { getStatus = getPiApiTaskStatus, settle = settleTryOnTask } = {}) => {
+  let response;
+  try {
+    response = await getStatus(task.taskId);
+  } catch (error) {
+    // Only a confirmed account mismatch is terminal. Network/auth failures
+    // must not discard a task that could still produce billable results.
+    if (error.code !== "TRYON_ACCOUNT_CHANGED") throw error;
+    await db.collection("billing_tryon_tasks").updateOne(
+      { taskId: task.taskId, completedAt: { $exists: false } },
+      { $set: { completedAt: now, failed: true, failureCode: error.code, failureMessage: error.message } },
+    );
+    return;
+  }
+  const payload = response?.data || response;
+  if (payload?.status === "completed") {
+    const count = findResultUrls(payload.output).length;
+    if (count) await settle({ taskId: task.taskId, imageCount: count });
+    else await db.collection("billing_tryon_tasks").updateOne({ taskId: task.taskId }, { $set: { completedAt: now, settledCount: 0 } });
+  } else if (payload?.status === "failed") {
+    await db.collection("billing_tryon_tasks").updateOne({ taskId: task.taskId }, { $set: { completedAt: now, failed: true, failureCode: payload.error?.code ?? null, failureMessage: payload.error?.message || "Task failed to complete." } });
+  }
+};
+
 export const registerTryOnTask = async ({ taskId, shopId, productId, userId }) => {
   const db = await getMongoDb();
   const shop = await db.collection("shops").findOne({ id: shopId });
@@ -204,15 +228,7 @@ export const runBillingWorker = async () => {
     }
   }
   const tryOnTasks = await db.collection("billing_tryon_tasks").find({ completedAt: { $exists: false }, createdAt: { $gte: new Date(now.getTime() - 7 * DAY) } }).limit(20).toArray();
-  await Promise.allSettled(tryOnTasks.map(async (task) => {
-    const response = await getPiApiTaskStatus(task.taskId);
-    const payload = response?.data || response;
-    if (payload?.status === "completed") {
-      const count = findResultUrls(payload.output).length;
-      if (count) await settleTryOnTask({ taskId: task.taskId, imageCount: count });
-      else await db.collection("billing_tryon_tasks").updateOne({ taskId: task.taskId }, { $set: { completedAt: now, settledCount: 0 } });
-    } else if (payload?.status === "failed") await db.collection("billing_tryon_tasks").updateOne({ taskId: task.taskId }, { $set: { completedAt: now, failed: true } });
-  }));
+  await Promise.allSettled(tryOnTasks.map((task) => reconcileTryOnTask({ db, task, now })));
   const pendingEntries = await db.collection("billing_entries").find({ invoiceId: null }).project({ ownerId: 1, cycleId: 1 }).toArray();
   const sourceCycles = await db.collection("billing_cycles").find({ id: { $in: [...new Set(pendingEntries.map((entry) => entry.cycleId).filter(Boolean))] }, status: "closed" }).project({ id: 1 }).toArray();
   const closedIds = new Set(sourceCycles.map((cycle) => cycle.id));

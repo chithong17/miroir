@@ -1,5 +1,6 @@
 import axios from "axios";
 import https from "https";
+import { normalizePiApiError } from "../utils/piapiErrors.js";
 
 const PIAPI_BASE_URL = "https://api.piapi.ai/api/v1";
 const httpsAgent = new https.Agent({
@@ -14,28 +15,6 @@ const getPiApiKey = () => {
   }
 
   return apiKey;
-};
-
-const describeApiKey = (apiKey) => {
-  if (!apiKey) {
-    return {
-      present: false,
-      prefix: "",
-      suffix: "",
-      length: 0,
-      hasLeadingOrTrailingWhitespace: false,
-    };
-  }
-
-  const normalizedKey = apiKey.trim();
-
-  return {
-    present: true,
-    prefix: normalizedKey.slice(0, 4),
-    suffix: normalizedKey.slice(-4),
-    length: normalizedKey.length,
-    hasLeadingOrTrailingWhitespace: normalizedKey !== apiKey,
-  };
 };
 
 const piapiClient = axios.create({
@@ -83,7 +62,6 @@ export const createPiApiTask = async ({ tryOnType, batchSize, imageUrls }) => {
   };
 
   console.log("Creating PiAPI task with input keys:", Object.keys(input));
-  console.log("PiAPI key runtime info:", describeApiKey(process.env.PIAPI_KEY));
 
   try {
     const response = await piapiClient.post("/task", payload, {
@@ -101,25 +79,13 @@ export const createPiApiTask = async ({ tryOnType, batchSize, imageUrls }) => {
 
     return response.data;
   } catch (error) {
-    console.error("PiAPI create task status:", error.response?.status);
-    console.error(
-      "PiAPI create task key info:",
-      describeApiKey(process.env.PIAPI_KEY),
-    );
-    console.error(
-      "PiAPI create task payload:",
-      JSON.stringify(payload, null, 2),
-    );
-    console.error(
-      "PiAPI create task error:",
-      error.response?.data || error.message,
-    );
+    console.error("PiAPI create task error:", {
+      status: error.response?.status,
+      message: normalizePiApiError(error).message,
+      inputKeys: Object.keys(input),
+    });
 
-    throw new Error(
-      error.response?.data?.error?.message ||
-        error.response?.data?.message ||
-        "Failed to create try-on task with PiAPI.",
-    );
+    throw normalizePiApiError(error);
   }
 };
 
@@ -135,13 +101,20 @@ export const getPiApiTaskStatus = async (taskId) => {
       timeout: 120000,
     });
 
+    if (response.data?.data?.status === "failed") {
+      console.warn("PiAPI generation failed:", {
+        taskId,
+        code: response.data.data.error?.code,
+        message: response.data.data.error?.message,
+      });
+    }
     return response.data;
   } catch (error) {
-    console.error("PiAPI get task status code:", error.response?.status);
-    console.error(
-      "PiAPI get task error:",
-      error.response?.data || error.message,
-    );
+    console.warn("PiAPI get task error:", {
+      taskId,
+      status: error.response?.status,
+      message: normalizePiApiError(error).message,
+    });
 
     if (isTimeoutError(error)) {
       return {
@@ -161,10 +134,6 @@ export const getPiApiTaskStatus = async (taskId) => {
       };
     }
 
-    throw new Error(
-      error.response?.data?.error?.message ||
-        error.response?.data?.message ||
-        "Failed to fetch try-on task status from PiAPI.",
-    );
+    throw normalizePiApiError(error);
   }
 };

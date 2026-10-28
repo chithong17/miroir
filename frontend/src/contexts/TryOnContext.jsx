@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getTryOnTaskStatus } from "../api/tryonApi";
+import { shouldRetryTryOnPoll, tryOnPollDelay } from "../lib/tryOnPolling.mjs";
 
 const TryOnContext = createContext(null);
 
@@ -36,11 +37,13 @@ export const TryOnProvider = ({ children }) => {
   useEffect(() => {
     let isCancelled = false;
     let timeoutId;
+    let consecutiveFailures = 0;
 
     const pollTaskStatus = async (taskId) => {
       try {
         const response = await getTryOnTaskStatus(taskId);
         if (isCancelled) return;
+        consecutiveFailures = 0;
 
         if (response.status === "completed") {
           setCurrentTask((prev) => 
@@ -58,7 +61,17 @@ export const TryOnProvider = ({ children }) => {
           return; // Stop polling
         }
       } catch (error) {
-        console.error("Failed to poll task status", error);
+        if (isCancelled) return;
+        // A failed status request does not mean image generation has failed.
+        // Retry the same task; never create another billable generation here.
+        if (shouldRetryTryOnPoll(error)) {
+          consecutiveFailures += 1;
+          setCurrentTask(prev => prev?.id === taskId
+            ? { ...prev, connectionInterrupted: true }
+            : prev);
+          timeoutId = setTimeout(() => pollTaskStatus(taskId), tryOnPollDelay(consecutiveFailures - 1));
+          return;
+        }
         if (!isCancelled) {
           setCurrentTask((prev) => 
             prev?.id === taskId 
@@ -66,11 +79,14 @@ export const TryOnProvider = ({ children }) => {
               : prev
           );
         }
-        return; // Stop polling on error to match original behavior
+        return;
       }
 
       // If not completed or failed, and not cancelled, schedule next poll
       if (!isCancelled) {
+        setCurrentTask(prev => prev?.id === taskId && prev.connectionInterrupted
+          ? { ...prev, connectionInterrupted: false }
+          : prev);
         timeoutId = setTimeout(() => pollTaskStatus(taskId), 5000);
       }
     };

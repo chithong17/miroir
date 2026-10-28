@@ -10,6 +10,7 @@ import { trackShopEvent } from "../services/shopAnalytics.service.js";
 import { getRawUserById } from "../services/userAuth.service.js";
 import { findResultUrl } from "../utils/findResultUrl.js";
 import { findResultUrls } from "../utils/findResultUrl.js";
+import { describeTryOnFailure } from "../utils/piapiErrors.js";
 import { assertShopTryOnAvailable, registerTryOnTask, settleTryOnTask } from "../services/billing.service.js";
 
 const parseBatchSize = (rawValue) => {
@@ -356,7 +357,9 @@ export const getTryOnTaskStatus = async (req, res, next) => {
       return res.status(200).json({
         success: false,
         status: "failed",
-        errorMessage,
+        errorMessage: describeTryOnFailure({ ...rawTaskData?.error, message: errorMessage }),
+        providerErrorCode: rawTaskData?.error?.code,
+        taskId,
         raw: rawTaskData,
       });
     }
