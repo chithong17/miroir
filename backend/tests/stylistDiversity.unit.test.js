@@ -69,9 +69,49 @@ test("a full clothing set is one complete outfit and genders are not mixed", () 
 
 test("optional layers are not recycled when complete outfits without them are available", () => {
   const products = [...separates(5), product("coat", "Jacket")];
-  const result = diversifyRecommendation({ recommendation: {}, products, prompt: "birthday", count: 5 });
+  const result = diversifyRecommendation({ recommendation: {}, products, prompt: "birthday with a jacket", count: 5 });
   assert.equal(result.outfits.length, 5);
   assert.equal(result.outfits.filter(o => o.items.some(i => i.product.id === "coat")).length, 1);
+});
+
+test("cardigan and camisole set is a primary top, never an extra layer over Oxford + jeans", () => {
+  const shirt = product("oxford", "Shirt"), jeans = product("jeans", "Jeans");
+  const bundle = { ...product("cardigan-set", "Set"), name: "Set Áo Khoác Cardigan Len Mỏng & Áo Hai Dây Đen" };
+  assert.equal(classifyOutfitProduct(bundle), "top");
+  const recommendation = { outfits: [{ items: [shirt, jeans, bundle].map(p => ({ productId: p.id })) }] };
+  const result = diversifyRecommendation({ recommendation, products: [shirt, jeans, bundle], prompt: "đi sinh nhật", count: 5 });
+  assert.equal(result.outfits.length, 1);
+  assert.equal(result.outfits[0].items.length, 2);
+  assert(result.outfits.every(o => o.items.filter(i => classifyOutfitProduct(i.product) === "top").length === 1));
+  const onlyBundle = diversifyRecommendation({ recommendation: {}, products: [bundle, jeans], prompt: "đi sinh nhật", count: 5 });
+  assert.deepEqual(onlyBundle.outfits[0].items.map(i => i.product.id), [bundle.id, jeans.id]);
+});
+
+test("complete matching sets stand alone and unknown clothing cannot be added as a hidden layer", () => {
+  const set = { ...product("full-set", "Set"), name: "Set Áo Sơ Mi & Quần Short" };
+  const jacket = product("coat", "Jacket"), unknown = product("unknown", "Unknown");
+  const result = diversifyRecommendation({ recommendation: { outfits: [{ items: [{ productId: set.id }, { productId: unknown.id }] }] }, products: [set, jacket, unknown], prompt: "birthday", count: 5 });
+  assert.equal(result.outfits.length, 1);
+  assert.deepEqual(result.outfits[0].items.map(i => i.product.id), [set.id]);
+});
+
+test("valid AI styling is preferred over forcing catalog combinations for shop variety", () => {
+  const products = separates(6);
+  const recommendation = { outfits: [
+    { title: "AI classic", items: [{ productId: "top-0" }, { productId: "bottom-0" }] },
+    { title: "AI casual", items: [{ productId: "top-1" }, { productId: "bottom-1" }] },
+  ] };
+  const result = diversifyRecommendation({ recommendation, products, prompt: "birthday", count: 5 });
+  assert.deepEqual(result.outfits.slice(0, 2).map(outfit => outfit.title), ["AI classic", "AI casual"]);
+});
+
+test("ordinary fallback prioritizes separate shirt and bottom pairs before bundles", () => {
+  const fullSet = { ...product("full-set", "Set"), name: "Set Áo & Chân Váy" };
+  const upperSet = { ...product("upper-set", "Set"), name: "Set Cardigan & Áo Hai Dây" };
+  const products = [fullSet, upperSet, ...separates(5)];
+  const result = diversifyRecommendation({ recommendation: {}, products, prompt: "đi sinh nhật", count: 5 });
+  assert.equal(result.outfits.length, 5);
+  assert(result.outfits.every(o => o.items.length === 2 && o.items.every(i => ![fullSet.id, upperSet.id].includes(i.product.id))));
 });
 
 function retrievalFixture({ missingIndex = false, noShops = false, thin = false } = {}) {

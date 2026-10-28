@@ -55,7 +55,15 @@ test("fallback returns fewer results when only one complete combination exists",
     desiredOutfitCount: 5,
   });
   assert.equal(outfits.length, 1);
-  assert.deepEqual(outfits[0].items.map((item) => item.productId), ["top", "bottom", "outer"]);
+  assert.deepEqual(outfits[0].items.map((item) => item.productId), ["top", "bottom"]);
+});
+
+test("fallback adds a real jacket only when layering is requested", () => {
+  const outfits = buildCoherentFallbackOutfits({
+    products: [product("top", "Áo sơ mi", "Top"), product("bottom", "Quần tây", "Pants"), product("outer", "Áo khoác", "Jacket")],
+    prompt: "phối áo khoác cho trời lạnh", desiredOutfitCount: 1,
+  });
+  assert.deepEqual(outfits[0].items.map(item => item.productId), ["top", "bottom", "outer"]);
 });
 
 test("enriched stylist products retain sellable variants and omit cost price", () => {

@@ -6,6 +6,9 @@
 - Đưa `shopId` vào bộ lọc vector trước giới hạn tìm kiếm. Lấy tối đa 120 ứng viên rồi chọn 30 sản phẩm, dành chỗ cho áo/quần/váy và giảm việc một shop chiếm toàn bộ ngữ cảnh. AI nhận tối đa 30 sản phẩm.
 - Giữ điều kiện giới tính, giá, availability, trạng thái đăng bán và biến thể còn hàng. Nếu vector ít kết quả, thiếu nhóm đồ chính hoặc index đang cập nhật, bổ sung từ catalog đủ điều kiện. Không dùng sản phẩm từ shop ngoài danh sách hợp lệ.
 - Gộp gợi ý AI với các tổ hợp catalog làm nguồn dự phòng. Chỉ trả bộ có áo + quần/váy hoặc một váy/set hoàn chỉnh. Set có cả áo và phần thân dưới được tính là một bộ hoàn chỉnh.
+- Set cardigan + áo hai dây chiếm vị trí áo chính, không phải áo khoác phụ để cộng vào sơ mi + quần. Không nhận bộ có hai nhóm áo chính hoặc món không rõ vai trò.
+- Nhánh catalog mặc định ghép áo + quần/váy, hoặc dùng riêng set hoàn chỉnh. Chỉ tự thêm áo khoác khi yêu cầu có nhắc đến khoác/layering/thời tiết lạnh.
+- Ưu tiên bộ AI đã vượt qua kiểm tra cấu trúc/ngân sách; không ép đổi sang tổ hợp catalog chỉ để tăng số shop khác nhau.
 - Mỗi món chính chỉ xuất hiện một lần trong các outfit trả về. Ảnh sản phẩm giống nhau dưới ID khác nhau cũng không vượt qua kiểm tra này. Lớp khoác/phụ kiện có thể được tái sử dụng.
 - Không ghép giới tính male/female trong cùng bộ khi catalog có thông tin giới tính. Không tự suy ra giới tính cho sản phẩm để trống hoặc unisex.
 - Tổng giá outfit phải nằm trong ngân sách được gửi lên. Thiếu lựa chọn hợp lệ thì trả ít outfit hơn, không cố đủ 5 bộ. Không đủ bộ hoàn chỉnh sẽ có thông báo `noMatch`.

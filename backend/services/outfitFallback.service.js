@@ -9,9 +9,11 @@ export const classifyOutfitProduct = (product = {}) => {
   const text = normalize(`${product.category || ""} ${product.name || ""}`);
   if (/\b(set|sets|bo|co-ord|coord)\b/.test(text) && /\b(ao|top|shirts?|blouse|camisole|croptop|tank)\b/.test(text) && /\b(quan|chan vay|skirt|pants?|shorts?|trousers?)\b/.test(text)) return "one-piece";
   if (/\b(dress(?:es)?|dam|jumpsuits?)\b/.test(text)) return "one-piece";
+  // A cardigan + camisole bundle occupies the top slot, not an extra jacket slot.
+  if (/\b(set|sets|bo|co-ord|coord)\b/.test(text) && /\b(hai day|2 day|camisole|tank|bralette|ao ong|croptop|crop top)\b/.test(text)) return "top";
   if (/\b(jacket|blazer|cardigan|coat|hoodie|ao khoac)\b/.test(text)) return "outerwear";
   if (/\b(pants?|trousers?|jeans?|shorts?|skirt|culottes?|quan|chan vay)\b/.test(text)) return "bottom";
-  if (/\b(top|shirts?|t-shirt|tee|blouse|sweater|ao thun|ao so mi)\b/.test(text)) return "top";
+  if (/\b(top|shirts?|t-shirt|tee|blouse|sweater|polo|camisole|tank|ao thun|ao so mi|ao len|ao hai day)\b/.test(text)) return "top";
   if (/\b(shoes?|sneakers?|heels?|boots?|sandals?|giay|dep)\b/.test(text)) return "shoes";
   if (/\b(bag|belt|hat|scarf|jewelry|tui|that lung|mu|khan)\b/.test(text)) return "accessory";
   return "other";
@@ -43,11 +45,14 @@ export const buildCoherentFallbackOutfits = ({
   products = [],
   prompt = "",
   desiredOutfitCount = 5,
+  includeLayers = /\b(ao khoac|jacket|blazer|cardigan|coat|layer|mua dong|troi lanh)\b/.test(normalize(prompt)),
 }) => {
   const buckets = {
     top: [], bottom: [], outerwear: [], "one-piece": [], shoes: [], accessory: [], other: [],
   };
   products.forEach((product) => buckets[classifyOutfitProduct(product)].push(product));
+  const isBundle = product => /\b(set|sets|bo|co-ord|coord)\b/.test(normalize(`${product.category || ""} ${product.name || ""}`));
+  buckets.top.sort((a, b) => Number(isBundle(a)) - Number(isBundle(b)));
   if (partyPrompt(prompt)) buckets.bottom.sort((a, b) => partyBottomRank(a) - partyBottomRank(b));
 
   const candidates = [];
@@ -68,9 +73,7 @@ export const buildCoherentFallbackOutfits = ({
   buckets["one-piece"].forEach((piece, index) => {
     addCandidate([
       piece,
-      buckets.outerwear[index % Math.max(1, buckets.outerwear.length)],
-      buckets.shoes[index % Math.max(1, buckets.shoes.length)],
-      buckets.accessory[index % Math.max(1, buckets.accessory.length)],
+      includeLayers ? buckets.outerwear[index % Math.max(1, buckets.outerwear.length)] : undefined,
     ], "one-piece");
   });
 
@@ -81,9 +84,7 @@ export const buildCoherentFallbackOutfits = ({
     addCandidate([
       top,
       bottom,
-      buckets.outerwear[offset % Math.max(1, buckets.outerwear.length)],
-      buckets.shoes[offset % Math.max(1, buckets.shoes.length)],
-      buckets.accessory[offset % Math.max(1, buckets.accessory.length)],
+      includeLayers ? buckets.outerwear[offset % Math.max(1, buckets.outerwear.length)] : undefined,
     ], "separates");
   }
 
@@ -95,7 +96,7 @@ export const buildCoherentFallbackOutfits = ({
       addCandidate([
         top,
         bottom,
-        buckets.outerwear[index % Math.max(1, buckets.outerwear.length)],
+        includeLayers ? buckets.outerwear[index % Math.max(1, buckets.outerwear.length)] : undefined,
       ], "separates");
     }
   }
@@ -107,11 +108,12 @@ export const buildCoherentFallbackOutfits = ({
       .forEach((product) => addCandidate([product], "single"));
   }
 
+  candidates.sort((a, b) => Number(b.type === "separates") - Number(a.type === "separates"));
   return candidates.slice(0, desiredOutfitCount).map((candidate, index) => {
     const labels = candidate.items.map((item) => item.name).join(" + ");
     return {
       id: `fallback-outfit-${index + 1}`,
-      title: candidate.type === "single" ? `Gợi ý sản phẩm: ${labels}` : `Phối đồ: ${labels}`,
+      title: candidate.type === "single" ? `Gợi ý sản phẩm: ${labels}` : candidate.type === "one-piece" ? `Set phối sẵn ${index + 1}` : `Phối đồ ${index + 1}`,
       score: Math.max(72, 84 - index * 2),
       items: candidate.items.map((product) => ({
         productId: product.id,

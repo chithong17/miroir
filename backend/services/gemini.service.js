@@ -349,6 +349,7 @@ Use the user's prompt as the primary styling brief.
 Use body measurements, body shape, skin tone, style preferences, budget, occasion, customer feedback, user memory, and fit review summaries only when they are provided.
 Return up to desiredOutfitCount distinct complete outfits. Prefer variety across silhouettes, colors, and categories while staying faithful to the prompt.
 Every outfit must be structurally wearable: use either one dress/one-piece, or one top plus one bottom. An outerwear item, shoes, or accessories may be added, but outerwear alone is not a complete outfit.
+Prefer a simple top + bottom pair for ordinary requests. A full matching clothing set already contains its top and bottom and should be used on its own. A cardigan + camisole/tank bundle occupies the top slot: never add it to an outfit that already has a shirt/top. Only add optional layers when they genuinely suit the request, never merely to increase item count.
 Do not put two tops or two bottoms in the same outfit. Do not repeat an identical product combination across outfits. If the catalog cannot support desiredOutfitCount complete distinct outfits, return fewer outfits instead of duplicates or incomplete combinations.
 Return JSON only using this schema:
 {
