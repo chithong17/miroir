@@ -29,28 +29,29 @@ function Panel({ eyebrow, title, description, children, className = "" }) {
 }
 
 function RegistrationChart({ daily }) {
-  const width = 720, height = 180, left = 42, right = 18, top = 22, bottom = 30;
+  const width = Math.max(760, daily.length * 24), height = 280, left = 48, right = 22, top = 32, bottom = 42;
   const plotW = width - left - right, plotH = height - top - bottom;
   const max = Math.max(1, ...daily.map(row => row.count));
   const step = Math.max(1, Math.ceil(max / 4));
   const ceiling = step * 4;
   const barW = plotW / Math.max(1, daily.length);
-  const tickIndices = [...new Set([0, Math.floor((daily.length - 1) / 3), Math.floor((daily.length - 1) * 2 / 3), daily.length - 1])].filter(i => i >= 0);
+  const tickIndices = [...new Set([0, ...daily.map((_, i) => i).filter(i => (i + 1) % 5 === 0), daily.length - 1])].filter(i => i >= 0 && (i === daily.length - 1 || daily.length - 1 - i > 1));
   const peak = daily.reduce((best, row) => row.count > (best?.count || 0) ? row : best, null);
   return <>
-    <svg viewBox={`0 0 ${width} ${height}`} className="mt-4 w-full" role="img" aria-label={`Đăng ký theo ngày, ${number(daily.reduce((sum, row) => sum + row.count, 0))} tài khoản trong kỳ`}>
+    <div className="mt-5 overflow-x-auto rounded-xl" tabIndex={0} aria-label="Biểu đồ đăng ký theo ngày, có thể cuộn ngang"><div style={{ minWidth: width }}><svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={`Đăng ký theo ngày, ${number(daily.reduce((sum, row) => sum + row.count, 0))} tài khoản trong kỳ`}>
       {[0, 1, 2, 3, 4].map(i => {
         const y = top + plotH - plotH * i / 4;
-        return <g key={i}><line x1={left} x2={width - right} y1={y} y2={y} stroke="#E8EDE3" strokeDasharray={i ? "4 5" : undefined} /><text x={left - 10} y={y + 4} textAnchor="end" fontSize="11" fill="#889283">{number(step * i)}</text></g>;
+        return <g key={i}><line x1={left} x2={width - right} y1={y} y2={y} stroke="#DCE5D5" strokeDasharray={i ? "4 5" : undefined} /><text x={left - 12} y={y + 5} textAnchor="end" fontSize="14" fontWeight="600" fill="#526155">{number(step * i)}</text></g>;
       })}
       {daily.map((row, i) => {
         const h = row.count / ceiling * plotH;
         const x = left + i * barW + barW * 0.15;
-        return <g key={row.date}><title>{row.date}: {row.count} đăng ký</title><rect x={x} y={top + plotH - h} width={barW * 0.7} height={h} rx={Math.min(4, barW / 5)} fill={row.date === peak?.date ? "#344B32" : "#A4BB83"} />{row.date === peak?.date && <text x={x + barW * 0.35} y={top + plotH - h - 8} textAnchor="middle" fontWeight="700" fontSize="12" fill="#344B32">{row.count}</text>}</g>;
+        return <g key={row.date}><title>{row.date}: {row.count} đăng ký</title><rect x={x} y={top + plotH - h} width={barW * 0.7} height={h} rx={Math.min(4, barW / 5)} fill={row.date === peak?.date ? "#263F2A" : "#78995C"} />{row.count > 0 && <text x={x + barW * 0.35} y={top + plotH - h - 9} textAnchor="middle" fontWeight="700" fontSize="14" fill="#263F2A">{row.count}</text>}</g>;
       })}
-      {tickIndices.map(i => <text key={i} x={left + (i + 0.5) * barW} y={height - 10} textAnchor="middle" fontSize="11" fill="#889283">{shortDate(daily[i]?.date)}</text>)}
-    </svg>
-    <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-[#7A8579]"><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#A4BB83]" />Số tài khoản mới / ngày</span><span>{peak ? `Cao nhất: ${number(peak.count)} · ${shortDate(peak.date)}` : "Chưa có đăng ký trong kỳ"}</span></div>
+      {tickIndices.map(i => <text key={i} x={left + (i + 0.5) * barW} y={height - 12} textAnchor="middle" fontSize="14" fontWeight="600" fill="#526155">{shortDate(daily[i]?.date)}</text>)}
+    </svg></div></div>
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-[#526155]"><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#78995C]" />Số tài khoản mới / ngày</span><span>{peak ? `Cao nhất: ${number(peak.count)} · ${shortDate(peak.date)}` : "Chưa có đăng ký trong kỳ"}</span></div>
+    <p className="mt-2 text-xs text-[#7A8579]">Cuộn ngang nếu biểu đồ rộng hơn màn hình.</p>
   </>;
 }
 
@@ -79,13 +80,13 @@ function RegistrationPanel({ report, view, onViewChange, onMonthSelect }) {
   const activeDays = daily.filter(row => row.count > 0).length;
   return <Panel eyebrow="Acquisition" title={view === "month" ? "Đăng ký theo tháng" : selected ? `Đăng ký tháng ${selected.slice(5)}/${selected.slice(0, 4)}` : "Đăng ký mới theo ngày"} description={selected === currentMonth ? `Tính đến ${shortDate(daily.at(-1)?.date)} · Giờ Việt Nam` : "Số đăng ký theo ngày đang lưu trên hệ thống, giờ Việt Nam."}>
     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-      <div className="inline-flex rounded-full bg-[#F1F5EA] p-1">{[["month", "Theo tháng"], ["day", "Theo ngày"]].map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => { onViewChange(id); if (id === "month" && selected) onMonthSelect(""); }} className={`min-h-9 rounded-full px-3 text-xs font-semibold ${view === id ? "bg-[#344B32] text-white" : "text-[#6B7B62]"}`}>{label}</button>)}</div>
+      <div className="inline-flex rounded-full bg-[#F1F5EA] p-1">{[["month", "Theo tháng"], ["day", "Theo ngày"]].map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => { onViewChange(id); if (id === "month" && selected) onMonthSelect(""); if (id === "day" && !selected) onMonthSelect(currentMonth); }} className={`min-h-10 rounded-full px-4 text-sm font-semibold ${view === id ? "bg-[#344B32] text-white" : "text-[#6B7B62]"}`}>{label}</button>)}</div>
       <label className="flex items-center gap-2 text-xs text-[#6B7B62]">Chọn tháng<input type="month" aria-label="Chọn tháng đăng ký" min="2000-01" max={currentMonth} value={selected || ""} onChange={event => { if (event.target.value) { onMonthSelect(event.target.value); onViewChange("day"); } }} className="min-h-9 max-w-[160px] rounded-lg border border-[#DCE4D6] bg-white px-2 text-xs text-[#344B32]" /></label>
     </div>
     {view === "month" ? <><div className="mt-3 flex items-end gap-3 border-b border-[#E3E9DB] pb-3">
       {months.map(row => <button type="button" key={row.month} onClick={() => { onMonthSelect(row.month); onViewChange("day"); }} aria-label={`Xem tháng ${row.month.slice(5)}/${row.month.slice(0, 4)}: ${row.count} đăng ký`} className="group min-w-0 flex-1 rounded-xl px-1 pt-2 text-center outline-offset-4 hover:bg-[#F5F8EF]">
-        <div className="flex h-20 flex-col items-center justify-end"><span className="mb-2 text-xl font-bold tabular-nums text-[#344B32]">{number(row.count)}</span><div className="w-full max-w-20 rounded-t-lg bg-[#8BA66C] transition-colors group-hover:bg-[#344B32]" style={{ height: `${row.count / max * 48}px` }} /></div>
-        <p className="mt-3 text-xs font-bold text-[#344B32]">{row.month.slice(5)}/{row.month.slice(0, 4)}</p><p className="mt-1 text-[10px] text-[#7A8579]">{shortDate(row.first)}–{shortDate(row.last)}</p>
+        <div className="flex h-52 flex-col items-center justify-end"><span className="mb-3 text-3xl font-bold tabular-nums text-[#344B32]">{number(row.count)}</span><div className="w-full max-w-24 rounded-t-lg bg-[#78995C] transition-colors group-hover:bg-[#344B32]" style={{ height: `${row.count / max * 150}px` }} /></div>
+        <p className="mt-3 text-sm font-bold text-[#344B32]">{row.month.slice(5)}/{row.month.slice(0, 4)}</p><p className="mt-1 text-xs text-[#526155]">{shortDate(row.first)}–{shortDate(row.last)}</p>
       </button>)}
     </div><p className="mt-2 text-[10px] text-[#7A8579]">Bấm một cột để xem cả tháng. Khoảng ngày dưới cột là phạm vi được tính trong bộ lọc hiện tại.</p></> : <RegistrationChart daily={daily} />}
     <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#EEF2E8] pt-3">{[["Đăng ký trong kỳ", report.summary.newInRange], ["Ngày có đăng ký", activeDays], ["Cao nhất / ngày", Math.max(0, ...daily.map(row => row.count))]].map(([label, value]) => <div key={label}><p className="text-xl font-bold text-[#344B32]">{number(value)}</p><p className="mt-1 text-[10px] text-[#7A8579]">{label}</p></div>)}</div>
@@ -114,7 +115,7 @@ export default function CustomerReport({ report, section = "acquisition", regist
         <Metric label="Có hoạt động trong kỳ" value={number(s.activeInRange)} note={`${number(s.activityRate)}% tổng tài khoản khách hàng`} icon={Activity} />
         <Metric label="Đã hoàn tất hồ sơ" value={number(s.completedProfiles)} note={`${number(percent(s.completedProfiles, s.total))}% tổng tài khoản · toàn thời gian`} icon={CheckCircle2} />
       </div>
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.8fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[2.5fr_1fr]">
         <RegistrationPanel report={report} view={registrationView} onViewChange={onRegistrationViewChange} onMonthSelect={onMonthSelect} />
         <Panel eyebrow="Engagement" title="Tỷ lệ có hoạt động" description="Tài khoản có ít nhất một hành vi được ghi nhận."><ActivityRing active={s.activeInRange} total={s.total} /><div className="space-y-2 text-xs"><div className="flex justify-between gap-3"><span className="flex items-center gap-2 text-[#7A8579]"><span className="h-2 w-2 rounded-full bg-[#6C8950]" />Có hoạt động</span><strong>{number(s.activeInRange)}</strong></div><div className="flex justify-between gap-3"><span className="flex items-center gap-2 text-[#7A8579]"><span className="h-2 w-2 rounded-full bg-[#DCE4D2]" />Chưa ghi nhận trong kỳ</span><strong>{number(noActivity)}</strong></div></div></Panel>
       </div>
