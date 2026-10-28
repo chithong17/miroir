@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import CustomerReport, { reportSections } from "./CustomerReport.jsx";
 import CustomerPeriodSelect from "./CustomerPeriodSelect.jsx";
 import { CalendarDays, Download, RefreshCw, Search } from "lucide-react";
-import { getAdminCustomerAnalytics, simulateCustomerActivity, revertCustomerActivity, deleteAdminCustomer } from "../../api/adminApi.js";
+import { getAdminCustomerAnalytics, deleteAdminCustomer } from "../../api/adminApi.js";
 import { NeuCard } from "../seller/NeuComponents.jsx";
 
 const number = (value) => new Intl.NumberFormat("vi-VN").format(value || 0);
@@ -46,23 +46,7 @@ export default function AdminCustomers({ refreshing = false }) {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [simulating, setSimulating] = useState(false);
 
-  const handleSimulate = async () => {
-    try {
-      setSimulating(true);
-      if (report?.insights?.mau >= 80) {
-        await revertCustomerActivity();
-      } else {
-        await simulateCustomerActivity(88);
-      }
-      setRevision((v) => v + 1);
-    } catch (err) {
-      alert(err.response?.data?.message || err.message || "Không thể thực hiện thao tác");
-    } finally {
-      setSimulating(false);
-    }
-  };
   useEffect(() => {
     let cancelled = false;
     if (refreshing) return;
@@ -103,14 +87,7 @@ export default function AdminCustomers({ refreshing = false }) {
       <h1 className="text-2xl font-bold text-[#23352B]">Thống kê khách hàng</h1>
       <div className="flex flex-wrap gap-2">
         <CustomerPeriodSelect range={range} month={month} onChange={value => { if (value !== "month") { setRange(value); setMonth(""); } }} />
-        <button
-          type="button"
-          disabled={simulating || loading || refreshing}
-          onClick={handleSimulate}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-[#DCE4D6] bg-white px-3.5 text-xs font-bold text-[#344B32] transition hover:bg-[#F1F5E9] disabled:opacity-50"
-        >
-          {simulating ? "Đang xử lý…" : report?.insights?.mau >= 80 ? "Hoàn tác (về 32%)" : "Mô phỏng 88% hoạt động"}
-        </button>
+
         <button type="button" aria-label="Làm mới thống kê customer" disabled={loading || refreshing} onClick={() => setRevision((value) => value + 1)} className="neu-icon-btn h-11 w-11 disabled:opacity-50"><RefreshCw size={16} /></button>
         <button type="button" disabled={!report || loading || refreshing || Boolean(error)} onClick={() => exportReport(report)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#526D38] px-4 text-sm font-bold text-white disabled:opacity-50"><Download size={16} />Xuất CSV</button>
       </div>
