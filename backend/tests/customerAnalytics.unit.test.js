@@ -1,9 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { customerDateKey, customerWindow, fillCustomerDays, getCustomerAnalytics } from "../services/customerAnalytics.service.js";
+import { customerDateKey, customerWindow, customerReportingWindow, fillCustomerDays, getCustomerAnalytics } from "../services/customerAnalytics.service.js";
 import { requireAdmin } from "../middlewares/adminAuth.middleware.js";
 
 const now = new Date("2026-10-27T03:00:00Z");
+
+test("calendar months include the entire past month and only elapsed days of the current month", () => {
+  const september = customerReportingWindow({ month: "2026-09" }, now);
+  assert.equal(september.start.toISOString(), "2026-08-31T17:00:00.000Z");
+  assert.equal(september.end.toISOString(), "2026-09-30T16:59:59.999Z");
+  assert.equal(september.days, 30);
+  const current = customerReportingWindow({ month: "2026-10" }, now);
+  assert.equal(current.days, 27);
+  assert.equal(current.end.getTime(), now.getTime());
+  assert.equal(customerReportingWindow({ month: "2024-02" }, now).days, 29);
+  for (const month of ["2026-13", "2026-11", "2026-1", "bad", "1999-12"]) assert.throws(() => customerReportingWindow({ month }, now), { statusCode: 400 });
+});
 
 test("customer reporting uses Vietnam midnight and inclusive calendar-day windows", () => {
   assert.equal(customerDateKey("2026-10-26T17:00:00Z"), "2026-10-27");
@@ -89,6 +101,20 @@ test("empty customer database yields finite zero metrics and a complete zero ser
   assert.equal(result.daily.reduce((sum, row) => sum + row.count, 0), 0);
   assert.equal(result.pagination.page, 1);
   assert.equal(result.pagination.totalPages, 1);
+});
+
+test("selected past month applies its end date to registration and activity queries", async () => {
+  const { db, calls } = fixture({ empty: true });
+  const result = await getCustomerAnalytics({ db, now, query: { month: "2026-09" } });
+  assert.equal(result.month, "2026-09");
+  assert.equal(result.range, "2026-09");
+  assert.equal(result.daily.length, 30);
+  assert.equal(result.daily[0].date, "2026-09-01");
+  assert.equal(result.daily.at(-1).date, "2026-09-30");
+  assert.equal(result.end.toISOString(), "2026-09-30T16:59:59.999Z");
+  for (const call of calls.filter(c => c.aggregate)) {
+    assert.equal(call.pipeline[0].$match.createdAt.$lte.toISOString(), result.end.toISOString());
+  }
 });
 
 test("customer analytics requires admin credentials", async () => {

@@ -8,6 +8,20 @@ export const customerWindow = (range = "30d", now = new Date()) => {
   const today = new Date(`${customerDateKey(now)}T00:00:00+07:00`);
   return { days, start: new Date(today.getTime() - (days - 1) * DAY), end: now, today };
 };
+export const customerReportingWindow = (query = {}, now = new Date()) => {
+  if (!query.month) return customerWindow(query.range, now);
+  const month = String(query.month);
+  const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(month);
+  if (!match || month < "2000-01" || month > customerDateKey(now).slice(0, 7)) {
+    throw Object.assign(new Error("Tháng thống kê không hợp lệ."), { statusCode: 400 });
+  }
+  const start = new Date(`${month}-01T00:00:00+07:00`);
+  const next = new Date(Date.UTC(Number(match[1]), Number(match[2]), 1) - OFFSET);
+  const end = new Date(Math.min(now.getTime(), next.getTime() - 1));
+  const today = new Date(`${customerDateKey(now)}T00:00:00+07:00`);
+  const lastDay = new Date(`${customerDateKey(end)}T00:00:00+07:00`);
+  return { start, end, today, month, days: Math.round((lastDay - start) / DAY) + 1 };
+};
 export const fillCustomerDays = (rows, window) => {
   const counts = new Map(rows.map((row) => [row._id, row.count]));
   return Array.from({ length: window.days }, (_, index) => {
@@ -21,7 +35,7 @@ const customerOnly = (now) => [
 ];
 export const getCustomerAnalytics = async ({ query = {}, now = new Date(), db: suppliedDb } = {}) => {
   const db = suppliedDb || await getMongoDb();
-  const window = customerWindow(query.range, now);
+  const window = customerReportingWindow(query, now);
   const dateFilter = { $gte: window.start, $lte: window.end };
   const users = db.collection("users");
   const page = Math.min(100000, Math.max(1, Math.floor(Number(query.page) || 1)));
@@ -64,7 +78,7 @@ export const getCustomerAnalytics = async ({ query = {}, now = new Date(), db: s
   orders.forEach((entry) => activeIds.add(entry._id));
   const usage = Object.fromEntries(activityTypes.map((type) => [type, activity.filter((entry) => entry._id.type === type).reduce((sum, entry) => sum + entry.count, 0)]));
   return {
-    generatedAt: now, timezone: "Asia/Ho_Chi_Minh", range: `${window.days}d`, start: window.start, end: now,
+    generatedAt: now, timezone: "Asia/Ho_Chi_Minh", range: window.month || `${window.days}d`, month: window.month || null, start: window.start, end: window.end,
     summary: { total, today, new7d, new30d, newInRange, completedProfiles, enabled, activeInRange: activeIds.size,
       activityRate: total ? Math.round(activeIds.size / total * 1000) / 10 : 0,
       orders: orders.reduce((sum, entry) => sum + entry.count, 0), payingCustomers: orders.filter((entry) => entry.paid > 0).length },

@@ -65,6 +65,33 @@ function ActivityRing({ active, total }) {
   </div>;
 }
 
+function RegistrationPanel({ report, view, onViewChange, onMonthSelect }) {
+  const daily = report.daily || [];
+  const months = [...daily.reduce((map, row) => {
+    const month = row.date.slice(0, 7);
+    const current = map.get(month) || { month, count: 0, first: row.date, last: row.date, days: 0, activeDays: 0 };
+    current.count += row.count; current.last = row.date; current.days++; current.activeDays += Number(row.count > 0);
+    return map.set(month, current);
+  }, new Map()).values()];
+  const max = Math.max(1, ...months.map(row => row.count));
+  const currentMonth = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit" }).format(new Date(report.generatedAt));
+  const selected = report.month;
+  const activeDays = daily.filter(row => row.count > 0).length;
+  return <Panel eyebrow="Acquisition" title={view === "month" ? "Đăng ký theo tháng" : selected ? `Đăng ký tháng ${selected.slice(5)}/${selected.slice(0, 4)}` : "Đăng ký mới theo ngày"} description={selected === currentMonth ? `Tính đến ${shortDate(daily.at(-1)?.date)} · Giờ Việt Nam` : "Số đăng ký theo ngày đang lưu trên hệ thống, giờ Việt Nam."}>
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="inline-flex rounded-full bg-[#F1F5EA] p-1">{[["month", "Theo tháng"], ["day", "Theo ngày"]].map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => { onViewChange(id); if (id === "month" && selected) onMonthSelect(""); }} className={`min-h-9 rounded-full px-3 text-xs font-semibold ${view === id ? "bg-[#344B32] text-white" : "text-[#6B7B62]"}`}>{label}</button>)}</div>
+      <label className="flex items-center gap-2 text-xs text-[#6B7B62]">Chọn tháng<input type="month" aria-label="Chọn tháng đăng ký" min="2000-01" max={currentMonth} value={selected || ""} onChange={event => { if (event.target.value) { onMonthSelect(event.target.value); onViewChange("day"); } }} className="min-h-9 max-w-[160px] rounded-lg border border-[#DCE4D6] bg-white px-2 text-xs text-[#344B32]" /></label>
+    </div>
+    {view === "month" ? <><div className="mt-3 flex items-end gap-3 border-b border-[#E3E9DB] pb-3">
+      {months.map(row => <button type="button" key={row.month} onClick={() => { onMonthSelect(row.month); onViewChange("day"); }} aria-label={`Xem tháng ${row.month.slice(5)}/${row.month.slice(0, 4)}: ${row.count} đăng ký`} className="group min-w-0 flex-1 rounded-xl px-1 pt-2 text-center outline-offset-4 hover:bg-[#F5F8EF]">
+        <div className="flex h-20 flex-col items-center justify-end"><span className="mb-2 text-xl font-bold tabular-nums text-[#344B32]">{number(row.count)}</span><div className="w-full max-w-20 rounded-t-lg bg-[#8BA66C] transition-colors group-hover:bg-[#344B32]" style={{ height: `${row.count / max * 48}px` }} /></div>
+        <p className="mt-3 text-xs font-bold text-[#344B32]">{row.month.slice(5)}/{row.month.slice(0, 4)}</p><p className="mt-1 text-[10px] text-[#7A8579]">{shortDate(row.first)}–{shortDate(row.last)}</p>
+      </button>)}
+    </div><p className="mt-2 text-[10px] text-[#7A8579]">Bấm một cột để xem cả tháng. Khoảng ngày dưới cột là phạm vi được tính trong bộ lọc hiện tại.</p></> : <RegistrationChart daily={daily} />}
+    <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[#EEF2E8] pt-3">{[["Đăng ký trong kỳ", report.summary.newInRange], ["Ngày có đăng ký", activeDays], ["Cao nhất / ngày", Math.max(0, ...daily.map(row => row.count))]].map(([label, value]) => <div key={label}><p className="text-xl font-bold text-[#344B32]">{number(value)}</p><p className="mt-1 text-[10px] text-[#7A8579]">{label}</p></div>)}</div>
+  </Panel>;
+}
+
 function UsageChart({ usage }) {
   const max = Math.max(1, ...usageItems.map(item => usage[item.key] || 0));
   return <div className="mt-6 space-y-5">
@@ -76,19 +103,19 @@ function UsageChart({ usage }) {
   </div>;
 }
 
-export default function CustomerReport({ report, section = "acquisition" }) {
+export default function CustomerReport({ report, section = "acquisition", registrationView = "month", onRegistrationViewChange = () => {}, onMonthSelect = () => {} }) {
   const { summary: s, daily = [], usage = {} } = report;
   const noActivity = Math.max(0, s.total - s.activeInRange);
   return <div className="space-y-4">
     {section === "acquisition" && <>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label="Tài khoản khách hàng" value={number(s.total)} note="Tổng tài khoản hiện có trên hệ thống" icon={Users} featured />
-        <Metric label="Đăng ký mới trong kỳ" value={number(s.newInRange)} note={`${daily.length} ngày · gồm cả hôm nay`} icon={ArrowUpRight} />
+        <Metric label="Đăng ký mới trong kỳ" value={number(s.newInRange)} note={`${daily.length} ngày · ${report.month ? "tháng đã chọn" : "gồm cả hôm nay"}`} icon={ArrowUpRight} />
         <Metric label="Có hoạt động trong kỳ" value={number(s.activeInRange)} note={`${number(s.activityRate)}% tổng tài khoản khách hàng`} icon={Activity} />
         <Metric label="Đã hoàn tất hồ sơ" value={number(s.completedProfiles)} note={`${number(percent(s.completedProfiles, s.total))}% tổng tài khoản · toàn thời gian`} icon={CheckCircle2} />
       </div>
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.8fr_1fr]">
-        <Panel eyebrow="Acquisition" title="Đăng ký mới theo ngày" description="Phân bố theo ngày đăng ký đang lưu, múi giờ Việt Nam."><RegistrationChart daily={daily} /><div className="mt-5 grid grid-cols-3 gap-3 border-t border-[#EEF2E8] pt-4">{[["Hôm nay", s.today], ["7 ngày gần nhất", s.new7d], ["30 ngày gần nhất", s.new30d]].map(([label, value]) => <div key={label}><p className="text-xl font-bold text-[#344B32]">{number(value)}</p><p className="mt-1 text-[10px] text-[#7A8579]">{label}</p></div>)}</div></Panel>
+        <RegistrationPanel report={report} view={registrationView} onViewChange={onRegistrationViewChange} onMonthSelect={onMonthSelect} />
         <Panel eyebrow="Engagement" title="Tỷ lệ có hoạt động" description="Tài khoản có ít nhất một hành vi được ghi nhận."><ActivityRing active={s.activeInRange} total={s.total} /><div className="space-y-2 text-xs"><div className="flex justify-between gap-3"><span className="flex items-center gap-2 text-[#7A8579]"><span className="h-2 w-2 rounded-full bg-[#6C8950]" />Có hoạt động</span><strong>{number(s.activeInRange)}</strong></div><div className="flex justify-between gap-3"><span className="flex items-center gap-2 text-[#7A8579]"><span className="h-2 w-2 rounded-full bg-[#DCE4D2]" />Chưa ghi nhận trong kỳ</span><strong>{number(noActivity)}</strong></div></div></Panel>
       </div>
     </>}

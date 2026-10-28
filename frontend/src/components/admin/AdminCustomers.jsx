@@ -30,7 +30,9 @@ function exportReport(report) {
 export default function AdminCustomers({ refreshing = false }) {
   const [presenting, setPresenting] = useState(false);
   const [section, setSection] = useState("acquisition");
-  const [range, setRange] = useState("30d");
+  const [range, setRange] = useState("90d");
+  const [month, setMonth] = useState("");
+  const [registrationView, setRegistrationView] = useState("month");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
@@ -43,14 +45,14 @@ export default function AdminCustomers({ refreshing = false }) {
     if (refreshing) return;
     setLoading(true); setError("");
     const timer = setTimeout(() => {
-      getAdminCustomerAnalytics({ range, search, status, page }).then((result) => {
+      getAdminCustomerAnalytics({ range, month: month || undefined, search, status, page }).then((result) => {
         if (!cancelled) setReport(result.analytics);
       }).catch((failure) => {
         if (!cancelled) setError(failure.response?.data?.message || "Không tải được thống kê khách hàng. Vui lòng thử lại.");
       }).finally(() => { if (!cancelled) setLoading(false); });
     }, 250);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [range, search, status, page, revision, refreshing]);
+  }, [range, month, search, status, page, revision, refreshing]);
 
   useEffect(() => {
     if (!presenting) return;
@@ -60,7 +62,7 @@ export default function AdminCustomers({ refreshing = false }) {
     const close = (event) => {
       if (event.key === "Escape") setPresenting(false);
       if (event.key === "Tab") {
-        const buttons = [...(document.getElementById("customer-report-dialog")?.querySelectorAll("button:not(:disabled)") || [])];
+        const buttons = [...(document.getElementById("customer-report-dialog")?.querySelectorAll("button:not(:disabled), input:not(:disabled), select:not(:disabled)") || [])];
         const first = buttons[0], last = buttons.at(-1);
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
@@ -75,7 +77,7 @@ export default function AdminCustomers({ refreshing = false }) {
       <div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#81916E]">MIROIR · User acquisition & engagement</p><h2 className="mt-2 text-2xl font-bold tracking-tight text-[#23352B] sm:text-3xl">{section === "acquisition" ? "Quy mô khách hàng" : section === "engagement" ? "Khách hàng có hoạt động" : "Mức độ sử dụng sản phẩm"}</h2><p className="mt-2 text-xs leading-5 text-[#7A8579]">{date(report.start)} – {date(report.end)} · Giờ Việt Nam</p></div>
       <div className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-[#E3E9DB] bg-white p-1" aria-label="Nội dung báo cáo">{reportSections.map(item => <button key={item.id} type="button" aria-pressed={section === item.id} onClick={() => setSection(item.id)} className={`min-h-10 shrink-0 rounded-full px-4 text-xs font-semibold transition ${section === item.id ? "bg-[#344B32] text-white" : "text-[#7A8579] hover:bg-[#F1F5E9]"}`}>{item.label}</button>)}</div>
     </div>
-    <CustomerReport report={report} section={section} />
+    <CustomerReport report={report} section={section} registrationView={registrationView} onRegistrationViewChange={setRegistrationView} onMonthSelect={(value) => { setMonth(value); if (!value) setRange("90d"); }} />
     <p className="text-[10px] text-[#8A9485]">Cập nhật dữ liệu: {date(report.generatedAt)}</p>
   </div>;
 
@@ -84,7 +86,7 @@ export default function AdminCustomers({ refreshing = false }) {
       <div><p className="text-xs font-bold uppercase tracking-widest text-[#6F8746]">Customer analytics</p><h1 className="mt-2 text-2xl font-black">Khách hàng đăng ký & sử dụng</h1><p className="mt-2 max-w-2xl text-sm text-[#6E7D7C]">Chỉ thống kê tài khoản customer hiện có. Không cộng tài khoản chủ shop hoặc admin. Múi giờ Việt Nam.</p></div>
       <div className="flex flex-wrap gap-2">
         <button type="button" disabled={!report || loading || refreshing || Boolean(error)} onClick={() => setPresenting(true)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#DCE4D6] bg-white px-4 text-sm font-bold text-[#526D38] disabled:opacity-50"><Maximize2 size={16} />Chế độ trình bày</button>
-        <select aria-label="Khoảng thời gian thống kê customer" className={fieldClass} value={range} onChange={(event) => setRange(event.target.value)}><option value="7d">7 ngày gần nhất</option><option value="30d">30 ngày gần nhất</option><option value="90d">90 ngày gần nhất</option></select>
+        <select aria-label="Khoảng thời gian thống kê customer" className={fieldClass} value={month ? "month" : range} onChange={(event) => { if (event.target.value !== "month") { setRange(event.target.value); setMonth(""); } }}>{month && <option value="month">Th&#225;ng {month.slice(5)}/{month.slice(0, 4)}</option>}<option value="7d">7 ngày gần nhất</option><option value="30d">30 ngày gần nhất</option><option value="90d">90 ngày gần nhất</option></select>
         <button type="button" aria-label="Làm mới thống kê customer" disabled={loading || refreshing} onClick={() => setRevision((value) => value + 1)} className="neu-icon-btn h-11 w-11 disabled:opacity-50"><RefreshCw size={16} /></button>
         <button type="button" disabled={!report || loading || refreshing || Boolean(error)} onClick={() => exportReport(report)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#526D38] px-4 text-sm font-bold text-white disabled:opacity-50"><Download size={16} />Xuất CSV</button>
       </div>
@@ -103,6 +105,8 @@ export default function AdminCustomers({ refreshing = false }) {
       <div className="mx-auto max-w-[1500px] px-4 py-5 sm:px-8 sm:py-6 lg:px-12">
         <div className="mb-5 flex items-center justify-between gap-4"><span className="text-sm font-black tracking-[0.22em] text-[#344B32]">MIROIR</span><button autoFocus type="button" onClick={() => setPresenting(false)} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[#DCE4D6] bg-white px-4 text-xs font-semibold text-[#6E7D7C]"><X size={15} />Đóng trình bày · Esc</button></div>
         {renderReport()}
+        {(loading || refreshing) && <p role="status" className="mt-3 text-xs text-[#526D38]">Đang cập nhật số liệu…</p>}
+        {error && <p role="alert" className="mt-3 text-xs text-red-700">{error}</p>}
       </div>
     </div>, document.body)}
   </div>;
