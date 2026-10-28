@@ -1245,7 +1245,7 @@ function CheckoutView() {
                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#61734F]">Quà chào mừng</p>
                     <p className="mt-1 text-[13px] font-bold leading-5 text-[#283C24]">Đặc quyền thành viên mới</p>
                   </div>
-                  <span className="shrink-0 rounded-lg bg-[#4F733C] px-2.5 py-1.5 text-sm font-black leading-5 text-white">−40%</span>
+                  <span className="shrink-0 rounded-lg bg-[#4F733C] px-2.5 py-1.5 text-sm font-black leading-5 text-white">−{cart.discount?.percent ?? 50}%</span>
                 </div>
 
                 <div className="mt-4">
@@ -1945,7 +1945,7 @@ function OrderDetail({ orderId }) {
               </div>
               {order.discountAmount > 0 && (
                 <div className="flex items-center justify-between">
-                  <span>Đặc quyền thành viên mới (40% / 1 món)</span>
+                  <span>Đặc quyền thành viên mới ({order.discount?.percent ?? 50}% / 1 món)</span>
                   <strong className="text-[#4F733C]">−{formatMoney(order.discountAmount)}</strong>
                 </div>
               )}

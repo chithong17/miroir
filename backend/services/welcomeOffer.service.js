@@ -1,6 +1,6 @@
 // A welcome gift applies to one unit, even when the selected line has quantity > 1.
 export const createWelcomeOffer = (now = new Date()) => ({
-  status: "available", percent: 40, grantedAt: now, redeemedOrderId: null,
+  status: "available", percent: 50, grantedAt: now, redeemedOrderId: null,
 });
 
 export const welcomeDiscountForShop = (discount, shopId) =>
@@ -15,10 +15,10 @@ export const calculateWelcomeDiscount = (groups, offer) => {
       if (item.available && item.quantity > 0 && Number.isSafeInteger(price) && price > 0 &&
           (!selected || price > selected.unitPrice)) {
         selected = {
-          type: "welcome", percent: 40, shopId: group.shop.id,
+          type: "welcome", percent: 50, shopId: group.shop.id,
           productId: item.productId, variantId: item.variantId,
           productName: item.product.name, quantity: 1, unitPrice: price,
-          amount: Math.round(price * 0.4),
+          amount: Math.round(price * 0.5),
         };
       }
     }

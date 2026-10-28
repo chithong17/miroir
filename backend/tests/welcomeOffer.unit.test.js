@@ -23,15 +23,15 @@ const groups = [
 test("new gift is public and existing accounts do not receive a retroactive gift", () => {
   const offer = createWelcomeOffer(new Date("2026-10-27"));
   assert.equal(offer.status, "available");
-  assert.equal(offer.percent, 40);
+  assert.equal(offer.percent, 50);
   assert.deepEqual(toPublicUser({ welcomeOffer: offer }).welcomeOffer, offer);
   assert.equal(toPublicUser({}).welcomeOffer, null);
 });
 
-test("40% applies to exactly one highest-priced available unit across shops", () => {
+test("50% applies to exactly one highest-priced available unit across shops", () => {
   const discount = calculateWelcomeDiscount(groups, createWelcomeOffer());
   assert.equal(discount.shopId, "b");
-  assert.equal(discount.amount, 100000);
+  assert.equal(discount.amount, 125001);
   assert.equal(discount.quantity, 1);
   assert.equal(discount.productId, "p250001");
 });
