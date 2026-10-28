@@ -17,10 +17,26 @@ import {
 import { listAdminInvoices } from "../services/billing.service.js";
 import { grantShopPlan } from "../services/planGrant.service.js";
 import { getCustomerAnalytics } from "../services/customerAnalytics.service.js";
+import { simulateActiveCustomers, revertActiveCustomerSimulation } from "../services/customerSimulation.service.js";
 
 export const customerAnalytics = async (req, res, next) => {
   try { res.json({ success: true, analytics: await getCustomerAnalytics({ query: req.query || {} }) }); }
   catch (error) { next(error); }
+};
+
+export const simulateCustomerActivity = async (req, res, next) => {
+  try {
+    const targetMau = Number(req.body?.targetMau || req.query?.targetMau || 88);
+    const result = await simulateActiveCustomers({ targetMau });
+    res.json({ success: true, ...result });
+  } catch (error) { next(error); }
+};
+
+export const revertCustomerActivity = async (_req, res, next) => {
+  try {
+    const result = await revertActiveCustomerSimulation();
+    res.json({ success: true, ...result });
+  } catch (error) { next(error); }
 };
 
 export const adminBillingInvoices = async (_req, res, next) => {

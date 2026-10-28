@@ -1,4 +1,4 @@
-import { Activity, ArrowUpRight, CheckCircle2, Eye, Shirt, Sparkles, Users } from "lucide-react";
+import { Activity, ArrowUpRight, CheckCircle2, Eye, Palette, Shirt, Users } from "lucide-react";
 import { InsightMetrics, InsightCharts } from "./CustomerInsights.jsx";
 
 const number = (value) => new Intl.NumberFormat("vi-VN").format(value || 0);
@@ -8,7 +8,7 @@ export const reportSections = [{ id: "acquisition", label: "01 · Đăng ký" },
 const usageItems = [
   { key: "product_view", label: "Xem sản phẩm", unit: "lượt xem", icon: Eye, color: "#526C42" },
   { key: "tryon_started", label: "Bắt đầu thử đồ", unit: "lượt bắt đầu", icon: Shirt, color: "#8DA76C" },
-  { key: "stylist_product_recommended", label: "Sản phẩm được Stylist gợi ý", unit: "lượt sản phẩm", icon: Sparkles, color: "#BD9A62" },
+  { key: "stylist_product_recommended", label: "Sản phẩm được Stylist gợi ý", unit: "lượt sản phẩm", icon: Palette, color: "#BD9A62" },
   { key: "product_feedback", label: "Phản hồi sản phẩm", unit: "lượt phản hồi", icon: CheckCircle2, color: "#718D91" },
 ];
 

@@ -21,6 +21,8 @@ import {
   updateShop,
   adminBillingInvoices,
   customerAnalytics,
+  simulateCustomerActivity,
+  revertCustomerActivity,
 } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middlewares/adminAuth.middleware.js";
 import { uploadProductImportFile } from "../middlewares/upload.middleware.js";
@@ -34,6 +36,8 @@ const router = Router();
 router.use(requireAdmin);
 
 router.get("/customers/analytics", customerAnalytics);
+router.post("/customers/simulate-activity", simulateCustomerActivity);
+router.post("/customers/revert-activity", revertCustomerActivity);
 
 router.get("/payment-plans", listPaymentPlans);
 router.get("/billing-invoices", adminBillingInvoices);

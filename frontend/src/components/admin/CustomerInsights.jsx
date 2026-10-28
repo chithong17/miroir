@@ -1,4 +1,4 @@
-import { Activity, Users, UserPlus } from "lucide-react";
+import { Activity, Users, UserPlus, Shirt, Palette, Eye, MessageSquare } from "lucide-react";
 
 const number = value => new Intl.NumberFormat("vi-VN").format(value || 0);
 const dateLabel = date => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
@@ -56,14 +56,41 @@ function ActiveChart({ report }) {
   </ChartCard>;
 }
 
+function FeatureUsage({ report }) {
+  const usage = report.usage || {};
+  const rows = [
+    { key: "tryon_started", label: "Lượt thử đồ", detail: "Bắt đầu thử đồ", icon: Shirt, color: "#5E8647" },
+    { key: "stylist_product_recommended", label: "Stylist AI", detail: "Sản phẩm được gợi ý", icon: Palette, color: "#A7824E" },
+    { key: "product_view", label: "Lượt xem sản phẩm", detail: "Mở xem sản phẩm", icon: Eye, color: "#668F98" },
+    { key: "product_feedback", label: "Lượt phản hồi", detail: "Phản hồi sản phẩm", icon: MessageSquare, color: "#937A9F" },
+  ];
+  const max = Math.max(1, ...rows.map(row => usage[row.key] || 0));
+  const hasEvents = rows.some(row => usage[row.key] > 0);
+  return <ChartCard number="03" title="Sử dụng tính năng" subtitle="Tổng lượt trong kỳ đã chọn">
+    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {rows.map(({ key, label, detail, icon: Icon, color }) => <div key={key} className="min-w-0 rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
+        <div className="flex items-center gap-2 text-sm font-semibold text-[#52634D]"><Icon size={18} className="shrink-0" style={{ color }} /><span>{label}</span></div>
+        <p className="mt-4 text-4xl font-black tabular-nums text-[#23352B]">{number(usage[key])}</p>
+        <p className="mt-2 text-xs text-[#7B8777]">{detail}</p>
+      </div>)}
+    </div>
+    {hasEvents ? <div className="mt-7 space-y-5" role="img" aria-label={rows.map(row => `${row.label}: ${number(usage[row.key])}`).join(", ")}>
+      {rows.map(({ key, label, color }) => <div key={key} className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 sm:grid-cols-[160px_1fr_70px] sm:items-center">
+        <span className="text-sm font-medium text-[#52634D]">{label}</span>
+        <div className="col-span-2 row-start-2 h-3 overflow-hidden rounded-full bg-[#EFF3E9] sm:col-span-1 sm:row-auto"><div className="h-full rounded-full" style={{ width: `${(usage[key] || 0) / max * 100}%`, backgroundColor: color }} /></div>
+        <strong className="col-start-2 row-start-1 text-right text-sm tabular-nums text-[#23352B] sm:col-start-auto sm:row-auto">{number(usage[key])}</strong>
+      </div>)}
+    </div> : <p className="mt-6 rounded-xl bg-[#F8FAF5] p-4 text-sm text-[#7B8777]">Chưa ghi nhận lượt sử dụng trong kỳ này.</p>}
+  </ChartCard>;
+}
+
 export function InsightCharts({ report, section }) {
-  const i = report.insights, weekly = i.growth.length > 35;
+  const i = report.insights;
   const growth = groupPoints(i.growth, "registered", true);
-  const engagement = groupPoints(i.daily, "featureEvents", false);
   return <div className="space-y-5">
     {section === "acquisition" && <ChartCard number="01" title="User Growth"><LineChart points={growth} label="Biểu đồ tăng trưởng khách hàng" /></ChartCard>}
     {["acquisition", "engagement"].includes(section) && <ActiveChart report={report} />}
-    {["acquisition", "usage"].includes(section) && <ChartCard number="03" title="Engagement" subtitle={`Lượt sử dụng tính năng · ${weekly ? "Nhóm 7 ngày" : "Theo ngày"}`}><LineChart points={engagement} label="Sự kiện sử dụng tính năng trong kỳ" color="#A7824E" /></ChartCard>}
+    {["acquisition", "usage"].includes(section) && <FeatureUsage report={report} />}
     {section === "engagement" && <ChartCard number="03" title="Hoạt động theo ngày" subtitle="Số người dùng duy nhất"><LineChart points={i.daily.map(row => ({ date: row.date, label: dateLabel(row.date), value: row.activeUsers }))} label="Người dùng hoạt động theo ngày" /></ChartCard>}
   </div>;
 }
