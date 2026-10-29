@@ -94,7 +94,8 @@ export default function Conversation() {
   );
 
   useEffect(() => {
-    void markRead();
+    const timer = setTimeout(() => void markRead(), 0);
+    return () => clearTimeout(timer);
   }, [messages.length, markRead]);
 
   // Scroll to bottom when messages update

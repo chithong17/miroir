@@ -8,16 +8,16 @@ import { useTranslation } from '../stores/language';
 import { GlassSurface } from './ui';
 
 interface NavItem {
-  path: '/' | '/try-on' | '/stylist' | '/account';
-  labelKey: 'home' | 'tryOn' | 'stylist' | 'account';
+  path: '/' | '/saved' | '/orders' | '/account';
+  labelKey: 'home' | 'saved' | 'orders' | 'account';
   outlineIcon: keyof typeof MaterialIcons.glyphMap;
   filledIcon: keyof typeof MaterialIcons.glyphMap;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/', labelKey: 'home', outlineIcon: 'storefront', filledIcon: 'storefront' },
-  { path: '/try-on', labelKey: 'tryOn', outlineIcon: 'checkroom', filledIcon: 'checkroom' },
-  { path: '/stylist', labelKey: 'stylist', outlineIcon: 'auto-awesome', filledIcon: 'auto-awesome' },
+  { path: '/saved', labelKey: 'saved', outlineIcon: 'favorite-border', filledIcon: 'favorite' },
+  { path: '/orders', labelKey: 'orders', outlineIcon: 'receipt-long', filledIcon: 'receipt-long' },
   { path: '/account', labelKey: 'account', outlineIcon: 'person-outline', filledIcon: 'person' },
 ];
 

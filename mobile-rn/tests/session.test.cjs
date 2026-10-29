@@ -1,19 +1,19 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');const path = require('node:path');const vm = require('node:vm');const ts = require('typescript');
-function load(me = async () => ({id:'u1'})) {
+function load(me = async () => ({id:'u1'}), deleteAccount = async () => ({success:true})) {
   const data = new Map();const handlers = [];let state;
   class ApiError extends Error {get unauthorized(){return false;}}
   class QueryClient {clear(){} }
   const source = fs.readFileSync(path.join(__dirname,'../src/stores/session.ts'),'utf8');const exports = {};
   const storage = {getItem:async key => data.get(key) || null,setItem:async (key,value) => data.set(key,value)};
-  vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports,require:name => {
+  vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports,Error,require:name => {
     if (name.includes('async-storage')) return {__esModule:true,default:storage};
     if (name === 'expo-secure-store') return {};
     if (name === 'react-native') return {Platform:{OS:'web'}};
     if (name === 'zustand') return {create:init => {const store = () => state;store.getState = () => state;state = init(update => {state={...state,...update};},() => state);return store;}};
     if (name.includes('react-query')) return {QueryClient};
-    if (name.includes('/customer')) return {customerApi:{me}};
+    if (name.includes('/customer')) return {customerApi:{me,deleteAccount}};
     if (name.includes('/contracts')) return {ApiError};
     if (name.includes('/authEvents')) return {onUnauthorized:fn => handlers.push(fn)};
     throw new Error(name);
@@ -36,4 +36,12 @@ test('deleteAccount clears session token and switches to guest',async () => {
   const session=load();await session.getState().authenticate({token:'t3',user:{id:'u3'}});
   await session.getState().deleteAccount();
   assert.equal(session.getState().token,'');assert.equal(session.getState().user,null);assert.equal(session.getState().guest,true);
+});
+
+test('failed account deletion preserves authentication and exposes the error',async () => {
+  const session=load(undefined,async () => {throw new Error('Deletion unavailable');});
+  await session.getState().authenticate({token:'t4',user:{id:'u4'}});
+  await session.getState().deleteAccount();
+  assert.equal(session.getState().token,'t4');assert.equal(session.getState().guest,false);
+  assert.match(session.getState().error,/Deletion unavailable/);
 });

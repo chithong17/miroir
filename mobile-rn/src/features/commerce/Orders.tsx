@@ -61,7 +61,7 @@ export function Orders() {
           onBack={() => router.replace('/account')}
         />
       }
-      contentStyle={{ padding: 18, gap: 16 }}
+      contentStyle={{ padding: 18, gap: 16, paddingBottom: 144 }}
     >
       {/* Segmented Tab Bar */}
       <View style={styles.tabsRow}>

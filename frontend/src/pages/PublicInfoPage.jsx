@@ -3,6 +3,7 @@ import './PublicInfoPage.css';
 import heroStageBackground from '../assets/hero2-stage-no-model.png';
 
 const email = 'miroirofficial20@gmail.com';
+const operator = 'Tien Ngoc Huynh';
 export const PUBLIC_INFO_PATHS = ['/about', '/policies', '/privacy', '/ai-policy', '/terms', '/delete-account', '/support'];
 const links = [
   ['/about', 'Về MIROIR'], ['/privacy', 'Bảo mật'], ['/ai-policy', 'AI Try-on'],
@@ -11,15 +12,16 @@ const links = [
 const documents = {
   '/privacy': {
     title: 'Dữ liệu của bạn. Quyền lựa chọn của bạn.', label: 'Chính sách bảo mật',
-    intro: 'Thông tin về dữ liệu được sử dụng khi bạn khám phá thời trang, thử đồ và mua sắm trên MIROIR.',
+    intro: 'Thông tin về dữ liệu được sử dụng khi bạn mua sắm trên ứng dụng MIROIR và khi sử dụng các dịch vụ MIROIR khác.',
     sections: [
+      ['Phạm vi ứng dụng di động', 'Bản MIROIR dành cho iPhone và iPad tập trung vào khám phá sản phẩm từ boutique, lưu sản phẩm, nhắn tin với shop, đặt hàng, giao nhận và đổi trả. Bản di động này không cung cấp Try-on hoặc Stylist. Các phần nói về AI bên dưới chỉ áp dụng khi bạn chủ động sử dụng những dịch vụ đó trên một bề mặt khác của MIROIR.'],
       ['Dữ liệu MIROIR xử lý', 'Thông tin tài khoản như tên, email và thông tin xác thực; hồ sơ phong cách và số đo bạn cung cấp; ảnh người mẫu, ảnh trang phục và kết quả thử đồ; sản phẩm yêu thích, giỏ hàng, địa chỉ giao hàng, đơn hàng, tin nhắn và ảnh đính kèm. Dữ liệu cụ thể phụ thuộc tính năng bạn sử dụng.'],
       ['Mục đích sử dụng', 'Đăng nhập và quản lý tài khoản; cá nhân hóa gợi ý trang phục; tạo kết quả AI Try-on; xử lý mua sắm, giao nhận và đổi trả; kết nối người mua với shop; vận hành, xử lý sự cố và bảo vệ dịch vụ. Không gửi mật khẩu, mã OTP hoặc thông tin thẻ thanh toán qua tin nhắn hỗ trợ.'],
       ['Những bên tham gia xử lý', 'Ảnh có thể được lưu qua Cloudinary và được gửi tới PiAPI để xử lý thử đồ. Dữ liệu tài khoản và nghiệp vụ được lưu trong cơ sở dữ liệu MongoDB của dịch vụ. Shop nhận thông tin cần thiết để xử lý đơn hàng và hội thoại với bạn; thanh toán gói shop được xử lý qua PayOS. Đây là các thành phần được nhận diện trong mã nguồn hiện tại, không phải tuyên bố về mọi nhà thầu hoặc vị trí lưu trữ.'],
       ['Lưu trữ và xóa dữ liệu', 'MIROIR chưa công bố một thời hạn lưu trữ cố định áp dụng cho mọi loại dữ liệu. Không có cam kết mọi ảnh tự động biến mất sau 24 giờ. Xóa tài khoản hiện xóa bản ghi tài khoản, địa chỉ, giỏ hàng và các bản ghi tác vụ Try-on gắn với tài khoản theo chức năng backend; không đồng nghĩa xóa ngay mọi ảnh trên dịch vụ lưu trữ/AI, bản sao lưu, đơn hàng hoặc tin nhắn. Xem phạm vi và yêu cầu xử lý bổ sung tại trang Xóa tài khoản.'],
       ['Lựa chọn và yêu cầu của bạn', 'Bạn có thể cập nhật hồ sơ trong ứng dụng, ngừng tải ảnh, xóa tài khoản hoặc liên hệ MIROIR để yêu cầu kiểm tra, chỉnh sửa hay xóa dữ liệu cụ thể. Chúng tôi cần xác minh quyền sở hữu trước khi xử lý yêu cầu liên quan đến dữ liệu cá nhân. Không gửi ảnh nhạy cảm nếu không cần thiết.'],
       ['Lưu trữ trên thiết bị', 'Website sử dụng bộ nhớ trình duyệt cho trạng thái đăng nhập và tùy chọn giao diện. Xóa dữ liệu trình duyệt có thể đăng xuất bạn nhưng không xóa tài khoản trên máy chủ. Truy cập dịch vụ trên thiết bị đáng tin cậy và đăng xuất sau khi dùng máy dùng chung.'],
-      ['Liên hệ và cập nhật', `Gửi yêu cầu về dữ liệu tới ${email}. Nội dung chính sách cần được cập nhật khi tính năng, nhà cung cấp hoặc cách xử lý dữ liệu thay đổi.`],
+      ['Đơn vị vận hành và liên hệ', `MIROIR do ${operator} vận hành theo tài khoản nhà phát triển cá nhân. Gửi yêu cầu hỗ trợ hoặc yêu cầu về dữ liệu tới ${email}. Chính sách này được cập nhật khi tính năng, nhà cung cấp hoặc cách xử lý dữ liệu thay đổi.`],
     ],
   },
   '/ai-policy': {
@@ -53,7 +55,7 @@ function Contact({subject = 'Hỗ trợ MIROIR'}) {
 }
 
 function DeleteAccount() {
-  const [fields, setFields] = useState({email: '', password: '', confirmation: ''});
+  const [fields, setFields] = useState({accountType: 'customer', email: '', password: '', confirmation: ''});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
@@ -64,31 +66,37 @@ function DeleteAccount() {
     try {
       const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
       if (!base) throw new Error('Chưa cấu hình máy chủ cho trang này. Vui lòng gửi yêu cầu qua email bên dưới.');
-      // Reauthenticate; keep the deletion token in memory, never browser storage.
-      const login = await fetch(`${base}/user-auth/login`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: fields.email.trim(), password: fields.password})});
-      const auth = await login.json();
-      if (!login.ok || !auth.token) throw new Error(auth.message || 'Không thể xác thực tài khoản.');
-      const result = await fetch(`${base}/users/me/account`, {method: 'DELETE', headers: {Authorization: `Bearer ${auth.token}`}});
+      let result;
+      if (fields.accountType === 'owner') {
+        result = await fetch(`${base}/shop-auth/account`, {method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: fields.email.trim(), password: fields.password, confirmation: 'DELETE'})});
+      } else {
+        // Reauthenticate; keep the deletion token in memory, never browser storage.
+        const login = await fetch(`${base}/user-auth/login`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({email: fields.email.trim(), password: fields.password})});
+        const auth = await login.json();
+        if (!login.ok || !auth.token) throw new Error(auth.message || 'Không thể xác thực tài khoản.');
+        result = await fetch(`${base}/users/me/account`, {method: 'DELETE', headers: {Authorization: `Bearer ${auth.token}`}});
+      }
       const data = await result.json();
       if (!result.ok || data.success !== true) throw new Error(data.message || 'Chưa thể xóa tài khoản. Vui lòng liên hệ hỗ trợ.');
       localStorage.removeItem('miroir_user_token');
-      setFields({email: '', password: '', confirmation: ''}); setDone(true);
+      setFields(previous => ({accountType: previous.accountType, email: '', password: '', confirmation: ''})); setDone(true);
     } catch (e) {setError(e.message || 'Không thể kết nối. Vui lòng thử lại hoặc liên hệ hỗ trợ.');}
     finally {setBusy(false);}
   }
   return <>
-    <section className="info-section"><h2>Trước khi bạn quyết định</h2><p>Xóa tài khoản customer MIROIR sẽ xóa bản ghi tài khoản, hồ sơ, địa chỉ, giỏ hàng và bản ghi tác vụ Try-on gắn với tài khoản theo chức năng backend hiện tại. Dữ liệu đã xóa không thể khôi phục bằng cách đăng nhập lại.</p><div className="info-notice"><strong>Phạm vi cần lưu ý</strong><p>Thao tác này chưa tự động xóa đơn hàng, tin nhắn, ảnh/file tại Cloudinary, dữ liệu tại nhà cung cấp AI hoặc bản sao lưu. Để yêu cầu kiểm tra và xử lý dữ liệu còn lại, hãy gửi email cho MIROIR. Chúng tôi chưa công bố thời hạn xử lý cố định cho các yêu cầu đó.</p></div></section>
-    <section className="info-section"><h2>Xóa trực tiếp trên website</h2><p>Không cần cài lại ứng dụng. Xác thực bằng tài khoản customer của bạn và xác nhận bên dưới. Tài khoản shop cần liên hệ hỗ trợ để kiểm tra gói dịch vụ và nghiệp vụ đang diễn ra.</p>
+    <section className="info-section"><h2>Trước khi bạn quyết định</h2><p>Tài khoản customer và tài khoản chủ shop là hai tài khoản độc lập. Hãy chọn đúng loại tài khoản. Dữ liệu đã xóa không thể khôi phục bằng cách đăng nhập lại.</p><div className="info-notice"><strong>Phạm vi cần lưu ý</strong><p>Xóa tài khoản chủ shop sẽ đóng boutique, xóa quyền đăng nhập và gỡ catalog. Đơn hàng, thanh toán, đổi trả và hội thoại có thể được giữ lại để hỗ trợ giao dịch, giải quyết tranh chấp và đáp ứng nghĩa vụ áp dụng. Ảnh còn được tham chiếu bởi các bản ghi được giữ lại chưa bị xóa. Liên hệ MIROIR nếu bạn cần kiểm tra một dữ liệu cụ thể.</p></div></section>
+    <section className="info-section"><h2>Xóa trực tiếp trên website</h2><p>Không cần cài lại ứng dụng. Xác thực bằng email và mật khẩu hiện tại; đăng ký chủ shop đang chờ duyệt cũng có thể xóa tại đây.</p>
       {done ? <div role="status" className="info-notice"><strong>Tài khoản đã được xóa theo phạm vi nêu trên.</strong><p>Để xử lý dữ liệu còn lại ở các hệ thống khác, liên hệ email hỗ trợ.</p></div> : <form className="info-form" onSubmit={submit}>
+        <label>Loại tài khoản<select value={fields.accountType} onChange={e => setFields({...fields,accountType:e.target.value})} disabled={busy}><option value="customer">Khách hàng</option><option value="owner">Chủ shop</option></select></label>
         <label>Email tài khoản<input type="email" autoComplete="username" required value={fields.email} onChange={e => setFields({...fields,email:e.target.value})} disabled={busy}/></label>
         <label>Mật khẩu<input type="password" autoComplete="current-password" required value={fields.password} onChange={e => setFields({...fields,password:e.target.value})} disabled={busy}/></label>
         <label>Nhập XÓA để xác nhận<input autoComplete="off" required value={fields.confirmation} onChange={e => setFields({...fields,confirmation:e.target.value})} disabled={busy}/></label>
         <p>Nhấn nút bên dưới sẽ thực hiện xóa sau khi xác thực thành công, không phải chỉ gửi yêu cầu.</p>
         {error && <p role="alert" className="info-error">{error}</p>}
-        <button className="info-button info-danger" type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : 'Xóa vĩnh viễn tài khoản customer'}</button>
+        <button className="info-button info-danger" type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : `Xóa vĩnh viễn tài khoản ${fields.accountType === 'owner' ? 'chủ shop' : 'khách hàng'}`}</button>
       </form>}
     </section>
-    <section className="info-section"><h2>Yêu cầu qua email</h2><p>Nếu không đăng nhập được, cần xóa dữ liệu riêng lẻ hoặc đang dùng tài khoản shop, gửi thư từ email đã đăng ký. Nêu tài khoản, loại dữ liệu muốn xóa và mã đơn/tác vụ nếu có. Không gửi mật khẩu, OTP hoặc ảnh giấy tờ. MIROIR sẽ trao đổi để xác minh trước khi xử lý; việc mở ứng dụng email chưa đồng nghĩa đã gửi yêu cầu.</p><Contact subject="Yêu cầu xóa tài khoản / dữ liệu MIROIR"/></section>
+    <section className="info-section"><h2>Yêu cầu qua email</h2><p>Nếu không đăng nhập được hoặc cần xử lý một dữ liệu riêng lẻ, gửi thư từ email đã đăng ký. Nêu loại tài khoản, loại dữ liệu và mã đơn liên quan nếu có. Không gửi mật khẩu, OTP hoặc ảnh giấy tờ. MIROIR sẽ xác minh trước khi xử lý; việc mở ứng dụng email chưa đồng nghĩa đã gửi yêu cầu.</p><Contact subject="Yêu cầu xóa tài khoản / dữ liệu MIROIR"/></section>
   </>;
 }
 
@@ -107,7 +115,7 @@ export default function PublicInfoPage({path}) {
     <header className="info-header"><a className="info-logo" href="/" aria-label="MIROIR — Trang chủ"><img src="/logo-web.png" alt=""/>MIROIR</a><nav aria-label="Điều hướng chính"><a href="/">Trang chủ</a><a href="/about" aria-current={isAbout ? 'page' : undefined}>Giới thiệu</a><a href="/policies" aria-current={doc || path === '/policies' || path === '/delete-account' ? 'page' : undefined}>Chính sách</a><a href="/support" aria-current={path === '/support' ? 'page' : undefined}>Hỗ trợ</a></nav><a className="info-open" href="/app">Mở MIROIR <span aria-hidden="true">→</span></a></header>
     <main id="info-main">
       <div className="info-hero" style={{'--info-stage': `url("${heroStageBackground}")`}}><p className="info-eyebrow">MIROIR / {label}</p><h1>{title}</h1><p>{doc?.intro || 'Nơi khám phá thời trang, thử đồ bằng AI và tìm gợi ý cho phong cách riêng — với thông tin dễ tìm, dễ đọc.'}</p><div className="info-hero-meta"><span>FASHION, REIMAGINED.</span><span>THÔNG TIN RÕ RÀNG / TRẢI NGHIỆM AN TÂM</span></div></div>
-      <div className="info-layout"><aside><p className="info-eyebrow">THÔNG TIN & QUYỀN LỢI</p><nav aria-label="Các trang thông tin">{links.map(([href,name]) => <a key={href} href={href} aria-current={path === href ? 'page' : undefined}>{name}<span aria-hidden="true">↗</span></a>)}</nav><p className="info-update">Cập nhật: 17.10.2026</p></aside>
+      <div className="info-layout"><aside><p className="info-eyebrow">THÔNG TIN & QUYỀN LỢI</p><nav aria-label="Các trang thông tin">{links.map(([href,name]) => <a key={href} href={href} aria-current={path === href ? 'page' : undefined}>{name}<span aria-hidden="true">↗</span></a>)}</nav><p className="info-update">Cập nhật: 29.10.2026</p></aside>
         <article className="info-article">
           {doc && <><p className="info-review">Bản nội dung đang rà soát trước phát hành chính thức. Các cam kết phải phù hợp với vận hành thực tế; chưa có tuyên bố chứng nhận tuân thủ.</p><nav className="info-toc" aria-label="Mục lục">{doc.sections.map(([heading],i) => <a key={heading} href={`#section-${i+1}`}>{String(i+1).padStart(2,'0')} / {heading}</a>)}</nav>{doc.sections.map(([heading,body],i) => <section className="info-section" id={`section-${i+1}`} key={heading}><span className="info-number">{String(i+1).padStart(2,'0')}</span><h2>{heading}</h2><p>{body}</p></section>)}<Contact subject={`Câu hỏi về ${label} MIROIR`}/></>}
           {path === '/delete-account' && <DeleteAccount/>}

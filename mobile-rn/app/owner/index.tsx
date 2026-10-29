@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ownerApi } from '../../src/api/owner';
 import { useOwner } from '../../src/stores/owner';
+import { WorkQueue } from '../../src/features/owner/WorkQueue';
 import {
   AppHeader,
   Card,
@@ -37,7 +38,7 @@ export default function OwnerCenter() {
   });
 
   const shop = shops.data?.[0];
-  const isPremium = owner.owner?.subscription?.status === 'active';
+  const isPremium = !!owner.owner?.subscription?.isPremium || owner.owner?.subscription?.status === 'active';
 
   return (
     <Screen
@@ -90,6 +91,7 @@ export default function OwnerCenter() {
       {/* TAB 1: OVERVIEW */}
       {activeTab === 'overview' && (
         <View style={{ gap: 16 }}>
+          <WorkQueue />
           {/* Shop Banner Card */}
           {shops.isLoading ? (
             <ActivityIndicator color={colors.accentStrong} />
@@ -205,7 +207,7 @@ export default function OwnerCenter() {
               onPress={() => router.push('/owner/dashboard')}
             />
             <MiroirButton
-              label="Shop subscription plans"
+              label="Shop access"
               icon="workspace-premium"
               isSecondary
               onPress={() => router.push('/owner/payments')}
@@ -220,7 +222,7 @@ export default function OwnerCenter() {
           <GlassSurface radius={24} padding={18}>
             <Text style={typography.titleLarge}>Product Management</Text>
             <Text style={[typography.bodyMedium, { color: colors.muted, marginVertical: 6 }]}>
-              Create, edit, and organize variants, prices, and try-on compatibility for your catalog.
+              Create, edit, and organize variants, prices, and stock levels for your catalog.
             </Text>
             <View style={{ gap: 10, marginTop: 8 }}>
               <MiroirButton
@@ -245,7 +247,7 @@ export default function OwnerCenter() {
           <GlassSurface radius={24} padding={18}>
             <Text style={typography.titleLarge}>Dashboard & Analytics</Text>
             <Text style={[typography.bodyMedium, { color: colors.muted, marginVertical: 6 }]}>
-              Explore real-time data on views, try-on conversions, order volume, and fit feedback.
+              Explore real-time data on product views, order volume, payments, and customer feedback.
             </Text>
             <View style={{ marginTop: 8 }}>
               <MiroirButton
@@ -278,13 +280,13 @@ export default function OwnerCenter() {
 
             <View style={{ gap: 10, marginTop: 18 }}>
               <MiroirButton
-                label="Shop subscription plans"
+                label="Shop access"
                 icon="workspace-premium"
                 isSecondary
                 onPress={() => router.push('/owner/payments')}
               />
               <MiroirButton
-                label="Refresh owner subscription"
+                label="Refresh shop access"
                 icon="refresh"
                 isSecondary
                 onPress={() => void owner.refresh()}
@@ -301,6 +303,7 @@ export default function OwnerCenter() {
                 isSecondary
                 onPress={() => void owner.logout()}
               />
+              <MiroirButton label="Delete shop owner account" icon="delete-forever" isSecondary onPress={() => router.push('/delete-owner-account')}/>
             </View>
           </GlassSurface>
         </View>

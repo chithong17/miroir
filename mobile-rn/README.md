@@ -1,5 +1,11 @@
 # MIROIR React Native
 
+## Current release direction: boutique commerce
+
+The current RN experience focuses on boutique discovery and shopping, plus a separate shop operations workspace. Try-On and Stylist have been removed from this app. Customer tabs are Discover, Saved, Orders and Account. Body-photo/measurement onboarding and external digital-plan purchases are no longer part of the mobile experience.
+
+See [STORE_RESUBMISSION.md](STORE_RESUBMISSION.md) for the implemented scope, review path and remaining iOS/store requirements. The migration and acceptance notes below describe historical work and are not proof that the current release is ready for App Review.
+
 Migration in progress; see [MIGRATION.md](MIGRATION.md) for the full scope and unchecked parity gates. The Flutter app in `../mobile` is preserved.
 
 ## Run

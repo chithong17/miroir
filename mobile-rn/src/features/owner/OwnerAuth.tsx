@@ -22,6 +22,7 @@ export function OwnerAuthScreen() {
   const [mode, setMode] = useState<'login' | 'register' | 'reset'>('login');
   const [fields, setFields] = useState({ name: '', email: '', password: '', otp: '' });
   const [stage, setStage] = useState(0);
+  const [registrationMessage, setRegistrationMessage] = useState('');
 
   const auth = useMutation({
     mutationFn: async () => {
@@ -46,6 +47,12 @@ export function OwnerAuthScreen() {
         mode === 'login'
           ? await ownerApi.login(fields.email, fields.password)
           : await ownerApi.register(fields.name, fields.email, fields.password);
+      if (mode === 'register' && result.success && !result.token) {
+        setRegistrationMessage(result.message || 'Account created. Your boutique registration is awaiting approval. You can sign in after approval or delete your registration below.');
+        setFields(previous => ({ ...previous, password: '' }));
+        setMode('login');
+        return;
+      }
       await useOwner.getState().authenticate(result);
     },
   });
@@ -173,6 +180,7 @@ export function OwnerAuthScreen() {
         )}
 
         <ErrorNotice message={auth.error?.message} />
+        {!!registrationMessage && <Text accessibilityRole="alert" style={typography.bodyLarge}>{registrationMessage}</Text>}
 
         <MiroirButton
           label={getButtonTitle()}
@@ -205,6 +213,7 @@ export function OwnerAuthScreen() {
         isSecondary
         onPress={() => router.replace('/account')}
       />
+      <MiroirButton label="Delete shop owner account" isSecondary onPress={() => router.push('/delete-owner-account')}/>
     </Screen>
   );
 }

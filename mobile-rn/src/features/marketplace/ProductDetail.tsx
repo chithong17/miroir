@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  useWindowDimensions,
   Image,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -13,7 +15,6 @@ import { catalogApi } from '../../api/catalog';
 import { customerApi } from '../../api/customer';
 import { queryClient, useSession } from '../../stores/session';
 import {
-  Button,
   ErrorNotice,
   Field,
   GlassPill,
@@ -24,12 +25,13 @@ import {
 } from '../../components/ui';
 import { colors, typography } from '../../theme/tokens';
 import { money } from './Marketplace';
-import { useTryOn } from '../try-on/state';
-import { AddToCart, AddToCartSheet } from '../commerce/AddToCart';
+import { AddToCartSheet } from '../commerce/AddToCart';
 import { ContactShop } from '../chat/ContactShop';
 
 export function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const wide = useWindowDimensions().width >= 840;
+  const insets = useSafeAreaInsets();
   const { token, user, setUser } = useSession();
   const [rating, setRating] = useState('5');
   const [fit, setFit] = useState('true_to_size');
@@ -63,13 +65,14 @@ export function ProductDetail() {
 
   const p = product.data;
   const isFavorite = user?.favoriteProductIds?.includes(id);
+  const available = p?.variants?.some(v => v.active !== false && v.stockQuantity > 0);
 
   return (
     <Screen
       contentStyle={styles.content}
       footer={
         p ? (
-          <View style={styles.bottomBarContainer}>
+          <View style={[styles.bottomBarContainer, { paddingBottom: Math.max(insets.bottom, 16), width: '100%', maxWidth: 1200, alignSelf: 'center' }]}>
             <GlassSurface radius={34} padding={12} style={styles.bottomGlassBar}>
               <View style={styles.bottomBarContent}>
                 <View style={{ flex: 1 }}>
@@ -77,24 +80,12 @@ export function ProductDetail() {
                   <Text style={[typography.bodySmall, { color: colors.muted }]}>Price</Text>
                 </View>
                 {p.shop && (
-                  <SurfaceIconButton
-                    icon="chat-bubble-outline"
-                    size={46}
-                    onPress={() =>
-                      router.push({
-                        pathname: '/chat/[id]',
-                        params: {
-                          id: p.shop!.id,
-                          contextType: 'product',
-                          contextId: p.id,
-                        },
-                      })
-                    }
-                  />
+                  <ContactShop shopId={p.shop.id} productId={p.id} compact />
                 )}
                 <View style={{ flex: 1.3 }}>
                   <MiroirButton
-                    label="Add to bag"
+                    label={available ? "Add to bag" : "Out of stock"}
+                    disabled={!available}
                     icon="shopping-bag"
                     onPress={() => setCartSheetOpen(true)}
                   />
@@ -117,19 +108,11 @@ export function ProductDetail() {
         {!!token && (
           <SurfaceIconButton
             icon={isFavorite ? 'favorite' : 'favorite-border'}
+            accessibilityLabel={isFavorite ? 'Remove from saved' : 'Save piece'}
             isDark={isFavorite}
             onPress={() => favorite.mutate()}
           />
         )}
-      </View>
-
-      {/* Accessible Back button for smoke tests */}
-      <View style={styles.hiddenAccessible}>
-        <Button
-          title="Back"
-          secondary
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-        />
       </View>
 
       {product.isPending && (
@@ -144,9 +127,9 @@ export function ProductDetail() {
       />
 
       {p && (
-        <View style={{ gap: 20 }}>
+        <View style={{ gap: 20, flexDirection: wide ? 'row' : 'column', alignItems: 'flex-start' }}>
           {/* Product Hero Image */}
-          <View style={styles.heroWrapper}>
+          <View style={[styles.heroWrapper, wide && { flex: 1, height: 560 }]}>
             {p.imageUrl ? (
               <Image
                 source={{ uri: p.imageUrl }}
@@ -160,6 +143,7 @@ export function ProductDetail() {
             )}
           </View>
 
+          <View style={{ flex: 1, width: wide ? undefined : '100%', gap: 20 }}>
           {/* Product Header Information */}
           <View style={{ gap: 6 }}>
             <Text style={typography.headlineSmall}>{p.name}</Text>
@@ -193,16 +177,6 @@ export function ProductDetail() {
               </Text>
             </GlassSurface>
           ) : null}
-
-          {/* Studio Try-On Action Button */}
-          <MiroirButton
-            label="Try it on"
-            icon="checkroom"
-            onPress={() => {
-              useTryOn.getState().prefill(p);
-              router.push('/try-on');
-            }}
-          />
 
           {/* Shop Information Card */}
           {p.shop && (
@@ -279,6 +253,7 @@ export function ProductDetail() {
             onClose={() => setCartSheetOpen(false)}
             product={p}
           />
+          </View>
         </View>
       )}
     </Screen>

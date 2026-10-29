@@ -3,6 +3,12 @@
   "build": {
     "development": {"distribution": "internal", "android": {"buildType": "apk"}},
     "preview": {"distribution": "internal", "android": {"buildType": "apk"}},
-    "production": {"android": {"buildType": "app-bundle"}}
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://miroir-backend-l7si.onrender.com/api",
+        "EXPO_PUBLIC_SOCKET_URL": "https://miroir-backend-l7si.onrender.com"
+      },
+      "android": {"buildType": "app-bundle"}
+    }
   }
 }

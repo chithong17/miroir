@@ -65,14 +65,14 @@ export const useSession = create<SessionState>((set, get) => ({
   logout: async () => get().continueAsGuest(),
   deleteAccount: async () => {
     const token = get().token;
-    if (token) {
-      try {
-        await customerApi.deleteAccount(token);
-      } catch {
-        // proceed to clear local data
-      }
+    if (!token) return;
+    try {
+      const result = await customerApi.deleteAccount(token);
+      if (!result.success) throw new Error(result.message || 'Unable to delete your account.');
+      if (get().token === token) await get().continueAsGuest();
+    } catch (e) {
+      if (get().token === token) set({error: e instanceof Error ? e.message : 'Unable to delete your account. Please try again.'});
     }
-    await get().continueAsGuest();
   },
   exitGuest: async () => {await AsyncStorage.setItem('miroir.customer_guest_mode', 'false'); set({guest: false});},
   expire:async token => {

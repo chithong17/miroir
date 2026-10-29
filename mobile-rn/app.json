@@ -9,8 +9,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow MIROIR to access your photos so you can select garments and full-body model pictures for AI Virtual Try-On and avatar styling.",
-          "cameraPermission": "Allow MIROIR to take photos for your virtual try-on fitting and personalized style profile.",
+          "photosPermission": "Allow MIROIR to attach product photos, chat images, and order or return evidence.",
+          "cameraPermission": "Allow MIROIR to photograph products and attach order or return evidence.",
           "microphonePermission": false
         }
       ],
@@ -18,15 +18,17 @@
       "./plugins/withShortCmakePaths"
     ],
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.miroir.mobile",
+      "buildNumber": "7",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow MIROIR to access your photos so you can select garments and full-body model pictures for AI Virtual Try-On and avatar styling.",
-        "NSCameraUsageDescription": "Allow MIROIR to take photos for your virtual try-on fitting and personalized style profile."
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "Allow MIROIR to attach product photos, chat images, and order or return evidence.",
+        "NSCameraUsageDescription": "Allow MIROIR to photograph products and attach order or return evidence."
       }
     },
     "android": {

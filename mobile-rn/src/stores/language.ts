@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const translations = {
-  en: {home:'Home',tryOn:'Try-on',stylist:'Stylist',account:'Account',language:'Language',english:'English',vietnamese:'Vietnamese',login:'Sign in / create account',logout:'Sign out'},
-  vi: {home:'Trang chủ',tryOn:'Thử đồ',stylist:'Stylist',account:'Tài khoản',language:'Ngôn ngữ',english:'Tiếng Anh',vietnamese:'Tiếng Việt',login:'Đăng nhập / tạo tài khoản',logout:'Đăng xuất'},
+  en: {home:'Discover',saved:'Saved',orders:'Orders',account:'Account',language:'Language',english:'English',vietnamese:'Vietnamese',login:'Sign in / create account',logout:'Sign out'},
+  vi: {home:'Khám phá',saved:'Đã lưu',orders:'Đơn hàng',account:'Tài khoản',language:'Ngôn ngữ',english:'Tiếng Anh',vietnamese:'Tiếng Việt',login:'Đăng nhập / tạo tài khoản',logout:'Đăng xuất'},
 };
 export type Language = keyof typeof translations;
 export const useLanguage = create<{language:Language;error:string;restore:() => Promise<void>;setLanguage:(language:Language) => Promise<void>}>((set) => ({language:'en',error:'',

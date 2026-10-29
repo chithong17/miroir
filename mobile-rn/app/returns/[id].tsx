@@ -176,7 +176,7 @@ export default function ReturnDetail() {
                 <Text style={typography.titleMedium}>Send Your Return</Text>
               </View>
               <Text style={[typography.bodySmall, { color: colors.muted }]}>
-                Ship the package to the shop's address and submit the tracking code below.
+                Ship the package to the shop’s address and submit the tracking code below.
               </Text>
               <Field
                 label="Tracking Code"

@@ -99,9 +99,9 @@ export function Entry() {
               padding={24}
               style={styles.choiceCard}
             >
-              <Text style={styles.choiceHeading}>Start your fashion flow</Text>
+              <Text style={styles.choiceHeading}>Find your next favorite boutique</Text>
               <Text style={styles.choiceBody}>
-                Sign in to keep your profile and personalized styling, or continue as a guest to browse the marketplace first.
+                Discover boutique collections, ask the shop about a piece, and keep your orders in one place.
               </Text>
 
               <ErrorNotice message={session.error} />
@@ -135,8 +135,9 @@ export function Entry() {
                 >
                   <Text style={styles.guestButtonText}>Continue as guest</Text>
                 </Pressable>
+                <MiroirButton label="Manage my boutique" icon="storefront" isSecondary onPress={async () => { await session.continueAsGuest(); router.push('/owner'); }} />
                 <Text style={styles.guestNote}>
-                  Guest mode can browse products and outfits. Sign in later for saved profile, profile photo, and personalized flows.
+                  Browse without an account. Sign in when you want to save pieces, message a shop, or place an order.
                 </Text>
               </View>
             </GlassSurface>
@@ -295,7 +296,7 @@ export function Entry() {
                     style={styles.termsLink}
                     onPress={() => router.push('/terms')}
                   >
-                    Điều khoản dịch vụ & Chính sách bảo vệ dữ liệu AI Virtual Try-On
+                    Điều khoản dịch vụ & Chính sách quyền riêng tư
                   </Text>{' '}
                   của MIROIR.
                 </Text>

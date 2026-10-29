@@ -10,6 +10,7 @@ playwright-report/
 .expo/
 dist/
 dist-native/
+dist-commerce/
 web-build/
 expo-env.d.ts
 

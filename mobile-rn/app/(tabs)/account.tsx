@@ -13,7 +13,6 @@ import { useSession } from '../../src/stores/session';
 import { useLanguage, useTranslation } from '../../src/stores/language';
 import {
   ErrorNotice,
-  GlassPill,
   GlassSurface,
   MiroirButton,
   Screen,
@@ -46,7 +45,7 @@ export default function Account() {
             </View>
             <Text style={styles.guestHeading}>Guest Mode</Text>
             <Text style={styles.guestSub}>
-              Sign in to save your fitting profile, keep your personalized styling, and use the try-on studio.
+              Save favorite pieces, talk directly to boutiques, and follow your orders and returns.
             </Text>
 
             <View style={{ width: '100%', gap: 12, marginTop: 16 }}>
@@ -101,17 +100,7 @@ export default function Account() {
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={typography.headlineSmall}>{user.name}</Text>
               <Text style={typography.bodyMedium}>{user.email}</Text>
-              <View style={{ marginTop: 4, alignSelf: 'flex-start' }}>
-                <GlassPill
-                  label={
-                    user.subscription?.allFeaturesIncluded ? 'MIROIR access' : user.subscription?.isPremium
-                      ? 'Premium Member'
-                      : 'Free Plan'
-                  }
-                  icon={user.subscription?.isPremium ? 'verified' : 'star-outline'}
-                  isSelected={user.subscription?.isPremium}
-                />
-              </View>
+
             </View>
           </View>
 
@@ -160,15 +149,11 @@ export default function Account() {
                 onPress={() => router.push('/chat')}
               />
               <MenuItem
-                icon="workspace-premium"
-                label="Premium plans"
-                onPress={() => router.push('/payments')}
-              />
-              <MenuItem
                 icon="policy"
                 label="Chính sách & Điều khoản"
                 onPress={() => router.push('/terms')}
               />
+              <MenuItem icon="help-outline" label="Miroir support" onPress={() => router.push('/support')}/>
               <MenuItem
                 icon="storefront"
                 label="Shop owner center"
@@ -234,7 +219,7 @@ export default function Account() {
                 onPress={() => {
                   Alert.alert(
                     'Xóa tài khoản',
-                    'Bạn có chắc chắn muốn xóa tài khoản MIROIR? Toàn bộ hồ sơ số đo, ảnh thử đồ và thông tin tài khoản của bạn sẽ bị xóa vĩnh viễn và không thể khôi phục.',
+                    'Bạn có chắc chắn muốn xóa tài khoản MIROIR? Thông tin tài khoản sẽ được xử lý theo chính sách xóa dữ liệu. Thao tác này không thể hoàn tác.',
                     [
                       { text: 'Hủy', style: 'cancel' },
                       {
@@ -261,7 +246,7 @@ export default function Account() {
         </View>
       )}
 
-      <ErrorNotice message={language.error} />
+      <ErrorNotice message={language.error || session.error} />
     </Screen>
   );
 }

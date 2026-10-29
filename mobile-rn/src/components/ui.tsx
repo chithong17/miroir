@@ -21,6 +21,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, radii, typography } from '../theme/tokens';
+import { commerceLayout } from '../theme/commerce';
 
 export function Screen({
   children,
@@ -45,7 +46,7 @@ export function Screen({
       >
         {scrollable ? (
           <ScrollView
-            contentContainerStyle={[styles.content, contentStyle]}
+            contentContainerStyle={[styles.content, { width: '100%', maxWidth: commerceLayout.pageMax, alignSelf: 'center' }, contentStyle]}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
@@ -82,7 +83,7 @@ export function AppHeader({
         {showBack && (
           <SurfaceIconButton
             icon="arrow-back"
-            size={40}
+            size={48}
             onPress={onBack}
           />
         )}
@@ -329,11 +330,13 @@ export function Button({
 export function SurfaceIconButton({
   icon,
   onPress,
+  accessibilityLabel,
   isDark = false,
-  size = 46,
+  size = 48,
   isGlass = true,
 }: {
   icon: keyof typeof MaterialIcons.glyphMap;
+  accessibilityLabel?: string;
   onPress?: () => void;
   isDark?: boolean;
   size?: number;
@@ -346,6 +349,7 @@ export function SurfaceIconButton({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || (icon.startsWith('arrow-back') ? 'Back' : icon.replaceAll('-', ' '))}
       onPress={onPress}
       style={({ pressed }) => [
         styles.surfaceIconButton,
@@ -684,7 +688,8 @@ export function ModalSheet({
                   <Text style={styles.sheetTitle}>{title}</Text>
                   <SurfaceIconButton
                     icon="close"
-                    size={36}
+                    size={48}
+                    accessibilityLabel="Close"
                     onPress={onClose}
                   />
                 </View>

@@ -37,29 +37,9 @@ import { configureCloudinary } from "./services/cloudinary.service.js";
 import { ensureCommerceIndexes } from "./services/commerceIndexes.service.js";
 import { expireCommerceOrders } from "./services/commerce.service.js";
 import { configureChatSocket } from "./services/chatSocket.service.js";
+import { processAccountMediaDeletionJobs } from "./services/accountMediaDeletion.service.js";
 
 dotenv.config();
-
-const describeEnvValue = (value) => {
-  if (!value) {
-    return {
-      present: false,
-      prefix: "",
-      suffix: "",
-      length: 0,
-    };
-  }
-
-  const normalizedValue = value.trim();
-
-  return {
-    present: true,
-    prefix: normalizedValue.slice(0, 4),
-    suffix: normalizedValue.slice(-4),
-    length: normalizedValue.length,
-    hasLeadingOrTrailingWhitespace: normalizedValue !== value,
-  };
-};
 
 const isAllowedDevOrigin = (origin) => {
   if (!origin) {
@@ -146,18 +126,6 @@ app.get("/api/health", (_req, res) => {
   res.json({ success: true, message: "MIROIR backend is running" });
 });
 
-app.get("/api/debug/piapi-key", (_req, res) => {
-  const key = process.env.PIAPI_KEY || "";
-
-  res.json({
-    present: Boolean(key),
-    prefix: key.slice(0, 4),
-    suffix: key.slice(-4),
-    length: key.length,
-    hasLeadingOrTrailingWhitespace: key !== key.trim(),
-  });
-});
-
 app.use("/api/tryon", tryOnRoutes);
 app.use("/api/stylist", stylistRoutes);
 app.use("/api/catalog", catalogRoutes);
@@ -181,8 +149,10 @@ app.use("/api/shop-auth", shopAuthRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/shipping-configs", shippingRoutes);
 app.use("/api/shop-products", shopProductRoutes);
-app.use("/api/debug", debugRoutes);
-app.use("/api/test-ghn", testGhnRoutes);
+if (process.env.NODE_ENV !== "production" && process.env.ENABLE_DEV_DIAGNOSTICS === "true") {
+  app.use("/api/debug", debugRoutes);
+  app.use("/api/test-ghn", testGhnRoutes);
+}
 
 app.use((err, _req, res, _next) => {
   console.error("Unhandled server error:", err);
@@ -220,7 +190,6 @@ configureChatSocket(io);
 
 httpServer.listen(port, () => {
   console.log(`MIROIR backend listening on port ${port}`);
-  console.log("Loaded PIAPI_KEY env info:", describeEnvValue(process.env.PIAPI_KEY));
 });
 
 ensureCommerceIndexes().catch((error) => console.error("Commerce index initialization failed:", error));
@@ -234,5 +203,8 @@ billingWorker.unref();
 runStrategyReportWorker().catch((error) => console.error("Strategy worker failed:", error));
 const strategyWorker = setInterval(() => runStrategyReportWorker().catch((error) => console.error("Strategy worker failed:", error)), 3600000);
 strategyWorker.unref();
+processAccountMediaDeletionJobs().catch(() => console.error("Account media cleanup failed."));
+const accountMediaWorker = setInterval(() => processAccountMediaDeletionJobs().catch(() => console.error("Account media cleanup failed.")), 300000);
+accountMediaWorker.unref();
 
 

@@ -6,9 +6,9 @@ import { GlassSurface, MiroirButton, Screen } from '../../components/ui';
 import { useSession } from '../../stores/session';
 import { colors, typography } from '../../theme/tokens';
 const slides = [
-  {title:'Welcome to MIROIR',body:'Explore AI-powered fashion tools that help you discover outfits faster and with more confidence.',tag:'Smart styling',preview:'Curated home',accent:'#E7F5FA',secondary:'#FDF6E9',icon:'auto-awesome' as const},
-  {title:'Try looks on before you buy',body:'Upload your photo, add garments, and preview the full outfit with the virtual try-on flow.',tag:'Virtual try-on',preview:'Studio preview',accent:'#F2EEFB',secondary:'#E8F5EF',icon:'checkroom' as const},
-  {title:'Get curated outfit suggestions',body:'Describe the vibe you want and let the AI Stylist turn your prompt into grounded combinations.',tag:'AI stylist',preview:'Prompt to outfit',accent:'#EAF6EF',secondary:'#EAF1FB',icon:'style' as const},
+  {title:'Find pieces with a story',body:'Explore boutique collections, compare materials and available sizes, and save the pieces you love.',tag:'Discover boutiques',preview:'Your next favorite',accent:colors.accentSoft,secondary:colors.canvas,icon:'storefront' as const},
+  {title:'Talk to the shop behind the piece',body:'Ask about fabric, sizing or an order in a conversation linked to the product. Keep your bag, delivery and returns together.',tag:'Shop with context',preview:'From question to order',accent:colors.panel,secondary:colors.accentSoft,icon:'chat-bubble-outline' as const},
+  {title:'Your boutique, in your pocket',body:'For shop owners: manage product variants and stock, follow orders, and respond to customers from a dedicated workspace.',tag:'For boutique owners',preview:'Your daily workspace',accent:colors.accentSoft,secondary:colors.panel,icon:'inventory-2' as const},
 ];
 export function Onboarding() {
   const [index,setIndex] = useState(0);
@@ -29,7 +29,7 @@ export function Onboarding() {
         <GlassSurface radius={34} padding={22} style={{flex:1,gap:0}} backgroundColor="rgba(255,255,255,0.66)">
           <View style={styles.row}><View style={styles.tag}><Text style={styles.tagText}>{slide.tag}</Text></View><View style={styles.iconButton}><MaterialIcons name={slide.icon} size={20} color={colors.ink}/></View></View>
           <LinearGradient colors={[slide.accent,slide.secondary]} style={[styles.preview,{height:Math.max(144,Math.min(220,height*0.26))}]}>
-            <View style={styles.phone}><View style={styles.notch}/><View style={styles.phoneHeader}><Text style={styles.phoneTitle}>{slide.preview}</Text><MaterialIcons name={slide.icon} size={16} color={colors.ink}/></View><View style={styles.phoneCard}/><View style={styles.phoneCta}><MaterialIcons name="auto-awesome" size={14} color="white"/><Text numberOfLines={1} style={styles.phoneCtaText}>Get started</Text></View></View>
+            <View style={styles.phone}><View style={styles.notch}/><View style={styles.phoneHeader}><Text style={styles.phoneTitle}>{slide.preview}</Text><MaterialIcons name={slide.icon} size={16} color={colors.ink}/></View><View style={styles.phoneCard}/><View style={styles.phoneCta}><MaterialIcons name={slide.icon} size={14} color="white"/><Text numberOfLines={1} style={styles.phoneCtaText}>Get started</Text></View></View>
           </LinearGradient>
           <Text style={[typography.headlineMedium,{marginTop:18}]}>{slide.title}</Text><Text style={[typography.bodyLarge,{marginTop:8}]}>{slide.body}</Text>
         </GlassSurface>

@@ -67,7 +67,7 @@ export default function Notifications() {
           <MaterialIcons name="notifications-none" size={54} color={colors.mutedSoft} />
           <Text style={typography.titleLarge}>You are all caught up</Text>
           <Text style={[typography.bodyMedium, { textAlign: 'center' }]}>
-            We'll notify you when your orders update, items ship, or discounts drop.
+            We’ll notify you when your orders update, items ship, or discounts drop.
           </Text>
         </View>
       ) : (

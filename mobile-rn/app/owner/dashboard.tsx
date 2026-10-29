@@ -202,8 +202,6 @@ function FunnelStages({
   if (!values) return null;
   const stages = [
     { key: 'views', label: 'Views', icon: 'visibility' as const },
-    { key: 'tryOns', label: 'Try-ons', icon: 'checkroom' as const },
-    { key: 'stylistMatches', label: 'Stylist matches', icon: 'auto-awesome' as const },
     { key: 'feedback', label: 'Feedback', icon: 'rate-review' as const },
     { key: 'orders', label: 'Orders', icon: 'shopping-cart' as const },
     { key: 'paidOrders', label: 'Paid orders', icon: 'verified' as const },
@@ -278,8 +276,7 @@ function ProductRankList({
               )}
               {type === 'engagement' && p.views != null && (
                 <Text style={styles.rankProductStats}>
-                  {p.views.toLocaleString()} views · {p.tryOns || 0} try-ons ·{' '}
-                  {p.stylistMatches || 0} matches
+                  {p.views.toLocaleString()} product views
                 </Text>
               )}
             </View>
@@ -344,7 +341,7 @@ export default function OwnerDashboard() {
       header={
         <AppHeader
           title="Shop performance"
-          subtitle="Sales, customer actions, and AI discovery"
+          subtitle="Sales, orders, and customer activity"
           showBack
           onBack={() => router.replace('/owner')}
           rightAction={
@@ -422,7 +419,7 @@ export default function OwnerDashboard() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.heroTitle}>Performance dashboard</Text>
                 <Text style={styles.heroSubtitle}>
-                  Sales, customer actions, and AI discovery for this shop.
+                  Sales, orders, and customer activity for this shop.
                 </Text>
               </View>
             </View>
@@ -492,12 +489,10 @@ export default function OwnerDashboard() {
 
           {/* Engagement Overview */}
           <MetricGrid
-            title="Product & AI engagement"
+            title="Product engagement"
             values={a?.summary}
             labels={{
               productViews: 'Product views',
-              tryOnClicks: 'Try-ons',
-              stylistMatches: 'Stylist matches',
               feedbackCount: 'Customer feedback',
               conversionRate: 'Conversion rate',
               publishedProducts: 'Published products',
@@ -511,12 +506,7 @@ export default function OwnerDashboard() {
             items={a?.timeSeries}
             metric="views"
           />
-          <SeriesChart
-            title="Daily try-ons"
-            subtitle="Virtual fitting sessions triggered"
-            items={a?.timeSeries}
-            metric="tryOns"
-          />
+
 
           {/* Catalog Health */}
           {d?.inventoryHealth && (
@@ -543,12 +533,7 @@ export default function OwnerDashboard() {
                   </Text>
                   <Text style={[styles.healthPillLabel, { color: '#D9383A' }]}>Out of stock</Text>
                 </View>
-                <View style={[styles.healthPill, { backgroundColor: '#FFF7E6' }]}>
-                  <Text style={[styles.healthPillCount, { color: '#D48806' }]}>
-                    {d.inventoryHealth.needsEmbedding || 0}
-                  </Text>
-                  <Text style={[styles.healthPillLabel, { color: '#D48806' }]}>AI Indexing</Text>
-                </View>
+
               </View>
             </Card>
           )}

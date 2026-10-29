@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  useWindowDimensions,
   Image,
   Pressable,
   StyleSheet,
@@ -14,6 +15,8 @@ import { catalogApi } from '../../src/api/catalog';
 import { useSession } from '../../src/stores/session';
 import { AppHeader, Card, ErrorNotice, MiroirButton, Screen } from '../../src/components/ui';
 import { ProductCard } from '../../src/features/marketplace/Marketplace';
+import { ContactShop } from '../../src/features/chat/ContactShop';
+import { productColumns, commerceLayout } from '../../src/theme/commerce';
 import { colors, radii, typography } from '../../src/theme/tokens';
 
 export default function ShopDetail() {
@@ -32,6 +35,7 @@ export default function ShopDetail() {
   });
 
   const s = shop.data;
+  const columns = productColumns(Math.min(useWindowDimensions().width, commerceLayout.pageMax));
 
   return (
     <Screen
@@ -43,19 +47,7 @@ export default function ShopDetail() {
           onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           rightAction={
             s ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Message shop"
-                onPress={() =>
-                  router.push({
-                    pathname: '/chat/[id]',
-                    params: { id: s.id },
-                  })
-                }
-                style={styles.headerChatBtn}
-              >
-                <MaterialIcons name="chat-bubble-outline" size={20} color={colors.accentStrong} />
-              </Pressable>
+              <ContactShop shopId={s.id} compact />
             ) : null
           }
         />
@@ -129,18 +121,7 @@ export default function ShopDetail() {
               ) : null}
             </View>
 
-            {/* Message shop button */}
-            <MiroirButton
-              label="Message shop"
-              icon="chat-bubble-outline"
-              isSecondary
-              onPress={() =>
-                router.push({
-                  pathname: '/chat/[id]',
-                  params: { id: s.id },
-                })
-              }
-            />
+            <ContactShop shopId={s.id} />
           </Card>
 
           {/* Shop Catalog Collection */}
@@ -163,7 +144,7 @@ export default function ShopDetail() {
             ) : (
               <View style={styles.productsGrid}>
                 {products.data?.products.map(p => (
-                  <View key={p.id} style={styles.gridColumn}>
+                  <View key={p.id} style={[styles.gridColumn, { width: `${100 / columns}%` }]}>
                     <ProductCard product={p} />
                   </View>
                 ))}
@@ -213,7 +194,7 @@ const styles = StyleSheet.create({
   shopCard: {
     borderRadius: 24,
     padding: 18,
-    gap: 14,
+    gap: 0,
     overflow: 'hidden',
   },
   coverImage: {
@@ -225,7 +206,7 @@ const styles = StyleSheet.create({
   identityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 16,
   },
   logoWrapper: {
     width: 72,
@@ -271,10 +252,10 @@ const styles = StyleSheet.create({
   productsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 0,
   },
   gridColumn: {
-    width: '48%',
+    padding: 8,
   },
   paginationRow: {
     flexDirection: 'row',

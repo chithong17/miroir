@@ -53,6 +53,7 @@ export default function ProductEditor() {
   useEffect(() => {
     const p = product.data;
     if (!p || loaded === p.id) return;
+    const timer = setTimeout(() => {
     setFields({
       ...initial,
       ...Object.fromEntries(
@@ -64,6 +65,8 @@ export default function ProductEditor() {
     });
     setVariants((p.variants || []).map(v => ({ ...v, stockQuantity: String(v.stockQuantity) })));
     setLoaded(p.id);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [product.data, loaded]);
 
   const save = useMutation({
