@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { getMongoDb, withMongoTransaction } from "./mongo.service.js";
 import { addMonth, isSubscriptionActive, normalizePlanCode, PAYMENT_PLANS, PLAN_CODES } from "./subscription.service.js";
-import { getPiApiTaskStatus } from "./piapi.service.js";
+import { getTryOnProviderTaskStatus } from "./tryonProvider.service.js";
 import { findResultUrls } from "../utils/findResultUrl.js";
 import { createNotification } from "./notification.service.js";
 
@@ -111,7 +111,7 @@ export const getOwnerBillingSummary = async (owner) => {
   return { owner: current, usage: { used: cycle?.usedTryOns || 0, quota: cycle?.tryOnQuota || 0, overage: Math.max(0, (cycle?.usedTryOns || 0) - (cycle?.tryOnQuota || 0)), estimatedFees: entries.reduce((sum, item) => sum + item.amount, 0), outstanding: invoices.reduce((sum, item) => sum + item.amount, 0) } };
 };
 
-export const reconcileTryOnTask = async ({ db, task, now }, { getStatus = getPiApiTaskStatus, settle = settleTryOnTask } = {}) => {
+export const reconcileTryOnTask = async ({ db, task, now }, { getStatus = getTryOnProviderTaskStatus, settle = settleTryOnTask } = {}) => {
   let response;
   try {
     response = await getStatus(task.taskId);

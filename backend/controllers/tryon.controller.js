@@ -1,7 +1,8 @@
 import {
-  createPiApiTask,
-  getPiApiTaskStatus,
-} from "../services/piapi.service.js";
+  createTryOnProviderTask,
+  getTryOnProviderName,
+  getTryOnProviderTaskStatus,
+} from "../services/tryonProvider.service.js";
 import axios from "axios";
 import https from "https";
 import { uploadImageBuffer } from "../services/cloudinary.service.js";
@@ -87,7 +88,7 @@ export const createTryOnTask = async (req, res, next) => {
 
     const imageUrls = await uploadRequiredImages(req.files || {});
 
-    const taskResponse = await createPiApiTask({
+    const taskResponse = await createTryOnProviderTask({
       tryOnType,
       batchSize,
       imageUrls,
@@ -100,14 +101,14 @@ export const createTryOnTask = async (req, res, next) => {
       taskResponse?.id;
 
     if (!taskId) {
-      console.error("Unexpected PiAPI task creation response:", taskResponse);
+      console.error("Unexpected try-on provider response:", taskResponse);
       return res.status(502).json({
         success: false,
-        message: "PiAPI did not return a task id.",
+        message: "Try-on provider did not return a task id.",
       });
     }
 
-    console.log(`PiAPI task created successfully: ${taskId}`);
+    console.log(`${getTryOnProviderName()} task created successfully: ${taskId}`);
 
     return res.status(201).json({
       success: true,
@@ -224,7 +225,7 @@ export const createCatalogTryOnTask = async (req, res, next) => {
       lower_input: isLower ? garmentInput : undefined,
     };
 
-    const taskResponse = await createPiApiTask({
+    const taskResponse = await createTryOnProviderTask({
       tryOnType,
       batchSize: parseBatchSize(req.body.batchSize),
       imageUrls,
@@ -234,7 +235,7 @@ export const createCatalogTryOnTask = async (req, res, next) => {
     if (!taskId) {
       return res.status(502).json({
         success: false,
-        message: "PiAPI did not return a task id.",
+        message: "Try-on provider did not return a task id.",
       });
     }
 
@@ -315,7 +316,7 @@ export const createCustomTryOnTask = async (req, res, next) => {
       });
     }
 
-    const taskResponse = await createPiApiTask({
+    const taskResponse = await createTryOnProviderTask({
       tryOnType,
       batchSize: parseBatchSize(req.body.batchSize),
       imageUrls,
@@ -325,7 +326,7 @@ export const createCustomTryOnTask = async (req, res, next) => {
     if (!taskId) {
       return res.status(502).json({
         success: false,
-        message: "PiAPI did not return a task id.",
+        message: "Try-on provider did not return a task id.",
       });
     }
 
@@ -343,7 +344,7 @@ export const createCustomTryOnTask = async (req, res, next) => {
 export const getTryOnTaskStatus = async (req, res, next) => {
   try {
     const { taskId } = req.params;
-    const taskResponse = await getPiApiTaskStatus(taskId);
+    const taskResponse = await getTryOnProviderTaskStatus(taskId);
     const rawTaskData = taskResponse?.data || taskResponse;
     const status = rawTaskData?.status || "pending";
     const output = rawTaskData?.output;

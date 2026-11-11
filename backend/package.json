@@ -29,6 +29,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@genlook/api": "^0.6.0",
     "@google/generative-ai": "^0.24.1",
     "@payos/node": "^2.0.5",
     "axios": "^1.7.9",
