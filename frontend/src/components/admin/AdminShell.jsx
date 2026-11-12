@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Store, Users, CreditCard, ShieldCheck, Bell, LogOut, Menu, X, Package, Trash2, FileSpreadsheet, Settings, RefreshCw, ArrowLeft, Layers } from "lucide-react";
+import { LayoutDashboard, Store, Users, CreditCard, ShieldCheck, Bell, LogOut, Menu, X, Package, Trash2, FileSpreadsheet, Settings, RefreshCw, ArrowLeft, Layers, BadgeDollarSign } from "lucide-react";
 
 const navigation = [
   ["overview", "Tổng quan", LayoutDashboard],
@@ -7,6 +7,7 @@ const navigation = [
   ["shops", "Quản lý cửa hàng", Store],
   ["owners", "Tài khoản chủ shop", Users],
   ["subscriptions", "Shop đăng ký gói", Layers],
+  ["revenue", "Doanh thu", BadgeDollarSign],
   ["plans", "Gói & thanh toán", CreditCard],
   ["disputes", "Khiếu nại & thông báo", Bell],
 ];

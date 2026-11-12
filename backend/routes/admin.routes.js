@@ -20,6 +20,7 @@ import {
   grantPaymentPlan,
   updateShop,
   adminBillingInvoices,
+  adminRevenue,
   customerAnalytics,
   simulateCustomerActivity,
   simulateProductViewsController,
@@ -46,6 +47,7 @@ router.post("/customers/delete", deleteCustomers);
 
 router.get("/payment-plans", listPaymentPlans);
 router.get("/billing-invoices", adminBillingInvoices);
+router.get("/revenue", adminRevenue);
 router.put("/payment-plans/:planCode", updatePaymentPlan);
 
 router.get("/shop-owners", listShopOwners);

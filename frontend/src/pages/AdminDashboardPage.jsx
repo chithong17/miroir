@@ -2,6 +2,7 @@ import AdminCustomers from "../components/admin/AdminCustomers.jsx";
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "../components/admin/AdminShell.jsx";
 import AdminOverview, { AdminSubscriptions } from "../components/admin/AdminOverview.jsx";
+import AdminRevenue from "../components/admin/AdminRevenue.jsx";
 import "../components/admin/admin.css";
 import {
   approveShopOwner,
@@ -494,6 +495,7 @@ function AdminDashboardPage() {
           {view === "customers" && <AdminCustomers refreshing={refreshing} />}
           {view === "overview" && <AdminOverview shops={allShops} owners={allOwners} plans={paymentPlans} invoices={billingInvoices} setView={setView} openShop={openShop} />}
           {view === "subscriptions" && <AdminSubscriptions shops={allShops} owners={allOwners} plans={paymentPlans} openShop={openShop} />}
+          {view === "revenue" && <AdminRevenue refreshing={refreshing} />}
           {view === "owners" ? (
             <OwnersView
               owners={owners}

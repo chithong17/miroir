@@ -18,6 +18,7 @@ import { listAdminInvoices } from "../services/billing.service.js";
 import { grantShopPlan } from "../services/planGrant.service.js";
 import { getMongoDb } from "../services/mongo.service.js";
 import { getCustomerAnalytics } from "../services/customerAnalytics.service.js";
+import { getAdminRevenueReport } from "../services/adminRevenue.service.js";
 import { simulateActiveCustomers, revertActiveCustomerSimulation, simulateProductViews } from "../services/customerSimulation.service.js";
 
 export const customerAnalytics = async (req, res, next) => {
@@ -95,6 +96,11 @@ export const deleteCustomers = async (req, res, next) => {
 
 export const adminBillingInvoices = async (_req, res, next) => {
   try { res.json({ success: true, invoices: await listAdminInvoices() }); }
+  catch (error) { next(error); }
+};
+
+export const adminRevenue = async (req, res, next) => {
+  try { res.json({ success: true, ...(await getAdminRevenueReport(req.query || {})) }); }
   catch (error) { next(error); }
 };
 

@@ -30,6 +30,8 @@ export const ensureCommerceIndexes = async () => {
     ),
     db.collection("order_disputes").createIndex({ id: 1 }, { unique: true }),
     db.collection("payment_orders").createIndex({ orderCode: 1 }, { unique: true }),
+    db.collection("payment_orders").createIndex({ status: 1, paidAt: -1 }),
+    db.collection("payment_orders").createIndex({ accountId: 1, status: 1, paidAt: -1 }),
     db.collection("payment_orders").createIndex({ checkoutKey: 1 }, { unique: true, partialFilterExpression: { status: "pending", checkoutKey: { $type: "string" } } }),
     db.collection("billing_cycles").createIndex({ id: 1 }, { unique: true }),
     db.collection("billing_cycles").createIndex({ status: 1, expiresAt: 1 }),
