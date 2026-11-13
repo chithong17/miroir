@@ -109,7 +109,7 @@ function ConversionFunnel({ funnel = [] }) {
     { label: "Khám phá sản phẩm", count: 382, percentOfTotal: 100, stepConversion: 100, color: "#668F98" },
     { label: "Gợi ý Stylist AI", count: 284, percentOfTotal: 74.3, stepConversion: 74.3, color: "#A7824E" },
     { label: "Bắt đầu thử đồ ảo", count: 299, percentOfTotal: 78.3, stepConversion: 105.3, color: "#5E8647" },
-    { label: "Phản hồi độ vừa vặn", count: 76, percentOfTotal: 19.9, stepConversion: 25.4, color: "#937A9F" },
+    { label: "Phản hồi độ vừa vặn", count: 138, percentOfTotal: 36.1, stepConversion: 46.2, color: "#937A9F" },
   ];
   return (
     <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
@@ -156,7 +156,7 @@ function ConversionFunnel({ funnel = [] }) {
 function FitAndStyleInsights({ feedbackQuality, stylistCategories }) {
   const fq = feedbackQuality || {
     averageRating: 4.8,
-    totalReviews: 76,
+    totalReviews: 138,
     fitDistribution: [
       { label: "Vừa vặn chuẩn xác (True to size)", percent: 76, color: "#5E8647" },
       { label: "Hơi chật (Slightly small)", percent: 14, color: "#BD9A62" },

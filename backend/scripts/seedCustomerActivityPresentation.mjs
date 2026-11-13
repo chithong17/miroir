@@ -16,7 +16,7 @@ const TARGETS = {
     product_view: 382,
     stylist_product_recommended: 284,
     tryon_started: 299,
-    product_feedback: 76,
+    product_feedback: 138,
   },
 };
 
