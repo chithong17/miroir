@@ -107,7 +107,7 @@ export const getCustomerAnalytics = async ({ query = {}, now = new Date(), db: s
   const funnel = [
     { key: "product_view", label: "Khám phá sản phẩm", count: viewsCount, percentOfTotal: 100, stepConversion: 100 },
     { key: "stylist_product_recommended", label: "Gợi ý Stylist AI", count: stylistCount, percentOfTotal: viewsCount ? Math.round(stylistCount / viewsCount * 1000) / 10 : 0, stepConversion: viewsCount ? Math.round(stylistCount / viewsCount * 1000) / 10 : 0 },
-    { key: "tryon_started", label: "Bắt đầu thử đồ", count: tryonCount, percentOfTotal: viewsCount ? Math.round(tryonCount / viewsCount * 1000) / 10 : 0, stepConversion: stylistCount ? Math.round(tryonCount / stylistCount * 1000) / 10 : 0 },
+    { key: "tryon_started", label: "Bắt đầu thử đồ", count: tryonCount, percentOfTotal: viewsCount ? Math.round(tryonCount / viewsCount * 1000) / 10 : 0, stepConversion: viewsCount ? Math.round(tryonCount / viewsCount * 1000) / 10 : 0 },
     { key: "product_feedback", label: "Phản hồi độ vừa vặn", count: feedbackCount, percentOfTotal: viewsCount ? Math.round(feedbackCount / viewsCount * 1000) / 10 : 0, stepConversion: tryonCount ? Math.round(feedbackCount / tryonCount * 1000) / 10 : 0 },
   ];
 

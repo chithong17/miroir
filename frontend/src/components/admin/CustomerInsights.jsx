@@ -108,7 +108,7 @@ function ConversionFunnel({ funnel = [] }) {
   const steps = funnel.length ? funnel : [
     { label: "Khám phá sản phẩm", count: 382, percentOfTotal: 100, stepConversion: 100, color: "#668F98" },
     { label: "Gợi ý Stylist AI", count: 284, percentOfTotal: 74.3, stepConversion: 74.3, color: "#A7824E" },
-    { label: "Bắt đầu thử đồ ảo", count: 299, percentOfTotal: 78.3, stepConversion: 105.3, color: "#5E8647" },
+    { label: "Bắt đầu thử đồ ảo", count: 299, percentOfTotal: 78.3, stepConversion: 78.3, color: "#5E8647" },
     { label: "Phản hồi độ vừa vặn", count: 138, percentOfTotal: 36.1, stepConversion: 46.2, color: "#937A9F" },
   ];
   return (
@@ -153,7 +153,54 @@ function ConversionFunnel({ funnel = [] }) {
   );
 }
 
-function FitAndStyleInsights({ feedbackQuality, stylistCategories }) {
+function StylistCategoriesCard({ stylistCategories }) {
+  const sc = stylistCategories || [
+    { category: "Váy & Đầm dạ tiệc", percent: 35, count: 99 },
+    { category: "Công sở & Thanh lịch", percent: 30, count: 85 },
+    { category: "Dạo phố & Trẻ trung", percent: 21, count: 60 },
+    { category: "Tối giản & Basic", percent: 14, count: 40 },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
+      <div className="flex items-center justify-between gap-2 border-b border-[#E3E9DB] pb-3">
+        <div className="flex items-center gap-2">
+          <Sparkles size={18} className="text-[#BD9A62]" />
+          <h4 className="text-sm font-bold text-[#23352B]">Phong cách Stylist AI gợi ý</h4>
+        </div>
+        <span className="rounded-full bg-[#F5EEDF] px-2.5 py-0.5 text-[11px] font-bold text-[#8F6623]">
+          {number(sc.reduce((acc, c) => acc + (c.count || 0), 0) || 284)} lượt gợi ý
+        </span>
+      </div>
+      <div className="mt-4 space-y-2.5">
+        {sc.map((cat, idx) => (
+          <div key={cat.category}>
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span className="text-[#4E5E49]">{cat.category}</span>
+              <span className="tabular-nums text-[#23352B]">
+                <strong>{number(cat.count)}</strong> ({cat.percent}%)
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-[#EBF0E4]">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${cat.percent}%`,
+                  backgroundColor: idx === 0 ? "#BD9A62" : idx === 1 ? "#5E8647" : idx === 2 ? "#668F98" : "#937A9F"
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3.5 text-[11px] text-[#7B8777]">
+        Đầm dạ tiệc và trang phục công sở chiếm tới 65% nhu cầu tư vấn phối đồ từ AI Stylist.
+      </p>
+    </div>
+  );
+}
+
+function FitQualityCard({ feedbackQuality }) {
   const fq = feedbackQuality || {
     averageRating: 4.8,
     totalReviews: 138,
@@ -164,78 +211,33 @@ function FitAndStyleInsights({ feedbackQuality, stylistCategories }) {
     ],
   };
 
-  const sc = stylistCategories || [
-    { category: "Váy & Đầm dạ tiệc", percent: 35, count: 99 },
-    { category: "Công sở & Thanh lịch", percent: 30, count: 85 },
-    { category: "Dạo phố & Trẻ trung", percent: 21, count: 60 },
-    { category: "Tối giản & Basic", percent: 14, count: 40 },
-  ];
-
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
-        <div className="flex items-center justify-between gap-2 border-b border-[#E3E9DB] pb-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle size={18} className="text-[#5E8647]" />
-            <h4 className="text-sm font-bold text-[#23352B]">Chất lượng thử đồ & Độ vừa vặn</h4>
-          </div>
-          <span className="flex items-center gap-1 text-xs font-bold text-[#A87926]">
-            <Star size={14} fill="#F2B705" color="#F2B705" /> {fq.averageRating} / 5.0
-          </span>
+    <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
+      <div className="flex items-center justify-between gap-2 border-b border-[#E3E9DB] pb-3">
+        <div className="flex items-center gap-2">
+          <CheckCircle size={18} className="text-[#5E8647]" />
+          <h4 className="text-sm font-bold text-[#23352B]">Chất lượng thử đồ & Độ vừa vặn</h4>
         </div>
-        <div className="mt-4 space-y-2.5">
-          {fq.fitDistribution.map(item => (
-            <div key={item.label}>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-[#4E5E49]">{item.label}</span>
-                <strong className="text-[#23352B]">{item.percent}%</strong>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-[#EBF0E4]">
-                <div className="h-full rounded-full" style={{ width: `${item.percent}%`, backgroundColor: item.color || "#5E8647" }} />
-              </div>
-            </div>
-          ))}
-        </div>
-        <p className="mt-3.5 text-[11px] text-[#7B8777]">
-          76% khách hàng đánh giá đồ ướm vừa vặn cơ thể, tỷ lệ hài lòng đạt 4.8/5.0★.
-        </p>
+        <span className="flex items-center gap-1 text-xs font-bold text-[#A87926]">
+          <Star size={14} fill="#F2B705" color="#F2B705" /> {fq.averageRating} / 5.0
+        </span>
       </div>
-
-      <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
-        <div className="flex items-center justify-between gap-2 border-b border-[#E3E9DB] pb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-[#BD9A62]" />
-            <h4 className="text-sm font-bold text-[#23352B]">Phong cách Stylist AI gợi ý</h4>
-          </div>
-          <span className="rounded-full bg-[#F5EEDF] px-2.5 py-0.5 text-[11px] font-bold text-[#8F6623]">
-            {number(sc.reduce((acc, c) => acc + (c.count || 0), 0) || 284)} lượt gợi ý
-          </span>
-        </div>
-        <div className="mt-4 space-y-2.5">
-          {sc.map((cat, idx) => (
-            <div key={cat.category}>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-[#4E5E49]">{cat.category}</span>
-                <span className="tabular-nums text-[#23352B]">
-                  <strong>{number(cat.count)}</strong> ({cat.percent}%)
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-[#EBF0E4]">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${cat.percent}%`,
-                    backgroundColor: idx === 0 ? "#BD9A62" : idx === 1 ? "#5E8647" : idx === 2 ? "#668F98" : "#937A9F"
-                  }}
-                />
-              </div>
+      <div className="mt-4 space-y-2.5">
+        {fq.fitDistribution.map(item => (
+          <div key={item.label}>
+            <div className="mb-1 flex items-center justify-between text-xs">
+              <span className="text-[#4E5E49]">{item.label}</span>
+              <strong className="text-[#23352B]">{item.percent}%</strong>
             </div>
-          ))}
-        </div>
-        <p className="mt-3.5 text-[11px] text-[#7B8777]">
-          Đầm dạ tiệc và trang phục công sở chiếm tới 65% nhu cầu tư vấn phối đồ từ AI Stylist.
-        </p>
+            <div className="h-2 overflow-hidden rounded-full bg-[#EBF0E4]">
+              <div className="h-full rounded-full" style={{ width: `${item.percent}%`, backgroundColor: item.color || "#5E8647" }} />
+            </div>
+          </div>
+        ))}
       </div>
+      <p className="mt-3.5 text-[11px] text-[#7B8777]">
+        76% khách hàng đánh giá đồ ướm vừa vặn cơ thể, tỷ lệ hài lòng đạt 4.8/5.0★.
+      </p>
     </div>
   );
 }
@@ -286,17 +288,22 @@ function FeatureUsage({ report }) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 className="text-base font-bold text-[#23352B]">Bóc tách chi tiết từng tính năng</h4>
-            <p className="mt-1 text-xs text-[#7B8777]">Phân bổ theo cửa hàng, phễu chuyển đổi và chất lượng trải nghiệm.</p>
+            <p className="mt-1 text-xs text-[#7B8777]">Phân bổ theo cửa hàng, phong cách gợi ý và chất lượng trải nghiệm.</p>
           </div>
           <span className="rounded-full bg-[#EAF2E4] px-3 py-1 text-xs font-bold text-[#44662E]">Chi tiết kỳ thống kê</span>
         </div>
 
+        {/* Hàng 1: Phân bổ thử đồ theo Shop & Phong cách Stylist AI gợi ý */}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           <TryonShopBreakdown shops={fb.tryonByShop} />
-          <ConversionFunnel funnel={fb.funnel} />
+          <StylistCategoriesCard stylistCategories={fb.stylistCategories} />
         </div>
 
-        <FitAndStyleInsights feedbackQuality={fb.feedbackQuality} stylistCategories={fb.stylistCategories} />
+        {/* Hàng 2: Chất lượng thử đồ & Độ vừa vặn & Phễu chuyển đổi tính năng */}
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          <FitQualityCard feedbackQuality={fb.feedbackQuality} />
+          <ConversionFunnel funnel={fb.funnel} />
+        </div>
       </div>
     </ChartCard>
   );
