@@ -81,8 +81,6 @@ function TryonShopBreakdown({ shops = [] }) {
                     {index + 1}
                   </span>
                   {s.name}
-                  {isNabii && <span className="rounded bg-[#EAF3E2] px-1.5 py-0.5 text-[9px] font-bold text-[#49702F]">Cao nhất (70+)</span>}
-                  {isTop2 && <span className="rounded bg-[#F8EFE3] px-1.5 py-0.5 text-[9px] font-bold text-[#966F2C]">Top 2 (50+)</span>}
                 </span>
                 <span className="font-bold tabular-nums text-[#23352B]">{number(s.count)} lượt</span>
               </div>
@@ -100,7 +98,7 @@ function TryonShopBreakdown({ shops = [] }) {
         })}
       </div>
       <p className="mt-4 text-[11px] text-[#7B8777]">
-        Nabii shop dẫn đầu với 75 lượt thử đồ, 1004.shop đứng thứ hai với 52 lượt, các cửa hàng còn lại dao động từ 14 – 36 lượt.
+        Nabii shop dẫn đầu với 74 lượt thử đồ, 1004.shop đứng thứ hai với 52 lượt, các cửa hàng còn lại dao động từ 14 – 36 lượt.
       </p>
     </div>
   );
