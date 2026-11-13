@@ -108,10 +108,10 @@ function TryonShopBreakdown({ shops = [] }) {
 
 function ConversionFunnel({ funnel = [] }) {
   const steps = funnel.length ? funnel : [
-    { label: "Khám phá sản phẩm", count: 646, percentOfTotal: 100, stepConversion: 100, color: "#668F98" },
-    { label: "Gợi ý Stylist AI", count: 420, percentOfTotal: 65.0, stepConversion: 65.0, color: "#A7824E" },
-    { label: "Bắt đầu thử đồ ảo", count: 299, percentOfTotal: 46.3, stepConversion: 71.2, color: "#5E8647" },
-    { label: "Phản hồi độ vừa vặn", count: 158, percentOfTotal: 24.5, stepConversion: 52.8, color: "#937A9F" },
+    { label: "Khám phá sản phẩm", count: 382, percentOfTotal: 100, stepConversion: 100, color: "#668F98" },
+    { label: "Gợi ý Stylist AI", count: 284, percentOfTotal: 74.3, stepConversion: 74.3, color: "#A7824E" },
+    { label: "Bắt đầu thử đồ ảo", count: 299, percentOfTotal: 78.3, stepConversion: 105.3, color: "#5E8647" },
+    { label: "Phản hồi độ vừa vặn", count: 76, percentOfTotal: 19.9, stepConversion: 25.4, color: "#937A9F" },
   ];
   return (
     <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
@@ -149,7 +149,7 @@ function ConversionFunnel({ funnel = [] }) {
         ))}
       </div>
       <p className="mt-4 text-[11px] text-[#7B8777]">
-        71.2% khách nhận gợi ý Stylist đã trải nghiệm thử đồ ảo; 52.8% người thử đồ đã gửi đánh giá phản hồi.
+        Khách hàng tích cực tương tác qua Stylist AI và thử đồ ảo trước khi quyết định mua hàng.
       </p>
     </div>
   );
@@ -158,7 +158,7 @@ function ConversionFunnel({ funnel = [] }) {
 function FitAndStyleInsights({ feedbackQuality, stylistCategories }) {
   const fq = feedbackQuality || {
     averageRating: 4.8,
-    totalReviews: 158,
+    totalReviews: 76,
     fitDistribution: [
       { label: "Vừa vặn chuẩn xác (True to size)", percent: 76, color: "#5E8647" },
       { label: "Hơi chật (Slightly small)", percent: 14, color: "#BD9A62" },
@@ -167,10 +167,10 @@ function FitAndStyleInsights({ feedbackQuality, stylistCategories }) {
   };
 
   const sc = stylistCategories || [
-    { category: "Váy & Đầm dạ tiệc", percent: 35, count: 147 },
-    { category: "Công sở & Thanh lịch", percent: 30, count: 126 },
-    { category: "Dạo phố & Trẻ trung", percent: 21, count: 88 },
-    { category: "Tối giản & Basic", percent: 14, count: 59 },
+    { category: "Váy & Đầm dạ tiệc", percent: 35, count: 99 },
+    { category: "Công sở & Thanh lịch", percent: 30, count: 85 },
+    { category: "Dạo phố & Trẻ trung", percent: 21, count: 60 },
+    { category: "Tối giản & Basic", percent: 14, count: 40 },
   ];
 
   return (

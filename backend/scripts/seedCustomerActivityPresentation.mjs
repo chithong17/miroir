@@ -9,14 +9,14 @@ const BATCH = "customer-presentation-181-v1";
 const apply = process.argv.includes("--apply");
 const TARGETS = {
   totalUsers: 181,
-  dau: 18,
-  wau: 72,
+  dau: 33,
+  wau: 118,
   mau: 161,
   usage: {
-    product_view: 650,
-    stylist_product_recommended: 420,
-    tryon_started: 300,
-    product_feedback: 160,
+    product_view: 382,
+    stylist_product_recommended: 284,
+    tryon_started: 299,
+    product_feedback: 76,
   },
 };
 
