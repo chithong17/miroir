@@ -12,6 +12,7 @@
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:shop-insights": "node scripts/seedShopInsightsMock.js",
     "seed:shop-commerce": "node scripts/seedShopCommerceMock.js",
+    "seed:customer-presentation": "node scripts/seedCustomerActivityPresentation.mjs",
     "migrate:shop-plans:dry": "node scripts/migrateShopPlans.js",
     "migrate:shop-plans": "node scripts/migrateShopPlans.js --apply",
     "sync:locations": "node scripts/syncVietnamLocations.js",

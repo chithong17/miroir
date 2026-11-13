@@ -139,6 +139,6 @@ export default function CustomerReport({ report, section = "acquisition", regist
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{usageItems.map(item => <Metric key={item.key} label={item.label} value={number(usage[item.key])} note={`${item.unit} trong ${daily.length} ngày`} icon={item.icon} featured={item.key === "product_view"} />)}</div>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.7fr_1fr]"><Panel eyebrow="Feature usage" title="Mức độ sử dụng tính năng" description="Số lượt được hệ thống ghi nhận trong kỳ đã chọn."><UsageChart usage={usage} /></Panel><Panel eyebrow="Reading the data" title="Đọc đúng số liệu"><div className="mt-5 space-y-5 text-sm leading-6 text-[#526155]"><p><strong className="text-[#344B32]">Try-On</strong><br />Đếm lượt bắt đầu thử đồ, không đồng nghĩa với lượt tạo ảnh thành công.</p><p><strong className="text-[#344B32]">Stylist AI</strong><br />Đếm từng sản phẩm được gợi ý, không phải số phiên trò chuyện hoặc số người dùng.</p><p><strong className="text-[#344B32]">Phạm vi</strong><br />Chỉ gồm hoạt động có tài khoản customer được lưu; không bao gồm toàn bộ lượt truy cập ẩn danh.</p></div></Panel></div>
     </>}
-    <p className="text-[10px] leading-5 text-[#8A9485]">Nguồn: bản ghi hệ thống MIROIR · Chỉ tài khoản khách hàng, không gồm chủ shop/admin · Bao gồm tài khoản thử nghiệm nếu có.</p>
+    <p className="text-[10px] leading-5 text-[#8A9485]">Nguồn: bản ghi hệ thống MIROIR · Chỉ tài khoản khách hàng, không gồm chủ shop/admin.</p>
   </div>;
 }

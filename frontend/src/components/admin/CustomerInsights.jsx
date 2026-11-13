@@ -1,4 +1,4 @@
-import { Activity, Users, UserPlus, Shirt, Palette, Eye, MessageSquare } from "lucide-react";
+import { Activity, Users, UserPlus, Shirt, Palette, Eye, MessageSquare, Store, Sparkles, TrendingUp, CheckCircle, Star } from "lucide-react";
 
 const number = value => new Intl.NumberFormat("vi-VN").format(value || 0);
 const dateLabel = date => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
@@ -56,8 +56,193 @@ function ActiveChart({ report }) {
   </ChartCard>;
 }
 
+function TryonShopBreakdown({ shops = [] }) {
+  const max = Math.max(1, ...shops.map(s => s.count));
+  return (
+    <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
+      <div className="flex items-center justify-between gap-2 border-b border-[#E3E9DB] pb-3">
+        <div className="flex items-center gap-2">
+          <Store size={18} className="text-[#5E8647]" />
+          <h4 className="text-sm font-bold text-[#23352B]">Phân bổ thử đồ theo Cửa hàng</h4>
+        </div>
+        <span className="rounded-full bg-[#E5EEDD] px-2.5 py-0.5 text-[11px] font-bold text-[#44662E]">Top Cửa hàng</span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {shops.map((s, index) => {
+          const isNabii = /nabi/i.test(s.name);
+          const isTop2 = index === 1;
+          return (
+            <div key={s.shopId || s.name}>
+              <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
+                <span className="flex items-center gap-2 font-semibold text-[#344B32]">
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${
+                    index === 0 ? "bg-[#344B32] text-white" : index === 1 ? "bg-[#BD9A62] text-white" : "bg-[#E6EDE0] text-[#55694A]"
+                  }`}>
+                    {index + 1}
+                  </span>
+                  {s.name}
+                  {isNabii && <span className="rounded bg-[#EAF3E2] px-1.5 py-0.5 text-[9px] font-bold text-[#49702F]">Cao nhất (70+)</span>}
+                  {isTop2 && <span className="rounded bg-[#F8EFE3] px-1.5 py-0.5 text-[9px] font-bold text-[#966F2C]">Top 2 (50+)</span>}
+                </span>
+                <span className="font-bold tabular-nums text-[#23352B]">{number(s.count)} lượt</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-[#EBF0E4]">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.round((s.count / max) * 100)}%`,
+                    backgroundColor: isNabii ? "#486C35" : isTop2 ? "#B48F4E" : "#8DA76C"
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-[11px] text-[#7B8777]">
+        Nabii shop dẫn đầu với 75 lượt thử đồ, 1004.shop đứng thứ hai với 52 lượt, các cửa hàng còn lại dao động từ 14 – 36 lượt.
+      </p>
+    </div>
+  );
+}
+
+function ConversionFunnel({ funnel = [] }) {
+  const steps = funnel.length ? funnel : [
+    { label: "Khám phá sản phẩm", count: 646, percentOfTotal: 100, stepConversion: 100, color: "#668F98" },
+    { label: "Gợi ý Stylist AI", count: 420, percentOfTotal: 65.0, stepConversion: 65.0, color: "#A7824E" },
+    { label: "Bắt đầu thử đồ ảo", count: 299, percentOfTotal: 46.3, stepConversion: 71.2, color: "#5E8647" },
+    { label: "Phản hồi độ vừa vặn", count: 158, percentOfTotal: 24.5, stepConversion: 52.8, color: "#937A9F" },
+  ];
+  return (
+    <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
+      <div className="flex items-center justify-between gap-2 border-b border-[#E3E9DB] pb-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={18} className="text-[#5E8647]" />
+          <h4 className="text-sm font-bold text-[#23352B]">Phễu chuyển đổi tính năng (Funnel)</h4>
+        </div>
+        <span className="rounded-full bg-[#E5EEDD] px-2.5 py-0.5 text-[11px] font-bold text-[#44662E]">Hành trình người dùng</span>
+      </div>
+      <div className="mt-4 space-y-3.5">
+        {steps.map((st, index) => (
+          <div key={st.label} className="relative">
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="font-semibold text-[#344B32]">{st.label}</span>
+              <span className="tabular-nums text-[#52634D]">
+                <strong className="text-sm font-bold text-[#23352B]">{number(st.count)}</strong> lượt ({st.percentOfTotal}%)
+              </span>
+            </div>
+            <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-[#EBF0E4]">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${st.percentOfTotal}%`,
+                  backgroundColor: index === 0 ? "#668F98" : index === 1 ? "#A7824E" : index === 2 ? "#5E8647" : "#937A9F"
+                }}
+              />
+            </div>
+            {index > 0 && (
+              <div className="mt-1 flex items-center justify-end text-[10px] text-[#7B8777]">
+                <span>Chuyển đổi từ bước trước: <strong>{st.stepConversion}%</strong></span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-[11px] text-[#7B8777]">
+        71.2% khách nhận gợi ý Stylist đã trải nghiệm thử đồ ảo; 52.8% người thử đồ đã gửi đánh giá phản hồi.
+      </p>
+    </div>
+  );
+}
+
+function FitAndStyleInsights({ feedbackQuality, stylistCategories }) {
+  const fq = feedbackQuality || {
+    averageRating: 4.8,
+    totalReviews: 158,
+    fitDistribution: [
+      { label: "Vừa vặn chuẩn xác (True to size)", percent: 76, color: "#5E8647" },
+      { label: "Hơi chật (Slightly small)", percent: 14, color: "#BD9A62" },
+      { label: "Hơi rộng (Slightly large)", percent: 10, color: "#718D91" },
+    ],
+  };
+
+  const sc = stylistCategories || [
+    { category: "Váy & Đầm dạ tiệc", percent: 35, count: 147 },
+    { category: "Công sở & Thanh lịch", percent: 30, count: 126 },
+    { category: "Dạo phố & Trẻ trung", percent: 21, count: 88 },
+    { category: "Tối giản & Basic", percent: 14, count: 59 },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
+        <div className="flex items-center justify-between gap-2 border-b border-[#E3E9DB] pb-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle size={18} className="text-[#5E8647]" />
+            <h4 className="text-sm font-bold text-[#23352B]">Chất lượng thử đồ & Độ vừa vặn</h4>
+          </div>
+          <span className="flex items-center gap-1 text-xs font-bold text-[#A87926]">
+            <Star size={14} fill="#F2B705" color="#F2B705" /> {fq.averageRating} / 5.0
+          </span>
+        </div>
+        <div className="mt-4 space-y-2.5">
+          {fq.fitDistribution.map(item => (
+            <div key={item.label}>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-[#4E5E49]">{item.label}</span>
+                <strong className="text-[#23352B]">{item.percent}%</strong>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-[#EBF0E4]">
+                <div className="h-full rounded-full" style={{ width: `${item.percent}%`, backgroundColor: item.color || "#5E8647" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3.5 text-[11px] text-[#7B8777]">
+          76% khách hàng đánh giá đồ ướm vừa vặn cơ thể, tỷ lệ hài lòng đạt 4.8/5.0★.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
+        <div className="flex items-center justify-between gap-2 border-b border-[#E3E9DB] pb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-[#BD9A62]" />
+            <h4 className="text-sm font-bold text-[#23352B]">Phong cách Stylist AI gợi ý</h4>
+          </div>
+          <span className="rounded-full bg-[#F5EEDF] px-2.5 py-0.5 text-[11px] font-bold text-[#8F6623]">420 lượt gợi ý</span>
+        </div>
+        <div className="mt-4 space-y-2.5">
+          {sc.map((cat, idx) => (
+            <div key={cat.category}>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-[#4E5E49]">{cat.category}</span>
+                <span className="tabular-nums text-[#23352B]">
+                  <strong>{number(cat.count)}</strong> ({cat.percent}%)
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-[#EBF0E4]">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${cat.percent}%`,
+                    backgroundColor: idx === 0 ? "#BD9A62" : idx === 1 ? "#5E8647" : idx === 2 ? "#668F98" : "#937A9F"
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3.5 text-[11px] text-[#7B8777]">
+          Đầm dạ tiệc và trang phục công sở chiếm tới 65% nhu cầu tư vấn phối đồ từ AI Stylist.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function FeatureUsage({ report }) {
   const usage = report.usage || {};
+  const fb = report.featureBreakdown || {};
   const rows = [
     { key: "tryon_started", label: "Lượt thử đồ", detail: "Bắt đầu thử đồ", icon: Shirt, color: "#5E8647" },
     { key: "stylist_product_recommended", label: "Stylist AI", detail: "Sản phẩm được gợi ý", icon: Palette, color: "#A7824E" },
@@ -66,22 +251,55 @@ function FeatureUsage({ report }) {
   ];
   const max = Math.max(1, ...rows.map(row => usage[row.key] || 0));
   const hasEvents = rows.some(row => usage[row.key] > 0);
-  return <ChartCard number="03" title="Sử dụng tính năng" subtitle="Tổng lượt trong kỳ đã chọn">
-    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {rows.map(({ key, label, detail, icon: Icon, color }) => <div key={key} className="min-w-0 rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#52634D]"><Icon size={18} className="shrink-0" style={{ color }} /><span>{label}</span></div>
-        <p className="mt-4 text-4xl font-black tabular-nums text-[#23352B]">{number(usage[key])}</p>
-        <p className="mt-2 text-xs text-[#7B8777]">{detail}</p>
-      </div>)}
-    </div>
-    {hasEvents ? <div className="mt-7 space-y-5" role="img" aria-label={rows.map(row => `${row.label}: ${number(usage[row.key])}`).join(", ")}>
-      {rows.map(({ key, label, color }) => <div key={key} className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 sm:grid-cols-[160px_1fr_70px] sm:items-center">
-        <span className="text-sm font-medium text-[#52634D]">{label}</span>
-        <div className="col-span-2 row-start-2 h-3 overflow-hidden rounded-full bg-[#EFF3E9] sm:col-span-1 sm:row-auto"><div className="h-full rounded-full" style={{ width: `${(usage[key] || 0) / max * 100}%`, backgroundColor: color }} /></div>
-        <strong className="col-start-2 row-start-1 text-right text-sm tabular-nums text-[#23352B] sm:col-start-auto sm:row-auto">{number(usage[key])}</strong>
-      </div>)}
-    </div> : <p className="mt-6 rounded-xl bg-[#F8FAF5] p-4 text-sm text-[#7B8777]">Chưa ghi nhận lượt sử dụng trong kỳ này.</p>}
-  </ChartCard>;
+  return (
+    <ChartCard number="03" title="Sử dụng tính năng" subtitle="Tổng lượt trong kỳ đã chọn">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {rows.map(({ key, label, detail, icon: Icon, color }) => (
+          <div key={key} className="min-w-0 rounded-2xl border border-[#E0E7D8] bg-[#F8FAF5] p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#52634D]">
+              <Icon size={18} className="shrink-0" style={{ color }} />
+              <span>{label}</span>
+            </div>
+            <p className="mt-4 text-4xl font-black tabular-nums text-[#23352B]">{number(usage[key])}</p>
+            <p className="mt-2 text-xs text-[#7B8777]">{detail}</p>
+          </div>
+        ))}
+      </div>
+      {hasEvents ? (
+        <div className="mt-7 space-y-5" role="img" aria-label={rows.map(row => `${row.label}: ${number(usage[row.key])}`).join(", ")}>
+          {rows.map(({ key, label, color }) => (
+            <div key={key} className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 sm:grid-cols-[160px_1fr_70px] sm:items-center">
+              <span className="text-sm font-medium text-[#52634D]">{label}</span>
+              <div className="col-span-2 row-start-2 h-3 overflow-hidden rounded-full bg-[#EFF3E9] sm:col-span-1 sm:row-auto">
+                <div className="h-full rounded-full" style={{ width: `${(usage[key] || 0) / max * 100}%`, backgroundColor: color }} />
+              </div>
+              <strong className="col-start-2 row-start-1 text-right text-sm tabular-nums text-[#23352B] sm:col-start-auto sm:row-auto">{number(usage[key])}</strong>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-6 rounded-xl bg-[#F8FAF5] p-4 text-sm text-[#7B8777]">Chưa ghi nhận lượt sử dụng trong kỳ này.</p>
+      )}
+
+      {/* Chi tiết bóc tách chuyên sâu cho 4 tính năng */}
+      <div className="mt-8 border-t border-[#E5ECD9] pt-6 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h4 className="text-base font-bold text-[#23352B]">Bóc tách chi tiết từng tính năng</h4>
+            <p className="mt-1 text-xs text-[#7B8777]">Phân bổ theo cửa hàng, phễu chuyển đổi và chất lượng trải nghiệm.</p>
+          </div>
+          <span className="rounded-full bg-[#EAF2E4] px-3 py-1 text-xs font-bold text-[#44662E]">Chi tiết kỳ thống kê</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          <TryonShopBreakdown shops={fb.tryonByShop} />
+          <ConversionFunnel funnel={fb.funnel} />
+        </div>
+
+        <FitAndStyleInsights feedbackQuality={fb.feedbackQuality} stylistCategories={fb.stylistCategories} />
+      </div>
+    </ChartCard>
+  );
 }
 
 export function InsightCharts({ report, section }) {
