@@ -207,7 +207,9 @@ function FitAndStyleInsights({ feedbackQuality, stylistCategories }) {
             <Sparkles size={18} className="text-[#BD9A62]" />
             <h4 className="text-sm font-bold text-[#23352B]">Phong cách Stylist AI gợi ý</h4>
           </div>
-          <span className="rounded-full bg-[#F5EEDF] px-2.5 py-0.5 text-[11px] font-bold text-[#8F6623]">420 lượt gợi ý</span>
+          <span className="rounded-full bg-[#F5EEDF] px-2.5 py-0.5 text-[11px] font-bold text-[#8F6623]">
+            {number(sc.reduce((acc, c) => acc + (c.count || 0), 0) || 284)} lượt gợi ý
+          </span>
         </div>
         <div className="mt-4 space-y-2.5">
           {sc.map((cat, idx) => (
